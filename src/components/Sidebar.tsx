@@ -1,6 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter }  from 'next/navigation'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── SVG icon set ──────────────────────────────────────────────────────────────
@@ -123,7 +124,8 @@ export default function Sidebar({
   onClose?:      () => void
   badgeCounts?:  BadgeCounts
 }) {
-  const router = useRouter()
+  const router   = useRouter()
+  const isMobile = useIsMobile()
   const visibleItems = NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
 
   const getNavBadge = (href: string): number => {
@@ -217,7 +219,7 @@ export default function Sidebar({
               onClick={() => { router.push(href); onClose?.() }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: '9px 12px',
+                width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
                 border: 'none',
                 borderRadius: 8,
                 background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
@@ -260,7 +262,7 @@ export default function Sidebar({
         <button
           onClick={onLogout}
           style={{
-            width: '100%', padding: '9px 12px',
+            width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
             borderRadius: 8,
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.08)',
