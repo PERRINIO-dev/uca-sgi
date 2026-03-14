@@ -448,7 +448,7 @@ export default function DashboardClient({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(stockAlerts.length > 6 ? stockAlerts.slice(0, 6) : stockAlerts).map((item: any) => {
-                const avail  = Number(item.available_tiles)
+                const avail  = Number(item.available_full_cartons)
                 const isCrit = avail < 20
                 const bg     = isCrit ? C.redL    : C.orangeL
                 const clr    = isCrit ? C.red     : C.orange
@@ -480,7 +480,7 @@ export default function DashboardClient({
                       <div style={{ fontSize: 18, fontWeight: 800, color: clr, lineHeight: 1, fontFamily: FONT }}>
                         {fmtNum(avail)}
                       </div>
-                      <div style={{ fontSize: 10, color: C.muted, marginTop: 1, fontFamily: FONT }}>carreaux</div>
+                      <div style={{ fontSize: 10, color: C.muted, marginTop: 1, fontFamily: FONT }}>cartons</div>
                     </div>
                   </div>
                 )

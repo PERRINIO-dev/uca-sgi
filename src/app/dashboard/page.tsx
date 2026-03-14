@@ -51,9 +51,9 @@ export default async function DashboardPage() {
   })
   const dailyChart = Object.entries(dailyMap).map(([day, ca]) => ({ day, ca }))
 
-  // Stock alerts (available < 50 tiles)
+  // Stock alerts (available < 50 cartons)
   const stockAlerts = stats.stockLevels.filter(
-    (s: any) => Number(s.available_tiles) < 50
+    (s: any) => Number(s.available_full_cartons) < 50
   )
 
   return (

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState }    from 'react'
-import { useIsMobile } from '@/hooks/useIsMobile'
-import Sidebar         from '@/components/Sidebar'
-import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import { useState, useEffect } from 'react'
+import { useIsMobile }         from '@/hooks/useIsMobile'
+import Sidebar                 from '@/components/Sidebar'
+import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 
 export default function PageLayout({
   profile,
@@ -30,6 +30,14 @@ export default function PageLayout({
     '/reports':   'Rapports',
   }
   const pageTitle = PAGE_TITLES[activeRoute] ?? 'UCA SGI'
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .catch(err => console.error('[SW]', err))
+    }
+  }, [])
 
   return (
     <div style={{

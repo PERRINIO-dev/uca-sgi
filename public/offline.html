@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UCA SGI — Hors ligne</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #F8FAFC;
+      color: #0F172A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100svh;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 48px 40px;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      font-family: Georgia, serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #0C1A35;
+      letter-spacing: 2px;
+      margin-bottom: 32px;
+    }
+    .icon-wrap {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #FEF2F2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+    }
+    .icon-wrap svg { width: 36px; height: 36px; }
+    h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #0F172A;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    button {
+      background: #1B3A6B;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    button:hover { background: #0C1A35; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">UCA</div>
+
+    <div class="icon-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 6l4 4 4-4"/>
+        <path d="M5 10V3"/>
+        <path d="M23 18a4 4 0 0 1-4 4H5a4 4 0 0 1 0-8h.27A7 7 0 0 1 20.8 9"/>
+      </svg>
+    </div>
+
+    <h1>Connexion perdue</h1>
+    <p>
+      Vous êtes actuellement hors ligne.<br>
+      Vérifiez votre connexion internet et réessayez.
+    </p>
+    <button onclick="window.location.reload()">Réessayer</button>
+  </div>
+</body>
+</html>

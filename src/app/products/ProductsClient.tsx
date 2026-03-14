@@ -296,8 +296,9 @@ export default function ProductsClient({
               const tileArea   = parseFloat(p.tile_area_m2)
               const availM2    = available * tileArea
               const tpc        = parseInt(p.tiles_per_carton)
-              const isCritical = available < 20
-              const isLow      = available < 50
+              const availCartons = Math.floor(available / tpc)
+              const isCritical   = availCartons < 20
+              const isLow        = availCartons < 50
               const stockColor = !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green
 
               return (
@@ -479,9 +480,9 @@ export default function ProductsClient({
             <Row>
               <Field label="Code référence *">
                 <input value={form.referenceCode}
-                  onChange={e => { refCodeTouched.current = true; setField('referenceCode', e.target.value) }}
+                  readOnly
                   placeholder="Généré automatiquement"
-                  style={inputStyle} />
+                  style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
               </Field>
               <Field label="Catégorie *">
                 <select value={form.category}
