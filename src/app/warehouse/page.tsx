@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import WarehouseClient  from './WarehouseClient'
+import { createClient }   from '@/lib/supabase/server'
+import { redirect }       from 'next/navigation'
+import { getBadgeCounts } from '@/lib/supabase/badge-counts'
+import WarehouseClient    from './WarehouseClient'
 
 export default async function WarehousePage() {
   const supabase = await createClient()
@@ -93,6 +94,8 @@ export default async function WarehousePage() {
     .order('created_at', { ascending: false })
     .limit(15)
 
+  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+
   return (
     <WarehouseClient
       profile={profile}
@@ -101,6 +104,7 @@ export default async function WarehousePage() {
       stockLevels={stockLevels ?? []}
       products={products ?? []}
       myRequests={myRequests ?? []}
+      badgeCounts={badgeCounts}
     />
   )
 }

@@ -5,6 +5,7 @@ import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProduct, updateProduct } from './actions'
 import PageLayout       from '@/components/PageLayout'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -60,9 +61,11 @@ const emptyForm = () => ({
 export default function ProductsClient({
   profile,
   products,
+  badgeCounts,
 }: {
-  profile:  any
-  products: any[]
+  profile:      any
+  products:     any[]
+  badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -232,7 +235,7 @@ export default function ProductsClient({
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <PageLayout profile={profile} activeRoute="/products" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/products" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between',

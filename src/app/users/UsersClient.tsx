@@ -12,6 +12,7 @@ import {
   toggleBoutiqueActive,
 } from './actions'
 import PageLayout from '@/components/PageLayout'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const C = {
@@ -87,12 +88,13 @@ function IconStore() {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function UsersClient({
-  profile, employees, boutiques, currentUserId,
+  profile, employees, boutiques, currentUserId, badgeCounts,
 }: {
   profile:       any
   employees:     any[]
   boutiques:     any[]
   currentUserId: string
+  badgeCounts?:  BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -247,7 +249,7 @@ export default function UsersClient({
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <PageLayout profile={profile} activeRoute="/users" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/users" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between',
@@ -422,7 +424,7 @@ export default function UsersClient({
                       </td>
                       <td style={{ padding: '13px 16px' }}>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                          {emp.role !== 'owner' && (
+                          {(emp.role !== 'owner' || isMe) && (
                             <button onClick={() => openEdit(emp)}
                               style={{ display: 'flex', alignItems: 'center', gap: 5,
                                 padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
@@ -531,11 +533,13 @@ export default function UsersClient({
                 style={inputStyle} />
             </FieldBlock>
 
-            <FieldBlock label="Rôle">
-              <RoleSelector value={editRole} onChange={setEditRole} />
-            </FieldBlock>
+            {editUser?.role !== 'owner' && (
+              <FieldBlock label="Rôle">
+                <RoleSelector value={editRole} onChange={setEditRole} />
+              </FieldBlock>
+            )}
 
-            {editRole === 'vendor' && (
+            {editRole === 'vendor' && editUser?.role !== 'owner' && (
               <FieldBlock label="Boutique assignée">
                 <select value={editBoutique} onChange={e => setEditBoutique(e.target.value)}
                   style={inputStyle}>

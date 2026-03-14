@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── SVG icon set ──────────────────────────────────────────────────────────────
 function IconDashboard({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
@@ -113,15 +114,24 @@ export default function Sidebar({
   onLogout,
   isMobileOpen = true,
   onClose,
+  badgeCounts,
 }: {
-  profile:      { full_name: string; role: string }
-  activeRoute:  string
-  onLogout:     () => void
+  profile:       { full_name: string; role: string }
+  activeRoute:   string
+  onLogout:      () => void
   isMobileOpen?: boolean
-  onClose?:     () => void
+  onClose?:      () => void
+  badgeCounts?:  BadgeCounts
 }) {
   const router = useRouter()
   const visibleItems = NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
+
+  const getNavBadge = (href: string): number => {
+    if (!badgeCounts) return 0
+    if (href === '/dashboard') return badgeCounts.pendingApprovals
+    if (href === '/warehouse') return badgeCounts.confirmedOrders
+    return 0
+  }
 
   return (
     <aside style={{
@@ -200,6 +210,7 @@ export default function Sidebar({
       <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto' }}>
         {visibleItems.map(([Icon, label, href]) => {
           const active = activeRoute === href
+          const badge  = getNavBadge(href)
           return (
             <button
               key={href}
@@ -223,7 +234,22 @@ export default function Sidebar({
                 size={15}
                 color={active ? '#93C5FD' : 'rgba(255,255,255,0.38)'}
               />
-              {label}
+              <span style={{ flex: 1 }}>{label}</span>
+              {badge > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18,
+                  padding: '0 5px',
+                  borderRadius: 9,
+                  background: '#EF4444',
+                  color: '#fff',
+                  fontSize: 10, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}>
+                  {badge > 99 ? '99+' : badge}
+                </span>
+              )}
             </button>
           )
         })}

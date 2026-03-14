@@ -1,6 +1,7 @@
 import { createClient }                           from '@/lib/supabase/server'
 import { redirect }                               from 'next/navigation'
 import { getDashboardStats, getSalesByPeriod }    from '@/lib/supabase/queries'
+import { getBadgeCounts }                         from '@/lib/supabase/badge-counts'
 import DashboardClient                            from './DashboardClient'
 
 export default async function DashboardPage() {
@@ -22,9 +23,10 @@ export default async function DashboardPage() {
     redirect('/sales')
   }
 
-  const [stats, chartData] = await Promise.all([
+  const [stats, chartData, badgeCounts] = await Promise.all([
     getDashboardStats(),
     getSalesByPeriod(7),
+    getBadgeCounts(profile.role, supabase),
   ])
 
   // Aggregate KPIs
@@ -63,6 +65,7 @@ export default async function DashboardPage() {
       stockAlerts={stockAlerts}
       boutiqueStats={boutiqueStats}
       dailyChart={dailyChart}
+      badgeCounts={badgeCounts}
     />
   )
 }

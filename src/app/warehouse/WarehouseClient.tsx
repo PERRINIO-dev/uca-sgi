@@ -5,6 +5,7 @@ import { useRouter }      from 'next/navigation'
 import { createClient }   from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
 import PageLayout         from '@/components/PageLayout'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -44,7 +45,7 @@ type Tab = 'orders' | 'stock' | 'requests'
 
 export default function WarehouseClient({
   profile, orders, deliveredOrders,
-  stockLevels, products, myRequests,
+  stockLevels, products, myRequests, badgeCounts,
 }: {
   profile:         any
   orders:          any[]
@@ -52,6 +53,7 @@ export default function WarehouseClient({
   stockLevels:     any[]
   products:        any[]
   myRequests:      any[]
+  badgeCounts?:    BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -273,7 +275,7 @@ export default function WarehouseClient({
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <PageLayout profile={profile} activeRoute="/warehouse" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/warehouse" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
@@ -387,8 +389,7 @@ export default function WarehouseClient({
                         {new Date(order.created_at).toLocaleDateString(
                           'fr-FR', { day: '2-digit', month: 'short',
                             hour: '2-digit', minute: '2-digit' }
-                        )} ·{' '}
-                        <strong>{fmtCFA(sale?.total_amount ?? 0)}</strong>
+                        )}
                       </div>
                     </div>
 

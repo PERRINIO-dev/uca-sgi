@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react'
 import { useRouter }         from 'next/navigation'
 import { createClient }      from '@/lib/supabase/client'
 import PageLayout            from '@/components/PageLayout'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid,
@@ -57,13 +58,14 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function ReportsClient({
-  profile, sales, boutiques, vendors, auditLogs,
+  profile, sales, boutiques, vendors, auditLogs, badgeCounts,
 }: {
-  profile:   any
-  sales:     any[]
-  boutiques: any[]
-  vendors:   any[]
-  auditLogs: any[]
+  profile:      any
+  sales:        any[]
+  boutiques:    any[]
+  vendors:      any[]
+  auditLogs:    any[]
+  badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -274,7 +276,7 @@ export default function ReportsClient({
 
   // ────────────────────────────────────────────────────────────────────────
   return (
-    <PageLayout profile={profile} activeRoute="/reports" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/reports" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between',

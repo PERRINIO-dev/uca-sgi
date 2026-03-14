@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import VendorSaleForm   from './VendorSaleForm'
+import { createClient }   from '@/lib/supabase/server'
+import { redirect }       from 'next/navigation'
+import { getBadgeCounts } from '@/lib/supabase/badge-counts'
+import VendorSaleForm     from './VendorSaleForm'
 
 export default async function NewSalePage() {
   const supabase = await createClient()
@@ -63,6 +64,8 @@ export default async function NewSalePage() {
       reference_price_per_m2: pricingMap[p.product_id].reference_price_per_m2,
     }))
 
+  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+
   return (
     <VendorSaleForm
       profile={profile}
@@ -70,6 +73,7 @@ export default async function NewSalePage() {
       products={enrichedProducts}
       allBoutiques={allBoutiques}
       isOwnerOrAdmin={isOwnerOrAdmin}
+      badgeCounts={badgeCounts}
     />
   )
 }

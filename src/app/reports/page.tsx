@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import ReportsClient    from './ReportsClient'
+import { createClient }   from '@/lib/supabase/server'
+import { redirect }       from 'next/navigation'
+import { getBadgeCounts } from '@/lib/supabase/badge-counts'
+import ReportsClient      from './ReportsClient'
 
 export default async function ReportsPage() {
   const supabase = await createClient()
@@ -61,6 +62,8 @@ export default async function ReportsPage() {
     .order('created_at', { ascending: false })
     .limit(200)
 
+  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+
   return (
     <ReportsClient
       profile={profile}
@@ -68,6 +71,7 @@ export default async function ReportsPage() {
       boutiques={boutiques ?? []}
       vendors={vendors ?? []}
       auditLogs={auditLogs ?? []}
+      badgeCounts={badgeCounts}
     />
   )
 }

@@ -9,6 +9,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import PageLayout from '@/components/PageLayout'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtCFA = (n: number) =>
@@ -113,6 +114,7 @@ export default function DashboardClient({
   stockAlerts,
   boutiqueStats,
   dailyChart,
+  badgeCounts,
 }: {
   profile:         any
   todayRevenue:    number
@@ -121,6 +123,7 @@ export default function DashboardClient({
   stockAlerts:     any[]
   boutiqueStats:   any[]
   dailyChart:      any[]
+  badgeCounts?:    BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -178,7 +181,7 @@ export default function DashboardClient({
   ]
 
   return (
-    <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
       <div style={{ marginBottom: 28 }}>

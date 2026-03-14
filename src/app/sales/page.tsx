@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import SalesListClient  from './SalesListClient'
+import { createClient }    from '@/lib/supabase/server'
+import { redirect }        from 'next/navigation'
+import { getBadgeCounts }  from '@/lib/supabase/badge-counts'
+import SalesListClient     from './SalesListClient'
 
 export default async function SalesPage() {
   const supabase = await createClient()
@@ -40,12 +41,16 @@ export default async function SalesPage() {
     query = query.eq('boutique_id', profile.boutique_id!)
   }
 
-  const { data: sales } = await query
+  const [{ data: sales }, badgeCounts] = await Promise.all([
+    query,
+    getBadgeCounts(profile.role, supabase),
+  ])
 
   return (
     <SalesListClient
       profile={profile}
       sales={sales ?? []}
+      badgeCounts={badgeCounts}
     />
   )
 }

@@ -3,8 +3,10 @@
 import { useState, useMemo }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
+import { SIGNATURE_B64 }     from '@/lib/signature-b64'
 import { createSale }         from '@/app/sales/actions'
 import PageLayout             from '@/components/PageLayout'
+import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -40,10 +42,11 @@ interface CartItem {
 }
 
 export default function VendorSaleForm({
-  profile, boutique, products, allBoutiques, isOwnerOrAdmin,
+  profile, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts,
 }: {
   profile: any; boutique: any; products: any[]
   allBoutiques: any[]; isOwnerOrAdmin: boolean
+  badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -171,8 +174,7 @@ export default function VendorSaleForm({
     .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
     .sig-block { }
     .sig-name { font-size: 12px; font-weight: 600; color: #0F172A; margin-bottom: 4px; }
-    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 12px; }
-    .sig-line { border-bottom: 1px solid #CBD5E1; height: 48px; margin-bottom: 6px; }
+    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 8px; }
     .sig-sub { font-size: 10px; color: #94A3B8; }
     .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #94A3B8; padding-top: 16px; border-top: 1px solid #E2E8F0; }
     @media print { @page { margin: 20mm; } }
@@ -239,10 +241,10 @@ export default function VendorSaleForm({
         <div class="sig-sub">Signature du vendeur</div>
       </div>
       <div class="sig-block">
-        <div class="sig-name">Direction</div>
-        <div class="sig-role">Responsable / Propriétaire</div>
-        <div class="sig-line"></div>
-        <div class="sig-sub">Cachet et signature</div>
+        <div class="sig-name">Kepseu Lucien</div>
+        <div class="sig-role">Propriétaire — UCA</div>
+        <img src="${SIGNATURE_B64}" style="height:90px;max-width:240px;object-fit:contain;display:block;margin:6px 0 2px"/>
+        <div class="sig-sub">Signature du propriétaire</div>
       </div>
     </div>
   </div>
@@ -267,33 +269,42 @@ export default function VendorSaleForm({
     if (computed.floorViolation || computed.stockInsufficient) return
     if (computed.price <= 0 || computed.tiles <= 0) return
 
-    setCart(prev => {
-      const existingIdx = prev.findIndex(
-        item =>
-          item.product.product_id === selectedProduct.product_id &&
-          item.unitPricePerM2     === computed.price
-      )
+    const existingIdx = cart.findIndex(
+      item =>
+        item.product.product_id === selectedProduct.product_id &&
+        item.unitPricePerM2     === computed.price
+    )
 
-      if (existingIdx >= 0) {
-        const updated  = [...prev]
-        const existing = updated[existingIdx]
-        const newTiles = existing.quantityTiles + computed.tiles
-        const tpc      = parseInt(selectedProduct.tiles_per_carton)
-        const newM2    = parseFloat(
-          (newTiles * parseFloat(selectedProduct.tile_area_m2)).toFixed(4)
+    if (existingIdx >= 0) {
+      const existing   = cart[existingIdx]
+      const newTiles   = existing.quantityTiles + computed.tiles
+      const available  = parseInt(selectedProduct.available_tiles)
+
+      // Re-validate merged total against available stock
+      if (newTiles > available) {
+        setError(
+          `Stock insuffisant — vous avez déjà ${existing.quantityTiles} carreau${existing.quantityTiles > 1 ? 'x' : ''} dans le panier ` +
+          `pour ce produit (${available} disponible${available > 1 ? 's' : ''} au total).`
         )
-        updated[existingIdx] = {
-          ...existing,
-          quantityTiles:   newTiles,
-          quantityM2:      newM2,
-          quantityCartons: Math.floor(newTiles / tpc),
-          looseTiles:      newTiles % tpc,
-          totalPrice:      newM2 * computed.price,
-        }
-        return updated
+        return
       }
 
-      return [...prev, {
+      const tpc   = parseInt(selectedProduct.tiles_per_carton)
+      const newM2 = parseFloat(
+        (newTiles * parseFloat(selectedProduct.tile_area_m2)).toFixed(4)
+      )
+      const updated = [...cart]
+      updated[existingIdx] = {
+        ...existing,
+        quantityTiles:   newTiles,
+        quantityM2:      newM2,
+        quantityCartons: Math.floor(newTiles / tpc),
+        looseTiles:      newTiles % tpc,
+        totalPrice:      newM2 * computed.price,
+      }
+      setCart(updated)
+    } else {
+      setCart(prev => [...prev, {
         product:         selectedProduct,
         inputMode,
         unitPricePerM2:  computed.price,
@@ -302,8 +313,8 @@ export default function VendorSaleForm({
         quantityCartons: computed.fullCartons,
         looseTiles:      computed.loose,
         totalPrice:      computed.total,
-      }]
-    })
+      }])
+    }
 
     resetInputs()
     setError(null)
@@ -359,7 +370,7 @@ export default function VendorSaleForm({
   // ── SUCCESS ───────────────────────────────────────────────────────────────
   if (step === 'success') {
     return (
-      <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout}>
+      <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
         <div style={{ display: 'flex', flex: 1,
           alignItems: 'center', justifyContent: 'center', padding: 40 }}>
           <div style={{ background: C.surface, borderRadius: 16, padding: 48,
@@ -436,7 +447,7 @@ export default function VendorSaleForm({
 
   // ── MAIN FORM ─────────────────────────────────────────────────────────────
   return (
-    <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout}>
+    <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
         {/* Back nav */}
         <button

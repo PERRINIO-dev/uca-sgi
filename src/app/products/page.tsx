@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import ProductsClient   from './ProductsClient'
+import { createClient }   from '@/lib/supabase/server'
+import { redirect }       from 'next/navigation'
+import { getBadgeCounts } from '@/lib/supabase/badge-counts'
+import ProductsClient     from './ProductsClient'
 
 export default async function ProductsPage() {
   const supabase = await createClient()
@@ -29,10 +30,13 @@ export default async function ProductsPage() {
     `)
     .order('created_at', { ascending: false })
 
+  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+
   return (
     <ProductsClient
       profile={profile}
       products={products ?? []}
+      badgeCounts={badgeCounts}
     />
   )
 }

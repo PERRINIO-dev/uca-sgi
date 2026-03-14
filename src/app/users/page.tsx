@@ -1,6 +1,7 @@
-import { createClient } from '@/lib/supabase/server'
-import { redirect }     from 'next/navigation'
-import UsersClient      from './UsersClient'
+import { createClient }   from '@/lib/supabase/server'
+import { redirect }       from 'next/navigation'
+import { getBadgeCounts } from '@/lib/supabase/badge-counts'
+import UsersClient        from './UsersClient'
 
 export default async function UsersPage() {
   const supabase = await createClient()
@@ -31,12 +32,15 @@ export default async function UsersPage() {
     .select('id, name, is_active')
     .order('name')
 
+  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+
   return (
     <UsersClient
       profile={profile}
       employees={employees ?? []}
       boutiques={boutiques ?? []}
       currentUserId={user.id}
+      badgeCounts={badgeCounts}
     />
   )
 }

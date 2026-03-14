@@ -3,17 +3,20 @@
 import { useState }    from 'react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import Sidebar         from '@/components/Sidebar'
+import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 export default function PageLayout({
   profile,
   activeRoute,
   onLogout,
   children,
+  badgeCounts,
 }: {
-  profile:     { full_name: string; role: string }
-  activeRoute: string
-  onLogout:    () => void
-  children:    React.ReactNode
+  profile:      { full_name: string; role: string }
+  activeRoute:  string
+  onLogout:     () => void
+  children:     React.ReactNode
+  badgeCounts?: BadgeCounts
 }) {
   const isMobile                  = useIsMobile()
   const [sidebarOpen, setSidebar] = useState(false)
@@ -98,6 +101,7 @@ export default function PageLayout({
         onLogout={onLogout}
         isMobileOpen={!isMobile || sidebarOpen}
         onClose={() => setSidebar(false)}
+        badgeCounts={badgeCounts}
       />
 
       <main style={{
