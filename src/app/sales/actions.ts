@@ -245,7 +245,7 @@ export async function createSale(payload: CreateSalePayload) {
   revalidatePath('/dashboard')
 
   // Fire-and-forget push to warehouse/admin/owner about the new order
-  sendPushToRoles(adminClient, ['warehouse', 'admin', 'owner'], {
+  sendPushToRoles(getAdminClient(), ['warehouse', 'admin', 'owner'], {
     title: 'Nouvelle commande',
     body:  `Vente ${sale.sale_number} — ${payload.items.length} article(s) à préparer`,
     url:   '/warehouse',

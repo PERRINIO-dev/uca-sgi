@@ -8,7 +8,9 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
   const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
   const raw = window.atob(b64)
-  return Uint8Array.from({ length: raw.length }, (_, i) => raw.charCodeAt(i))
+  const arr = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+  return arr
 }
 
 async function subscribeToPush() {
@@ -21,7 +23,7 @@ async function subscribeToPush() {
   if (!sub) {
     sub = await reg.pushManager.subscribe({
       userVisibleOnly:      true,
-      applicationServerKey: urlBase64ToUint8Array(key),
+      applicationServerKey: urlBase64ToUint8Array(key).buffer as ArrayBuffer,
     })
   }
 

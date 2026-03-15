@@ -55,7 +55,8 @@ export async function sendPushToRoles(
   const { data: subs } = await admin
     .from('push_subscriptions')
     .select('subscription')
-    .in('user_id', users.map(u => u.id))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .in('user_id', users.map((u: any) => u.id))
 
   await dispatch(subs ?? [], payload)
 }
