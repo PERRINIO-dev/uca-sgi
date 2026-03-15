@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SIGNATURE_B64 } from '@/lib/signature-b64'
 import PageLayout       from '@/components/PageLayout'
 import { cancelSale }   from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
@@ -648,7 +647,8 @@ function printSaleReceipt(sale: any) {
     .sig-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #94A3B8; margin-bottom: 16px; }
     .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
     .sig-name { font-size: 12px; font-weight: 600; color: #0F172A; margin-bottom: 4px; }
-    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 8px; }
+    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 12px; }
+    .sig-line { border-bottom: 1.5px solid #CBD5E1; height: 52px; margin-bottom: 6px; }
     .sig-sub { font-size: 10px; color: #94A3B8; }
     .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #94A3B8; padding-top: 16px; border-top: 1px solid #E2E8F0; }
     @media print { @page { margin: 20mm; } }
@@ -717,7 +717,7 @@ function printSaleReceipt(sale: any) {
       <div>
         <div class="sig-name">Kepseu Lucien</div>
         <div class="sig-role">Propriétaire — UCA</div>
-        <img src="${SIGNATURE_B64}" style="height:90px;max-width:240px;object-fit:contain;display:block;margin:6px 0 2px"/>
+        <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
       </div>
     </div>

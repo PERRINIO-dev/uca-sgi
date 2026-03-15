@@ -3,7 +3,6 @@
 import { useState, useMemo }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
-import { SIGNATURE_B64 }     from '@/lib/signature-b64'
 import { createSale }         from '@/app/sales/actions'
 import PageLayout             from '@/components/PageLayout'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
@@ -174,7 +173,8 @@ export default function VendorSaleForm({
     .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
     .sig-block { }
     .sig-name { font-size: 12px; font-weight: 600; color: #0F172A; margin-bottom: 4px; }
-    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 8px; }
+    .sig-role { font-size: 11px; color: #64748B; margin-bottom: 12px; }
+    .sig-line { border-bottom: 1.5px solid #CBD5E1; height: 52px; margin-bottom: 6px; }
     .sig-sub { font-size: 10px; color: #94A3B8; }
     .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #94A3B8; padding-top: 16px; border-top: 1px solid #E2E8F0; }
     @media print { @page { margin: 20mm; } }
@@ -243,7 +243,7 @@ export default function VendorSaleForm({
       <div class="sig-block">
         <div class="sig-name">Kepseu Lucien</div>
         <div class="sig-role">Propriétaire — UCA</div>
-        <img src="${SIGNATURE_B64}" style="height:90px;max-width:240px;object-fit:contain;display:block;margin:6px 0 2px"/>
+        <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
       </div>
     </div>
@@ -452,10 +452,18 @@ export default function VendorSaleForm({
         {/* Back nav */}
         <button
           onClick={() => router.push('/sales')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 13, color: C.slate, fontFamily: FONT, fontWeight: 500,
-            padding: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: 4 }}>
-          ← Retour aux ventes
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: C.surface, border: `1.5px solid ${C.border}`,
+            borderRadius: 8, cursor: 'pointer', fontFamily: FONT,
+            fontSize: 13, fontWeight: 600, color: C.navy,
+            padding: '8px 14px', marginBottom: 16,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+          }}>
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Retour aux ventes
         </button>
 
         <div style={{ marginBottom: 28 }}>

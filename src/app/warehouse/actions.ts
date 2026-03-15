@@ -1,7 +1,17 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { createClient }                      from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { revalidatePath }                    from 'next/cache'
+import { sendPushToRoles, sendPushToUser }   from '@/lib/push/send'
+
+function getAdmin() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  )
+}
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   confirmed: ['preparing'],
@@ -88,6 +98,36 @@ export async function updateOrderStatus(
 
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
+
+  // Push notification for delivery: check low stock
+  if (newStatus === 'delivered') {
+    const admin = getAdmin()
+    // Fetch sale items to check which products were just delivered
+    const { data: items } = await admin
+      .from('sale_items')
+      .select('product_id, products(name)')
+      .eq('sale_id', order.sale_id)
+
+    if (items?.length) {
+      const productIds = items.map((i: any) => i.product_id)
+      const { data: stocks } = await admin
+        .from('stock_view')
+        .select('product_id, product_name, available_full_cartons')
+        .in('product_id', productIds)
+
+      const lowStock = (stocks ?? []).filter((s: any) => Number(s.available_full_cartons) < 20)
+      if (lowStock.length > 0) {
+        const names = lowStock.map((s: any) => s.product_name).join(', ')
+        sendPushToRoles(admin, ['admin', 'owner'], {
+          title: 'Stock critique',
+          body:  `Stock bas (<20 cartons) : ${names}`,
+          url:   '/products',
+          tag:   'low-stock',
+        }).catch(console.error)
+      }
+    }
+  }
+
   return { success: true }
 }
 
@@ -144,5 +184,16 @@ export async function submitStockRequest(payload: {
 
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
+
+  // Notify admin/owner about the pending approval
+  const { data: product } = await supabase
+    .from('products').select('name').eq('id', payload.productId).single()
+  sendPushToRoles(getAdmin(), ['admin', 'owner'], {
+    title: 'Demande de stock',
+    body:  `Nouvelle demande pour ${product?.name ?? 'un produit'} — approbation requise`,
+    url:   '/dashboard',
+    tag:   `stock-request-${data.id}`,
+  }).catch(console.error)
+
   return { success: true }
 }

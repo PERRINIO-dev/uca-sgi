@@ -38,7 +38,7 @@ export default async function SalesPage() {
     .limit(500)
 
   if (profile.role === 'vendor') {
-    query = query.eq('boutique_id', profile.boutique_id!)
+    query = query.eq('vendor_id', user.id)
   }
 
   const [{ data: sales }, badgeCounts] = await Promise.all([

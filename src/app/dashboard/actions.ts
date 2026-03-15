@@ -1,7 +1,17 @@
 'use server'
 
-import { createClient }   from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { createClient }                      from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { revalidatePath }                    from 'next/cache'
+import { sendPushToUser }                    from '@/lib/push/send'
+
+function getAdmin() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  )
+}
 
 async function getCallerProfile() {
   const supabase = await createClient()
@@ -52,6 +62,22 @@ export async function approveStockRequest(
 
   revalidatePath('/dashboard')
   revalidatePath('/warehouse')
+
+  // Notify the requester that their request was approved
+  const { data: req } = await supabase
+    .from('stock_requests')
+    .select('requested_by, products(name)')
+    .eq('id', requestId)
+    .single()
+  if (req?.requested_by) {
+    sendPushToUser(getAdmin(), req.requested_by, {
+      title: 'Demande approuvée',
+      body:  `Votre demande de stock pour ${(req.products as any)?.name ?? 'ce produit'} a été approuvée.`,
+      url:   '/warehouse',
+      tag:   `approved-${requestId}`,
+    }).catch(console.error)
+  }
+
   return { success: true }
 }
 
@@ -86,5 +112,21 @@ export async function rejectStockRequest(
   })
 
   revalidatePath('/dashboard')
+
+  // Notify the requester that their request was rejected
+  const { data: req } = await supabase
+    .from('stock_requests')
+    .select('requested_by, products(name)')
+    .eq('id', requestId)
+    .single()
+  if (req?.requested_by) {
+    sendPushToUser(getAdmin(), req.requested_by, {
+      title: 'Demande refusée',
+      body:  `Votre demande de stock pour ${(req.products as any)?.name ?? 'ce produit'} a été refusée.${comment ? ` Motif : ${comment}` : ''}`,
+      url:   '/warehouse',
+      tag:   `rejected-${requestId}`,
+    }).catch(console.error)
+  }
+
   return { success: true }
 }

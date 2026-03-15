@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useIsMobile }         from '@/hooks/useIsMobile'
 import Sidebar                 from '@/components/Sidebar'
+import PushSubscription        from '@/components/PushSubscription'
 import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 
 export default function PageLayout({
@@ -40,6 +41,8 @@ export default function PageLayout({
   }, [])
 
   return (
+    <>
+    <PushSubscription />
     <div style={{
       display: 'flex', minHeight: '100vh',
       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
@@ -121,5 +124,6 @@ export default function PageLayout({
         {children}
       </main>
     </div>
+    </>
   )
 }

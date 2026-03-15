@@ -3,6 +3,7 @@
 import { createClient }                      from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { revalidatePath }                    from 'next/cache'
+import { sendPushToRoles }                   from '@/lib/push/send'
 
 // Admin client bypasses RLS — needed to update stock.reserved_tiles
 function getAdminClient() {
@@ -242,6 +243,14 @@ export async function createSale(payload: CreateSalePayload) {
 
   revalidatePath('/sales')
   revalidatePath('/dashboard')
+
+  // Fire-and-forget push to warehouse/admin/owner about the new order
+  sendPushToRoles(adminClient, ['warehouse', 'admin', 'owner'], {
+    title: 'Nouvelle commande',
+    body:  `Vente ${sale.sale_number} — ${payload.items.length} article(s) à préparer`,
+    url:   '/warehouse',
+    tag:   `order-${sale.id}`,
+  }).catch(console.error)
 
   return { success: true, saleNumber: sale.sale_number, saleId: sale.id, serverTotal }
 }
