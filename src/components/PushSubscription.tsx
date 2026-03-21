@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react'
 
-const STORAGE_KEY = 'uca-push-dismissed'
-
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = '='.repeat((4 - (base64.length % 4)) % 4)
   const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -40,15 +38,16 @@ export default function PushSubscription() {
   useEffect(() => {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return
     if (Notification.permission === 'denied') return
-    if (localStorage.getItem(STORAGE_KEY)) return
 
     if (Notification.permission === 'granted') {
-      // Already granted — subscribe silently
+      // Already granted — silently ensure subscription is registered
       subscribeToPush().catch(console.error)
       return
     }
 
-    // Show the permission banner after a short delay
+    // Not yet decided — show the banner after a short delay
+    // (only if not already dismissed this session)
+    if (sessionStorage.getItem('uca-push-session-dismissed')) return
     const t = setTimeout(() => setShowBanner(true), 2500)
     return () => clearTimeout(t)
   }, [])
@@ -58,13 +57,12 @@ export default function PushSubscription() {
     const permission = await Notification.requestPermission()
     if (permission === 'granted') {
       subscribeToPush().catch(console.error)
-    } else {
-      localStorage.setItem(STORAGE_KEY, '1')
     }
   }
 
   const handleDismiss = () => {
-    localStorage.setItem(STORAGE_KEY, '1')
+    // Only dismiss for this session — banner reappears on next login
+    sessionStorage.setItem('uca-push-session-dismissed', '1')
     setShowBanner(false)
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
@@ -107,6 +107,17 @@ export default function SalesListClient({
 }) {
   const router   = useRouter()
   const supabase = createClient()
+
+  // ── Real-time: refresh when sales change ──────────────────────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel('sales-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => router.refresh())
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const [expanded,    setExpanded]   = useState<string | null>(null)
   const [cancelId,    setCancelId]   = useState<string | null>(null)
   const [cancelNum,   setCancelNum]  = useState('')

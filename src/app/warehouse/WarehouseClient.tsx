@@ -1,7 +1,7 @@
 'use client'
 
-import { useState }       from 'react'
-import { useRouter }      from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter }           from 'next/navigation'
 import { createClient }   from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
 import PageLayout         from '@/components/PageLayout'
@@ -57,6 +57,17 @@ export default function WarehouseClient({
 }) {
   const router   = useRouter()
   const supabase = createClient()
+
+  // ── Real-time: refresh when sales or stock_requests change ────────────────
+  useEffect(() => {
+    const channel = supabase
+      .channel('warehouse-rt')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_requests' }, () => router.refresh())
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [activeTab,     setTab]       = useState<Tab>('orders')
   const [expandedOrder, setExpanded]  = useState<string | null>(null)

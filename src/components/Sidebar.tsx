@@ -1,7 +1,8 @@
 'use client'
 
-import { useRouter }  from 'next/navigation'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useRouter }        from 'next/navigation'
+import { useTransition, useEffect, useState } from 'react'
+import { useIsMobile }      from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── SVG icon set ──────────────────────────────────────────────────────────────
@@ -58,6 +59,14 @@ function IconReports({ size = 16, color = 'currentColor' }: { size?: number; col
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="3" y="2" width="14" height="16" rx="2" stroke={color} strokeWidth="1.5"/>
       <path d="M7 7h6M7 10h6M7 13h3.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  )
+}
+function IconBell({ size = 15, color = 'currentColor', filled = false }: { size?: number; color?: string; filled?: boolean }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
     </svg>
   )
 }
@@ -126,6 +135,48 @@ export default function Sidebar({
 }) {
   const router   = useRouter()
   const isMobile = useIsMobile()
+  const [isPending, startTransition] = useTransition()
+  const [notifState, setNotifState]  = useState<'subscribed' | 'denied' | 'default'>('default')
+
+  useEffect(() => {
+    if (!('Notification' in window)) return
+    if (Notification.permission === 'denied') { setNotifState('denied'); return }
+    if (Notification.permission !== 'granted') return
+    navigator.serviceWorker?.ready.then(reg =>
+      reg.pushManager.getSubscription().then(sub => {
+        if (sub) setNotifState('subscribed')
+      })
+    )
+  }, [])
+
+  const handleNotifToggle = async () => {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return
+    if (notifState === 'subscribed') {
+      // Unsubscribe
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        await fetch('/api/push/subscribe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) })
+        await sub.unsubscribe()
+        setNotifState('default')
+      }
+      return
+    }
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') { setNotifState('denied'); return }
+    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!key) return
+    const reg = await navigator.serviceWorker.ready
+    const padding = '='.repeat((4 - (key.length % 4)) % 4)
+    const b64 = (key + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const raw = window.atob(b64)
+    const arr = new Uint8Array(raw.length)
+    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr.buffer as ArrayBuffer })
+    await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) })
+    setNotifState('subscribed')
+  }
+
   const visibleItems = NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
 
   const getNavBadge = (href: string): number => {
@@ -216,7 +267,10 @@ export default function Sidebar({
           return (
             <button
               key={href}
-              onClick={() => { router.push(href); onClose?.() }}
+              onClick={() => {
+                onClose?.()
+                startTransition(() => router.push(href))
+              }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
@@ -224,12 +278,13 @@ export default function Sidebar({
                 borderRadius: 8,
                 background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
                 borderLeft: active ? '2px solid #3B82F6' : '2px solid transparent',
-                color: active ? '#fff' : 'rgba(255,255,255,0.48)',
+                color: active ? '#fff' : isPending ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.48)',
                 fontSize: 13, fontWeight: active ? 600 : 400,
-                cursor: 'pointer', textAlign: 'left',
+                cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
                 fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
                 transition: 'background 0.15s, color 0.15s',
                 marginBottom: 2,
+                opacity: isPending && !active ? 0.6 : 1,
               }}
             >
               <Icon
@@ -257,8 +312,37 @@ export default function Sidebar({
         })}
       </nav>
 
+      {/* ── Notification toggle ── */}
+      {'Notification' in (typeof window !== 'undefined' ? window : {}) && (
+        <div style={{ padding: '0 12px 6px' }}>
+          <button
+            onClick={handleNotifToggle}
+            title={notifState === 'subscribed' ? 'Notifications activées — cliquer pour désactiver' : notifState === 'denied' ? 'Notifications bloquées par le navigateur' : 'Activer les notifications'}
+            style={{
+              width: '100%', padding: '8px 12px',
+              borderRadius: 8,
+              background: notifState === 'subscribed' ? 'rgba(59,130,246,0.12)' : 'transparent',
+              border: notifState === 'subscribed' ? '1px solid rgba(59,130,246,0.25)' : '1px solid rgba(255,255,255,0.06)',
+              color: notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)',
+              fontSize: 11.5, fontWeight: 500,
+              cursor: notifState === 'denied' ? 'not-allowed' : 'pointer',
+              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+              display: 'flex', alignItems: 'center', gap: 7,
+              transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+            }}
+          >
+            <IconBell
+              size={13}
+              color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)'}
+              filled={notifState === 'subscribed'}
+            />
+            {notifState === 'subscribed' ? 'Notifications activées' : notifState === 'denied' ? 'Notifications bloquées' : 'Activer les notifications'}
+          </button>
+        </div>
+      )}
+
       {/* ── Logout ── */}
-      <div style={{ padding: '10px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '6px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
           onClick={onLogout}
           style={{
