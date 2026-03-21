@@ -1,5 +1,5 @@
-// UCA SGI — Service Worker v2
-const CACHE_NAME   = 'uca-sgi-v2'
+// UCA SGI — Service Worker v3
+const CACHE_NAME   = 'uca-sgi-v3'
 const OFFLINE_URL  = '/offline.html'
 
 // Pages to pre-cache so they're available instantly
@@ -120,15 +120,25 @@ self.addEventListener('push', event => {
   const { title, body, url = '/', tag = 'uca-sgi' } = payload
 
   event.waitUntil(
-    self.registration.showNotification(title, {
-      body,
-      icon:               '/icon',
-      badge:              '/icon',
-      tag,
-      data:               { url },
-      requireInteraction: false,
-      vibrate:            [100, 50, 100],
-    })
+    Promise.all([
+      // Show the notification
+      self.registration.showNotification(title, {
+        body,
+        icon:               '/icon',
+        badge:              '/icon',
+        tag,
+        data:               { url },
+        requireInteraction: false,
+        vibrate:            [100, 50, 100],
+      }),
+      // Broadcast to any open windows so they refresh data immediately
+      // (handles the case where the app is open in the foreground or background)
+      self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then(clients => {
+          clients.forEach(client => client.postMessage({ type: 'PUSH_RECEIVED' }))
+        }),
+    ])
   )
 })
 

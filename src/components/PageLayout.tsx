@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter }           from 'next/navigation'
 import { useIsMobile }         from '@/hooks/useIsMobile'
 import Sidebar                 from '@/components/Sidebar'
 import PushSubscription        from '@/components/PushSubscription'
@@ -19,6 +20,7 @@ export default function PageLayout({
   children:     React.ReactNode
   badgeCounts?: BadgeCounts
 }) {
+  const router                    = useRouter()
   const isMobile                  = useIsMobile()
   const [sidebarOpen, setSidebar] = useState(false)
 
@@ -33,12 +35,36 @@ export default function PageLayout({
   const pageTitle = PAGE_TITLES[activeRoute] ?? 'UCA SGI'
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw.js', { scope: '/' })
-        .catch(err => console.error('[SW]', err))
+    if (!('serviceWorker' in navigator)) return
+
+    // Register service worker
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .catch(err => console.error('[SW]', err))
+
+    // Listen for SW broadcast: push notification received while page is open
+    // → refresh immediately so data is current before user even taps the notif
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_RECEIVED') {
+        router.refresh()
+      }
     }
-  }, [])
+    navigator.serviceWorker.addEventListener('message', handleSwMessage)
+
+    // Refresh when app returns to foreground (e.g. user taps notification,
+    // switches back from another app, or reopens the PWA from home screen)
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        router.refresh()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleSwMessage)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [router])
 
   return (
     <>
