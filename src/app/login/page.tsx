@@ -307,6 +307,28 @@ export default function LoginPage() {
           }}>
             Mot de passe oublié ?<br />Contactez votre administrateur.
           </p>
+
+          <div style={{
+            marginTop: 36,
+            paddingTop: 20,
+            borderTop: '1px solid #F1F5F9',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          }}>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1l1.854 3.756L14 5.528l-3 2.924.708 4.131L8 10.5l-3.708 2.083L5 8.452 2 5.528l4.146-.772L8 1z"
+                fill="#CBD5E1" />
+            </svg>
+            <span style={{
+              fontSize: 11, color: '#CBD5E1',
+              letterSpacing: '0.04em', fontWeight: 500,
+            }}>
+              Développé par Majestor Kepseu
+            </span>
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 1l1.854 3.756L14 5.528l-3 2.924.708 4.131L8 10.5l-3.708 2.083L5 8.452 2 5.528l4.146-.772L8 1z"
+                fill="#CBD5E1" />
+            </svg>
+          </div>
         </div>
       </div>
 
