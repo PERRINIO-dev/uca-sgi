@@ -3,6 +3,8 @@
 **UCA (Univers de Carreaux et Ameublement)** — internal management system for a
 tile import and retail company based in Yaoundé, Cameroon.
 
+Developed by **Majestor Kepseu**.
+
 ---
 
 ## 1. Business Context
@@ -25,9 +27,12 @@ This system replaces fully manual operations. It is an **internal tool only**
 | Framework    | Next.js 16.1.6 (App Router, Turbopack)          |
 | Database     | Supabase (PostgreSQL) — project: xqucalengkzdogghvhca |
 | Auth         | Supabase Auth (GoTrue) — email/password only    |
+| Realtime     | Supabase Realtime (postgres_changes on `sales`, `stock_requests`) |
+| Push         | Web Push API + VAPID (`web-push` npm package)   |
+| PWA          | Service Worker (`public/sw.js`), Web App Manifest |
 | Styling      | Inline styles (no Tailwind, no CSS modules)     |
 | Charts       | Recharts                                        |
-| Hosting      | Vercel (not yet deployed — still on localhost)  |
+| Hosting      | Vercel — https://uca-sgi.vercel.app             |
 | Font         | `system-ui, -apple-system, 'Segoe UI', sans-serif` |
 
 > **Note:** Georgia serif is used ONLY for the UCA brand logo in the sidebar.
@@ -45,10 +50,15 @@ File: `.env.local` at project root.
 NEXT_PUBLIC_SUPABASE_URL=https://xqucalengkzdogghvhca.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
 ```
 
-> `SUPABASE_SERVICE_ROLE_KEY` must NEVER be exposed to the client. It is only
-> used in server actions (`'use server'` files) via `getAdminClient()`.
+> `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` must NEVER be exposed to
+> the client. They are only used in server actions (`'use server'` files).
+
+All five variables must also be set in the **Vercel dashboard** under
+Settings → Environment Variables.
 
 ---
 
@@ -58,48 +68,57 @@ SUPABASE_SERVICE_ROLE_KEY=...
 src/
 ├── proxy.ts                          ← Auth proxy (replaces middleware.ts)
 ├── components/
-│   ├── Sidebar.tsx                   ← Shared role-aware sidebar (220px, navy)
-│   └── PageLayout.tsx                ← Auth page wrapper + mobile header
+│   ├── Sidebar.tsx                   ← Role-aware sidebar (240px, navy)
+│   ├── PageLayout.tsx                ← Auth wrapper + mobile header + SW registration
+│   ├── PwaInstallPrompt.tsx          ← Bottom banner "Add to home screen"
+│   └── PushSubscription.tsx          ← Notification opt-in card (appears after login)
 ├── hooks/
-│   └── useIsMobile.ts                ← SSR-safe breakpoint hook (768px)
+│   └── useIsMobile.ts                ← SSR-safe breakpoint hook (768px, useLayoutEffect)
 ├── lib/
 │   ├── types.ts
+│   ├── push/
+│   │   └── send.ts                   ← sendPushToRoles() / sendPushToUser() utilities
 │   └── supabase/
 │       ├── client.ts
 │       ├── server.ts
 │       └── queries.ts
 ├── app/
-│   ├── login/
-│   │   └── page.tsx                  ← Login (checks is_active before redirect)
+│   ├── layout.tsx                    ← PWA metadata + viewport export
+│   ├── manifest.ts                   ← Web App Manifest (Next.js route)
+│   ├── icon.tsx                      ← 512×512 PWA icon (ImageResponse)
+│   ├── apple-icon.tsx                ← 180×180 Apple touch icon
+│   ├── login/page.tsx                ← Split-screen login, author credit
 │   ├── auth/callback/route.ts        ← Session exchange + role-based redirect
+│   ├── api/push/subscribe/route.ts   ← POST/DELETE push subscription endpoint
 │   ├── dashboard/
 │   │   ├── page.tsx
-│   │   ├── DashboardClient.tsx
-│   │   └── actions.ts                ← approveStockRequest, rejectStockRequest
+│   │   ├── DashboardClient.tsx       ← Realtime subscription on stock_requests
+│   │   └── actions.ts                ← approveStockRequest, rejectStockRequest + push
 │   ├── sales/
-│   │   ├── page.tsx
-│   │   ├── SalesListClient.tsx
-│   │   ├── actions.ts                ← createSale, cancelSale
+│   │   ├── page.tsx                  ← Vendor filter: vendor_id = user.id
+│   │   ├── SalesListClient.tsx       ← Realtime subscription on sales
+│   │   ├── actions.ts                ← createSale, cancelSale + push on create
 │   │   └── new/
-│   │       ├── page.tsx              ← Filters inactive products before passing down
-│   │       └── VendorSaleForm.tsx    ← Searchable scrollable product list
+│   │       ├── page.tsx
+│   │       └── VendorSaleForm.tsx    ← Searchable product list, print receipt
 │   ├── warehouse/
-│   │   ├── page.tsx                  ← Filters stock_view to active products only
-│   │   ├── WarehouseClient.tsx
-│   │   └── actions.ts                ← updateOrderStatus, submitStockRequest
+│   │   ├── page.tsx
+│   │   ├── WarehouseClient.tsx       ← Realtime subscription on sales + stock_requests
+│   │   └── actions.ts                ← updateOrderStatus, submitStockRequest + push
 │   ├── products/
 │   │   ├── page.tsx
-│   │   ├── ProductsClient.tsx
-│   │   └── actions.ts                ← createProduct (upsert for stock init), updateProduct
+│   │   ├── ProductsClient.tsx        ← Reference code read-only, carton-based alerts
+│   │   └── actions.ts
 │   ├── users/
-│   │   ├── page.tsx                  ← Fetches all boutiques (including inactive)
-│   │   ├── UsersClient.tsx           ← User table + MDP reset + boutique grid modal
-│   │   └── actions.ts                ← createEmployee, toggleUserActive,
-│   │                                    updateEmployee, createBoutique,
-│   │                                    resetPassword, toggleBoutiqueActive
+│   │   ├── page.tsx
+│   │   ├── UsersClient.tsx
+│   │   └── actions.ts
 │   └── reports/
 │       ├── page.tsx
 │       └── ReportsClient.tsx         ← Overview/sales/products/vendors + CSV export
+public/
+├── sw.js                             ← Service worker v2 (cache-first static, network-first HTML)
+└── offline.html                      ← Branded offline fallback page
 ```
 
 ---
@@ -193,6 +212,20 @@ action_type, entity_type, entity_id,
 data_before, data_after, ip_address
 ```
 
+**push_subscriptions** — Web Push opt-in storage
+```sql
+CREATE TABLE push_subscriptions (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  endpoint    text NOT NULL UNIQUE,
+  subscription jsonb NOT NULL,
+  created_at  timestamptz DEFAULT now()
+);
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "own subscriptions" ON push_subscriptions
+  FOR ALL USING (auth.uid() = user_id);
+```
+
 ---
 
 ## 6. Database Functions & Triggers
@@ -201,17 +234,12 @@ data_before, data_after, ip_address
 
 | Trigger | Table | Function | Notes |
 |---------|-------|----------|-------|
-| `on_auth_user_created` | auth.users | `handle_new_auth_user()` | **NO-OP** — public.users inserted manually via admin client |
+| `on_auth_user_created` | auth.users | `handle_new_auth_user()` | NO-OP — public.users inserted manually via admin client |
 | `on_product_created` | products | `create_stock_entry_for_product()` | SECURITY DEFINER — creates stock row at 0 |
-| `on_sale_status_change` | sales | `reserve_stock_on_sale_insert()` | May not fire reliably (see note below) |
-| `on_order_delivered` | orders | `deduct_stock_on_delivery()` | SECURITY DEFINER — deducts total_tiles on delivery |
+| `on_sale_status_change` | sales | `reserve_stock_on_sale_insert()` | Belt-and-suspenders; createSale manages reserved_tiles explicitly |
+| `on_order_delivered` | orders | `deduct_stock_on_delivery()` | SECURITY DEFINER — deducts total_tiles + reserved_tiles on delivery |
 | `set_sale_number` | sales | Auto-numbering | VNT-YYYY-NNNN |
 | `set_order_number` | orders | Auto-numbering | CMD-YYYY-NNNN |
-
-> **Important:** The `reserve_stock_on_sale_insert` trigger fires on `sales`
-> AFTER UPDATE, but `sale_items` are inserted separately in a later step.
-> `createSale` and `cancelSale` therefore manage `reserved_tiles` explicitly
-> via the admin client — the trigger is a belt-and-suspenders fallback only.
 
 ### Key RPC Function
 ```sql
@@ -221,12 +249,18 @@ apply_approved_stock_request(request_id UUID)
 -- Updates stock.total_tiles and records stock_after_tiles
 ```
 
+### Supabase Realtime
+The `sales` and `stock_requests` tables must be present in the
+`supabase_realtime` publication. Enable in:
+**Supabase Dashboard → Database → Publications → supabase_realtime**
+→ toggle ON for `sales` and `stock_requests`.
+
 ---
 
 ## 7. RLS Policy Summary
 
 > `stock.UPDATE` is blocked for all roles except via SECURITY DEFINER triggers
-> and operations that use the service role key.
+> and service role key operations.
 > `audit_logs` has no UPDATE or DELETE — INSERT only.
 > `orders.UPDATE` is blocked for vendors — cancellation uses admin client.
 
@@ -237,10 +271,11 @@ apply_approved_stock_request(request_id UUID)
 | products | authenticated | owner/admin | owner/admin | — |
 | stock | authenticated | owner/admin | owner/admin + trigger | — |
 | stock_requests | own OR owner/admin | authenticated | owner/admin | — |
-| sales | vendor sees own boutique; owner/admin all | vendor/admin/owner | owner/admin | — |
+| sales | vendor sees own sales (vendor_id); owner/admin all | vendor/admin/owner | owner/admin | — |
 | sale_items | via sales join | vendor/admin/owner | — | — |
 | orders | warehouse/admin/owner | vendor/admin/owner | warehouse/admin/owner | — |
-| audit_logs | owner/admin | authenticated | ❌ NEVER | ❌ NEVER |
+| audit_logs | owner/admin | authenticated | NEVER | NEVER |
+| push_subscriptions | own rows only | own rows only | own rows only | own rows only |
 
 ---
 
@@ -280,6 +315,11 @@ loose_tiles  = quantity_tiles % tiles_per_carton
 ```
 Input modes: m² or Cartons + carreaux (free loose tiles)
 
+### Stock Alert Thresholds
+- Critical: `available_full_cartons < 20` — shown in red on dashboard and products
+- Low: `available_full_cartons < 50` — shown in orange
+- Push notification sent to admin/owner when a product crosses 20 cartons after delivery
+
 ### Stock Lifecycle
 ```
 1. Product created → stock row auto-created at 0 tiles (trigger + upsert fallback)
@@ -297,11 +337,13 @@ Input modes: m² or Cartons + carreaux (free loose tiles)
 Vendor creates sale (status: confirmed)
     → Order auto-created (status: confirmed)
     → reserved_tiles incremented via admin client
-    → Warehouse sees order in Commandes tab
+    → Push notification sent to warehouse/admin/owner
+    → Warehouse sees order in Commandes tab (Realtime update)
     → Warehouse clicks "Commencer" → order: preparing, sale: preparing
     → Warehouse clicks "Marquer prête" → order: ready, sale: ready
     → Warehouse confirms delivery → order: delivered, sale: delivered (via trigger)
     → TRIGGER deducts stock.total_tiles and reserved_tiles
+    → Push sent to admin/owner if any product drops below 20 cartons
 
 Sale cancellation:
     → Sale status → cancelled
@@ -309,62 +351,61 @@ Sale cancellation:
     → reserved_tiles released via admin client
 ```
 
-### Deactivated Products
-- Inactive products are filtered from the new sale form (server-side, via
-  `pricingMap` join on `is_active = true`)
-- Inactive products are filtered from the warehouse stock view (server-side,
-  using active product IDs as a filter set)
+### Push Notification Triggers
+| Event | Recipient |
+|-------|-----------|
+| New sale confirmed | warehouse, admin, owner |
+| Stock request submitted | admin, owner |
+| Stock request approved | requester (warehouse user) |
+| Stock request rejected | requester (warehouse user) |
+| Product below 20 cartons after delivery | admin, owner |
 
-### Boutique Closure
-- Closed boutiques (`is_active = false`) are hidden from vendor assignment
-  dropdowns in create/edit employee forms
-- All boutiques (active + closed) are visible in the boutique management modal
-  with a Fermer/Réouvrir toggle
-
-### User Creation
-**Supabase dashboard "Create user" is broken** — GoTrue trigger incompatibility.
-All user creation goes through `users/actions.ts` → `getAdminClient()` →
-`auth.admin.createUser()` + manual `upsert` into `public.users`.
-
-### Password Reset (admin)
-Admins and owners can reset any employee's password via the Users page.
-Uses `auth.admin.updateUserById()` via the service role client.
-Logged to `audit_logs` as `PASSWORD_RESET`.
+### Vendor Sales Visibility
+Vendors only see their own sales (`vendor_id = auth.uid()`).
+Admin and owner see all sales across all boutiques.
 
 ---
 
-## 10. Known Issues & Technical Debt
+## 10. PWA & Offline
 
-### Medium Priority
-1. **`any` types** — heavy use of `any` throughout client components
-2. **Missing TypeScript interfaces** — `lib/types.ts` may not cover all entities
-3. **No 404 page** — missing `app/not-found.tsx`
-4. **No error boundary** — missing `app/error.tsx` and `app/global-error.tsx`
-5. **Reports date range** — server fetches last 90 days; client filter only refines this
-6. **No session timeout handling** — expired sessions cause silent failures
-
-### Low Priority
-7. **No confirmation modal before sale cancellation**
-8. **Warehouse `updateOrderStatus`** — sale status mirror for `delivered` is
-   handled by trigger but the action still runs a redundant no-op update
-9. **No print/PDF receipt** — after sale confirmation
-10. **CSV encoding** — BOM added for Excel but not tested on all platforms
+- Service worker registered in `PageLayout.tsx` (authenticated users only)
+- Cache strategy: cache-first for `/_next/static/` and image assets;
+  network-first for HTML navigation with offline fallback to `public/offline.html`
+- Install prompt: `PwaInstallPrompt.tsx` listens for `beforeinstallprompt`
+- Push subscription: `PushSubscription.tsx` appears 2.5s after first login;
+  preference stored in `localStorage` key `uca-push-dismissed`
+- SW version: bump `CACHE_NAME` in `public/sw.js` to invalidate cache on deploy
 
 ---
 
-## 11. Design System
+## 11. Real-time Updates
+
+All authenticated pages refresh automatically when data changes:
+
+1. **Supabase Realtime** — WebSocket subscription on `sales` and
+   `stock_requests` tables triggers `router.refresh()` immediately
+2. **`visibilitychange`** — when the user returns to the app (e.g., after
+   tapping a push notification), `router.refresh()` fires automatically
+3. **SW broadcast** — on push received, SW posts a message to all open windows;
+   `PageLayout` listens and calls `router.refresh()`
+
+> Supabase Realtime must be enabled for `sales` and `stock_requests` in
+> Database → Publications → supabase_realtime.
+
+---
+
+## 12. Design System
 
 ### Color Palette
 ```typescript
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
-  border: '#E2E8F0', bg: '#F1F5F9', surface: '#FFFFFF',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2E86AB', blueL: '#EFF8FC',
+  border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
+  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
   orange: '#D97706', orangeL: '#FFFBEB',
   red: '#DC2626', redL: '#FEF2F2',
   gold: '#B45309', goldL: '#FFFBEB',
-  purple: '#7C3AED', purpleL: '#F5F3FF',
 }
 ```
 
@@ -376,16 +417,15 @@ const C = {
 - Body: 13px
 
 ### Layout
-- Sidebar: fixed, 220px wide, `#0C1A35` background
-- Main content: `marginLeft: 220`, padding `32px 36px`
+- Sidebar: fixed, 240px wide, `#0C1A35` background
+- Main content: `marginLeft: 240px`, padding `32px 36px`
 - Mobile: 56px top bar + hamburger, sidebar slides via `translateX`
 - Cards: white, borderRadius 12, border `1px solid #E2E8F0`
-- Modals: fixed overlay, white card, maxWidth 480px, borderRadius 14,
-  navy header (#1B3A6B)
+- Modals: fixed overlay, white card, maxWidth 480px, borderRadius 14, navy header
 
 ---
 
-## 12. Formatting Conventions
+## 13. Formatting Conventions
 
 ```typescript
 const fmtCFA = (n: number) =>
@@ -407,27 +447,6 @@ new Date(x).toLocaleDateString('fr-FR', {
 
 ---
 
-## 13. Remaining Enhancement Priorities
-
-### Must-have before go-live
-1. Add `app/not-found.tsx` and `app/error.tsx`
-2. Add session expiry handling in proxy.ts
-3. Fix TypeScript `any` types throughout
-4. Mobile responsiveness for vendor interface (used on phones in boutique)
-
-### High value
-5. Confirm modal before sale cancellation
-6. Print/PDF receipt after sale confirmation
-7. Stock alert email notification to owner
-
-### Nice to have
-8. Dark mode
-9. PWA — install prompt, offline fallback
-10. Keyboard shortcuts for warehouse order actions
-11. Bulk product import via CSV
-
----
-
 ## 14. Running the Project
 
 ```bash
@@ -444,26 +463,27 @@ npm run start
 ```
 
 ### Test Accounts
-| Role | Email | Password |
-|------|-------|----------|
-| Owner | majestork@gmail.com | StrongPass123 |
-| Admin | emmanuel@uca.cm | (set during creation) |
-| Vendor | fatima@uca.cm | (set during creation) |
-| Warehouse | paul@uca.cm | (set during creation) |
+| Role | Email |
+|------|-------|
+| Owner | majestork@gmail.com |
+| Admin | emmanuel@uca.cm |
+| Vendor | fatima@uca.cm |
+| Warehouse | paul@uca.cm |
 
 ---
 
-## 15. Pre-Deployment Checklist
+## 15. Deployment Checklist
 
-- [ ] Verify all env vars are set in Vercel dashboard
-- [ ] Add `NEXT_PUBLIC_APP_URL` env var for production URL
-- [ ] Set Supabase Auth → Site URL to Vercel production URL
-- [ ] Set Supabase Auth → Redirect URLs to include `/auth/callback`
-- [ ] Enable Supabase Auth email confirmation for production
-- [ ] Review Supabase project password policy
-- [ ] Run `npm run build` locally — must be zero errors
-- [ ] Test production build locally with `npm run start`
-- [ ] Verify `SUPABASE_SERVICE_ROLE_KEY` is not exposed in client bundles
-- [ ] Smoke test: vendor login → new sale → confirm → warehouse delivery flow
-- [ ] Smoke test: admin cancel sale → order disappears from warehouse
-- [ ] Smoke test: stock request submit → owner approve → stock level updates
+- [ ] All 5 env vars set in Vercel dashboard (including VAPID keys)
+- [ ] Supabase Auth → Site URL set to `https://uca-sgi.vercel.app`
+- [ ] Supabase Auth → Redirect URLs includes `https://uca-sgi.vercel.app/auth/callback`
+- [ ] Supabase Realtime enabled for `sales` and `stock_requests` tables
+- [ ] `push_subscriptions` table created with RLS policy
+- [ ] `npm run build` locally — zero errors
+- [ ] Smoke test: vendor login → new sale → warehouse receives realtime update
+- [ ] Smoke test: warehouse confirms delivery → stock levels update
+- [ ] Smoke test: stock request → admin approve → warehouse sees approval
+- [ ] PWA: add to home screen on iOS → offline fallback works
+- [ ] Push: subscribe → confirm sale → notification arrives on mobile
+
+See `DEPLOYMENT_GUIDE.md` for full SQL setup and step-by-step instructions.
