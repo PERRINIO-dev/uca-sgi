@@ -73,11 +73,9 @@ export async function updateOrderStatus(
 
   if (error) return { error: error.message }
 
-  // Mirror status to sale for all transitions.
-  // For 'delivered', the DB trigger deduct_stock_on_delivery also fires —
-  // this explicit update is a safe redundancy that guarantees the sale
-  // status reaches 'delivered' even if the trigger only handles stock deduction.
-  await supabase
+  // Mirror status to sale — use admin client to bypass RLS since warehouse
+  // workers don't have UPDATE permission on sales in most RLS setups.
+  await getAdmin()
     .from('sales')
     .update({ status: newStatus })
     .eq('id', order.sale_id)

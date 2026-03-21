@@ -112,6 +112,7 @@ export async function rejectStockRequest(
   })
 
   revalidatePath('/dashboard')
+  revalidatePath('/warehouse')
 
   // Notify the requester that their request was rejected
   const { data: req } = await supabase

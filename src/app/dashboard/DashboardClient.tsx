@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter }           from 'next/navigation'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter }                    from 'next/navigation'
 import { createClient }   from '@/lib/supabase/client'
 import { approveStockRequest, rejectStockRequest } from './actions'
 import {
@@ -126,7 +126,7 @@ export default function DashboardClient({
   badgeCounts?:    BadgeCounts
 }) {
   const router   = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // ── Real-time: refresh when sales or stock_requests change ────────────────
   useEffect(() => {

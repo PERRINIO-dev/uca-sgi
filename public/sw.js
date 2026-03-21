@@ -144,7 +144,7 @@ self.addEventListener('notificationclick', event => {
       .then(clientList => {
         // If a window is already open on this origin, navigate it
         for (const client of clientList) {
-          if ('focus' in client) {
+          if ('focus' in client && 'navigate' in client) {
             client.focus()
             client.navigate(targetUrl)
             return

@@ -106,7 +106,7 @@ export default function SalesListClient({
   badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // ── Real-time: refresh when sales change ──────────────────────────────────
   useEffect(() => {

@@ -270,21 +270,25 @@ export async function cancelSale(saleId: string) {
   if (!profile) return { error: 'Profil introuvable.' }
 
   const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const adminSupabase  = getAdminClient()
 
-  // Admins/owners can cancel any sale; vendors can only cancel their own
+  // Use admin client to bypass RLS — authorization is enforced by server-side
+  // role check and vendor_id comparison above, not by RLS alone.
+  // Admins/owners: cancel any non-final status (including preparing/ready)
+  // Vendors: only cancel their own sales when still confirmed/draft
   const { data: updatedSales, error } = isAdminOrOwner
-    ? await supabase
+    ? await adminSupabase
         .from('sales')
         .update({ status: 'cancelled' })
         .eq('id', saleId)
-        .in('status', ['confirmed', 'draft'])
+        .in('status', ['draft', 'confirmed', 'preparing', 'ready'])
         .select('id')
-    : await supabase
+    : await adminSupabase
         .from('sales')
         .update({ status: 'cancelled' })
         .eq('id', saleId)
         .eq('vendor_id', user.id)
-        .in('status', ['confirmed', 'draft'])
+        .in('status', ['draft', 'confirmed'])
         .select('id')
 
   if (error) return { error: error.message }
@@ -294,8 +298,6 @@ export async function cancelSale(saleId: string) {
   }
 
   // Cancel the associated warehouse order so it disappears from the queue
-  // (orders table RLS blocks vendor writes — must use admin client)
-  const adminSupabase = getAdminClient()
   const { error: orderCancelError } = await adminSupabase
     .from('orders')
     .update({ status: 'cancelled' })
@@ -350,5 +352,6 @@ export async function cancelSale(saleId: string) {
   revalidatePath('/sales')
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
+  revalidatePath('/products')
   return { success: true }
 }

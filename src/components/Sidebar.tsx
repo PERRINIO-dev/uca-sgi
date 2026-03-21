@@ -136,13 +136,16 @@ export default function Sidebar({
   const router   = useRouter()
   const isMobile = useIsMobile()
   const [isPending, startTransition] = useTransition()
-  const [notifState, setNotifState]  = useState<'subscribed' | 'denied' | 'default'>('default')
+  const [notifSupported, setNotifSupported] = useState(false)
+  const [notifState,     setNotifState]     = useState<'subscribed' | 'denied' | 'default'>('default')
 
   useEffect(() => {
-    if (!('Notification' in window)) return
+    // Run only on the client — avoids SSR/hydration mismatch
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) return
+    setNotifSupported(true)
     if (Notification.permission === 'denied') { setNotifState('denied'); return }
     if (Notification.permission !== 'granted') return
-    navigator.serviceWorker?.ready.then(reg =>
+    navigator.serviceWorker.ready.then(reg =>
       reg.pushManager.getSubscription().then(sub => {
         if (sub) setNotifState('subscribed')
       })
@@ -313,7 +316,7 @@ export default function Sidebar({
       </nav>
 
       {/* ── Notification toggle ── */}
-      {'Notification' in (typeof window !== 'undefined' ? window : {}) && (
+      {notifSupported && (
         <div style={{ padding: '0 12px 6px' }}>
           <button
             onClick={handleNotifToggle}

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter }           from 'next/navigation'
-import { createClient }   from '@/lib/supabase/client'
+import { useState, useEffect, useMemo } from 'react'
+import { useRouter }                    from 'next/navigation'
+import { createClient }                 from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
 import PageLayout         from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
@@ -56,7 +56,7 @@ export default function WarehouseClient({
   badgeCounts?:    BadgeCounts
 }) {
   const router   = useRouter()
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   // ── Real-time: refresh when sales or stock_requests change ────────────────
   useEffect(() => {
