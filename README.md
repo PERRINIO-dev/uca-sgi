@@ -10,7 +10,7 @@ Developed by **Majestor Kepseu**.
 ## 1. Business Context
 
 The business operates:
-- 3 boutiques: Bastos, Omnisport, Melen
+- boutiques
 - 1 central warehouse
 - Currency: FCFA (XAF)
 - Language: French throughout
@@ -462,14 +462,6 @@ npm run build
 npm run start
 ```
 
-### Test Accounts
-| Role | Email |
-|------|-------|
-| Owner | majestork@gmail.com |
-| Admin | emmanuel@uca.cm |
-| Vendor | fatima@uca.cm |
-| Warehouse | paul@uca.cm |
-
 ---
 
 ## 15. Deployment Checklist
@@ -486,4 +478,3 @@ npm run start
 - [ ] PWA: add to home screen on iOS → offline fallback works
 - [ ] Push: subscribe → confirm sale → notification arrives on mobile
 
-See `DEPLOYMENT_GUIDE.md` for full SQL setup and step-by-step instructions.
