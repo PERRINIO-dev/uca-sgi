@@ -169,7 +169,7 @@ export default function DashboardClient({
     {
       label:  "Chiffre d'affaires",
       sub:    "Aujourd'hui · ventes livrées",
-      value:  todayRevenue > 0 ? fmtCFA(todayRevenue) : '—',
+      value:  fmtCFA(todayRevenue),
       color:  C.blue,
       colorL: C.blueL,
       Icon:   IconRevenue,
@@ -185,7 +185,7 @@ export default function DashboardClient({
     {
       label:  'Panier moyen',
       sub:    'Par transaction',
-      value:  avgBasket > 0 ? fmtCFA(avgBasket) : '—',
+      value:  fmtCFA(avgBasket),
       color:  C.orange,
       colorL: C.orangeL,
       Icon:   IconBasket,

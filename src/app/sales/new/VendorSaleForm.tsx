@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo }  from 'react'
+import React, { useState, useMemo }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
@@ -62,11 +62,14 @@ export default function VendorSaleForm({
   const [cart,             setCart]      = useState<CartItem[]>([])
   const [customerName,     setName]      = useState('')
   const [customerPhone,    setPhone]     = useState('')
+  const [customerPhone2,   setPhone2]    = useState('')
+  const [customerCNI,      setCNI]       = useState('')
   const [notes,            setNotes]     = useState('')
   const [loading,          setLoading]   = useState(false)
   const [error,            setError]     = useState<string | null>(null)
   const [successData,      setSuccess]   = useState<any>(null)
   const [step,             setStep]      = useState<'form' | 'success'>('form')
+  const [formStep,         setFormStep]  = useState<1 | 2>(1)
 
   const resetInputs = () => {
     setInputM2(''); setInputTiles(''); setCartons(''); setLoose(''); setUnitPrice('')
@@ -202,6 +205,7 @@ export default function VendorSaleForm({
       <div class="info-label">Client</div>
       <div class="info-value">${customerName || 'Client anonyme'}</div>
       ${customerPhone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${customerPhone}</div>` : ''}
+      ${customerCNI ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${customerCNI}</div>` : ''}
     </div>
     <div class="info-col">
       <div class="info-label">Vendeur</div>
@@ -326,16 +330,25 @@ export default function VendorSaleForm({
   // ── Submit ────────────────────────────────────────────────────────────────
   const handleConfirm = async () => {
     if (cart.length === 0) return
+    if (!customerName.trim())  { setError('Le nom du client est obligatoire.');        return }
+    if (!customerPhone.trim()) { setError('Le numéro de téléphone est obligatoire.');  return }
+    if (!customerCNI.trim())   { setError('Le numéro CNI du client est obligatoire.'); return }
+
     setLoading(true)
     setError(null)
+
+    const phone = customerPhone2.trim()
+      ? `${customerPhone.trim()} / ${customerPhone2.trim()}`
+      : customerPhone.trim()
 
     const result = await createSale({
       boutique_id:    selectedBoutique?.id ?? boutique?.id,
       vendor_id:      profile.id,
-      customer_name:  customerName  || null,
-      customer_phone: customerPhone || null,
+      customer_name:  customerName.trim(),
+      customer_phone: phone,
+      customer_cni:   customerCNI.trim(),
       total_amount:   cartTotal,
-      notes:          notes         || null,
+      notes:          notes || null,
       items: cart.map(item => ({
         product_id:                item.product.product_id,
         quantity_tiles:            item.quantityTiles,
@@ -421,8 +434,9 @@ export default function VendorSaleForm({
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => {
-                    setCart([]); setName(''); setPhone('')
-                    setNotes(''); resetInputs(); setStep('form')
+                    setCart([]); setName(''); setPhone(''); setPhone2('')
+                    setCNI(''); setNotes(''); resetInputs()
+                    setStep('form'); setFormStep(1)
                   }}
                   style={{ flex: 1, padding: '11px', background: C.surface,
                     color: C.navy, border: `1.5px solid ${C.navy}`,
@@ -466,7 +480,7 @@ export default function VendorSaleForm({
           Retour aux ventes
         </button>
 
-        <div style={{ marginBottom: 28 }}>
+        <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink,
             margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
             Nouvelle vente
@@ -479,11 +493,43 @@ export default function VendorSaleForm({
           </p>
         </div>
 
+        {/* ── Step indicator ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24 }}>
+          {([
+            [1, 'Sélection & panier'],
+            [2, 'Client & confirmation'],
+          ] as [number, string][]).map(([n, label]) => (
+            <React.Fragment key={n}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: formStep === n ? C.navy : formStep > n ? C.green : C.border,
+                  color: formStep >= n ? '#fff' : C.muted,
+                  fontSize: 12, fontWeight: 700,
+                }}>
+                  {formStep > n
+                    ? <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    : n
+                  }
+                </div>
+                <span style={{
+                  fontSize: 12, fontWeight: formStep === n ? 700 : 400,
+                  color: formStep === n ? C.ink : C.muted, fontFamily: FONT,
+                }}>
+                  {label}
+                </span>
+              </div>
+              {n < 2 && <div style={{ flex: 1, height: 1, background: formStep > n ? C.green : C.border, maxWidth: 40 }} />}
+            </React.Fragment>
+          ))}
+        </div>
+
         <div style={{ display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
 
-          {/* ── LEFT ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* ── LEFT — step 1 only ── */}
+          {formStep === 1 && <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {/* Product selector */}
             <Card>
@@ -735,7 +781,7 @@ export default function VendorSaleForm({
                 </button>
               </Card>
             )}
-          </div>
+          </div>}
 
           {/* ── RIGHT ── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -821,66 +867,136 @@ export default function VendorSaleForm({
               )}
             </Card>
 
-            {/* Client info */}
-            <Card>
-              <SectionLabel>4. Informations client</SectionLabel>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                    Nom du client{' '}
-                    <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
-                  </label>
-                  <input type="text" value={customerName}
-                    onChange={e => setName(e.target.value)}
-                    placeholder="ex : Michel Abanda"
-                    style={inputStyle()} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                    Téléphone{' '}
-                    <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
-                  </label>
-                  <input type="tel" value={customerPhone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="ex : 6 99 11 22 33"
-                    style={inputStyle()} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                    Notes{' '}
-                    <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
-                  </label>
-                  <textarea value={notes} rows={2}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="Instructions de livraison…"
-                    style={{ ...inputStyle(), resize: 'vertical' }} />
-                </div>
-              </div>
-            </Card>
-
-            {error && (
-              <div style={{ padding: '12px 14px', background: C.redL,
-                borderRadius: 8, border: `1px solid ${C.red}`,
-                fontSize: 13, fontWeight: 600, color: C.red, fontFamily: FONT }}>
-                {error}
-              </div>
+            {/* Step 1: Continuer button */}
+            {formStep === 1 && (
+              <button
+                onClick={() => { setError(null); setFormStep(2) }}
+                disabled={cart.length === 0}
+                style={{
+                  width: '100%', padding: '15px', borderRadius: 10,
+                  border: 'none',
+                  cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
+                  background: cart.length === 0 ? C.muted : C.navy,
+                  color: C.surface, fontSize: 14, fontWeight: 700,
+                  fontFamily: FONT,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}>
+                Continuer — Infos client
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
             )}
 
-            <button onClick={handleConfirm}
-              disabled={cart.length === 0 || loading}
-              style={{
-                width: '100%', padding: '16px', borderRadius: 10,
-                border: 'none',
-                cursor: cart.length === 0 ? 'not-allowed' : 'pointer',
-                background: cart.length === 0 || loading ? C.muted : C.green,
-                color: C.surface, fontSize: 15, fontWeight: 700,
-                fontFamily: FONT,
-              }}>
-              {loading ? 'Enregistrement…' : `✓ Confirmer · ${fmtCFA(cartTotal)}`}
-            </button>
+            {/* Step 2: Client info + confirm */}
+            {formStep === 2 && (
+              <>
+                <Card>
+                  <SectionLabel>2. Informations client</SectionLabel>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                    {/* Nom — required */}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        Nom du client <span style={{ color: C.red }}>*</span>
+                      </label>
+                      <input type="text" value={customerName}
+                        onChange={e => setName(e.target.value)}
+                        placeholder="ex : Michel Abanda"
+                        style={inputStyle(!customerName.trim() && !!error)} />
+                    </div>
+
+                    {/* CNI — required */}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        N° CNI (Carte Nationale d'Identité) <span style={{ color: C.red }}>*</span>
+                      </label>
+                      <input type="text" value={customerCNI}
+                        onChange={e => setCNI(e.target.value)}
+                        placeholder="ex : 1 23 04 5678 912 34"
+                        style={inputStyle(!customerCNI.trim() && !!error)} />
+                    </div>
+
+                    {/* Téléphone principal — required */}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        Téléphone principal <span style={{ color: C.red }}>*</span>
+                      </label>
+                      <input type="tel" value={customerPhone}
+                        onChange={e => setPhone(e.target.value)}
+                        placeholder="ex : 6 99 11 22 33"
+                        style={inputStyle(!customerPhone.trim() && !!error)} />
+                    </div>
+
+                    {/* Téléphone secondaire — optional */}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        Téléphone secondaire{' '}
+                        <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
+                      </label>
+                      <input type="tel" value={customerPhone2}
+                        onChange={e => setPhone2(e.target.value)}
+                        placeholder="ex : 6 88 44 55 66"
+                        style={inputStyle()} />
+                    </div>
+
+                    {/* Notes — optional */}
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        Notes{' '}
+                        <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
+                      </label>
+                      <textarea value={notes} rows={2}
+                        onChange={e => setNotes(e.target.value)}
+                        placeholder="Instructions de livraison, observations…"
+                        style={{ ...inputStyle(), resize: 'vertical' }} />
+                    </div>
+                  </div>
+                </Card>
+
+                {error && (
+                  <div style={{ padding: '12px 14px', background: C.redL,
+                    borderRadius: 8, border: `1px solid ${C.red}`,
+                    fontSize: 13, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                    {error}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <button onClick={handleConfirm}
+                    disabled={loading}
+                    style={{
+                      width: '100%', padding: '16px', borderRadius: 10,
+                      border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
+                      background: loading ? C.muted : C.green,
+                      color: C.surface, fontSize: 15, fontWeight: 700,
+                      fontFamily: FONT,
+                    }}>
+                    {loading ? 'Enregistrement…' : `Confirmer la vente · ${fmtCFA(cartTotal)}`}
+                  </button>
+                  <button
+                    onClick={() => { setError(null); setFormStep(1) }}
+                    disabled={loading}
+                    style={{
+                      width: '100%', padding: '11px', borderRadius: 9,
+                      border: `1.5px solid ${C.border}`, cursor: 'pointer',
+                      background: C.surface, color: C.slate,
+                      fontSize: 13, fontWeight: 600, fontFamily: FONT,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                    }}>
+                    <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                      <path d="M11 7H3M7 3L3 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Retour au panier
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
     </PageLayout>

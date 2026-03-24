@@ -52,10 +52,13 @@ export default function PageLayout({
     navigator.serviceWorker.addEventListener('message', handleSwMessage)
 
     // Refresh when app returns to foreground (e.g. user taps notification,
-    // switches back from another app, or reopens the PWA from home screen)
+    // switches back from another app, or reopens the PWA from home screen).
+    // Debounced to avoid triggering during SPA navigation transitions.
+    let visibilityTimer: ReturnType<typeof setTimeout> | null = null
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        router.refresh()
+        if (visibilityTimer) clearTimeout(visibilityTimer)
+        visibilityTimer = setTimeout(() => { router.refresh() }, 600)
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
@@ -63,6 +66,7 @@ export default function PageLayout({
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleSwMessage)
       document.removeEventListener('visibilitychange', handleVisibility)
+      if (visibilityTimer) clearTimeout(visibilityTimer)
     }
   }, [router])
 

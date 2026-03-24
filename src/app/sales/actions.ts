@@ -30,6 +30,7 @@ interface CreateSalePayload {
   vendor_id:      string
   customer_name:  string | null
   customer_phone: string | null
+  customer_cni:   string | null
   total_amount:   number
   notes:          string | null
   items:          SaleItem[]
@@ -139,6 +140,7 @@ export async function createSale(payload: CreateSalePayload) {
       vendor_id:      user.id,
       customer_name:  payload.customer_name,
       customer_phone: payload.customer_phone,
+      customer_cni:   payload.customer_cni,
       total_amount:   serverTotal,
       notes:          payload.notes,
       status:         'confirmed',

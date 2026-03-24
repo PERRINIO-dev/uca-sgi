@@ -3,7 +3,12 @@ import { redirect }        from 'next/navigation'
 import { getBadgeCounts }  from '@/lib/supabase/badge-counts'
 import SalesListClient     from './SalesListClient'
 
-export default async function SalesPage() {
+export default async function SalesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -51,6 +56,7 @@ export default async function SalesPage() {
       profile={profile}
       sales={sales ?? []}
       badgeCounts={badgeCounts}
+      errorCode={params.error}
     />
   )
 }

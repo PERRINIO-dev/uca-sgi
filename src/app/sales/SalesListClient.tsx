@@ -100,10 +100,12 @@ export default function SalesListClient({
   profile,
   sales,
   badgeCounts,
+  errorCode,
 }: {
   profile:      any
   sales:        any[]
   badgeCounts?: BadgeCounts
+  errorCode?:   string
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -191,6 +193,30 @@ export default function SalesListClient({
 
   return (
     <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
+
+      {/* ── No-boutique error banner ── */}
+      {errorCode === 'no_boutique' && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          padding: '14px 18px', marginBottom: 20,
+          background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10,
+        }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+            <path d="M9 1.5L16.5 15H1.5L9 1.5Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 7v4" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round"/>
+            <circle cx="9" cy="13" r="0.9" fill="#D97706"/>
+          </svg>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', marginBottom: 3, fontFamily: FONT }}>
+              Aucune boutique disponible
+            </div>
+            <div style={{ fontSize: 13, color: '#92400E', lineHeight: 1.5, fontFamily: FONT }}>
+              Vous devez créer au moins une boutique avant de pouvoir enregistrer une vente.
+              Rendez-vous dans la section <strong>Utilisateurs</strong> pour ajouter une boutique.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Page header ── */}
       <div style={{

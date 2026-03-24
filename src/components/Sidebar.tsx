@@ -138,6 +138,13 @@ export default function Sidebar({
   const [isPending, startTransition] = useTransition()
   const [notifSupported, setNotifSupported] = useState(false)
   const [notifState,     setNotifState]     = useState<'subscribed' | 'denied' | 'default'>('default')
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  // Prefetch all accessible routes on mount so navigation feels instant
+  useEffect(() => {
+    visibleItems.forEach(([,, href]) => { router.prefetch(href) })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     // Run only on the client — avoids SSR/hydration mismatch
@@ -190,6 +197,7 @@ export default function Sidebar({
   }
 
   return (
+    <>
     <aside style={{
       width: 240,
       background: '#0C1A35',
@@ -347,7 +355,7 @@ export default function Sidebar({
       {/* ── Logout ── */}
       <div style={{ padding: '6px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
-          onClick={onLogout}
+          onClick={() => setShowLogoutModal(true)}
           style={{
             width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
             borderRadius: 8,
@@ -366,5 +374,79 @@ export default function Sidebar({
         </button>
       </div>
     </aside>
+
+    {/* ── Logout confirmation modal ── */}
+    {showLogoutModal && (
+      <div style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(15,23,42,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: 20,
+        backdropFilter: 'blur(3px)',
+        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      }}>
+        <div style={{
+          background: '#FFFFFF', borderRadius: 14,
+          width: '100%', maxWidth: 400,
+          boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
+          overflow: 'hidden',
+        }}>
+          {/* Header */}
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid #E2E8F0',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 9,
+              background: '#FEF2F2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <IconLogout size={16} color="#DC2626" />
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
+                Confirmer la déconnexion
+              </div>
+              <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>
+                Vous devrez vous reconnecter pour accéder au système.
+              </div>
+            </div>
+          </div>
+          {/* Body */}
+          <div style={{ padding: '20px 24px' }}>
+            <p style={{ fontSize: 14, color: '#475569', margin: '0 0 20px', lineHeight: 1.6 }}>
+              Êtes-vous sûr de vouloir vous déconnecter ?
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => { setShowLogoutModal(false); onLogout() }}
+                style={{
+                  flex: 1, padding: '11px',
+                  background: '#DC2626', color: '#FFFFFF',
+                  border: 'none', borderRadius: 8,
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                }}
+              >
+                Se déconnecter
+              </button>
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                style={{
+                  padding: '11px 20px',
+                  background: '#F8FAFC', color: '#475569',
+                  border: '1px solid #E2E8F0', borderRadius: 8,
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   )
 }

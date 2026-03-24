@@ -30,7 +30,8 @@ export default async function NewSalePage() {
       .eq('is_active', true)
       .order('name')
     allBoutiques = boutiques ?? []
-    boutique = allBoutiques[0] ?? null
+    if (allBoutiques.length === 0) redirect('/sales?error=no_boutique')
+    boutique = allBoutiques[0]
   } else {
     if (!profile.boutique_id) redirect('/dashboard?error=no_boutique')
   }

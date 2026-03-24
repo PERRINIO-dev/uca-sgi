@@ -75,6 +75,7 @@ export default function ProductsClient({
   const [confirmDeactivate, setConfirmDeactivate] = useState<any>(null)
   const [form,              setForm]              = useState(emptyForm())
   const [loading,           setLoading]           = useState(false)
+  const [toggleLoadingId,   setToggleLoadingId]   = useState<string | null>(null)
   const [error,             setError]             = useState<string | null>(null)
   const [success,           setSuccess]           = useState<string | null>(null)
   const [filterActive,      setFilterActive]      = useState<'all' | 'active' | 'inactive'>('active')
@@ -199,7 +200,7 @@ export default function ProductsClient({
   }
 
   const handleToggleActive = async (p: any) => {
-    setLoading(true)
+    setToggleLoadingId(p.id)
     await updateProduct({
       productId:           p.id,
       name:                p.name,
@@ -210,7 +211,7 @@ export default function ProductsClient({
       referencePricePerM2: p.reference_price_per_m2,
       isActive:            !p.is_active,
     })
-    setLoading(false)
+    setToggleLoadingId(null)
     router.refresh()
   }
 
@@ -413,14 +414,15 @@ export default function ProductsClient({
                         ? setConfirmDeactivate(p)
                         : handleToggleActive(p)
                       }
-                      disabled={loading}
+                      disabled={toggleLoadingId === p.id}
                       style={{ flex: 1, padding: '8px',
                         background: p.is_active ? C.redL   : C.greenL,
                         color:      p.is_active ? C.red    : C.green,
                         border: 'none', borderRadius: 7,
                         fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                        opacity: toggleLoadingId === p.id ? 0.6 : 1,
                         fontFamily: FONT }}>
-                      {p.is_active ? 'Désactiver' : 'Réactiver'}
+                      {toggleLoadingId === p.id ? '…' : p.is_active ? 'Désactiver' : 'Réactiver'}
                     </button>
                   </div>
                 </div>
@@ -457,16 +459,18 @@ export default function ProductsClient({
             <button
               onClick={async () => {
                 const p = confirmDeactivate
-                setConfirmDeactivate(null)
                 await handleToggleActive(p)
+                setConfirmDeactivate(null)
               }}
-              disabled={loading}
+              disabled={toggleLoadingId === confirmDeactivate?.id}
               style={{
                 padding: '9px 18px', borderRadius: 8, border: 'none',
-                background: '#DC2626', color: 'white', fontSize: 13, fontWeight: 600,
-                cursor: 'pointer', fontFamily: FONT,
+                background: toggleLoadingId === confirmDeactivate?.id ? '#94A3B8' : '#DC2626',
+                color: 'white', fontSize: 13, fontWeight: 600,
+                cursor: toggleLoadingId === confirmDeactivate?.id ? 'not-allowed' : 'pointer',
+                fontFamily: FONT,
               }}>
-              Désactiver
+              {toggleLoadingId === confirmDeactivate?.id ? 'Désactivation…' : 'Désactiver'}
             </button>
           </div>
         </Modal>
