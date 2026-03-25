@@ -6,11 +6,11 @@
   to   { opacity: 1 }
 }
 @keyframes modalPanel {
-  from { opacity: 0; transform: translateY(14px) scale(0.97) }
+  from { opacity: 0; transform: translateY(16px) scale(0.97) }
   to   { opacity: 1; transform: translateY(0)    scale(1) }
 }
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-6px) }
+  from { opacity: 0; transform: translateY(-8px) }
   to   { opacity: 1; transform: translateY(0) }
 }
 @keyframes spin {
@@ -20,8 +20,23 @@
   from { opacity: 0 }
   to   { opacity: 1 }
 }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
 
-/* ── Input focus ring ────────────────────────────────────────────────────── */
+/* ── Base ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box }
+body {
+  background: #F8FAFC;
+  color: #0F172A;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ── Input / select / textarea ───────────────────────────────────────────── */
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
@@ -33,43 +48,208 @@ input, select, textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* ── Spinner ─────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   BUTTON SYSTEM — all interactive states live here so inline styles
+   (which cannot define :hover) are no longer needed for interaction.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Universal button feel */
+button {
+  transition:
+    background 0.14s ease,
+    background-color 0.14s ease,
+    box-shadow  0.14s ease,
+    border-color 0.14s ease,
+    color       0.14s ease,
+    opacity     0.14s ease,
+    transform   0.10s ease !important;
+}
+button:not(:disabled):active {
+  transform: translateY(1px) !important;
+  opacity: 0.9 !important;
+}
+button:disabled { cursor: not-allowed !important; opacity: 0.55 !important; }
+
+/* Focus ring for all buttons */
+button:focus-visible {
+  outline: 2px solid #2563EB !important;
+  outline-offset: 2px !important;
+}
+
+/* ── Primary (blue) ─────────────────────────────────────────── */
+.btn-primary:hover:not(:disabled) {
+  background: #1D4ED8 !important;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.30) !important;
+}
+/* ── Navy (dark blue) ───────────────────────────────────────── */
+.btn-navy:hover:not(:disabled) {
+  background: #122A52 !important;
+  box-shadow: 0 4px 14px rgba(15,34,64,0.28) !important;
+}
+/* ── Green (confirm / success) ──────────────────────────────── */
+.btn-green:hover:not(:disabled) {
+  background: #047857 !important;
+  box-shadow: 0 4px 14px rgba(5,150,105,0.28) !important;
+}
+/* ── Orange (warn / preparing) ──────────────────────────────── */
+.btn-orange:hover:not(:disabled) {
+  background: #B45309 !important;
+  box-shadow: 0 4px 14px rgba(217,119,6,0.25) !important;
+}
+/* ── Red / Danger ───────────────────────────────────────────── */
+.btn-red:hover:not(:disabled) {
+  background: #B91C1C !important;
+  box-shadow: 0 4px 14px rgba(220,38,38,0.28) !important;
+}
+/* ── Ghost (light bg, border) ───────────────────────────────── */
+.btn-ghost:hover:not(:disabled) {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+/* ── Ghost danger (outline red on hover) ────────────────────── */
+.btn-ghost-danger:hover:not(:disabled) {
+  background: #FEF2F2 !important;
+  color: #DC2626 !important;
+  border-color: #FECACA !important;
+}
+/* ── Outline navy (ghost with navy tint on hover) ───────────── */
+.btn-outline-navy:hover:not(:disabled) {
+  background: #EFF6FF !important;
+  border-color: #2563EB !important;
+  color: #1D4ED8 !important;
+}
+/* ── Icon-only ghost ────────────────────────────────────────── */
+.btn-icon:hover:not(:disabled) {
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE ROWS — hover states
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Standard non-clickable row */
+.trow:hover > td,
+.trow:hover > th {
+  background-color: #F8FAFC !important;
+  transition: background-color 0.1s ease;
+}
+/* Clickable / expandable row */
+.trow-click {
+  cursor: pointer;
+}
+.trow-click:hover > td,
+.trow-click:hover > th {
+  background-color: #EFF6FF !important;
+  transition: background-color 0.1s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SIDEBAR NAV ITEMS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.nav-item:not(.nav-active):hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: rgba(255,255,255,0.82) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INTERACTIVE CARDS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.card-hover {
+  transition: box-shadow 0.18s ease, transform 0.18s ease !important;
+}
+.card-hover:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.09) !important;
+  transform: translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPINNERS
+   ═══════════════════════════════════════════════════════════════════════════ */
 .spinner {
   width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.35);
+  border: 2px solid rgba(255,255,255,0.30);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
   display: inline-block;
+  flex-shrink: 0;
 }
 .spinner-dark {
   width: 14px; height: 14px;
-  border: 2px solid rgba(15,23,42,0.15);
+  border: 2px solid rgba(15,23,42,0.14);
   border-top-color: #0F172A;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
   display: inline-block;
+  flex-shrink: 0;
+}
+.spinner-blue {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(37,99,235,0.20);
+  border-top-color: #2563EB;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
-/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar          { width: 5px; height: 5px }
 ::-webkit-scrollbar-track    { background: transparent }
 ::-webkit-scrollbar-thumb    { background: #CBD5E1; border-radius: 10px }
 ::-webkit-scrollbar-thumb:hover { background: #94A3B8 }
 
-/* ── Base ────────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box }
-body {
-  background: #F8FAFC;
-  color: #0F172A;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
+/* ═══════════════════════════════════════════════════════════════════════════
+   BADGE / STATUS PILL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-/* ── iOS: prevent auto-zoom on input focus ───────────────────────────────── */
-/* iOS Safari zooms in when input font-size < 16px; this prevents that       */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL ANIMATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-overlay { animation: modalBackdrop 0.18s ease forwards; }
+.modal-panel   { animation: modalPanel    0.22s ease forwards; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION LABEL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   iOS: prevent auto-zoom on input focus
+   ═══════════════════════════════════════════════════════════════════════════ */
 @supports (-webkit-touch-callout: none) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
+  input, select, textarea { font-size: 16px !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT — clean receipts and prep sheets
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  .no-print { display: none !important; }
 }

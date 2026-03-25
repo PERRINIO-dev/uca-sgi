@@ -285,6 +285,7 @@ export default function LoginPage() {
             )}
 
             <button
+              className="btn-navy"
               type="submit"
               disabled={loading}
               style={{
@@ -294,10 +295,10 @@ export default function LoginPage() {
                 color: 'white', fontSize: 14, fontWeight: 600,
                 letterSpacing: '0.01em', marginTop: 4,
                 fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-                transition: 'background 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               }}
             >
-              {loading ? 'Connexion en cours…' : 'Se connecter →'}
+              {loading ? <><span className="spinner" />Connexion en cours…</> : 'Se connecter →'}
             </button>
           </form>
 

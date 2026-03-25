@@ -284,29 +284,29 @@ export default function Sidebar({
           return (
             <button
               key={href}
+              className={`nav-item${active ? ' nav-active' : ''}`}
               onClick={() => {
                 onClose?.()
                 startTransition(() => router.push(href))
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
+                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
                 border: 'none',
                 borderRadius: 8,
-                background: active ? 'rgba(59,130,246,0.14)' : 'transparent',
+                background: active ? 'rgba(59,130,246,0.16)' : 'transparent',
                 borderLeft: active ? '2px solid #3B82F6' : '2px solid transparent',
-                color: active ? '#fff' : isPending ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.48)',
-                fontSize: 13, fontWeight: active ? 600 : 400,
+                color: active ? '#fff' : isPending ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.52)',
+                fontSize: 13.5, fontWeight: active ? 600 : 400,
                 cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
                 fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-                transition: 'background 0.15s, color 0.15s',
                 marginBottom: 2,
-                opacity: isPending && !active ? 0.6 : 1,
+                opacity: isPending && !active ? 0.55 : 1,
               }}
             >
               <Icon
                 size={15}
-                color={active ? '#93C5FD' : 'rgba(255,255,255,0.38)'}
+                color={active ? '#93C5FD' : 'rgba(255,255,255,0.42)'}
               />
               <span style={{ flex: 1 }}>{label}</span>
               {badge > 0 && (
@@ -369,21 +369,21 @@ export default function Sidebar({
       {/* ── Logout ── */}
       <div style={{ padding: '6px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <button
+          className="nav-item"
           onClick={() => setShowLogoutModal(true)}
           style={{
-            width: '100%', padding: isMobile ? '13px 12px' : '9px 12px',
+            width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
             borderRadius: 8,
             background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: 'rgba(255,255,255,0.38)',
-            fontSize: 12, fontWeight: 500,
+            border: '1px solid rgba(255,255,255,0.1)',
+            color: 'rgba(255,255,255,0.42)',
+            fontSize: 13, fontWeight: 500,
             cursor: 'pointer',
             fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-            transition: 'border-color 0.15s, color 0.15s',
           }}
         >
-          <IconLogout size={14} color="rgba(255,255,255,0.38)" />
+          <IconLogout size={14} color="rgba(255,255,255,0.42)" />
           Déconnexion
         </button>
       </div>

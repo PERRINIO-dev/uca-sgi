@@ -291,12 +291,17 @@ export default function ReportsClient({
             {filterDays} derniers jours
           </p>
         </div>
-        <button onClick={exportCSV}
+        <button
+          className="btn-navy"
+          onClick={exportCSV}
           style={{ padding: '10px 18px', background: C.navy,
             color: C.surface, border: 'none', borderRadius: 8,
             fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            fontFamily: FONT }}>
-          ↓ Exporter CSV
+            fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M6.5 1v7.5M3.5 6l3 3 3-3M1.5 10v1.5h10V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Exporter CSV
         </button>
       </div>
 

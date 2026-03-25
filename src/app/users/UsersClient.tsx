@@ -267,6 +267,7 @@ export default function UsersClient({
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
+            className="btn-ghost"
             onClick={() => { setShowBoutiques(true); setBoutiqueError(null); setBoutiqueSuccess(null) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
@@ -278,6 +279,7 @@ export default function UsersClient({
             Boutiques ({boutiques.filter(b => b.is_active).length}/{boutiques.length})
           </button>
           <button
+            className="btn-navy"
             onClick={() => { setShowCreate(true); setCreateError(null); setCreateSuccess(null) }}
             style={{ padding: '10px 20px', background: C.navy,
               color: C.surface, border: 'none', borderRadius: 8,
@@ -425,7 +427,9 @@ export default function UsersClient({
                       <td style={{ padding: '13px 16px' }}>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                           {(emp.role !== 'owner' || isMe) && (
-                            <button onClick={() => openEdit(emp)}
+                            <button
+                              className="btn-outline-navy"
+                              onClick={() => openEdit(emp)}
                               style={{ display: 'flex', alignItems: 'center', gap: 5,
                                 padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
                                 background: 'transparent', color: C.blue,
@@ -436,6 +440,7 @@ export default function UsersClient({
                           )}
                           {!isMe && emp.role !== 'owner' && (
                             <button
+                              className={emp.is_active ? 'btn-ghost-danger' : 'btn-ghost'}
                               onClick={() => handleToggle(emp.id, emp.is_active)}
                               disabled={togglingId === emp.id}
                               style={{ padding: '5px 12px', borderRadius: 6, border: 'none',
@@ -443,8 +448,9 @@ export default function UsersClient({
                                 color:      emp.is_active ? C.red  : C.green,
                                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
                                 fontFamily: FONT,
+                                display: 'inline-flex', alignItems: 'center', gap: 5,
                                 opacity: togglingId === emp.id ? 0.6 : 1 }}>
-                              {togglingId === emp.id ? '…' : emp.is_active ? 'Désactiver' : 'Réactiver'}
+                              {togglingId === emp.id ? <><span className="spinner-blue" />…</> : emp.is_active ? 'Désactiver' : 'Réactiver'}
                             </button>
                           )}
                         </div>
@@ -554,7 +560,9 @@ export default function UsersClient({
             {editError && <Feedback error={editError} />}
 
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={handleEdit} disabled={editLoading}
+              <button
+                className="btn-navy"
+                onClick={handleEdit} disabled={editLoading}
                 style={{ flex: 1, padding: '11px', background: editLoading ? C.muted : C.navy,
                   color: C.surface, border: 'none', borderRadius: 8,
                   fontSize: 13, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
@@ -602,6 +610,7 @@ export default function UsersClient({
                       </button>
                     </div>
                     <button
+                      className="btn-primary"
                       onClick={handleEditPassword}
                       disabled={editPwdLoading || editPwd.length < 8}
                       style={{ padding: '10px 14px', borderRadius: 8,
@@ -666,6 +675,7 @@ export default function UsersClient({
                       </span>
                     </div>
                     <button
+                      className={b.is_active ? 'btn-ghost-danger' : 'btn-ghost'}
                       onClick={() => handleToggleBoutique(b.id, b.is_active)}
                       disabled={togglingBoutique === b.id}
                       style={{ padding: '5px 8px', borderRadius: 6, border: 'none',
@@ -691,14 +701,17 @@ export default function UsersClient({
                       placeholder="Adresse — ex : Rue de l'Unité"
                       onKeyDown={e => { if (e.key === 'Enter') handleCreateBoutique() }}
                       style={{ ...inputStyle, flex: 1 }} />
-                    <button onClick={handleCreateBoutique}
+                    <button
+                      className="btn-navy"
+                      onClick={handleCreateBoutique}
                       disabled={boutiqueLoading || !newBoutiqueName.trim()}
                       style={{ padding: '10px 16px', borderRadius: 8,
                         background: (boutiqueLoading || !newBoutiqueName.trim()) ? C.muted : C.navy,
                         color: C.surface, border: 'none',
                         fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                        fontFamily: FONT, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {boutiqueLoading ? '…' : 'Ajouter'}
+                        fontFamily: FONT, whiteSpace: 'nowrap', flexShrink: 0,
+                        display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                      {boutiqueLoading ? <><span className="spinner" />…</> : 'Ajouter'}
                     </button>
                   </div>
                 </div>
@@ -795,7 +808,9 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
               </div>
             )}
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8,
+          <button
+            className="btn-icon"
+            onClick={onClose} style={{ width: 30, height: 30, borderRadius: 8,
             background: C.bg, border: `1px solid ${C.border}`,
             cursor: 'pointer', flexShrink: 0, display: 'flex',
             alignItems: 'center', justifyContent: 'center',
@@ -861,7 +876,9 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
 }) {
   return (
     <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-      <button onClick={onConfirm} disabled={loading || disabled}
+      <button
+        className="btn-navy"
+        onClick={onConfirm} disabled={loading || disabled}
         style={{ flex: 1, padding: '11px',
           background: (loading || disabled) ? C.muted : C.navy,
           color: C.surface, border: 'none', borderRadius: 8,
@@ -871,7 +888,9 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
           justifyContent: 'center', gap: 7 }}>
         {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
       </button>
-      <button onClick={onCancel}
+      <button
+        className="btn-ghost"
+        onClick={onCancel}
         style={{ padding: '11px 18px', background: C.surface, color: C.slate,
           border: `1.5px solid ${C.border}`, borderRadius: 8,
           fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>

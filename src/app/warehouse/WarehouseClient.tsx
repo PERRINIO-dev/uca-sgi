@@ -410,57 +410,62 @@ export default function WarehouseClient({
                       onClick={e => e.stopPropagation()}>
                       {order.status === 'confirmed' && (
                         <button
-                          onClick={() => handleOrderAction(
-                            order.id, 'preparing'
-                          )}
+                          className="btn-orange"
+                          onClick={() => handleOrderAction(order.id, 'preparing')}
                           disabled={loadingOrder === order.id}
                           style={{
                             padding: '9px 16px', background: C.orange,
                             color: C.surface, border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
                             cursor: 'pointer', fontFamily: FONT,
-                            opacity: loadingOrder === order.id ? 0.6 : 1,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
                           }}>
-                          {loadingOrder === order.id
-                            ? '…' : '▶ Commencer'}
+                          {loadingOrder === order.id ? (
+                            <><span className="spinner" />En cours…</>
+                          ) : (
+                            <><svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><path d="M2 1.5l6 3.5-6 3.5V1.5z"/></svg>Commencer</>
+                          )}
                         </button>
                       )}
                       {order.status === 'preparing' && (
                         <button
-                          onClick={() => handleOrderAction(
-                            order.id, 'ready'
-                          )}
+                          className="btn-green"
+                          onClick={() => handleOrderAction(order.id, 'ready')}
                           disabled={loadingOrder === order.id}
                           style={{
                             padding: '9px 16px', background: C.green,
                             color: C.surface, border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
                             cursor: 'pointer', fontFamily: FONT,
-                            opacity: loadingOrder === order.id ? 0.6 : 1,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
                           }}>
-                          {loadingOrder === order.id
-                            ? '…' : '✓ Marquer prête'}
+                          {loadingOrder === order.id ? (
+                            <><span className="spinner" />En cours…</>
+                          ) : (
+                            <><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1.5 5.5l3 3 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>Marquer prête</>
+                          )}
                         </button>
                       )}
                       {order.status === 'ready' && (
                         <button
-                          onClick={() => handleOrderAction(
-                            order.id, 'delivered'
-                          )}
+                          className="btn-navy"
+                          onClick={() => handleOrderAction(order.id, 'delivered')}
                           disabled={loadingOrder === order.id}
                           style={{
                             padding: '9px 16px', background: C.navy,
                             color: C.surface, border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
                             cursor: 'pointer', fontFamily: FONT,
-                            opacity: loadingOrder === order.id ? 0.6 : 1,
+                            display: 'inline-flex', alignItems: 'center', gap: 6,
                           }}>
-                          {loadingOrder === order.id
-                            ? '…' : 'Confirmer livraison'}
+                          {loadingOrder === order.id ? (
+                            <><span className="spinner" />En cours…</>
+                          ) : 'Confirmer livraison'}
                         </button>
                       )}
                       {/* Print prep sheet */}
                       <button
+                        className="btn-icon"
                         onClick={() => printPreparationSheet(order)}
                         title="Imprimer la fiche de préparation"
                         style={{
@@ -477,9 +482,11 @@ export default function WarehouseClient({
                         </svg>
                         Imprimer
                       </button>
-                      <span style={{ color: C.muted, fontSize: 16,
-                        paddingLeft: 4 }}>
-                        {isOpen ? '▲' : '▼'}
+                      <span style={{ color: C.muted, paddingLeft: 4, display: 'flex' }}>
+                        {isOpen
+                          ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 9l4-4 4 4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        }
                       </span>
                     </div>
                   </div>
@@ -616,8 +623,11 @@ export default function WarehouseClient({
                                 background: C.muted, flexShrink: 0 }} />
                               Livrée
                             </span>
-                            <span style={{ color: C.muted, fontSize: 14 }}>
-                              {isOpen ? '▲' : '▼'}
+                            <span style={{ color: C.muted, display: 'flex' }}>
+                              {isOpen
+                                ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 9l4-4 4 4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              }
                             </span>
                           </div>
                         </div>
@@ -988,7 +998,9 @@ export default function WarehouseClient({
                   </div>
                 )}
 
-                <button onClick={handleStockRequest}
+                <button
+                  className="btn-navy"
+                  onClick={handleStockRequest}
                   disabled={
                     reqLoading ||
                     !reqProduct ||
@@ -1005,9 +1017,10 @@ export default function WarehouseClient({
                       (parseInt(reqLoose)   || 0) <= 0
                         ? C.muted : C.navy,
                     color: C.surface, fontSize: 13, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}>
                   {reqLoading
-                    ? 'Envoi…'
+                    ? <><span className="spinner" />Envoi…</>
                     : 'Soumettre pour approbation'}
                 </button>
               </div>
@@ -1118,16 +1131,24 @@ export default function WarehouseClient({
                 déduit et la vente marquée comme livrée.
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={handleConfirmDelivery}
+                <button
+                  className="btn-navy"
+                  onClick={handleConfirmDelivery}
                   disabled={!!loadingOrder}
                   style={{ flex: 1, padding: '12px',
                     background: C.navy, color: C.surface,
                     border: 'none', borderRadius: 8, fontSize: 13,
                     fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
-                    opacity: loadingOrder ? 0.6 : 1 }}>
-                  {loadingOrder ? '…' : '✓ Confirmer la livraison'}
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  }}>
+                  {loadingOrder ? (
+                    <><span className="spinner" />En cours…</>
+                  ) : (
+                    <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6l3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer la livraison</>
+                  )}
                 </button>
                 <button
+                  className="btn-ghost"
                   onClick={() => setConfirm(null)}
                   style={{ padding: '12px 16px', background: C.surface,
                     color: C.slate,

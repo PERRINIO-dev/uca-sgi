@@ -253,6 +253,7 @@ export default function ProductsClient({
             </p>
           </div>
           <button
+            className="btn-navy"
             onClick={() => { setForm(emptyForm()); setError(null); setSuccess(null); refCodeTouched.current = false; setShowCreate(true) }}
             style={{ padding: '11px 20px', background: C.navy,
               color: C.surface, border: 'none', borderRadius: 8,
@@ -401,15 +402,18 @@ export default function ProductsClient({
 
                   {/* Actions */}
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => openEdit(p)}
+                    <button
+                      className="btn-outline-navy"
+                      onClick={() => openEdit(p)}
                       style={{ flex: 1, padding: '8px',
                         background: C.blueL, color: C.blue,
-                        border: 'none', borderRadius: 7,
+                        border: `1px solid transparent`, borderRadius: 7,
                         fontSize: 12, fontWeight: 700, cursor: 'pointer',
                         fontFamily: FONT }}>
                       Modifier
                     </button>
                     <button
+                      className={p.is_active ? 'btn-ghost-danger' : 'btn-ghost'}
                       onClick={() => p.is_active
                         ? setConfirmDeactivate(p)
                         : handleToggleActive(p)
@@ -420,9 +424,11 @@ export default function ProductsClient({
                         color:      p.is_active ? C.red    : C.green,
                         border: 'none', borderRadius: 7,
                         fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                        opacity: toggleLoadingId === p.id ? 0.6 : 1,
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         fontFamily: FONT }}>
-                      {toggleLoadingId === p.id ? '…' : p.is_active ? 'Désactiver' : 'Réactiver'}
+                      {toggleLoadingId === p.id
+                        ? <><span className="spinner-blue" />…</>
+                        : p.is_active ? 'Désactiver' : 'Réactiver'}
                     </button>
                   </div>
                 </div>
@@ -448,6 +454,7 @@ export default function ProductsClient({
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
             <button
+              className="btn-ghost"
               onClick={() => setConfirmDeactivate(null)}
               style={{
                 padding: '9px 18px', borderRadius: 8, border: '1.5px solid #E2E8F0',
@@ -457,6 +464,7 @@ export default function ProductsClient({
               Annuler
             </button>
             <button
+              className="btn-red"
               onClick={async () => {
                 const p = confirmDeactivate
                 await handleToggleActive(p)
@@ -468,9 +476,11 @@ export default function ProductsClient({
                 background: toggleLoadingId === confirmDeactivate?.id ? '#94A3B8' : '#DC2626',
                 color: 'white', fontSize: 13, fontWeight: 600,
                 cursor: toggleLoadingId === confirmDeactivate?.id ? 'not-allowed' : 'pointer',
-                fontFamily: FONT,
+                fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8,
               }}>
-              {toggleLoadingId === confirmDeactivate?.id ? 'Désactivation…' : 'Désactiver'}
+              {toggleLoadingId === confirmDeactivate?.id
+                ? <><span className="spinner" />Désactivation…</>
+                : 'Désactiver'}
             </button>
           </div>
         </Modal>
@@ -705,7 +715,9 @@ function Modal({ title, children, onClose }: {
             letterSpacing: '-0.02em', fontFamily: FONT }}>
             {title}
           </h3>
-          <button onClick={onClose}
+          <button
+            className="btn-icon"
+            onClick={onClose}
             style={{ width: 30, height: 30, borderRadius: 8,
               background: '#F8FAFC', border: '1px solid #E2E8F0',
               cursor: 'pointer', flexShrink: 0, display: 'flex',
@@ -782,15 +794,19 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
         </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-        <button onClick={onConfirm} disabled={loading}
+        <button
+          className="btn-navy"
+          onClick={onConfirm} disabled={loading}
           style={{ flex: 1, padding: '12px',
             background: loading ? '#94A3B8' : '#1B3A6B',
             color: 'white', border: 'none', borderRadius: 8,
             fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            fontFamily: FONT }}>
-          {loading ? 'Enregistrement…' : confirmLabel}
+            fontFamily: FONT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {loading ? <><span className="spinner" />Enregistrement…</> : confirmLabel}
         </button>
-        <button onClick={onCancel}
+        <button
+          className="btn-ghost"
+          onClick={onCancel}
           style={{ padding: '12px 16px', background: 'white',
             color: '#94A3B8', border: '1.5px solid #E2E8F0',
             borderRadius: 8, fontSize: 13, fontWeight: 600,

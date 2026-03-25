@@ -420,6 +420,7 @@ export default function VendorSaleForm({
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button
+                className="btn-navy"
                 onClick={printReceipt}
                 style={{ width: '100%', padding: '13px', background: C.navy,
                   color: C.surface, border: 'none', borderRadius: 8,
@@ -434,6 +435,7 @@ export default function VendorSaleForm({
               </button>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
+                  className="btn-outline-navy"
                   onClick={() => {
                     setCart([]); setName(''); setPhone(''); setPhone2('')
                     setCNI(''); setNotes(''); resetInputs()
@@ -446,6 +448,7 @@ export default function VendorSaleForm({
                   Nouvelle vente
                 </button>
                 <button
+                  className="btn-ghost"
                   disabled={navPending}
                   onClick={() => startNavTransition(() => router.push('/sales'))}
                   style={{ flex: 1, padding: '11px', background: C.surface,
@@ -474,6 +477,7 @@ export default function VendorSaleForm({
 
         {/* Back nav */}
         <button
+          className="btn-ghost"
           disabled={navPending}
           onClick={() => startNavTransition(() => router.push('/sales'))}
           style={{
@@ -780,7 +784,9 @@ export default function VendorSaleForm({
                     Prix inférieur au plancher — vente bloquée
                   </div>
                 )}
-                <button onClick={addToCart}
+                <button
+                  className="btn-primary"
+                  onClick={addToCart}
                   disabled={
                     !computed || computed.floorViolation ||
                     computed.stockInsufficient ||
@@ -889,6 +895,7 @@ export default function VendorSaleForm({
             {/* Step 1: Continuer button */}
             {formStep === 1 && (
               <button
+                className="btn-navy"
                 onClick={() => { setError(null); setFormStep(2) }}
                 disabled={cart.length === 0}
                 style={{
@@ -987,18 +994,23 @@ export default function VendorSaleForm({
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <button onClick={handleConfirm}
+                  <button
+                    className="btn-green"
+                    onClick={handleConfirm}
                     disabled={loading}
                     style={{
                       width: '100%', padding: '16px', borderRadius: 10,
                       border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
                       background: loading ? C.muted : C.green,
                       color: C.surface, fontSize: 15, fontWeight: 700,
-                      fontFamily: FONT,
+                      fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     }}>
-                    {loading ? 'Enregistrement…' : `Confirmer la vente · ${fmtCFA(cartTotal)}`}
+                    {loading
+                      ? <><span className="spinner" />Enregistrement…</>
+                      : `Confirmer la vente · ${fmtCFA(cartTotal)}`}
                   </button>
                   <button
+                    className="btn-ghost"
                     onClick={() => { setError(null); setFormStep(1) }}
                     disabled={loading}
                     style={{

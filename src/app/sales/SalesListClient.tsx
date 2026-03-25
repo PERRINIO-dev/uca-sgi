@@ -246,6 +246,7 @@ export default function SalesListClient({
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
           <button
+            className="btn-navy"
             disabled={navPending}
             onClick={() => {
               if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
@@ -361,6 +362,7 @@ export default function SalesListClient({
           {/* Clear */}
           {hasFilters && (
             <button
+              className="btn-ghost"
               onClick={clearFilters}
               style={{
                 display: 'flex', alignItems: 'center', gap: 5,
@@ -397,6 +399,7 @@ export default function SalesListClient({
             </p>
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
               <button
+                className="btn-navy"
                 disabled={navPending}
                 onClick={() => startNavTransition(() => router.push('/sales/new'))}
                 style={{
@@ -407,7 +410,6 @@ export default function SalesListClient({
                   cursor: navPending ? 'not-allowed' : 'pointer',
                   fontFamily: FONT,
                   display: 'inline-flex', alignItems: 'center', gap: 8,
-                  transition: 'background 0.15s',
                 }}
               >
                 {navPending ? (
@@ -425,6 +427,7 @@ export default function SalesListClient({
               Aucune vente ne correspond aux filtres sélectionnés.
             </p>
             <button
+              className="btn-ghost"
               onClick={clearFilters}
               style={{
                 padding: '8px 18px', background: C.bg, color: C.slate,
@@ -452,10 +455,9 @@ export default function SalesListClient({
                   return (
                     <React.Fragment key={sale.id}>
                       <tr
+                        className="trow-click"
                         onClick={() => setExpanded(isOpen ? null : sale.id)}
-                        style={{ cursor: 'pointer', background: isOpen ? '#F8FAFC' : C.surface }}
-                        onMouseEnter={e => { if (!isOpen) (e.currentTarget as HTMLElement).style.background = C.bg }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isOpen ? '#F8FAFC' : C.surface }}
+                        style={{ background: isOpen ? C.bg : C.surface }}
                       >
                         <td style={{ ...TD_STYLE, fontWeight: 700, color: C.navy }}>
                           {sale.sale_number}
@@ -496,6 +498,7 @@ export default function SalesListClient({
                           {['confirmed', 'draft'].includes(sale.status) &&
                            (profile.role !== 'vendor' || sale.vendor_id === profile.id) && (
                             <button
+                              className="btn-ghost-danger"
                               onClick={() => { setCancelId(sale.id); setCancelNum(sale.sale_number); setCancelError(null) }}
                               style={{
                                 marginRight: 10, padding: '4px 10px',
@@ -537,6 +540,7 @@ export default function SalesListClient({
                 </span>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
+                    className="btn-ghost"
                     disabled={page === 1}
                     onClick={() => setPage(p => p - 1)}
                     style={{
@@ -548,6 +552,7 @@ export default function SalesListClient({
                     ← Précédent
                   </button>
                   <button
+                    className="btn-ghost"
                     disabled={page === totalPages}
                     onClick={() => setPage(p => p + 1)}
                     style={{
@@ -618,6 +623,7 @@ export default function SalesListClient({
               )}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
+                  className="btn-red"
                   onClick={handleCancelConfirm}
                   disabled={cancelling}
                   style={{
@@ -625,12 +631,13 @@ export default function SalesListClient({
                     background: cancelling ? C.muted : C.red,
                     color: 'white', border: 'none', borderRadius: 8,
                     fontSize: 13, fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer',
-                    fontFamily: FONT,
+                    fontFamily: FONT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}
                 >
-                  {cancelling ? 'Annulation…' : "Confirmer l'annulation"}
+                  {cancelling ? <><span className="spinner" />Annulation…</> : "Confirmer l'annulation"}
                 </button>
                 <button
+                  className="btn-ghost"
                   onClick={() => { setCancelId(null); setCancelError(null) }}
                   style={{
                     padding: '11px 18px', background: C.bg,

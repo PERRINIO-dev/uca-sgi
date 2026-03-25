@@ -227,38 +227,41 @@ export default function DashboardClient({
       {/* ── KPI cards ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: 16, marginBottom: 24,
       }}>
         {kpis.map(({ label, sub, value, color, Icon }) => (
           <div key={label} style={{
-            background: C.surface, borderRadius: 12,
+            background: C.surface, borderRadius: 14,
             border: `1px solid ${C.border}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            padding: '18px 20px',
+            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            padding: '20px 22px',
+            borderLeft: `4px solid ${color}`,
+            position: 'relative', overflow: 'hidden',
           }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: C.muted,
-                textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+                textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
                 {label}
               </div>
               <div style={{
-                width: 34, height: 34, borderRadius: 9,
+                width: 38, height: 38, borderRadius: 10,
                 background: color,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
+                boxShadow: `0 4px 12px ${color}50`,
               }}>
                 <Icon />
               </div>
             </div>
             <div style={{
-              fontSize: 26, fontWeight: 800, color: C.ink,
-              letterSpacing: '-0.02em', lineHeight: 1.1, fontFamily: FONT,
+              fontSize: 32, fontWeight: 800, color: C.ink,
+              letterSpacing: '-0.03em', lineHeight: 1.1, fontFamily: FONT,
               marginBottom: 6,
             }}>
               {value}
             </div>
-            <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{sub}</div>
+            <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</div>
           </div>
         ))}
       </div>
@@ -390,25 +393,29 @@ export default function DashboardClient({
                   )}
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button
+                      className="btn-green"
                       onClick={() => handleApprove(req.id)}
                       disabled={loading === req.id}
                       style={{
-                        flex: 1, padding: '8px', background: C.green,
+                        flex: 1, padding: '8px 12px', background: C.green,
                         color: 'white', border: 'none', borderRadius: 7,
                         fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                        opacity: loading === req.id ? 0.6 : 1,
                         fontFamily: FONT,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                       }}
                     >
-                      {loading === req.id ? '…' : 'Approuver'}
+                      {loading === req.id
+                        ? <><span className="spinner" style={{ width: 12, height: 12 }} />En cours…</>
+                        : 'Approuver'}
                     </button>
                     <button
+                      className="btn-ghost-danger"
                       onClick={() => setRejectId(req.id)}
                       disabled={loading === req.id}
                       style={{
-                        flex: 1, padding: '8px',
+                        flex: 1, padding: '8px 12px',
                         background: 'transparent',
-                        color: C.red, border: `1px solid ${C.red}`,
+                        color: C.red, border: `1.5px solid ${C.red}`,
                         borderRadius: 7, fontSize: 12, fontWeight: 600,
                         cursor: 'pointer', fontFamily: FONT,
                       }}
@@ -553,18 +560,22 @@ export default function DashboardClient({
               />
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <button
+                  className="btn-red"
                   onClick={handleReject}
                   disabled={!rejectMsg.trim() || loading === rejectId}
                   style={{
                     flex: 1, padding: '11px', background: C.red,
                     color: 'white', border: 'none', borderRadius: 8,
                     fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    opacity: !rejectMsg.trim() ? 0.5 : 1, fontFamily: FONT,
+                    fontFamily: FONT,
                   }}
                 >
-                  Confirmer le rejet
+                  {loading === rejectId
+                    ? <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}><span className="spinner" style={{ width: 12, height: 12 }} />En cours…</span>
+                    : 'Confirmer le rejet'}
                 </button>
                 <button
+                  className="btn-ghost"
                   onClick={() => { setRejectId(null); setRejectMsg('') }}
                   style={{
                     padding: '11px 18px', background: C.bg,
