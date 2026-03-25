@@ -18,19 +18,21 @@ export default async function ProductsPage() {
   if (!profile) redirect('/login')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
-  const { data: products } = await supabase
-    .from('products')
-    .select(`
-      id, reference_code, name, category, supplier,
-      width_cm, height_cm, tiles_per_carton,
-      tile_area_m2, carton_area_m2,
-      purchase_price, floor_price_per_m2,
-      reference_price_per_m2, is_active, created_at,
-      stock ( total_tiles, reserved_tiles, last_updated_at )
-    `)
-    .order('created_at', { ascending: false })
+  const [{ data: products }, badgeCounts] = await Promise.all([
+    supabase
+      .from('products')
+      .select(`
+        id, reference_code, name, category, supplier,
+        width_cm, height_cm, tiles_per_carton,
+        tile_area_m2, carton_area_m2,
+        purchase_price, floor_price_per_m2,
+        reference_price_per_m2, is_active, created_at,
+        stock ( total_tiles, reserved_tiles, last_updated_at )
+      `)
+      .order('created_at', { ascending: false }),
 
-  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+    getBadgeCounts(profile.role, supabase),
+  ])
 
   return (
     <ProductsClient

@@ -138,6 +138,7 @@ export default function Sidebar({
   const [isPending, startTransition] = useTransition()
   const [notifSupported, setNotifSupported] = useState(false)
   const [notifState,     setNotifState]     = useState<'subscribed' | 'denied' | 'default'>('default')
+  const [notifLoading,   setNotifLoading]   = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   // Prefetch all accessible routes on mount so navigation feels instant
@@ -161,30 +162,35 @@ export default function Sidebar({
 
   const handleNotifToggle = async () => {
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return
-    if (notifState === 'subscribed') {
-      // Unsubscribe
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.getSubscription()
-      if (sub) {
-        await fetch('/api/push/subscribe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) })
-        await sub.unsubscribe()
-        setNotifState('default')
+    setNotifLoading(true)
+    try {
+      if (notifState === 'subscribed') {
+        // Unsubscribe
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await fetch('/api/push/subscribe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) })
+          await sub.unsubscribe()
+          setNotifState('default')
+        }
+        return
       }
-      return
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') { setNotifState('denied'); return }
+      const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      if (!key) return
+      const reg = await navigator.serviceWorker.ready
+      const padding = '='.repeat((4 - (key.length % 4)) % 4)
+      const b64 = (key + padding).replace(/-/g, '+').replace(/_/g, '/')
+      const raw = window.atob(b64)
+      const arr = new Uint8Array(raw.length)
+      for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr.buffer as ArrayBuffer })
+      await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) })
+      setNotifState('subscribed')
+    } finally {
+      setNotifLoading(false)
     }
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') { setNotifState('denied'); return }
-    const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (!key) return
-    const reg = await navigator.serviceWorker.ready
-    const padding = '='.repeat((4 - (key.length % 4)) % 4)
-    const b64 = (key + padding).replace(/-/g, '+').replace(/_/g, '/')
-    const raw = window.atob(b64)
-    const arr = new Uint8Array(raw.length)
-    for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
-    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr.buffer as ArrayBuffer })
-    await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) })
-    setNotifState('subscribed')
   }
 
   const visibleItems = NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
@@ -327,6 +333,7 @@ export default function Sidebar({
       {notifSupported && (
         <div style={{ padding: '0 12px 6px' }}>
           <button
+            disabled={notifLoading || notifState === 'denied'}
             onClick={handleNotifToggle}
             title={notifState === 'subscribed' ? 'Notifications activées — cliquer pour désactiver' : notifState === 'denied' ? 'Notifications bloquées par le navigateur' : 'Activer les notifications'}
             style={{
@@ -334,20 +341,27 @@ export default function Sidebar({
               borderRadius: 8,
               background: notifState === 'subscribed' ? 'rgba(59,130,246,0.12)' : 'transparent',
               border: notifState === 'subscribed' ? '1px solid rgba(59,130,246,0.25)' : '1px solid rgba(255,255,255,0.06)',
-              color: notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)',
+              color: notifLoading ? 'rgba(255,255,255,0.45)' : notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)',
               fontSize: 11.5, fontWeight: 500,
-              cursor: notifState === 'denied' ? 'not-allowed' : 'pointer',
+              cursor: notifLoading || notifState === 'denied' ? 'not-allowed' : 'pointer',
               fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
               display: 'flex', alignItems: 'center', gap: 7,
               transition: 'background 0.15s, color 0.15s, border-color 0.15s',
             }}
           >
-            <IconBell
-              size={13}
-              color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)'}
-              filled={notifState === 'subscribed'}
-            />
-            {notifState === 'subscribed' ? 'Notifications activées' : notifState === 'denied' ? 'Notifications bloquées' : 'Activer les notifications'}
+            {notifLoading
+              ? <span className="spinner" style={{ width: 12, height: 12 }} />
+              : <IconBell
+                  size={13}
+                  color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)'}
+                  filled={notifState === 'subscribed'}
+                />
+            }
+            {notifLoading
+              ? 'En cours…'
+              : notifState === 'subscribed' ? 'Notifications activées'
+              : notifState === 'denied'     ? 'Notifications bloquées'
+              : 'Activer les notifications'}
           </button>
         </div>
       )}

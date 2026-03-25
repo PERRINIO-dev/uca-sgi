@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useTransition } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
@@ -101,14 +101,20 @@ export default function SalesListClient({
   sales,
   badgeCounts,
   errorCode,
+  hasBoutiques = true,
 }: {
-  profile:      any
-  sales:        any[]
-  badgeCounts?: BadgeCounts
-  errorCode?:   string
+  profile:       any
+  sales:         any[]
+  badgeCounts?:  BadgeCounts
+  errorCode?:    string
+  hasBoutiques?: boolean
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const [navPending, startNavTransition] = useTransition()
+
+  // ── Prefetch new-sale page so the click feels instant ─────────────────────
+  useEffect(() => { router.prefetch('/sales/new') }, [router])
 
   // ── Real-time: refresh when sales change ──────────────────────────────────
   useEffect(() => {
@@ -119,6 +125,8 @@ export default function SalesListClient({
     return () => { supabase.removeChannel(channel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const [noBoutiqueWarning, setNoBoutiqueWarning] = useState(false)
 
   const [expanded,    setExpanded]   = useState<string | null>(null)
   const [cancelId,    setCancelId]   = useState<string | null>(null)
@@ -195,7 +203,7 @@ export default function SalesListClient({
     <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── No-boutique error banner ── */}
-      {errorCode === 'no_boutique' && (
+      {(errorCode === 'no_boutique' || noBoutiqueWarning) && (
         <div style={{
           display: 'flex', alignItems: 'flex-start', gap: 12,
           padding: '14px 18px', marginBottom: 20,
@@ -238,16 +246,29 @@ export default function SalesListClient({
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
           <button
-            onClick={() => router.push('/sales/new')}
+            disabled={navPending}
+            onClick={() => {
+              if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+                setNoBoutiqueWarning(true)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                return
+              }
+              startNavTransition(() => router.push('/sales/new'))
+            }}
             style={{
               padding: '10px 20px',
-              background: C.navy, color: 'white',
+              background: navPending ? C.slate : C.navy, color: 'white',
               border: 'none', borderRadius: 8,
-              fontSize: 13, fontWeight: 600, cursor: 'pointer',
+              fontSize: 13, fontWeight: 600,
+              cursor: navPending ? 'not-allowed' : 'pointer',
               fontFamily: FONT,
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'background 0.15s',
             }}
           >
-            + Nouvelle vente
+            {navPending ? (
+              <><span className="spinner" />Chargement…</>
+            ) : '+ Nouvelle vente'}
           </button>
         )}
       </div>
@@ -376,16 +397,22 @@ export default function SalesListClient({
             </p>
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
               <button
-                onClick={() => router.push('/sales/new')}
+                disabled={navPending}
+                onClick={() => startNavTransition(() => router.push('/sales/new'))}
                 style={{
                   padding: '10px 24px',
-                  background: C.navy, color: 'white',
+                  background: navPending ? C.slate : C.navy, color: 'white',
                   border: 'none', borderRadius: 8,
-                  fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  fontSize: 13, fontWeight: 600,
+                  cursor: navPending ? 'not-allowed' : 'pointer',
                   fontFamily: FONT,
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  transition: 'background 0.15s',
                 }}
               >
-                Créer la première vente
+                {navPending ? (
+                  <><span className="spinner" />Chargement…</>
+                ) : 'Créer la première vente'}
               </button>
             )}
           </div>

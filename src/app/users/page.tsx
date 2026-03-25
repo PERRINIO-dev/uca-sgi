@@ -18,21 +18,23 @@ export default async function UsersPage() {
   if (!profile) redirect('/login')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
-  const { data: employees } = await supabase
-    .from('users')
-    .select(`
-      id, email, full_name, role,
-      is_active, created_at,
-      boutiques ( id, name )
-    `)
-    .order('created_at', { ascending: false })
+  const [{ data: employees }, { data: boutiques }, badgeCounts] = await Promise.all([
+    supabase
+      .from('users')
+      .select(`
+        id, email, full_name, role,
+        is_active, created_at,
+        boutiques ( id, name )
+      `)
+      .order('created_at', { ascending: false }),
 
-  const { data: boutiques } = await supabase
-    .from('boutiques')
-    .select('id, name, is_active')
-    .order('name')
+    supabase
+      .from('boutiques')
+      .select('id, name, is_active')
+      .order('name'),
 
-  const badgeCounts = await getBadgeCounts(profile.role, supabase)
+    getBadgeCounts(profile.role, supabase),
+  ])
 
   return (
     <UsersClient

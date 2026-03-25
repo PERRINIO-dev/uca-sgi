@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo }  from 'react'
+import React, { useState, useMemo, useTransition }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
@@ -49,6 +49,7 @@ export default function VendorSaleForm({
 }) {
   const router   = useRouter()
   const supabase = createClient()
+  const [navPending, startNavTransition] = useTransition()
 
   const [selectedBoutique, setBoutique]     = useState<any>(boutique)
   const [selectedProduct,  setProduct]      = useState<any>(products[0] ?? null)
@@ -444,12 +445,20 @@ export default function VendorSaleForm({
                     fontFamily: FONT }}>
                   Nouvelle vente
                 </button>
-                <button onClick={() => router.push('/sales')}
+                <button
+                  disabled={navPending}
+                  onClick={() => startNavTransition(() => router.push('/sales'))}
                   style={{ flex: 1, padding: '11px', background: C.surface,
-                    color: C.muted, border: `1.5px solid ${C.border}`,
+                    color: navPending ? C.muted : C.slate,
+                    border: `1.5px solid ${C.border}`,
                     borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: FONT }}>
-                  Mes ventes
+                    cursor: navPending ? 'not-allowed' : 'pointer',
+                    fontFamily: FONT, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', gap: 7,
+                  }}>
+                  {navPending
+                    ? <><span className="spinner-dark" />Chargement…</>
+                    : 'Mes ventes'}
                 </button>
               </div>
             </div>
@@ -465,19 +474,29 @@ export default function VendorSaleForm({
 
         {/* Back nav */}
         <button
-          onClick={() => router.push('/sales')}
+          disabled={navPending}
+          onClick={() => startNavTransition(() => router.push('/sales'))}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: C.surface, border: `1.5px solid ${C.border}`,
-            borderRadius: 8, cursor: 'pointer', fontFamily: FONT,
-            fontSize: 13, fontWeight: 600, color: C.navy,
+            borderRadius: 8,
+            cursor: navPending ? 'not-allowed' : 'pointer',
+            fontFamily: FONT, fontSize: 13, fontWeight: 600,
+            color: navPending ? C.muted : C.navy,
             padding: '8px 14px', marginBottom: 16,
             boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+            transition: 'color 0.15s',
           }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Retour aux ventes
+          {navPending ? (
+            <><span className="spinner-dark" />Chargement…</>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Retour aux ventes
+            </>
+          )}
         </button>
 
         <div style={{ marginBottom: 24 }}>
