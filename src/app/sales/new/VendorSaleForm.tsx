@@ -181,10 +181,12 @@ export default function VendorSaleForm({
     .sig-line { border-bottom: 1.5px solid #CBD5E1; height: 52px; margin-bottom: 6px; }
     .sig-sub { font-size: 10px; color: #94A3B8; }
     .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #94A3B8; padding-top: 16px; border-top: 1px solid #E2E8F0; }
-    @media print { @page { margin: 20mm; } }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 8px 16px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; font-family: system-ui,-apple-system,'Segoe UI',sans-serif; }
+    @media print { @page { margin: 20mm; } .back-btn { display: none !important; } }
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
       <div class="logo">UC<span>A</span></div>

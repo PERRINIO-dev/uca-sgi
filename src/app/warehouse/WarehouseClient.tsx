@@ -167,10 +167,12 @@ export default function WarehouseClient({
     .sig-line { border-bottom: 1px solid #CBD5E1; height: 40px; margin-bottom: 6px; }
     .sig-sub { font-size: 11px; color: #94A3B8; }
     .notes-block { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 10px 14px; margin-bottom: 20px; font-size: 12px; color: #92400E; }
-    @media print { @page { margin: 20mm; } }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 8px 16px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; font-family: system-ui,-apple-system,'Segoe UI',sans-serif; }
+    @media print { @page { margin: 20mm; } .back-btn { display: none !important; } }
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
       <div class="logo">UC<span>A</span></div>
@@ -363,9 +365,9 @@ export default function WarehouseClient({
                   overflow: 'hidden',
                 }}>
                   {/* Order header */}
-                  <div style={{ display: 'flex', alignItems: 'center',
+                  <div style={{ display: 'flex', alignItems: 'flex-start',
                     gap: 14, padding: '16px 20px',
-                    cursor: 'pointer',
+                    cursor: 'pointer', flexWrap: 'wrap',
                     borderLeft: `4px solid ${cfg.dot}` }}
                     onClick={() => setExpanded(
                       isOpen ? null : order.id
@@ -406,7 +408,7 @@ export default function WarehouseClient({
 
                     {/* Action button */}
                     <div style={{ display: 'flex', gap: 8,
-                      alignItems: 'center', flexShrink: 0 }}
+                      alignItems: 'center', flexWrap: 'wrap' }}
                       onClick={e => e.stopPropagation()}>
                       {order.status === 'confirmed' && (
                         <button

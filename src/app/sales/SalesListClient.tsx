@@ -111,7 +111,8 @@ export default function SalesListClient({
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const [navPending, startNavTransition] = useTransition()
+  const [navPending,       startNavTransition]       = useTransition()
+  const [firstSalePending, startFirstSaleTransition] = useTransition()
 
   // ── Prefetch new-sale page so the click feels instant ─────────────────────
   useEffect(() => { router.prefetch('/sales/new') }, [router])
@@ -400,19 +401,26 @@ export default function SalesListClient({
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
               <button
                 className="btn-navy"
-                disabled={navPending}
-                onClick={() => startNavTransition(() => router.push('/sales/new'))}
+                disabled={firstSalePending}
+                onClick={() => {
+                  if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+                    setNoBoutiqueWarning(true)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                    return
+                  }
+                  startFirstSaleTransition(() => router.push('/sales/new'))
+                }}
                 style={{
                   padding: '10px 24px',
-                  background: navPending ? C.slate : C.navy, color: 'white',
+                  background: firstSalePending ? C.slate : C.navy, color: 'white',
                   border: 'none', borderRadius: 8,
                   fontSize: 13, fontWeight: 600,
-                  cursor: navPending ? 'not-allowed' : 'pointer',
+                  cursor: firstSalePending ? 'not-allowed' : 'pointer',
                   fontFamily: FONT,
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                 }}
               >
-                {navPending ? (
+                {firstSalePending ? (
                   <><span className="spinner" />Chargement…</>
                 ) : 'Créer la première vente'}
               </button>
@@ -511,7 +519,12 @@ export default function SalesListClient({
                               Annuler
                             </button>
                           )}
-                          {isOpen ? <IconChevronUp /> : <IconChevronDown />}
+                          <span
+                            onClick={(e) => { e.stopPropagation(); setExpanded(isOpen ? null : sale.id) }}
+                            style={{ cursor: 'pointer', padding: '2px 4px', display: 'inline-flex' }}
+                          >
+                            {isOpen ? <IconChevronUp /> : <IconChevronDown />}
+                          </span>
                         </td>
                       </tr>
 
@@ -722,10 +735,12 @@ function printSaleReceipt(sale: any) {
     .sig-line { border-bottom: 1.5px solid #CBD5E1; height: 52px; margin-bottom: 6px; }
     .sig-sub { font-size: 10px; color: #94A3B8; }
     .footer { margin-top: 24px; text-align: center; font-size: 10px; color: #94A3B8; padding-top: 16px; border-top: 1px solid #E2E8F0; }
-    @media print { @page { margin: 20mm; } }
+    .back-btn { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 20px; padding: 8px 16px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; font-family: system-ui,-apple-system,'Segoe UI',sans-serif; }
+    @media print { @page { margin: 20mm; } .back-btn { display: none !important; } }
   </style>
 </head>
 <body>
+  <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
       <div class="logo">UC<span>A</span></div>
@@ -747,6 +762,7 @@ function printSaleReceipt(sale: any) {
       <div class="info-label">Client</div>
       <div class="info-value">${sale.customer_name || 'Client anonyme'}</div>
       ${sale.customer_phone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${sale.customer_phone}</div>` : ''}
+      ${sale.customer_cni ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${sale.customer_cni}</div>` : ''}
     </div>
     <div class="info-col">
       <div class="info-label">Vendeur</div>
@@ -887,6 +903,16 @@ function SaleDetail({ sale }: { sale: any }) {
                 <path d="M2 2.5c0-.28.22-.5.5-.5h2l.75 2L4 5.5s.5 1.5 2.5 2.5l1.5-1.25 2 .75V9.5c0 .28-.22.5-.5.5C4.07 10 2 4.93 2 2.5Z" stroke={C.muted} strokeWidth="1.1"/>
               </svg>
               {sale.customer_phone}
+            </span>
+          )}
+          {sale.customer_cni && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <rect x="1" y="2.5" width="10" height="7" rx="1.5" stroke={C.muted} strokeWidth="1.1"/>
+                <path d="M3.5 5.5h2M3.5 7.5h3.5" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/>
+                <circle cx="8.5" cy="6" r="1.2" stroke={C.muted} strokeWidth="1"/>
+              </svg>
+              CNI : {sale.customer_cni}
             </span>
           )}
           {sale.notes && (
