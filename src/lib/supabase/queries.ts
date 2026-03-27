@@ -2,52 +2,89 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function getDashboardStats() {
   const supabase = await createClient()
-  const today    = new Date()
+
+  const today = new Date()
   today.setHours(0, 0, 0, 0)
   const todayISO = today.toISOString()
 
-  const [salesResult, stockResult, pendingResult, boutiqueResult] =
-    await Promise.all([
+  // Month-to-date window
+  const mtdStart = new Date(today.getFullYear(), today.getMonth(), 1)
+  const mtdISO   = mtdStart.toISOString()
 
-      // Today's delivered sales totals (eq('delivered') already excludes all other statuses)
-      supabase
-        .from('sales')
-        .select('total_amount, boutique_id, boutiques(name)')
-        .gte('created_at', todayISO)
-        .eq('status', 'delivered'),
+  // Previous full month window
+  const prevMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+  const prevMonthEnd   = new Date(mtdStart.getTime() - 1)
+  const prevStartISO   = prevMonthStart.toISOString()
+  const prevEndISO     = prevMonthEnd.toISOString()
 
-      // Stock levels with alerts
-      supabase
-        .from('stock_view')
-        .select('*')
-        .order('available_tiles', { ascending: true }),
+  const [
+    todayResult, mtdResult, prevMonthResult,
+    stockResult, pendingResult, boutiqueResult, activeOrdersResult,
+  ] = await Promise.all([
 
-      // Pending stock requests
-      supabase
-        .from('stock_requests')
-        .select(`
-          id, created_at, request_type,
-          quantity_tiles_delta, justification,
-          stock_before_tiles, product_id,
-          products(name, reference_code),
-          users!stock_requests_requested_by_fkey(full_name)
-        `)
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true }),
+    // Today's sales (all non-cancelled — not just delivered)
+    supabase
+      .from('sales')
+      .select('total_amount, amount_paid')
+      .gte('created_at', todayISO)
+      .neq('status', 'cancelled'),
 
-      // Sales by boutique this week
-      supabase
-        .from('sales')
-        .select('total_amount, boutique_id, boutiques(name), created_at')
-        .gte('created_at', getWeekStart())
-        .neq('status', 'cancelled'),
-    ])
+    // Month-to-date sales
+    supabase
+      .from('sales')
+      .select('total_amount, amount_paid, boutique_id, boutiques(name)')
+      .gte('created_at', mtdISO)
+      .neq('status', 'cancelled'),
+
+    // Previous full month (for trend)
+    supabase
+      .from('sales')
+      .select('total_amount')
+      .gte('created_at', prevStartISO)
+      .lte('created_at', prevEndISO)
+      .neq('status', 'cancelled'),
+
+    // Stock levels with alerts
+    supabase
+      .from('stock_view')
+      .select('*')
+      .order('available_tiles', { ascending: true }),
+
+    // Pending stock requests
+    supabase
+      .from('stock_requests')
+      .select(`
+        id, created_at, request_type,
+        quantity_tiles_delta, justification,
+        stock_before_tiles, product_id,
+        products(name, reference_code),
+        users!stock_requests_requested_by_fkey(full_name)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: true }),
+
+    // MTD sales by boutique (replaces week-only)
+    supabase
+      .from('sales')
+      .select('total_amount, boutique_id, boutiques(name), created_at')
+      .gte('created_at', mtdISO)
+      .neq('status', 'cancelled'),
+
+    // Active orders count (confirmed + preparing + ready)
+    supabase
+      .from('sales')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['confirmed', 'preparing', 'ready']),
+  ])
 
   return {
-    todaySales:      salesResult.data      ?? [],
-    stockLevels:     stockResult.data      ?? [],
-    pendingRequests: pendingResult.data    ?? [],
-    weekSales:       boutiqueResult.data   ?? [],
+    todaySales:       todayResult.data       ?? [],
+    mtdSales:         mtdResult.data         ?? [],
+    prevMonthSales:   prevMonthResult.data   ?? [],
+    stockLevels:      stockResult.data       ?? [],
+    pendingRequests:  pendingResult.data     ?? [],
+    weekSales:        boutiqueResult.data    ?? [],
+    activeOrdersCount: activeOrdersResult.count ?? 0,
   }
 }
 

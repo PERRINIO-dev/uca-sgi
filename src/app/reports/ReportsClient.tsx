@@ -113,14 +113,17 @@ export default function ReportsClient({
         a + i.quantity_tiles * i.tile_area_m2_snapshot, 0
       ), 0
     )
-    const avgBasket  = confirmed.length > 0 ? totalCA / confirmed.length : 0
-    const cancelRate = filtered.length > 0
+    const avgBasket      = confirmed.length > 0 ? totalCA / confirmed.length : 0
+    const cancelRate     = filtered.length > 0
       ? (filtered.filter(s => s.status === 'cancelled').length / filtered.length) * 100
       : 0
+    const totalEncaisse  = confirmed.reduce((sum, s) => sum + (s.amount_paid ?? 0), 0)
+    const totalEnAttente = totalCA - totalEncaisse
     return {
       totalCA, confirmed: confirmed.length,
       delivered: delivered.length,
       totalM2, avgBasket, cancelRate,
+      totalEncaisse, totalEnAttente,
     }
   }, [filtered])
 
@@ -158,7 +161,7 @@ export default function ReportsClient({
   const productData = useMemo(() => {
     const map: Record<string, {
       name: string; ref: string; category: string
-      ca: number; m2: number; units: number
+      ca: number; m2: number; units: number; cost: number
     }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
@@ -168,11 +171,14 @@ export default function ReportsClient({
           name:     item.products?.name ?? '—',
           ref:      item.products?.reference_code ?? '—',
           category: item.products?.category ?? '—',
-          ca: 0, m2: 0, units: 0,
+          ca: 0, m2: 0, units: 0, cost: 0,
         }
+        const itemM2       = item.quantity_tiles * item.tile_area_m2_snapshot
+        const purchasePrice = parseFloat(item.products?.purchase_price ?? '0') || 0
         map[id].ca    += item.total_price
-        map[id].m2    += item.quantity_tiles * item.tile_area_m2_snapshot
+        map[id].m2    += itemM2
         map[id].units += item.quantity_tiles
+        map[id].cost  += purchasePrice * itemM2
       }))
     return Object.values(map).sort((a, b) => b.ca - a.ca)
   }, [filtered])
@@ -198,12 +204,16 @@ export default function ReportsClient({
 
   // ── CSV Export ─────────────────────────────────────────────────────────
   const exportCSV = () => {
+    const paymentLabels: Record<string, string> = {
+      paid: 'Payé', partial: 'Acompte versé', unpaid: 'Impayé',
+    }
     const headers = [
       'N° Vente', 'Date', 'Statut', 'Client', 'Téléphone',
       'Boutique', 'Vendeur', 'Notes',
       'Produit', 'Référence', 'Catégorie',
       'Carreaux', 'Cartons', 'Surface (m²)',
       'Prix/m² (FCFA)', 'Sous-total (FCFA)', 'Total vente (FCFA)',
+      'Encaissé (FCFA)', 'Statut paiement',
     ]
     const rows: (string | number)[][] = []
     for (const s of filtered) {
@@ -220,6 +230,8 @@ export default function ReportsClient({
           s.notes ?? '',
           '', '', '', '', '', '', '', '',
           Math.round(s.total_amount),
+          Math.round(s.amount_paid ?? 0),
+          paymentLabels[s.payment_status] ?? s.payment_status ?? '',
         ])
       } else {
         for (const item of items) {
@@ -247,6 +259,8 @@ export default function ReportsClient({
             Math.round(item.unit_price_per_m2),
             Math.round(item.total_price),
             Math.round(s.total_amount),
+            Math.round(s.amount_paid ?? 0),
+            paymentLabels[s.payment_status] ?? s.payment_status ?? '',
           ])
         }
       }
@@ -378,31 +392,85 @@ export default function ReportsClient({
       {activeTab === 'overview' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-          {/* KPI cards */}
+          {/* ── Hero KPI: CA total + barre d'encaissement ── */}
+          {(() => {
+            const encRate = kpis.totalCA > 0
+              ? (kpis.totalEncaisse / kpis.totalCA) * 100 : 0
+            return (
+              <div style={{
+                background: C.surface, borderRadius: 14,
+                border: `1px solid ${C.border}`,
+                borderLeft: `5px solid ${C.blue}`,
+                padding: '22px 24px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+                  textTransform: 'uppercase', letterSpacing: '0.08em',
+                  marginBottom: 8, fontFamily: FONT }}>
+                  Chiffre d'affaires — {filterDays} derniers jours
+                </div>
+                <div style={{ fontSize: 36, fontWeight: 900, color: C.ink,
+                  letterSpacing: '-0.03em', lineHeight: 1, fontFamily: FONT,
+                  marginBottom: 14 }}>
+                  {fmtCFA(kpis.totalCA)}
+                </div>
+                {/* Encaissement progress bar */}
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between',
+                    alignItems: 'center', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                      Encaissé : <strong style={{ color: C.green }}>{fmtCFA(kpis.totalEncaisse)}</strong>
+                    </span>
+                    <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                      Créances : <strong style={{
+                        color: kpis.totalEnAttente > 0 ? C.orange : C.muted
+                      }}>{fmtCFA(kpis.totalEnAttente)}</strong>
+                    </span>
+                  </div>
+                  <div style={{ height: 8, background: C.bg, borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%', borderRadius: 4,
+                      width: `${Math.min(100, encRate)}%`,
+                      background: encRate >= 100 ? C.green : encRate >= 70 ? C.blue : C.orange,
+                      transition: 'width 0.6s ease',
+                    }} />
+                  </div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4, fontFamily: FONT }}>
+                    {encRate.toFixed(0)} % encaissé
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* ── Secondary KPIs ── */}
           <div style={{ display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14 }}>
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
             {([
-              ["Chiffre d'affaires", fmtCFA(kpis.totalCA),
-                C.green,  C.greenL,  C.green],
-              ['Ventes confirmées',  String(kpis.confirmed),
-                C.blue,   C.surface, C.blue],
-              ['Ventes livrées',     String(kpis.delivered),
-                C.navy,   C.surface, C.navy],
-              ['Surface vendue',     fmtM2(kpis.totalM2),
-                C.orange, C.surface, C.orange],
-              ['Panier moyen',       fmtCFA(kpis.avgBasket),
-                C.ink,    C.surface, C.slate],
+              ['Créances clients',
+                fmtCFA(kpis.totalEnAttente),
+                kpis.totalEnAttente > 0 ? C.orange : C.muted,
+                kpis.totalEnAttente > 0 ? C.orange : C.muted,
+                'Montant non encore réglé'],
+              ['Commandes',
+                String(kpis.confirmed),
+                C.blue, C.blue,
+                `dont ${kpis.delivered} livrée${kpis.delivered !== 1 ? 's' : ''}`],
+              ['Panier moyen',
+                fmtCFA(kpis.avgBasket),
+                C.ink, C.slate,
+                'Par transaction'],
               ['Taux annulation',
                 kpis.cancelRate.toFixed(1) + ' %',
-                kpis.cancelRate > 10 ? C.red    : C.muted,
-                C.surface,
-                kpis.cancelRate > 10 ? C.red    : C.muted],
+                kpis.cancelRate > 10 ? C.red : C.muted,
+                kpis.cancelRate > 10 ? C.red : C.muted,
+                kpis.cancelRate > 10 ? 'Taux élevé — à surveiller' : 'Dans les normes'],
             ] as [string, string, string, string, string][])
-              .map(([label, value, color, bg, accent]) => (
+              .map(([label, value, color, accent, hint]) => (
                 <div key={label} style={{
                   background: C.surface, borderRadius: 10,
-                  border: `1px solid ${C.border}`, padding: '16px 18px',
-                  borderLeft: `4px solid ${accent}`,
+                  border: `1px solid ${C.border}`, padding: '14px 16px',
+                  borderLeft: `3px solid ${accent}`,
                 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: C.muted,
                     textTransform: 'uppercase', letterSpacing: '0.07em',
@@ -410,8 +478,11 @@ export default function ReportsClient({
                     {label}
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 900, color,
-                    letterSpacing: '-0.02em', fontFamily: FONT }}>
+                    letterSpacing: '-0.02em', fontFamily: FONT, marginBottom: 3 }}>
                     {value}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                    {hint}
                   </div>
                 </div>
               ))}
@@ -621,13 +692,18 @@ export default function ReportsClient({
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-                    {['Rang', 'Produit', 'Référence', 'Catégorie',
-                      'Surface vendue', 'Carreaux', 'CA généré']
-                      .map(h => <th key={h} style={TH}>{h}</th>)}
+                    {[
+                      'Rang', 'Produit', 'Référence', 'Catégorie',
+                      'Surface vendue', 'Carreaux', 'CA généré',
+                      ...(profile.role === 'owner' ? ['Marge brute', 'Marge %'] : []),
+                    ].map(h => <th key={h} style={TH}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
-                  {productData.map((p, idx) => (
+                  {productData.map((p, idx) => {
+                    const margin    = p.ca - p.cost
+                    const marginPct = p.ca > 0 ? (margin / p.ca) * 100 : 0
+                    return (
                     <tr key={p.ref} style={{ borderBottom: `1px solid ${C.border}` }}>
                       <td style={{ ...TD, fontSize: 16, fontWeight: 900,
                         color: idx === 0 ? C.gold : idx === 1 ? C.muted : C.border }}>
@@ -651,8 +727,21 @@ export default function ReportsClient({
                       <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
                         {fmtCFA(p.ca)}
                       </td>
+                      {profile.role === 'owner' && (
+                        <>
+                          <td style={{ ...TD, fontSize: 13, fontWeight: 700,
+                            color: margin >= 0 ? C.green : C.red }}>
+                            {fmtCFA(margin)}
+                          </td>
+                          <td style={{ ...TD, fontSize: 12,
+                            color: marginPct >= 0 ? C.green : C.red }}>
+                            {p.cost > 0 ? marginPct.toFixed(1) + ' %' : '—'}
+                          </td>
+                        </>
+                      )}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -850,6 +939,8 @@ const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }
   BOUTIQUE_ACTIVATED:        { label: 'Boutique activée',        color: C.green,  bg: C.greenL },
   BOUTIQUE_DEACTIVATED:      { label: 'Boutique désactivée',     color: C.red,    bg: C.redL },
   FLOOR_PRICE_VIOLATION_ATTEMPT: { label: 'Tentative prix plancher', color: C.red, bg: C.redL },
+  BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.navy,   bg: C.blueL },
+  PAYMENT_RECORDED:              { label: 'Paiement enregistré',     color: C.green,  bg: C.greenL },
 }
 
 const ROLE_LABELS: Record<string, string> = {

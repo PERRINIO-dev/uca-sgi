@@ -76,11 +76,13 @@ src/
 │   └── useIsMobile.ts                ← SSR-safe breakpoint hook (768px, useLayoutEffect)
 ├── lib/
 │   ├── types.ts
+│   ├── constants.ts                  ← LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS
 │   ├── push/
 │   │   └── send.ts                   ← sendPushToRoles() / sendPushToUser() utilities
 │   └── supabase/
 │       ├── client.ts
 │       ├── server.ts
+│       ├── badge-counts.ts
 │       └── queries.ts
 ├── app/
 │   ├── layout.tsx                    ← PWA metadata + viewport export
@@ -133,7 +135,8 @@ stock_request_status:  pending | approved | rejected
 sale_status:           draft | confirmed | preparing | ready | delivered | cancelled
 audit_action_type:     USER_* | PRODUCT_* | STOCK_REQUEST_* | SALE_* |
                        ORDER_* | FLOOR_PRICE_VIOLATION_ATTEMPT | LOGIN_* |
-                       PASSWORD_RESET | BOUTIQUE_ACTIVATED | BOUTIQUE_DEACTIVATED
+                       PASSWORD_RESET | PAYMENT_RECORDED |
+                       BOUTIQUE_CREATED | BOUTIQUE_ACTIVATED | BOUTIQUE_DEACTIVATED
 ```
 
 ### Tables
@@ -183,8 +186,18 @@ stock_before_tiles, stock_after_tiles
 **sales**
 ```
 id, created_at, sale_number (auto: VNT-YYYY-NNNN),
-boutique_id, vendor_id, customer_name, customer_phone,
-total_amount, status (sale_status), notes, updated_at
+boutique_id, vendor_id, customer_name, customer_phone, customer_cni,
+total_amount, amount_paid, payment_status (unpaid | partial | paid),
+status (sale_status), notes, updated_at
+```
+
+> `amount_paid` and `payment_status` are kept in sync by the
+> `sync_sale_payment_totals` trigger whenever a row is inserted into
+> `sale_payments`.
+
+**sale_payments** — partial / split payment records
+```
+id, sale_id (FK sales), amount, notes, created_by (FK users), created_at
 ```
 
 **sale_items** — snapshots at time of sale
@@ -241,12 +254,19 @@ CREATE POLICY "own subscriptions" ON push_subscriptions
 | `set_sale_number` | sales | Auto-numbering | VNT-YYYY-NNNN |
 | `set_order_number` | orders | Auto-numbering | CMD-YYYY-NNNN |
 
-### Key RPC Function
+### Key RPC Functions
 ```sql
 apply_approved_stock_request(request_id UUID)
 -- SECURITY DEFINER
 -- Called from dashboard/actions.ts approveStockRequest()
 -- Updates stock.total_tiles and records stock_after_tiles
+
+decrement_stock_on_delivery(p_product_id UUID, p_quantity INTEGER)
+-- SECURITY DEFINER
+-- Called from warehouse/actions.ts updateOrderStatus() on delivery
+-- Single atomic UPDATE: total_tiles and reserved_tiles decremented in one statement,
+-- avoiding any read-then-write race condition
+-- Migration: supabase/migrations/20260326_decrement_stock_on_delivery.sql
 ```
 
 ### Supabase Realtime
@@ -316,9 +336,12 @@ loose_tiles  = quantity_tiles % tiles_per_carton
 Input modes: m² or Cartons + carreaux (free loose tiles)
 
 ### Stock Alert Thresholds
-- Critical: `available_full_cartons < 20` — shown in red on dashboard and products
-- Low: `available_full_cartons < 50` — shown in orange
-- Push notification sent to admin/owner when a product crosses 20 cartons after delivery
+Defined in `src/lib/constants.ts` — single source of truth:
+```ts
+LOW_STOCK_CARTONS      = 50  // orange warning on dashboard, products page, and push notification
+CRITICAL_STOCK_CARTONS = 20  // red indicator on product cards
+```
+- Push notification sent to admin/owner when any product drops below **50 cartons** after delivery
 
 ### Stock Lifecycle
 ```
@@ -342,8 +365,8 @@ Vendor creates sale (status: confirmed)
     → Warehouse clicks "Commencer" → order: preparing, sale: preparing
     → Warehouse clicks "Marquer prête" → order: ready, sale: ready
     → Warehouse confirms delivery → order: delivered, sale: delivered (via trigger)
-    → TRIGGER deducts stock.total_tiles and reserved_tiles
-    → Push sent to admin/owner if any product drops below 20 cartons
+    → decrement_stock_on_delivery() RPC atomically decrements total_tiles and reserved_tiles
+    → Push sent to admin/owner if any product drops below 50 cartons
 
 Sale cancellation:
     → Sale status → cancelled
@@ -358,11 +381,17 @@ Sale cancellation:
 | Stock request submitted | admin, owner |
 | Stock request approved | requester (warehouse user) |
 | Stock request rejected | requester (warehouse user) |
-| Product below 20 cartons after delivery | admin, owner |
+| Product below 50 cartons after delivery | admin, owner |
 
 ### Vendor Sales Visibility
 Vendors only see their own sales (`vendor_id = auth.uid()`).
 Admin and owner see all sales across all boutiques.
+
+### Owner-Only Data
+`purchase_price` is never exposed to admin or vendor roles:
+- Hidden in product create/edit forms for non-owner users
+- "Marge brute" column in Reports → Produits tab visible to owner only
+- `purchase_price` field is owner-only in the products page
 
 ---
 
@@ -471,6 +500,7 @@ npm run start
 - [ ] Supabase Auth → Redirect URLs includes `https://uca-sgi.vercel.app/auth/callback`
 - [ ] Supabase Realtime enabled for `sales` and `stock_requests` tables
 - [ ] `push_subscriptions` table created with RLS policy
+- [ ] Run migration in Supabase SQL editor: `supabase/migrations/20260326_decrement_stock_on_delivery.sql`
 - [ ] `npm run build` locally — zero errors
 - [ ] Smoke test: vendor login → new sale → warehouse receives realtime update
 - [ ] Smoke test: warehouse confirms delivery → stock levels update

@@ -2,6 +2,7 @@ import { createClient }                           from '@/lib/supabase/server'
 import { redirect }                               from 'next/navigation'
 import { getDashboardStats, getSalesByPeriod }    from '@/lib/supabase/queries'
 import { getBadgeCounts }                         from '@/lib/supabase/badge-counts'
+import { LOW_STOCK_CARTONS }                      from '@/lib/constants'
 import DashboardClient                            from './DashboardClient'
 
 export default async function DashboardPage() {
@@ -29,13 +30,33 @@ export default async function DashboardPage() {
     getBadgeCounts(profile.role, supabase),
   ])
 
-  // Aggregate KPIs
+  // ── Today KPIs ────────────────────────────────────────────────────────────
   const todayRevenue = stats.todaySales.reduce(
     (sum: number, s: any) => sum + Number(s.total_amount), 0
   )
   const todayCount = stats.todaySales.length
 
-  // Revenue by boutique this week
+  // ── Month-to-date KPIs ────────────────────────────────────────────────────
+  const mtdRevenue   = stats.mtdSales.reduce(
+    (sum: number, s: any) => sum + Number(s.total_amount), 0
+  )
+  const mtdEncaisse  = stats.mtdSales.reduce(
+    (sum: number, s: any) => sum + Number(s.amount_paid ?? 0), 0
+  )
+  const mtdCreances  = Math.max(0, mtdRevenue - mtdEncaisse)
+  const mtdCount     = stats.mtdSales.length
+  const mtdAvgBasket = mtdCount > 0 ? mtdRevenue / mtdCount : 0
+
+  // ── Previous month for trend ──────────────────────────────────────────────
+  const prevMonthRevenue = stats.prevMonthSales.reduce(
+    (sum: number, s: any) => sum + Number(s.total_amount), 0
+  )
+  // Trend: % change vs previous month (capped display at ±999%)
+  const mtdTrend = prevMonthRevenue > 0
+    ? ((mtdRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
+    : null
+
+  // ── Revenue by boutique (MTD) ─────────────────────────────────────────────
   const boutiqueMap: Record<string, number> = {}
   stats.weekSales.forEach((s: any) => {
     const name = s.boutiques?.name ?? 'Inconnue'
@@ -43,7 +64,7 @@ export default async function DashboardPage() {
   })
   const boutiqueStats = Object.entries(boutiqueMap).map(([name, ca]) => ({ name, ca }))
 
-  // Daily chart data
+  // ── Daily chart data (last 7 days) ────────────────────────────────────────
   const dailyMap: Record<string, number> = {}
   chartData.forEach((s: any) => {
     const day = new Date(s.created_at).toLocaleDateString('fr-FR', { weekday: 'short' })
@@ -51,9 +72,9 @@ export default async function DashboardPage() {
   })
   const dailyChart = Object.entries(dailyMap).map(([day, ca]) => ({ day, ca }))
 
-  // Stock alerts (available < 50 cartons)
+  // ── Stock alerts (available < 50 cartons) ────────────────────────────────
   const stockAlerts = stats.stockLevels.filter(
-    (s: any) => Number(s.available_full_cartons) < 50
+    (s: any) => Number(s.available_full_cartons) < LOW_STOCK_CARTONS
   )
 
   return (
@@ -61,6 +82,11 @@ export default async function DashboardPage() {
       profile={profile}
       todayRevenue={todayRevenue}
       todayCount={todayCount}
+      mtdRevenue={mtdRevenue}
+      mtdCreances={mtdCreances}
+      mtdAvgBasket={mtdAvgBasket}
+      mtdTrend={mtdTrend}
+      activeOrdersCount={stats.activeOrdersCount}
       pendingRequests={stats.pendingRequests}
       stockAlerts={stockAlerts}
       boutiqueStats={boutiqueStats}

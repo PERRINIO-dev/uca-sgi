@@ -26,14 +26,15 @@ export default async function ReportsPage() {
     .from('sales')
     .select(`
       id, sale_number, created_at, status,
-      total_amount, customer_name, customer_phone, notes,
+      total_amount, amount_paid, payment_status,
+      customer_name, customer_phone, notes,
       boutiques ( id, name ),
       users!sales_vendor_id_fkey ( id, full_name ),
       sale_items (
         id, quantity_tiles, unit_price_per_m2,
         total_price, tile_area_m2_snapshot,
         tiles_per_carton_snapshot,
-        products ( id, name, reference_code, category )
+        products ( id, name, reference_code, category, purchase_price )
       )
     `)
     .gte('created_at', since.toISOString())

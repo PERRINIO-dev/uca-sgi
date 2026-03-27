@@ -41,11 +41,12 @@ interface CartItem {
 }
 
 export default function VendorSaleForm({
-  profile, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts,
+  profile, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts, ownerName = 'Le Propriétaire',
 }: {
   profile: any; boutique: any; products: any[]
   allBoutiques: any[]; isOwnerOrAdmin: boolean
   badgeCounts?: BadgeCounts
+  ownerName?: string
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -66,6 +67,7 @@ export default function VendorSaleForm({
   const [customerPhone2,   setPhone2]    = useState('')
   const [customerCNI,      setCNI]       = useState('')
   const [notes,            setNotes]     = useState('')
+  const [amountPaid,       setAmountPaid] = useState('')
   const [loading,          setLoading]   = useState(false)
   const [error,            setError]     = useState<string | null>(null)
   const [successData,      setSuccess]   = useState<any>(null)
@@ -232,12 +234,28 @@ export default function VendorSaleForm({
     <tbody>${rows}</tbody>
   </table>
 
+  ${(() => {
+      const total   = Math.round(successData?.serverTotal ?? cartTotal)
+      const paid    = Math.max(0, parseFloat(amountPaid) || 0)
+      const balance = Math.max(0, total - paid)
+      const payLabel = paid >= total ? 'Payé' : paid > 0 ? 'Acompte versé' : 'Impayé'
+      const payColor = paid >= total ? '#059669' : paid > 0 ? '#D97706' : '#DC2626'
+      return `
   <div class="total-row">
     <div class="total-box">
       <div class="total-label">Montant total</div>
-      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(Math.round(successData?.serverTotal ?? cartTotal))} FCFA</div>
+      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} FCFA</div>
+      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} FCFA</div>` : ''}
+      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste : ${new Intl.NumberFormat('fr-FR').format(balance)} FCFA</div>` : ''}
     </div>
   </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:28px">
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;background:${payColor}20;border:1px solid ${payColor};font-size:12px;font-weight:700;color:${payColor}">
+      <span style="width:6px;height:6px;border-radius:50%;background:${payColor}"></span>
+      ${payLabel}
+    </span>
+  </div>`
+    })()}
 
   <div class="sig-section">
     <div class="sig-title">Signatures</div>
@@ -249,7 +267,7 @@ export default function VendorSaleForm({
         <div class="sig-sub">Signature du vendeur</div>
       </div>
       <div class="sig-block">
-        <div class="sig-name">Kepseu Lucien</div>
+        <div class="sig-name">${ownerName}</div>
         <div class="sig-role">Propriétaire — UCA</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
@@ -352,6 +370,7 @@ export default function VendorSaleForm({
       customer_phone: phone,
       customer_cni:   customerCNI.trim(),
       total_amount:   cartTotal,
+      amount_paid:    parseFloat(amountPaid) || 0,
       notes:          notes || null,
       items: cart.map(item => ({
         product_id:                item.product.product_id,
@@ -441,7 +460,7 @@ export default function VendorSaleForm({
                   className="btn-outline-navy"
                   onClick={() => {
                     setCart([]); setName(''); setPhone(''); setPhone2('')
-                    setCNI(''); setNotes(''); resetInputs()
+                    setCNI(''); setNotes(''); setAmountPaid(''); resetInputs()
                     setStep('form'); setFormStep(1)
                   }}
                   style={{ flex: 1, padding: '11px', background: C.surface,
@@ -985,6 +1004,80 @@ export default function VendorSaleForm({
                         placeholder="Instructions de livraison, observations…"
                         style={{ ...inputStyle(), resize: 'vertical' }} />
                     </div>
+
+                    {/* ── Paiement ── */}
+                    <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink,
+                        marginBottom: 10, fontFamily: FONT }}>
+                        Paiement
+                      </div>
+
+                      {/* Quick-select buttons */}
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                        <button type="button"
+                          onClick={() => setAmountPaid(String(cartTotal))}
+                          style={{
+                            padding: '6px 14px', borderRadius: 6, border: `1.5px solid ${C.green}`,
+                            background: parseFloat(amountPaid) >= cartTotal ? C.green : 'transparent',
+                            color: parseFloat(amountPaid) >= cartTotal ? C.surface : C.green,
+                            fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+                          }}>
+                          Paiement complet
+                        </button>
+                        <button type="button"
+                          onClick={() => setAmountPaid('')}
+                          style={{
+                            padding: '6px 14px', borderRadius: 6, border: `1.5px solid ${C.border}`,
+                            background: amountPaid === '' ? C.bg : 'transparent',
+                            color: C.slate,
+                            fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+                          }}>
+                          Acompte / Partiel
+                        </button>
+                      </div>
+
+                      <input
+                        type="number" min="0" step="100"
+                        value={amountPaid}
+                        onChange={e => setAmountPaid(e.target.value)}
+                        placeholder={`Montant encaissé (max ${fmtCFA(cartTotal)})`}
+                        style={inputStyle()}
+                      />
+
+                      {/* Balance summary */}
+                      {(() => {
+                        const paid    = Math.max(0, parseFloat(amountPaid) || 0)
+                        const balance = cartTotal - paid
+                        const isOver  = paid > cartTotal
+                        if (paid === 0) return null
+                        return (
+                          <div style={{
+                            marginTop: 10, padding: '10px 14px', borderRadius: 8,
+                            background: isOver ? C.redL : balance === 0 ? C.greenL : C.orangeL,
+                            border: `1px solid ${isOver ? C.red : balance === 0 ? C.green : C.orange}`,
+                            display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
+                          }}>
+                            <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                              Encaissé : <strong>{fmtCFA(paid)}</strong>
+                            </span>
+                            {isOver ? (
+                              <span style={{ fontSize: 12, color: C.red, fontWeight: 700, fontFamily: FONT }}>
+                                Montant supérieur au total
+                              </span>
+                            ) : balance === 0 ? (
+                              <span style={{ fontSize: 12, color: C.green, fontWeight: 700, fontFamily: FONT }}>
+                                Soldé
+                              </span>
+                            ) : (
+                              <span style={{ fontSize: 12, color: C.orange, fontWeight: 700, fontFamily: FONT }}>
+                                Reste : {fmtCFA(balance)}
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
+
                   </div>
                 </Card>
 

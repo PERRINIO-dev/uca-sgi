@@ -110,20 +110,30 @@ export default function DashboardClient({
   profile,
   todayRevenue,
   todayCount,
+  mtdRevenue,
+  mtdCreances,
+  mtdAvgBasket,
+  mtdTrend,
+  activeOrdersCount,
   pendingRequests,
   stockAlerts,
   boutiqueStats,
   dailyChart,
   badgeCounts,
 }: {
-  profile:         any
-  todayRevenue:    number
-  todayCount:      number
-  pendingRequests: any[]
-  stockAlerts:     any[]
-  boutiqueStats:   any[]
-  dailyChart:      any[]
-  badgeCounts?:    BadgeCounts
+  profile:           any
+  todayRevenue:      number
+  todayCount:        number
+  mtdRevenue:        number
+  mtdCreances:       number
+  mtdAvgBasket:      number
+  mtdTrend:          number | null
+  activeOrdersCount: number
+  pendingRequests:   any[]
+  stockAlerts:       any[]
+  boutiqueStats:     any[]
+  dailyChart:        any[]
+  badgeCounts?:      BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -163,32 +173,38 @@ export default function DashboardClient({
     setLoading(null)
   }
 
-  const avgBasket = todayCount > 0 ? todayRevenue / todayCount : 0
-
   const kpis = [
     {
-      label:  "Chiffre d'affaires",
-      sub:    "Aujourd'hui · ventes livrées",
-      value:  fmtCFA(todayRevenue),
+      label:  "CA du mois",
+      sub:    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+      value:  fmtCFA(mtdRevenue),
       color:  C.blue,
-      colorL: C.blueL,
       Icon:   IconRevenue,
+      trend:  mtdTrend,
     },
     {
-      label:  'Ventes du jour',
-      sub:    'Ventes livrées aujourd\'hui',
-      value:  String(todayCount),
-      color:  C.green,
-      colorL: C.greenL,
-      Icon:   IconCount,
-    },
-    {
-      label:  'Panier moyen',
-      sub:    'Par transaction',
-      value:  fmtCFA(avgBasket),
-      color:  C.orange,
-      colorL: C.orangeL,
+      label:  'Créances clients',
+      sub:    'Montant en attente de règlement',
+      value:  fmtCFA(mtdCreances),
+      color:  mtdCreances > 0 ? C.orange : C.green,
       Icon:   IconBasket,
+      trend:  null,
+    },
+    {
+      label:  'Commandes actives',
+      sub:    'Confirmées · en préparation · prêtes',
+      value:  String(activeOrdersCount),
+      color:  C.navy,
+      Icon:   IconCount,
+      trend:  null,
+    },
+    {
+      label:  'Panier moyen (mois)',
+      sub:    `${todayCount} vente${todayCount !== 1 ? 's' : ''} aujourd'hui`,
+      value:  fmtCFA(mtdAvgBasket),
+      color:  C.green,
+      Icon:   IconBasket,
+      trend:  null,
     },
   ]
 
@@ -227,41 +243,52 @@ export default function DashboardClient({
       {/* ── KPI cards ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: 16, marginBottom: 24,
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: 14, marginBottom: 24,
       }}>
-        {kpis.map(({ label, sub, value, color, Icon }) => (
+        {kpis.map(({ label, sub, value, color, Icon, trend }) => (
           <div key={label} style={{
             background: C.surface, borderRadius: 14,
             border: `1px solid ${C.border}`,
             boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-            padding: '20px 22px',
+            padding: '18px 20px',
             borderLeft: `4px solid ${color}`,
-            position: 'relative', overflow: 'hidden',
           }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start',
+              justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
                 textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
                 {label}
               </div>
               <div style={{
-                width: 38, height: 38, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 9,
                 background: color,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-                boxShadow: `0 4px 12px ${color}50`,
+                flexShrink: 0, boxShadow: `0 3px 10px ${color}45`,
               }}>
                 <Icon />
               </div>
             </div>
             <div style={{
-              fontSize: 32, fontWeight: 800, color: C.ink,
+              fontSize: 28, fontWeight: 800, color: C.ink,
               letterSpacing: '-0.03em', lineHeight: 1.1, fontFamily: FONT,
               marginBottom: 6,
             }}>
               {value}
             </div>
-            <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</span>
+              {trend !== null && trend !== undefined && (
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '1px 7px',
+                  borderRadius: 100, fontFamily: FONT,
+                  background: trend >= 0 ? C.greenL : C.redL,
+                  color: trend >= 0 ? C.green : C.red,
+                }}>
+                  {trend >= 0 ? '+' : ''}{trend.toFixed(0)} %
+                </span>
+              )}
+            </div>
           </div>
         ))}
       </div>
@@ -301,7 +328,7 @@ export default function DashboardClient({
         </Panel>
 
         <Panel>
-          <SectionTitle>CA par boutique (semaine)</SectionTitle>
+          <SectionTitle>CA par boutique (mois en cours)</SectionTitle>
           {boutiqueStats.length > 0 ? (
             <ResponsiveContainer width="100%" height={190}>
               <BarChart data={boutiqueStats} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>

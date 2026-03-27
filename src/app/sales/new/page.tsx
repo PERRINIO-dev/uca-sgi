@@ -26,7 +26,7 @@ export default async function NewSalePage() {
   if (!isOwnerOrAdmin && !profile.boutique_id) redirect('/dashboard?error=no_boutique')
 
   // Run all independent queries in parallel
-  const [boutiqueRes, productsRes, pricingRes, badgeCounts] = await Promise.all([
+  const [boutiqueRes, productsRes, pricingRes, badgeCounts, ownerRes] = await Promise.all([
     isOwnerOrAdmin
       ? supabase.from('boutiques').select('id, name').eq('is_active', true).order('name')
       : Promise.resolve({ data: [] as any[] }),
@@ -48,6 +48,7 @@ export default async function NewSalePage() {
       .eq('is_active', true),
 
     getBadgeCounts(profile.role, supabase),
+    supabase.from('users').select('full_name').eq('role', 'owner').limit(1).single(),
   ])
 
   if (isOwnerOrAdmin) {
@@ -67,6 +68,8 @@ export default async function NewSalePage() {
       reference_price_per_m2: pricingMap[p.product_id].reference_price_per_m2,
     }))
 
+  const ownerName = (ownerRes as any).data?.full_name ?? 'Le Propriétaire'
+
   return (
     <VendorSaleForm
       profile={profile}
@@ -75,6 +78,7 @@ export default async function NewSalePage() {
       allBoutiques={allBoutiques}
       isOwnerOrAdmin={isOwnerOrAdmin}
       badgeCounts={badgeCounts}
+      ownerName={ownerName}
     />
   )
 }

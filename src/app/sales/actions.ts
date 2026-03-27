@@ -32,6 +32,7 @@ interface CreateSalePayload {
   customer_phone: string | null
   customer_cni:   string | null
   total_amount:   number
+  amount_paid:    number
   notes:          string | null
   items:          SaleItem[]
 }
@@ -133,6 +134,11 @@ export async function createSale(payload: CreateSalePayload) {
   }
 
   // 3. Create sale header (use server-verified user.id and server-calculated total)
+  const amountPaid   = Math.max(0, payload.amount_paid ?? 0)
+  const paymentStatus =
+    amountPaid >= serverTotal ? 'paid' :
+    amountPaid > 0            ? 'partial' : 'unpaid'
+
   const { data: sale, error: saleError } = await supabase
     .from('sales')
     .insert({
@@ -142,6 +148,8 @@ export async function createSale(payload: CreateSalePayload) {
       customer_phone: payload.customer_phone,
       customer_cni:   payload.customer_cni,
       total_amount:   serverTotal,
+      amount_paid:    amountPaid,
+      payment_status: paymentStatus,
       notes:          payload.notes,
       status:         'confirmed',
       sale_number:    '',
@@ -227,6 +235,17 @@ export async function createSale(payload: CreateSalePayload) {
     await supabase.from('sale_items').delete().eq('sale_id', sale.id)
     await supabase.from('sales').delete().eq('id', sale.id)
     return { error: orderError.message }
+  }
+
+  // 5.5 Record initial payment in history (enables multi-tranche tracking)
+  if (amountPaid > 0) {
+    await supabase.from('sale_payments').insert({
+      sale_id:    sale.id,
+      amount:     amountPaid,
+      notes:      'Paiement initial',
+      created_by: user.id,
+    })
+    // Trigger sync_sale_payment_totals() fires automatically in DB
   }
 
   // 6. Audit log
@@ -355,5 +374,55 @@ export async function cancelSale(saleId: string) {
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
   revalidatePath('/products')
+  revalidatePath('/reports')
+  return { success: true }
+}
+
+export async function addPayment(
+  saleId:  string,
+  amount:  number,
+  notes:   string | null,
+) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: profile } = await supabase
+    .from('users').select('role').eq('id', user.id).single()
+  if (!profile) return { error: 'Profil introuvable.' }
+
+  const { data: sale } = await supabase
+    .from('sales').select('id, vendor_id, status, total_amount, amount_paid').eq('id', saleId).single()
+  if (!sale) return { error: 'Vente introuvable.' }
+  if (sale.status === 'cancelled') return { error: 'Impossible d\'ajouter un paiement à une vente annulée.' }
+
+  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  if (!isAdminOrOwner && sale.vendor_id !== user.id) return { error: 'Accès refusé.' }
+  if (!amount || amount <= 0) return { error: 'Le montant doit être supérieur à 0.' }
+
+  const remaining = Number(sale.total_amount) - Number(sale.amount_paid ?? 0)
+  if (amount > remaining + 0.01) {
+    return { error: `Montant dépasse le solde restant (${new Intl.NumberFormat('fr-FR').format(Math.round(remaining))} FCFA).` }
+  }
+
+  const { error: insertError } = await supabase
+    .from('sale_payments')
+    .insert({ sale_id: saleId, amount, notes, created_by: user.id })
+
+  if (insertError) return { error: insertError.message }
+  // DB trigger sync_sale_payment_totals() automatically updates sales.amount_paid + payment_status
+
+  await supabase.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: profile.role,
+    action_type:        'PAYMENT_RECORDED',
+    entity_type:        'sale_payments',
+    entity_id:          saleId,
+    data_after:         { amount, notes },
+  })
+
+  revalidatePath('/sales')
+  revalidatePath('/reports')
   return { success: true }
 }

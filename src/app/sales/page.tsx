@@ -29,7 +29,8 @@ export default async function SalesPage({
     .from('sales')
     .select(`
       id, created_at, sale_number, status, vendor_id,
-      total_amount, customer_name, customer_phone, customer_cni, notes,
+      total_amount, amount_paid, payment_status,
+      customer_name, customer_phone, customer_cni, notes,
       boutiques(name),
       users!sales_vendor_id_fkey(full_name),
       sale_items (
@@ -48,16 +49,18 @@ export default async function SalesPage({
 
   const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
 
-  const [{ data: sales }, badgeCounts, boutiquesResult] = await Promise.all([
+  const [{ data: sales }, badgeCounts, boutiquesResult, ownerResult] = await Promise.all([
     query,
     getBadgeCounts(profile.role, supabase),
     // Fetch boutique count for owner/admin so the client can warn before navigating
     isOwnerOrAdmin
       ? supabase.from('boutiques').select('id', { count: 'exact', head: true }).eq('is_active', true)
       : Promise.resolve({ count: 1 }),
+    supabase.from('users').select('full_name').eq('role', 'owner').limit(1).single(),
   ])
 
   const hasBoutiques = isOwnerOrAdmin ? ((boutiquesResult as any).count ?? 0) > 0 : true
+  const ownerName = (ownerResult as any).data?.full_name ?? 'Le Propriétaire'
 
   return (
     <SalesListClient
@@ -66,6 +69,7 @@ export default async function SalesPage({
       badgeCounts={badgeCounts}
       errorCode={params.error}
       hasBoutiques={hasBoutiques}
+      ownerName={ownerName}
     />
   )
 }

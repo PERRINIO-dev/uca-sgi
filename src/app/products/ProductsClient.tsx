@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { createProduct, updateProduct } from './actions'
 import PageLayout       from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import { LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS } from '@/lib/constants'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -112,10 +113,15 @@ export default function ProductsClient({
     const required = [
       form.referenceCode, form.name, form.supplier,
       form.widthCm, form.heightCm, form.tilesPerCarton,
-      form.purchasePrice, form.floorPricePerM2, form.referencePricePerM2,
+      ...(profile.role === 'owner' ? [form.purchasePrice] : []),
+      form.floorPricePerM2, form.referencePricePerM2,
     ]
     if (required.some(v => !v)) {
       setError('Veuillez remplir tous les champs obligatoires.')
+      return
+    }
+    if (profile.role === 'owner' && parseFloat(form.purchasePrice) >= parseFloat(form.floorPricePerM2)) {
+      setError('Le prix d\'achat doit être inférieur au prix plancher.')
       return
     }
     if (parseFloat(form.floorPricePerM2) >= parseFloat(form.referencePricePerM2)) {
@@ -170,6 +176,10 @@ export default function ProductsClient({
 
   const handleUpdate = async () => {
     if (!editProduct) return
+    if (profile.role === 'owner' && form.purchasePrice && parseFloat(form.purchasePrice) >= parseFloat(form.floorPricePerM2)) {
+      setError('Le prix d\'achat doit être inférieur au prix plancher.')
+      return
+    }
     if (parseFloat(form.floorPricePerM2) >= parseFloat(form.referencePricePerM2)) {
       setError('Le prix plancher doit être inférieur au prix de référence.')
       return
@@ -299,8 +309,8 @@ export default function ProductsClient({
               const availM2    = available * tileArea
               const tpc        = parseInt(p.tiles_per_carton)
               const availCartons = Math.floor(available / tpc)
-              const isCritical   = availCartons < 20
-              const isLow        = availCartons < 50
+              const isCritical   = availCartons < CRITICAL_STOCK_CARTONS
+              const isLow        = availCartons < LOW_STOCK_CARTONS
               const stockColor = !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green
 
               return (
@@ -552,11 +562,13 @@ export default function ProductsClient({
             )}
 
             <Row>
-              <Field label="Prix d'achat (FCFA) *">
-                <input type="number" min="0" value={form.purchasePrice}
-                  onChange={e => setField('purchasePrice', e.target.value)}
-                  placeholder="ex : 8000" style={inputStyle} />
-              </Field>
+              {profile.role === 'owner' && (
+                <Field label="Prix d'achat/m² (FCFA) *">
+                  <input type="number" min="0" value={form.purchasePrice}
+                    onChange={e => setField('purchasePrice', e.target.value)}
+                    placeholder="ex : 8000" style={inputStyle} />
+                </Field>
+              )}
               <Field label="Prix plancher/m² *">
                 <input type="number" min="0" value={form.floorPricePerM2}
                   onChange={e => setField('floorPricePerM2', e.target.value)}
@@ -638,11 +650,13 @@ export default function ProductsClient({
             </Row>
 
             <Row>
-              <Field label="Prix d'achat (FCFA)">
-                <input type="number" min="0" value={form.purchasePrice}
-                  onChange={e => setField('purchasePrice', e.target.value)}
-                  style={inputStyle} />
-              </Field>
+              {profile.role === 'owner' && (
+                <Field label="Prix d'achat/m² (FCFA)">
+                  <input type="number" min="0" value={form.purchasePrice}
+                    onChange={e => setField('purchasePrice', e.target.value)}
+                    style={inputStyle} />
+                </Field>
+              )}
               <Field label="Prix plancher/m²">
                 <input type="number" min="0" value={form.floorPricePerM2}
                   onChange={e => setField('floorPricePerM2', e.target.value)}

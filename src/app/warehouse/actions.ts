@@ -4,6 +4,7 @@ import { createClient }                      from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { revalidatePath }                    from 'next/cache'
 import { sendPushToRoles, sendPushToUser }   from '@/lib/push/send'
+import { LOW_STOCK_CARTONS }                 from '@/lib/constants'
 
 function getAdmin() {
   return createAdminClient(
@@ -96,29 +97,55 @@ export async function updateOrderStatus(
 
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
+  if (newStatus === 'delivered') {
+    revalidatePath('/products')
+    revalidatePath('/reports')
+    revalidatePath('/sales')
+  }
 
-  // Push notification for delivery: check low stock
+  // On delivery: decrement stock (tiles physically left the warehouse)
   if (newStatus === 'delivered') {
     const admin = getAdmin()
-    // Fetch sale items to check which products were just delivered
+
     const { data: items } = await admin
       .from('sale_items')
-      .select('product_id, products(name)')
+      .select('product_id, quantity_tiles, products(name)')
       .eq('sale_id', order.sale_id)
 
     if (items?.length) {
       const productIds = items.map((i: any) => i.product_id)
-      const { data: stocks } = await admin
+
+      // Aggregate quantities per product (a sale can theoretically have two
+      // line-items for the same product, so we sum before decrementing)
+      const qtyMap = new Map<string, number>()
+      for (const item of items as any[]) {
+        qtyMap.set(item.product_id,
+          (qtyMap.get(item.product_id) ?? 0) + item.quantity_tiles
+        )
+      }
+
+      // Atomic decrement via RPC — single UPDATE per product, no read-then-write race.
+      // Requires the `decrement_stock_on_delivery` function from
+      // supabase/migrations/20260326_decrement_stock_on_delivery.sql
+      for (const [productId, qty] of qtyMap) {
+        await admin.rpc('decrement_stock_on_delivery', {
+          p_product_id: productId,
+          p_quantity:   qty,
+        })
+      }
+
+      // Check for low stock post-delivery
+      const { data: postStocks } = await admin
         .from('stock_view')
         .select('product_id, product_name, available_full_cartons')
         .in('product_id', productIds)
 
-      const lowStock = (stocks ?? []).filter((s: any) => Number(s.available_full_cartons) < 20)
+      const lowStock = (postStocks ?? []).filter((s: any) => Number(s.available_full_cartons) < LOW_STOCK_CARTONS)
       if (lowStock.length > 0) {
         const names = lowStock.map((s: any) => s.product_name).join(', ')
         sendPushToRoles(admin, ['admin', 'owner'], {
-          title: 'Stock critique',
-          body:  `Stock bas (<20 cartons) : ${names}`,
+          title: 'Stock bas',
+          body:  `Stock bas (<${LOW_STOCK_CARTONS} cartons) après livraison : ${names}`,
           url:   '/products',
           tag:   'low-stock',
         }).catch(console.error)

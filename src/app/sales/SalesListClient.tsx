@@ -1,10 +1,10 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useTransition } from 'react'
+import React, { useState, useMemo, useEffect, useTransition, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
-import { cancelSale }   from './actions'
+import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
@@ -25,6 +25,12 @@ const C = {
   red: '#DC2626', redL: '#FEF2F2',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+
+const PAYMENT_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  paid:    { label: 'Payé',    bg: '#ECFDF5', color: '#059669' },
+  partial: { label: 'Acompte', bg: '#FFFBEB', color: '#D97706' },
+  unpaid:  { label: 'Impayé',  bg: '#FEF2F2', color: '#DC2626' },
+}
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; dot: string }> = {
   draft:     { label: 'Brouillon',      bg: C.bg,      color: C.muted,   dot: C.muted },
@@ -102,12 +108,14 @@ export default function SalesListClient({
   badgeCounts,
   errorCode,
   hasBoutiques = true,
+  ownerName = 'Le Propriétaire',
 }: {
   profile:       any
   sales:         any[]
   badgeCounts?:  BadgeCounts
   errorCode?:    string
   hasBoutiques?: boolean
+  ownerName?:    string
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -136,11 +144,12 @@ export default function SalesListClient({
   const [cancelError, setCancelError] = useState<string | null>(null)
 
   // ── Filters ──
-  const [search,        setSearch]       = useState('')
-  const [statusFilter,  setStatusFilter] = useState('')
-  const [dateFrom,      setDateFrom]     = useState('')
-  const [dateTo,        setDateTo]       = useState('')
-  const [boutiqueFilter, setBoutiqueFilter] = useState('')
+  const [search,         setSearch]          = useState('')
+  const [statusFilter,   setStatusFilter]    = useState('')
+  const [paymentFilter,  setPaymentFilter]   = useState('')
+  const [dateFrom,       setDateFrom]        = useState('')
+  const [dateTo,         setDateTo]          = useState('')
+  const [boutiqueFilter, setBoutiqueFilter]  = useState('')
 
   // ── Pagination ──
   const PAGE_SIZE = 50
@@ -163,22 +172,24 @@ export default function SalesListClient({
     return sales.filter(s => {
       if (q && !s.sale_number?.toLowerCase().includes(q) && !s.customer_name?.toLowerCase().includes(q)) return false
       if (statusFilter && s.status !== statusFilter) return false
+      if (paymentFilter && s.payment_status !== paymentFilter) return false
       if (from && new Date(s.created_at) < from) return false
       if (to   && new Date(s.created_at) > to)   return false
       if (boutiqueFilter && s.boutiques?.name !== boutiqueFilter) return false
       return true
     })
-  }, [sales, search, statusFilter, dateFrom, dateTo, boutiqueFilter])
+  }, [sales, search, statusFilter, paymentFilter, dateFrom, dateTo, boutiqueFilter])
 
-  const hasFilters = search || statusFilter || dateFrom || dateTo || boutiqueFilter
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setDateFrom(''); setDateTo(''); setBoutiqueFilter(''); setPage(1) }
+  const hasFilters = search || statusFilter || paymentFilter || dateFrom || dateTo || boutiqueFilter
+  const clearFilters = () => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setDateFrom(''); setDateTo(''); setBoutiqueFilter(''); setPage(1) }
 
   // Reset to page 1 whenever any filter changes — derived implicitly since React
   // will re-render; we update page in each setter below via resetPage helper.
   const setSearchPaged       = (v: string)  => { setSearch(v);        setPage(1) }
-  const setStatusFilterPaged = (v: string)  => { setStatusFilter(v);  setPage(1) }
-  const setDateFromPaged     = (v: string)  => { setDateFrom(v);      setPage(1) }
-  const setDateToPaged       = (v: string)  => { setDateTo(v);        setPage(1) }
+  const setStatusFilterPaged   = (v: string) => { setStatusFilter(v);   setPage(1) }
+  const setPaymentFilterPaged  = (v: string) => { setPaymentFilter(v);  setPage(1) }
+  const setDateFromPaged       = (v: string) => { setDateFrom(v);       setPage(1) }
+  const setDateToPaged         = (v: string) => { setDateTo(v);         setPage(1) }
   const setBoutiqueFilterPaged = (v: string) => { setBoutiqueFilter(v); setPage(1) }
 
   const totalPages  = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE))
@@ -243,6 +254,11 @@ export default function SalesListClient({
               : hasFilters
               ? `${filteredSales.length} résultat${filteredSales.length !== 1 ? 's' : ''} sur ${sales.length} vente${sales.length > 1 ? 's' : ''}`
               : `${sales.length} vente${sales.length > 1 ? 's' : ''} · cliquer une ligne pour le détail`}
+            {sales.length >= 500 && (
+              <span style={{ marginLeft: 8, color: C.orange, fontWeight: 600 }}>
+                · Affichage limité aux 500 dernières ventes
+              </span>
+            )}
           </p>
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
@@ -318,6 +334,23 @@ export default function SalesListClient({
             {Object.entries(STATUS_CONFIG).map(([k, v]) => (
               <option key={k} value={k}>{v.label}</option>
             ))}
+          </select>
+          {/* Payment status */}
+          <select
+            value={paymentFilter}
+            onChange={e => setPaymentFilterPaged(e.target.value)}
+            style={{
+              height: 32, paddingLeft: 8, paddingRight: 24,
+              border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orange : C.border}`, borderRadius: 6,
+              fontSize: 12, fontFamily: FONT, color: paymentFilter ? C.ink : C.muted,
+              background: paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeL : C.bg,
+              cursor: 'pointer', outline: 'none', flex: '0 0 auto',
+            }}
+          >
+            <option value="">Tous les paiements</option>
+            <option value="unpaid">Impayé</option>
+            <option value="partial">Acompte versé</option>
+            <option value="paid">Payé</option>
           </select>
           {/* Date from */}
           <input
@@ -451,7 +484,7 @@ export default function SalesListClient({
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: C.bg }}>
                 <tr>
-                  {['N° Vente', 'Date', 'Client', 'Boutique', 'Vendeur', 'Montant', 'Statut', ''].map(h => (
+                  {['N° Vente', 'Date', 'Client', 'Boutique', ...(profile.role !== 'vendor' ? ['Vendeur'] : []), 'Montant', 'Statut', ''].map(h => (
                     <th key={h} style={TH_STYLE}>{h}</th>
                   ))}
                 </tr>
@@ -483,27 +516,50 @@ export default function SalesListClient({
                         </td>
                         <td style={TD_STYLE}>{sale.customer_name || <span style={{ color: C.muted }}>—</span>}</td>
                         <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.boutiques?.name ?? '—'}</td>
-                        <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
+                        {profile.role !== 'vendor' && (
+                          <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
+                        )}
                         <td style={{ ...TD_STYLE, fontWeight: 700 }}>
                           {fmtCFA(sale.total_amount)}
                         </td>
                         <td style={TD_STYLE}>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 5,
-                            fontSize: 11, fontWeight: 600,
-                            padding: '4px 10px', borderRadius: 100,
-                            background: cfg.bg, color: cfg.color,
-                            fontFamily: FONT,
-                          }}>
-                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
-                            {cfg.label}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 5,
+                              fontSize: 11, fontWeight: 600,
+                              padding: '4px 10px', borderRadius: 100,
+                              background: cfg.bg, color: cfg.color,
+                              fontFamily: FONT,
+                            }}>
+                              <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
+                              {cfg.label}
+                            </span>
+                            {sale.payment_status && sale.status !== 'cancelled' && (() => {
+                              const pc = PAYMENT_CONFIG[sale.payment_status]
+                              if (!pc) return null
+                              return (
+                                <span style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                                  fontSize: 10, fontWeight: 700,
+                                  padding: '3px 8px', borderRadius: 100,
+                                  background: pc.bg, color: pc.color,
+                                  fontFamily: FONT,
+                                }}>
+                                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: pc.color, flexShrink: 0 }} />
+                                  {pc.label}
+                                </span>
+                              )
+                            })()}
+                          </div>
                         </td>
                         <td
                           style={{ ...TD_STYLE, textAlign: 'right', whiteSpace: 'nowrap' }}
                           onClick={e => e.stopPropagation()}
                         >
-                          {['confirmed', 'draft'].includes(sale.status) &&
+                          {(
+                            ['confirmed', 'draft'].includes(sale.status) ||
+                            (['preparing', 'ready'].includes(sale.status) && ['owner', 'admin'].includes(profile.role))
+                          ) &&
                            (profile.role !== 'vendor' || sale.vendor_id === profile.id) && (
                             <button
                               className="btn-ghost-danger"
@@ -531,7 +587,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={8} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} />
+                            <SaleDetail sale={sale} profile={profile} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
                       )}
@@ -681,7 +737,7 @@ function IconPrint({ size = 13 }: { size?: number }) {
   )
 }
 
-function printSaleReceipt(sale: any) {
+function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
   const now = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -786,12 +842,28 @@ function printSaleReceipt(sale: any) {
     <tbody>${rows}</tbody>
   </table>
 
+  ${(() => {
+    const total      = Math.round(sale.total_amount)
+    const paid       = Math.max(0, parseFloat(sale.amount_paid ?? 0))
+    const balance    = Math.max(0, total - paid)
+    const payLabel   = paid >= total ? 'Payé' : paid > 0 ? 'Acompte versé' : 'Impayé'
+    const payColor   = paid >= total ? '#059669' : paid > 0 ? '#D97706' : '#DC2626'
+    return `
   <div class="total-row">
     <div class="total-box">
       <div class="total-label">Montant total</div>
-      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(Math.round(sale.total_amount))} FCFA</div>
+      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} FCFA</div>
+      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} FCFA</div>` : ''}
+      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste à payer : ${new Intl.NumberFormat('fr-FR').format(balance)} FCFA</div>` : ''}
     </div>
   </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:28px">
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:100px;background:${payColor}20;border:1px solid ${payColor};font-size:12px;font-weight:700;color:${payColor}">
+      <span style="width:6px;height:6px;border-radius:50%;background:${payColor}"></span>
+      ${payLabel}
+    </span>
+  </div>`
+  })()}
 
   <div class="sig-section">
     <div class="sig-title">Signatures</div>
@@ -803,7 +875,7 @@ function printSaleReceipt(sale: any) {
         <div class="sig-sub">Signature du vendeur</div>
       </div>
       <div>
-        <div class="sig-name">Kepseu Lucien</div>
+        <div class="sig-name">${ownerName}</div>
         <div class="sig-role">Propriétaire — UCA</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
@@ -824,18 +896,49 @@ function printSaleReceipt(sale: any) {
 }
 
 // ── Sale detail panel ─────────────────────────────────────────────────────────
-function SaleDetail({ sale }: { sale: any }) {
+function SaleDetail({ sale, profile, onPaymentAdded }: {
+  sale: any; profile: any; onPaymentAdded: () => void
+}) {
+  const supabase   = useMemo(() => createClient(), [])
+  const [payments, setPayments] = useState<any[] | null>(null)
+  const [showAdd,  setShowAdd]  = useState(false)
+  const [addAmt,   setAddAmt]   = useState('')
+  const [addNotes, setAddNotes] = useState('')
+  const [adding,   setAdding]   = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
+
+  const loadPayments = useCallback(async () => {
+    const { data } = await supabase
+      .from('sale_payments')
+      .select('id, amount, notes, created_at, users!sale_payments_created_by_fkey(full_name)')
+      .eq('sale_id', sale.id)
+      .order('created_at', { ascending: true })
+    setPayments(data ?? [])
+  }, [sale.id, supabase])
+
+  useEffect(() => { loadPayments() }, [loadPayments])
+
+  const handleAdd = async () => {
+    const amount = parseFloat(addAmt)
+    if (!amount || amount <= 0) { setAddError('Montant invalide.'); return }
+    setAdding(true); setAddError(null)
+    const result = await addPayment(sale.id, amount, addNotes || null)
+    setAdding(false)
+    if (result.error) { setAddError(result.error); return }
+    await loadPayments()
+    setAddAmt(''); setAddNotes(''); setShowAdd(false)
+    onPaymentAdded()
+  }
+
+  const canAdd = sale.status !== 'cancelled' &&
+    sale.payment_status !== 'paid' &&
+    (['owner', 'admin'].includes(profile.role) || sale.vendor_id === profile.id)
+
   return (
-    <div style={{
-      background: C.bg, borderRadius: 8,
-      padding: '14px 16px', border: `1px solid ${C.border}`,
-      marginTop: 2,
-    }}>
-      <div style={{
-        fontSize: 10, fontWeight: 700, color: C.muted,
-        textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12,
-        fontFamily: FONT,
-      }}>
+    <div style={{ background: C.bg, borderRadius: 8, padding: '14px 16px', border: `1px solid ${C.border}`, marginTop: 2 }}>
+
+      {/* Articles */}
+      <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
         Détail des articles
       </div>
       <div style={{ overflowX: 'auto' }}>
@@ -843,12 +946,7 @@ function SaleDetail({ sale }: { sale: any }) {
           <thead>
             <tr>
               {['Produit', 'Référence', 'Surface', 'Cartons', 'Carreaux', 'Prix/m²', 'Sous-total'].map(h => (
-                <th key={h} style={{
-                  textAlign: 'left', fontSize: 10, fontWeight: 600, color: C.muted,
-                  textTransform: 'uppercase', letterSpacing: '0.06em',
-                  padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`,
-                  fontFamily: FONT,
-                }}>
+                <th key={h} style={{ textAlign: 'left', fontSize: 10, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`, fontFamily: FONT }}>
                   {h}
                 </th>
               ))}
@@ -863,28 +961,15 @@ function SaleDetail({ sale }: { sale: any }) {
               const loose       = item.quantity_tiles % tpc
               return (
                 <tr key={item.id}>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>
-                    {item.products?.name ?? '—'}
-                  </td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 11, color: C.muted, fontFamily: FONT }}>
-                    {item.products?.reference_code ?? '—'}
-                  </td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>{item.products?.name ?? '—'}</td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 11, color: C.muted, fontFamily: FONT }}>{item.products?.reference_code ?? '—'}</td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtM2(m2)}</td>
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                    {fmtM2(m2)}
+                    {fullCartons}{loose > 0 && <span style={{ color: C.orange, fontSize: 11 }}> +{loose}</span>}
                   </td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                    {fullCartons}
-                    {loose > 0 && <span style={{ color: C.orange, fontSize: 11 }}> +{loose}</span>}
-                  </td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                    {fmtNum(item.quantity_tiles)}
-                  </td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                    {fmtNum(item.unit_price_per_m2)} FCFA
-                  </td>
-                  <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>
-                    {fmtCFA(item.total_price)}
-                  </td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtNum(item.quantity_tiles)}</td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtNum(item.unit_price_per_m2)} FCFA</td>
+                  <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmtCFA(item.total_price)}</td>
                 </tr>
               )
             })}
@@ -892,36 +977,127 @@ function SaleDetail({ sale }: { sale: any }) {
         </table>
       </div>
 
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: 4,
-        flexWrap: 'wrap', gap: 8,
-      }}>
+      {/* ── Historique des paiements ── */}
+      <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 14, paddingTop: 12 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+          Historique des paiements
+        </div>
+
+        {payments === null ? (
+          <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>Chargement…</div>
+        ) : payments.length === 0 ? (
+          <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>Aucun paiement enregistré</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+            {payments.map((p: any, i: number) => (
+              <div key={p.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '7px 10px', borderRadius: 6, flexWrap: 'wrap', gap: 6,
+                background: i === payments.length - 1 ? C.greenL : C.surface,
+                border: `1px solid ${i === payments.length - 1 ? C.green + '44' : C.border}`,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: FONT }}>+{fmtCFA(p.amount)}</span>
+                  {p.notes && <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>· {p.notes}</span>}
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                  {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {p.users?.full_name && ` · ${p.users.full_name}`}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {canAdd && !showAdd && (
+          <button
+            className="btn-outline-navy"
+            onClick={() => setShowAdd(true)}
+            style={{ marginTop: 10, padding: '7px 14px', borderRadius: 7, border: `1.5px solid ${C.navy}`, background: 'transparent', color: C.navy, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            Enregistrer un versement
+          </button>
+        )}
+
+        {canAdd && showAdd && (
+          <div style={{ marginTop: 10, padding: '12px 14px', background: C.surface, borderRadius: 8, border: `1.5px solid ${C.border}` }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 10, fontFamily: FONT }}>Nouveau versement</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <input
+                type="number" min="1" step="100"
+                value={addAmt}
+                onChange={e => setAddAmt(e.target.value)}
+                placeholder="Montant (FCFA)"
+                style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
+              />
+              <input
+                type="text"
+                value={addNotes}
+                onChange={e => setAddNotes(e.target.value)}
+                placeholder="Note (optionnel)"
+                style={{ flex: '2 1 180px', padding: '8px 10px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
+              />
+            </div>
+            {addError && <div style={{ fontSize: 12, color: C.red, marginTop: 6, fontFamily: FONT }}>{addError}</div>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+              <button
+                className="btn-navy"
+                onClick={handleAdd}
+                disabled={adding}
+                style={{ padding: '8px 16px', borderRadius: 6, background: adding ? C.muted : C.navy, color: 'white', border: 'none', fontSize: 12, fontWeight: 600, cursor: adding ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                {adding ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer'}
+              </button>
+              <button
+                className="btn-ghost"
+                onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddError(null) }}
+                disabled={adding}
+                style={{ padding: '8px 14px', borderRadius: 6, background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                Annuler
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Statut paiement ── */}
+      {sale.payment_status && sale.status !== 'cancelled' && (() => {
+        const pc      = PAYMENT_CONFIG[sale.payment_status]
+        const paid    = parseFloat(sale.amount_paid ?? 0)
+        const balance = Math.max(0, parseFloat(sale.total_amount) - paid)
+        if (!pc) return null
+        return (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 10, padding: '8px 12px', borderRadius: 8, background: pc.bg, border: `1px solid ${pc.color}33` }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: pc.color, fontFamily: FONT }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc.color }} />{pc.label}
+            </span>
+            <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+              Encaissé : <strong style={{ color: C.ink }}>{fmtCFA(paid)}</strong>
+              {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmtCFA(balance)}</strong></>)}
+            </span>
+          </div>
+        )
+      })()}
+
+      {/* ── Footer ── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: 12, color: C.slate, display: 'flex', gap: 16, flexWrap: 'wrap', fontFamily: FONT }}>
           {sale.customer_phone && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M2 2.5c0-.28.22-.5.5-.5h2l.75 2L4 5.5s.5 1.5 2.5 2.5l1.5-1.25 2 .75V9.5c0 .28-.22.5-.5.5C4.07 10 2 4.93 2 2.5Z" stroke={C.muted} strokeWidth="1.1"/>
-              </svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2.5c0-.28.22-.5.5-.5h2l.75 2L4 5.5s.5 1.5 2.5 2.5l1.5-1.25 2 .75V9.5c0 .28-.22.5-.5.5C4.07 10 2 4.93 2 2.5Z" stroke={C.muted} strokeWidth="1.1"/></svg>
               {sale.customer_phone}
             </span>
           )}
           {sale.customer_cni && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="1" y="2.5" width="10" height="7" rx="1.5" stroke={C.muted} strokeWidth="1.1"/>
-                <path d="M3.5 5.5h2M3.5 7.5h3.5" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/>
-                <circle cx="8.5" cy="6" r="1.2" stroke={C.muted} strokeWidth="1"/>
-              </svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.5" stroke={C.muted} strokeWidth="1.1"/><path d="M3.5 5.5h2M3.5 7.5h3.5" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/><circle cx="8.5" cy="6" r="1.2" stroke={C.muted} strokeWidth="1"/></svg>
               CNI : {sale.customer_cni}
             </span>
           )}
           {sale.notes && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke={C.muted} strokeWidth="1.1"/>
-                <path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/>
-              </svg>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke={C.muted} strokeWidth="1.1"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/></svg>
               {sale.notes}
             </span>
           )}
@@ -929,21 +1105,11 @@ function SaleDetail({ sale }: { sale: any }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={() => printSaleReceipt(sale)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px',
-              background: 'transparent', color: C.slate,
-              border: `1px solid ${C.border}`, borderRadius: 6,
-              fontSize: 11, fontWeight: 600, cursor: 'pointer',
-              fontFamily: FONT,
-            }}
-          >
+            onClick={() => printSaleReceipt(sale, ownerName)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
             <IconPrint /> Imprimer le reçu
           </button>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontFamily: FONT }}>
-            Total : {fmtCFA(sale.total_amount)}
-          </div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontFamily: FONT }}>Total : {fmtCFA(sale.total_amount)}</div>
         </div>
       </div>
     </div>
