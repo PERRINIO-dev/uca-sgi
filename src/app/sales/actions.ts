@@ -85,7 +85,7 @@ export async function createSale(payload: CreateSalePayload) {
     const tpc          = parseInt(String(dbProd.tiles_per_carton))
 
     if (item.unit_price_per_m2 < dbFloorPrice) {
-      await supabase.from('audit_logs').insert({
+      await getAdminClient().from('audit_logs').insert({
         user_id:            user.id,
         user_role_snapshot: callerProfile.role,
         action_type:        'FLOOR_PRICE_VIOLATION_ATTEMPT',
@@ -251,7 +251,7 @@ export async function createSale(payload: CreateSalePayload) {
   }
 
   // 6. Audit log
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: callerProfile.role,
     action_type:        'SALE_CREATED',
@@ -356,7 +356,7 @@ export async function cancelSale(saleId: string) {
     }
   }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'SALE_CANCELLED',
@@ -407,7 +407,8 @@ export async function addPayment(
   if (insertError) return { error: insertError.message }
   // DB trigger sync_sale_payment_totals() automatically updates sales.amount_paid + payment_status
 
-  await supabase.from('audit_logs').insert({
+  // Use admin client to bypass RLS — authorization already enforced above
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'PAYMENT_RECORDED',
