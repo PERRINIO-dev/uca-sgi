@@ -349,9 +349,11 @@ export default function ReportsClient({
       </div>
 
       {/* Tabs — pill segment */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 24,
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any,
+        marginBottom: 24, paddingBottom: 2 }}>
+      <div style={{ display: 'flex', gap: 2,
         background: C.bg, padding: 4, borderRadius: 100,
-        width: 'fit-content' }}>
+        width: 'fit-content', minWidth: 'max-content' }}>
         {([
           ['overview', 'Vue globale'],
           ['sales',    'Ventes'],
@@ -369,6 +371,7 @@ export default function ReportsClient({
             {label}
           </button>
         ))}
+      </div>
       </div>
 
       {/* ── OVERVIEW ── */}
@@ -429,6 +432,8 @@ export default function ReportsClient({
                 Aucune donnée sur la période
               </div>
             ) : (
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+              <div style={{ minWidth: 320 }}>
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={dailyData}>
                   <defs>
@@ -451,6 +456,8 @@ export default function ReportsClient({
                     stroke={C.blue} strokeWidth={2} fill="url(#caGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
+              </div>
             )}
           </div>
 
@@ -469,6 +476,8 @@ export default function ReportsClient({
                 Aucune donnée
               </div>
             ) : (
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+              <div style={{ minWidth: 320 }}>
               <ResponsiveContainer width="100%" height={Math.max(120, boutiqueData.length * 50)}>
                 <BarChart data={boutiqueData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
@@ -476,7 +485,7 @@ export default function ReportsClient({
                     tickFormatter={v =>
                       new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v)
                     } />
-                  <YAxis type="category" dataKey="name" width={110}
+                  <YAxis type="category" dataKey="name" width={90}
                     tick={{ fontSize: 11, fill: C.muted }} />
                   <Tooltip
                     formatter={(v) => [fmtCFA(Number(v)), 'CA']}
@@ -485,6 +494,8 @@ export default function ReportsClient({
                   <Bar dataKey="ca" fill={C.navy} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
+              </div>
+              </div>
             )}
           </div>
         </div>
@@ -558,7 +569,10 @@ export default function ReportsClient({
                           </td>
                           <td style={{ ...TD, color: C.muted, fontSize: 13,
                             textAlign: 'center' }}>
-                            {isOpen ? '▲' : '▼'}
+                            {isOpen
+                              ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 8l4-4 4 4" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              : <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            }
                           </td>
                         </tr>
                         {isOpen && (

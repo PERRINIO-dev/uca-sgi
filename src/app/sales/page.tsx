@@ -29,7 +29,7 @@ export default async function SalesPage({
     .from('sales')
     .select(`
       id, created_at, sale_number, status, vendor_id,
-      total_amount, customer_name, customer_phone, notes,
+      total_amount, customer_name, customer_phone, customer_cni, notes,
       boutiques(name),
       users!sales_vendor_id_fkey(full_name),
       sale_items (

@@ -152,6 +152,7 @@ export default function VendorSaleForm({
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=800"/>
   <title>Reçu de vente — ${successData?.saleNumber}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }

@@ -707,6 +707,7 @@ function printSaleReceipt(sale: any) {
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=800"/>
   <title>Reçu de vente — ${sale.sale_number}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }

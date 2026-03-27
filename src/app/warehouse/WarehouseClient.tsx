@@ -145,6 +145,7 @@ export default function WarehouseClient({
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=800"/>
   <title>Fiche de préparation — ${order.order_number}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }
