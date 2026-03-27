@@ -587,7 +587,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={8} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} profile={profile} onPaymentAdded={() => router.refresh()} />
+                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
                       )}
@@ -896,8 +896,8 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
 }
 
 // ── Sale detail panel ─────────────────────────────────────────────────────────
-function SaleDetail({ sale, profile, onPaymentAdded }: {
-  sale: any; profile: any; onPaymentAdded: () => void
+function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
+  sale: any; profile: any; ownerName: string; onPaymentAdded: () => void
 }) {
   const supabase   = useMemo(() => createClient(), [])
   const [payments, setPayments] = useState<any[] | null>(null)
