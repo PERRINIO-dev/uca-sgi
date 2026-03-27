@@ -47,6 +47,25 @@ export default async function DashboardPage() {
   const mtdCount     = stats.mtdSales.length
   const mtdAvgBasket = mtdCount > 0 ? mtdRevenue / mtdCount : 0
 
+  // ── MTD gross margin (owner-only) ─────────────────────────────────────────
+  // Cost = sum(purchase_price_snapshot × quantity_tiles × tile_area_m2_snapshot)
+  const mtdCost = stats.mtdSales.reduce((sum: number, s: any) =>
+    sum + (s.sale_items ?? []).reduce((a: number, item: any) =>
+      a + (Number(item.purchase_price_snapshot) || 0)
+        * Number(item.quantity_tiles)
+        * Number(item.tile_area_m2_snapshot)
+    , 0)
+  , 0)
+  const mtdMargin    = mtdRevenue - mtdCost
+  const mtdMarginPct = mtdRevenue > 0 ? (mtdMargin / mtdRevenue) * 100 : null
+
+  // ── All-time outstanding créances ─────────────────────────────────────────
+  const allTimeCreances = stats.allTimeCreanceSales.reduce(
+    (sum: number, s: any) =>
+      sum + Math.max(0, Number(s.total_amount) - Number(s.amount_paid ?? 0))
+    , 0
+  )
+
   // ── Previous month for trend (same day-range as current MTD) ─────────────
   // Only count previous-month sales up to the same day-of-month as today,
   // so the comparison is apples-to-apples (e.g. March 1–15 vs Feb 1–15).
@@ -91,6 +110,9 @@ export default async function DashboardPage() {
       mtdCreances={mtdCreances}
       mtdAvgBasket={mtdAvgBasket}
       mtdTrend={mtdTrend}
+      mtdMargin={mtdMargin}
+      mtdMarginPct={mtdMarginPct}
+      allTimeCreances={allTimeCreances}
       activeOrdersCount={stats.activeOrdersCount}
       pendingRequests={stats.pendingRequests}
       stockAlerts={stockAlerts}

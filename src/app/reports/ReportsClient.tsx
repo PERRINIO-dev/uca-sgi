@@ -173,8 +173,8 @@ export default function ReportsClient({
           category: item.products?.category ?? '—',
           ca: 0, m2: 0, units: 0, cost: 0,
         }
-        const itemM2       = item.quantity_tiles * item.tile_area_m2_snapshot
-        const purchasePrice = parseFloat(item.products?.purchase_price ?? '0') || 0
+        const itemM2        = item.quantity_tiles * item.tile_area_m2_snapshot
+        const purchasePrice = parseFloat(item.purchase_price_snapshot ?? '0') || 0
         map[id].ca    += item.total_price
         map[id].m2    += itemM2
         map[id].units += item.quantity_tiles

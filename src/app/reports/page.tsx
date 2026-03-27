@@ -33,8 +33,8 @@ export default async function ReportsPage() {
       sale_items (
         id, quantity_tiles, unit_price_per_m2,
         total_price, tile_area_m2_snapshot,
-        tiles_per_carton_snapshot,
-        products ( id, name, reference_code, category, purchase_price )
+        tiles_per_carton_snapshot, purchase_price_snapshot,
+        products ( id, name, reference_code, category )
       )
     `)
     .gte('created_at', since.toISOString())

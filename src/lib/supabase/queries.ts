@@ -20,6 +20,7 @@ export async function getDashboardStats() {
   const [
     todayResult, mtdResult, prevMonthResult,
     stockResult, pendingResult, boutiqueResult, activeOrdersResult,
+    creancesResult,
   ] = await Promise.all([
 
     // Today's sales (all non-cancelled — not just delivered)
@@ -29,10 +30,10 @@ export async function getDashboardStats() {
       .gte('created_at', todayISO)
       .neq('status', 'cancelled'),
 
-    // Month-to-date sales
+    // Month-to-date sales (with sale_items for cost/margin calculation)
     supabase
       .from('sales')
-      .select('total_amount, amount_paid, boutique_id, boutiques(name)')
+      .select('total_amount, amount_paid, boutique_id, boutiques(name), sale_items(purchase_price_snapshot, quantity_tiles, tile_area_m2_snapshot)')
       .gte('created_at', mtdISO)
       .neq('status', 'cancelled'),
 
@@ -75,16 +76,24 @@ export async function getDashboardStats() {
       .from('sales')
       .select('id', { count: 'exact', head: true })
       .in('status', ['confirmed', 'preparing', 'ready']),
+
+    // All-time outstanding créances (partial + unpaid, non-cancelled)
+    supabase
+      .from('sales')
+      .select('total_amount, amount_paid')
+      .in('payment_status', ['partial', 'unpaid'])
+      .neq('status', 'cancelled'),
   ])
 
   return {
-    todaySales:       todayResult.data       ?? [],
-    mtdSales:         mtdResult.data         ?? [],
-    prevMonthSales:   prevMonthResult.data   ?? [],
-    stockLevels:      stockResult.data       ?? [],
-    pendingRequests:  pendingResult.data     ?? [],
-    weekSales:        boutiqueResult.data    ?? [],
+    todaySales:        todayResult.data       ?? [],
+    mtdSales:          mtdResult.data         ?? [],
+    prevMonthSales:    prevMonthResult.data   ?? [],
+    stockLevels:       stockResult.data       ?? [],
+    pendingRequests:   pendingResult.data     ?? [],
+    weekSales:         boutiqueResult.data    ?? [],
     activeOrdersCount: activeOrdersResult.count ?? 0,
+    allTimeCreanceSales: creancesResult.data  ?? [],
   }
 }
 

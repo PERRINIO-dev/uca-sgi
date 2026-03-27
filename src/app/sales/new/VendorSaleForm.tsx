@@ -388,6 +388,7 @@ export default function VendorSaleForm({
         total_price:               item.totalPrice,
         floor_price_snapshot:      parseFloat(item.product.floor_price_per_m2),
         reference_price_snapshot:  parseFloat(item.product.reference_price_per_m2),
+        purchase_price_snapshot:   0, // overwritten server-side from DB
         tile_area_m2_snapshot:     parseFloat(item.product.tile_area_m2),
         tiles_per_carton_snapshot: parseInt(item.product.tiles_per_carton),
       })),

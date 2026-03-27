@@ -57,6 +57,14 @@ function IconBasket() {
     </svg>
   )
 }
+function IconMargin() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+      <path d="M3 17l4-5 4 2 6-8" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="16" cy="5" r="1.5" fill="#fff"/>
+    </svg>
+  )
+}
 function IconCheck() {
   return (
     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
@@ -115,6 +123,9 @@ export default function DashboardClient({
   mtdCreances,
   mtdAvgBasket,
   mtdTrend,
+  mtdMargin,
+  mtdMarginPct,
+  allTimeCreances,
   activeOrdersCount,
   pendingRequests,
   stockAlerts,
@@ -129,6 +140,9 @@ export default function DashboardClient({
   mtdCreances:       number
   mtdAvgBasket:      number
   mtdTrend:          number | null
+  mtdMargin:         number
+  mtdMarginPct:      number | null
+  allTimeCreances:   number
   activeOrdersCount: number
   pendingRequests:   any[]
   stockAlerts:       any[]
@@ -185,9 +199,9 @@ export default function DashboardClient({
     },
     {
       label:  'Créances clients',
-      sub:    'Montant en attente de règlement',
-      value:  fmtCFA(mtdCreances),
-      color:  mtdCreances > 0 ? C.orange : C.green,
+      sub:    `Ce mois : ${fmtCFA(mtdCreances)}`,
+      value:  fmtCFA(allTimeCreances),
+      color:  allTimeCreances > 0 ? C.orange : C.green,
       Icon:   IconBasket,
       trend:  null,
     },
@@ -207,6 +221,16 @@ export default function DashboardClient({
       Icon:   IconBasket,
       trend:  null,
     },
+    ...(profile.role === 'owner' ? [{
+      label:  'Marge brute (mois)',
+      sub:    mtdMarginPct !== null
+        ? `${mtdMarginPct >= 0 ? '+' : ''}${mtdMarginPct.toFixed(1)} % du CA`
+        : 'Aucune vente ce mois',
+      value:  fmtCFA(mtdMargin),
+      color:  mtdMargin >= 0 ? C.green : C.red,
+      Icon:   IconMargin,
+      trend:  null,
+    }] : []),
   ]
 
   return (

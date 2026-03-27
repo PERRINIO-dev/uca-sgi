@@ -21,6 +21,7 @@ interface SaleItem {
   total_price:               number
   floor_price_snapshot:      number
   reference_price_snapshot:  number
+  purchase_price_snapshot:   number
   tile_area_m2_snapshot:     number
   tiles_per_carton_snapshot: number
 }
@@ -62,7 +63,7 @@ export async function createSale(payload: CreateSalePayload) {
 
   const { data: dbProducts } = await supabase
     .from('products')
-    .select('id, floor_price_per_m2, reference_price_per_m2, tile_area_m2, tiles_per_carton')
+    .select('id, floor_price_per_m2, reference_price_per_m2, purchase_price, tile_area_m2, tiles_per_carton')
     .in('id', productIds)
     .eq('is_active', true)
 
@@ -107,6 +108,7 @@ export async function createSale(payload: CreateSalePayload) {
       ...item,
       floor_price_snapshot:      dbFloorPrice,
       reference_price_snapshot:  parseFloat(String(dbProd.reference_price_per_m2)),
+      purchase_price_snapshot:   parseFloat(String(dbProd.purchase_price ?? 0)) || 0,
       tile_area_m2_snapshot:     tileAreaM2,
       tiles_per_carton_snapshot: tpc,
       total_price:               itemTotal,
@@ -337,28 +339,20 @@ export async function cancelSale(saleId: string) {
     .eq('sale_id', saleId)
 
   if (saleItems && saleItems.length > 0) {
-    const itemProductIds  = [...new Set(saleItems.map(i => i.product_id))]
-    const { data: currentStocks } = await adminSupabase
-      .from('stock')
-      .select('product_id, reserved_tiles')
-      .in('product_id', itemProductIds)
-
-    if (currentStocks) {
-      const currentStockMap = new Map(currentStocks.map(s => [s.product_id, s]))
-      const releaseMap = new Map<string, number>()
-      for (const item of saleItems) {
-        releaseMap.set(
-          item.product_id,
-          (releaseMap.get(item.product_id) ?? 0) + item.quantity_tiles
-        )
-      }
-      for (const [productId, qty] of releaseMap) {
-        const current = currentStockMap.get(productId)?.reserved_tiles ?? 0
-        await adminSupabase
-          .from('stock')
-          .update({ reserved_tiles: Math.max(0, current - qty) })
-          .eq('product_id', productId)
-      }
+    // Aggregate quantities per product then atomically release reserved_tiles
+    // via RPC — eliminates the read-then-write race condition.
+    const releaseMap = new Map<string, number>()
+    for (const item of saleItems) {
+      releaseMap.set(
+        item.product_id,
+        (releaseMap.get(item.product_id) ?? 0) + item.quantity_tiles
+      )
+    }
+    for (const [productId, qty] of releaseMap) {
+      await adminSupabase.rpc('release_stock_on_cancel', {
+        p_product_id: productId,
+        p_quantity:   qty,
+      })
     }
   }
 
