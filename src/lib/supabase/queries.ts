@@ -36,10 +36,10 @@ export async function getDashboardStats() {
       .gte('created_at', mtdISO)
       .neq('status', 'cancelled'),
 
-    // Previous full month (for trend)
+    // Previous full month (for trend — needs created_at to filter same day-range)
     supabase
       .from('sales')
-      .select('total_amount')
+      .select('total_amount, created_at')
       .gte('created_at', prevStartISO)
       .lte('created_at', prevEndISO)
       .neq('status', 'cancelled'),
@@ -117,11 +117,3 @@ export async function getSalesByPeriod(days: number) {
   return data ?? []
 }
 
-function getWeekStart(): string {
-  const d = new Date()
-  const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  d.setDate(diff)
-  d.setHours(0, 0, 0, 0)
-  return d.toISOString()
-}

@@ -10,6 +10,7 @@ import {
 } from 'recharts'
 import PageLayout from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import { CRITICAL_STOCK_CARTONS } from '@/lib/constants'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtCFA = (n: number) =>
@@ -341,7 +342,7 @@ export default function DashboardClient({
             </ResponsiveContainer>
           ) : (
             <div style={{ height: 190, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
-              Aucune vente cette semaine
+              Aucune vente ce mois
             </div>
           )}
         </Panel>
@@ -495,7 +496,7 @@ export default function DashboardClient({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(stockAlerts.length > 6 ? stockAlerts.slice(0, 6) : stockAlerts).map((item: any) => {
                 const avail  = Number(item.available_full_cartons)
-                const isCrit = avail < 20
+                const isCrit = avail < CRITICAL_STOCK_CARTONS
                 const bg     = isCrit ? C.redL    : C.orangeL
                 const clr    = isCrit ? C.red     : C.orange
                 const bdr    = isCrit ? '#FECACA' : '#FDE68A'

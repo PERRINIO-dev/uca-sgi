@@ -113,6 +113,15 @@ export default function WarehouseClient({
     setLoadingOrd(null)
   }
 
+  // ── HTML escaping helper (prevents XSS in printed windows) ───────────────
+  const escHtml = (s: string | null | undefined): string =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
   // ── Print preparation sheet ────────────────────────────────────────────
   const printPreparationSheet = (order: any) => {
     const sale = order.sales
@@ -130,8 +139,8 @@ export default function WarehouseClient({
       const loose       = item.quantity_tiles % tpc
       return `
         <tr>
-          <td>${item.products?.name ?? '—'}</td>
-          <td style="color:#64748B;font-size:11px">${item.products?.reference_code ?? '—'}</td>
+          <td>${escHtml(item.products?.name)}</td>
+          <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
           <td style="text-align:center;font-weight:700">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
           <td style="text-align:center">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</td>
           <td style="text-align:right">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
@@ -146,7 +155,7 @@ export default function WarehouseClient({
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=800"/>
-  <title>Fiche de préparation — ${order.order_number}</title>
+  <title>Fiche de préparation — ${escHtml(order.order_number)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }
     body { font-family: system-ui,-apple-system,'Segoe UI',sans-serif; color: #0F172A; padding: 32px; font-size: 13px; }
@@ -185,21 +194,21 @@ export default function WarehouseClient({
     </div>
   </div>
 
-  <div class="order-id">${order.order_number}</div>
+  <div class="order-id">${escHtml(order.order_number)}</div>
   <div style="font-size:12px;color:#64748B;margin-bottom:20px">
-    Vente ${sale?.sale_number ?? '—'} · ${new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
+    Vente ${escHtml(sale?.sale_number) || '—'} · ${new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })}
   </div>
 
   <div class="client-block">
     <div class="label">Client</div>
-    <div class="value">${sale?.customer_name ?? 'Client anonyme'}</div>
+    <div class="value">${escHtml(sale?.customer_name) || 'Client anonyme'}</div>
     <div class="sub">
-      ${sale?.customer_phone ? sale.customer_phone + ' · ' : ''}
-      ${sale?.boutiques?.name ?? ''} · Vendeur : ${sale?.users?.full_name ?? '—'}
+      ${sale?.customer_phone ? escHtml(sale.customer_phone) + ' · ' : ''}
+      ${escHtml(sale?.boutiques?.name)} · Vendeur : ${escHtml(sale?.users?.full_name) || '—'}
     </div>
   </div>
 
-  ${sale?.notes ? `<div class="notes-block"><strong>Note vendeur :</strong> ${sale.notes}</div>` : ''}
+  ${sale?.notes ? `<div class="notes-block"><strong>Note vendeur :</strong> ${escHtml(sale.notes)}</div>` : ''}
 
   <table>
     <thead>

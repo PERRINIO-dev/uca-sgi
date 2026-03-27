@@ -129,6 +129,15 @@ export default function VendorSaleForm({
 
   const cartTotal = cart.reduce((sum, i) => sum + i.totalPrice, 0)
 
+  // ── HTML escaping helper (prevents XSS in printed windows) ───────────────
+  const escHtml = (s: string | null | undefined): string =>
+    String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+
   // ── Print receipt ─────────────────────────────────────────────────────────
   const printReceipt = () => {
     const now = new Date().toLocaleDateString('fr-FR', {
@@ -141,8 +150,8 @@ export default function VendorSaleForm({
       const loose = item.looseTiles
       return `
         <tr>
-          <td>${item.product?.product_name ?? item.product?.name ?? '—'}</td>
-          <td style="color:#64748B;font-size:11px">${item.product?.reference_code ?? '—'}</td>
+          <td>${escHtml(item.product?.product_name ?? item.product?.name)}</td>
+          <td style="color:#64748B;font-size:11px">${escHtml(item.product?.reference_code)}</td>
           <td style="text-align:center">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
           <td style="text-align:center">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
           <td style="text-align:right">${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA</td>
@@ -155,7 +164,7 @@ export default function VendorSaleForm({
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=800"/>
-  <title>Reçu de vente — ${successData?.saleNumber}</title>
+  <title>Reçu de vente — ${escHtml(successData?.saleNumber)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }
     body { font-family: system-ui,-apple-system,'Segoe UI',sans-serif; color: #0F172A; padding: 32px; font-size: 13px; }
@@ -197,11 +206,11 @@ export default function VendorSaleForm({
     </div>
     <div class="meta">
       <div>${now}</div>
-      <div>${selectedBoutique?.name ?? ''}</div>
+      <div>${escHtml(selectedBoutique?.name)}</div>
     </div>
   </div>
 
-  <div class="sale-id">${successData?.saleNumber ?? '—'}</div>
+  <div class="sale-id">${escHtml(successData?.saleNumber) || '—'}</div>
   <div style="font-size:12px;color:#64748B;margin-bottom:20px">
     ${new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
   </div>
@@ -209,14 +218,14 @@ export default function VendorSaleForm({
   <div class="info-block">
     <div class="info-col">
       <div class="info-label">Client</div>
-      <div class="info-value">${customerName || 'Client anonyme'}</div>
-      ${customerPhone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${customerPhone}</div>` : ''}
-      ${customerCNI ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${customerCNI}</div>` : ''}
+      <div class="info-value">${escHtml(customerName) || 'Client anonyme'}</div>
+      ${customerPhone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${escHtml(customerPhone)}</div>` : ''}
+      ${customerCNI ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${escHtml(customerCNI)}</div>` : ''}
     </div>
     <div class="info-col">
       <div class="info-label">Vendeur</div>
-      <div class="info-value">${profile?.full_name ?? '—'}</div>
-      <div style="font-size:12px;color:#64748B;margin-top:2px">${selectedBoutique?.name ?? ''}</div>
+      <div class="info-value">${escHtml(profile?.full_name) || '—'}</div>
+      <div style="font-size:12px;color:#64748B;margin-top:2px">${escHtml(selectedBoutique?.name)}</div>
     </div>
   </div>
 
@@ -261,13 +270,13 @@ export default function VendorSaleForm({
     <div class="sig-title">Signatures</div>
     <div class="sig-grid">
       <div class="sig-block">
-        <div class="sig-name">${profile?.full_name ?? 'Le vendeur'}</div>
-        <div class="sig-role">Vendeur — ${selectedBoutique?.name ?? ''}</div>
+        <div class="sig-name">${escHtml(profile?.full_name) || 'Le vendeur'}</div>
+        <div class="sig-role">Vendeur — ${escHtml(selectedBoutique?.name)}</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du vendeur</div>
       </div>
       <div class="sig-block">
-        <div class="sig-name">${ownerName}</div>
+        <div class="sig-name">${escHtml(ownerName)}</div>
         <div class="sig-role">Propriétaire — UCA</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>

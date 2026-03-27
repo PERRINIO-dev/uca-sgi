@@ -139,6 +139,7 @@ export default function UsersClient({
   const [togglingBoutique,   setTogglingBoutique]   = useState<string | null>(null)
 
   // Filters
+  const [search,       setSearch]       = useState('')
   const [filterRole,   setFilterRole]   = useState('all')
   const [filterActive, setFilterActive] = useState('active')
 
@@ -244,6 +245,11 @@ export default function UsersClient({
     if (filterRole !== 'all' && emp.role !== filterRole) return false
     if (filterActive === 'active'   && !emp.is_active) return false
     if (filterActive === 'inactive' && emp.is_active)  return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!emp.full_name?.toLowerCase().includes(q) &&
+          !emp.email?.toLowerCase().includes(q)) return false
+    }
     return true
   })
 
@@ -317,6 +323,12 @@ export default function UsersClient({
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap',
         background: C.surface, padding: '10px 14px', borderRadius: 10,
         border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Rechercher par nom ou email…"
+          style={{ ...inputStyle, flex: '1 1 200px', padding: '7px 10px', fontSize: 12 }}
+        />
         <select value={filterRole} onChange={e => setFilterRole(e.target.value)}
           style={{ ...inputStyle, width: 'auto', padding: '7px 10px', fontSize: 12 }}>
           <option value="all">Tous les rôles</option>

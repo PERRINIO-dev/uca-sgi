@@ -43,6 +43,11 @@ export async function createProduct(payload: {
     return { error: 'Le prix plancher doit être strictement inférieur au prix de référence.' }
   }
 
+  // Only the owner may set a meaningful purchase price — enforce server-side
+  const safePurchasePrice = profile.role === 'owner'
+    ? (isNaN(payload.purchasePrice) ? 0 : payload.purchasePrice)
+    : 0
+
   // Check reference code uniqueness
   const { data: existing } = await supabase
     .from('products')
@@ -63,7 +68,7 @@ export async function createProduct(payload: {
       width_cm:               payload.widthCm,
       height_cm:              payload.heightCm,
       tiles_per_carton:       payload.tilesPerCarton,
-      purchase_price:         payload.purchasePrice,
+      purchase_price:         safePurchasePrice,
       floor_price_per_m2:     payload.floorPricePerM2,
       reference_price_per_m2: payload.referencePricePerM2,
       is_active:              true,
@@ -135,13 +140,17 @@ export async function updateProduct(payload: {
     return { error: 'Le prix plancher doit être strictement inférieur au prix de référence.' }
   }
 
+  const safePurchasePrice = profile.role === 'owner'
+    ? (isNaN(payload.purchasePrice) ? 0 : payload.purchasePrice)
+    : undefined  // admin: do not overwrite the existing purchase_price
+
   const { error } = await supabase
     .from('products')
     .update({
       name:                   payload.name.trim(),
       category:               payload.category.trim(),
       supplier:               payload.supplier.trim(),
-      purchase_price:         payload.purchasePrice,
+      ...(safePurchasePrice !== undefined ? { purchase_price: safePurchasePrice } : {}),
       floor_price_per_m2:     payload.floorPricePerM2,
       reference_price_per_m2: payload.referencePricePerM2,
       is_active:              payload.isActive,

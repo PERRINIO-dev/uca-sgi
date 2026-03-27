@@ -47,11 +47,16 @@ export default async function DashboardPage() {
   const mtdCount     = stats.mtdSales.length
   const mtdAvgBasket = mtdCount > 0 ? mtdRevenue / mtdCount : 0
 
-  // ── Previous month for trend ──────────────────────────────────────────────
-  const prevMonthRevenue = stats.prevMonthSales.reduce(
+  // ── Previous month for trend (same day-range as current MTD) ─────────────
+  // Only count previous-month sales up to the same day-of-month as today,
+  // so the comparison is apples-to-apples (e.g. March 1–15 vs Feb 1–15).
+  const todayDayOfMonth = new Date().getDate()
+  const prevMonthSamePeriod = stats.prevMonthSales.filter(
+    (s: any) => new Date(s.created_at).getDate() <= todayDayOfMonth
+  )
+  const prevMonthRevenue = prevMonthSamePeriod.reduce(
     (sum: number, s: any) => sum + Number(s.total_amount), 0
   )
-  // Trend: % change vs previous month (capped display at ±999%)
   const mtdTrend = prevMonthRevenue > 0
     ? ((mtdRevenue - prevMonthRevenue) / prevMonthRevenue) * 100
     : null

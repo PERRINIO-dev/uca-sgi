@@ -170,7 +170,7 @@ export default function SalesListClient({
     const from = dateFrom ? new Date(dateFrom) : null
     const to   = dateTo   ? new Date(dateTo + 'T23:59:59') : null
     return sales.filter(s => {
-      if (q && !s.sale_number?.toLowerCase().includes(q) && !s.customer_name?.toLowerCase().includes(q)) return false
+      if (q && !s.sale_number?.toLowerCase().includes(q) && !s.customer_name?.toLowerCase().includes(q) && !s.customer_phone?.toLowerCase().includes(q)) return false
       if (statusFilter && s.status !== statusFilter) return false
       if (paymentFilter && s.payment_status !== paymentFilter) return false
       if (from && new Date(s.created_at) < from) return false
@@ -309,7 +309,7 @@ export default function SalesListClient({
             <input
               value={search}
               onChange={e => setSearchPaged(e.target.value)}
-              placeholder="N° ou client…"
+              placeholder="N°, client ou téléphone…"
               style={{
                 width: '100%', paddingLeft: 28, paddingRight: 8,
                 height: 32, border: `1px solid ${C.border}`,
@@ -586,7 +586,7 @@ export default function SalesListClient({
 
                       {isOpen && (
                         <tr>
-                          <td colSpan={8} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
+                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
                             <SaleDetail sale={sale} profile={profile} ownerName={ownerName} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
@@ -737,6 +737,15 @@ function IconPrint({ size = 13 }: { size?: number }) {
   )
 }
 
+function escHtml(s: string | null | undefined): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
   const now = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'long', year: 'numeric',
@@ -750,8 +759,8 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
     const loose       = item.quantity_tiles % tpc
     return `
       <tr>
-        <td>${item.products?.name ?? '—'}</td>
-        <td style="color:#64748B;font-size:11px">${item.products?.reference_code ?? '—'}</td>
+        <td>${escHtml(item.products?.name)}</td>
+        <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
         <td style="text-align:center">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
         <td style="text-align:center">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
         <td style="text-align:right">${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA</td>
@@ -764,7 +773,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=800"/>
-  <title>Reçu de vente — ${sale.sale_number}</title>
+  <title>Reçu de vente — ${escHtml(sale.sale_number)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0 }
     body { font-family: system-ui,-apple-system,'Segoe UI',sans-serif; color: #0F172A; padding: 32px; font-size: 13px; }
@@ -805,11 +814,11 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
     </div>
     <div class="meta">
       <div>${now}</div>
-      <div>${sale.boutiques?.name ?? ''}</div>
+      <div>${escHtml(sale.boutiques?.name)}</div>
     </div>
   </div>
 
-  <div class="sale-id">${sale.sale_number ?? '—'}</div>
+  <div class="sale-id">${escHtml(sale.sale_number) || '—'}</div>
   <div style="font-size:12px;color:#64748B;margin-bottom:20px">
     ${new Date(sale.created_at).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
   </div>
@@ -817,14 +826,14 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
   <div class="info-block">
     <div class="info-col">
       <div class="info-label">Client</div>
-      <div class="info-value">${sale.customer_name || 'Client anonyme'}</div>
-      ${sale.customer_phone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${sale.customer_phone}</div>` : ''}
-      ${sale.customer_cni ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${sale.customer_cni}</div>` : ''}
+      <div class="info-value">${escHtml(sale.customer_name) || 'Client anonyme'}</div>
+      ${sale.customer_phone ? `<div style="font-size:12px;color:#64748B;margin-top:2px">${escHtml(sale.customer_phone)}</div>` : ''}
+      ${sale.customer_cni ? `<div style="font-size:11px;color:#94A3B8;margin-top:2px">CNI : ${escHtml(sale.customer_cni)}</div>` : ''}
     </div>
     <div class="info-col">
       <div class="info-label">Vendeur</div>
-      <div class="info-value">${sale.users?.full_name ?? '—'}</div>
-      <div style="font-size:12px;color:#64748B;margin-top:2px">${sale.boutiques?.name ?? ''}</div>
+      <div class="info-value">${escHtml(sale.users?.full_name) || '—'}</div>
+      <div style="font-size:12px;color:#64748B;margin-top:2px">${escHtml(sale.boutiques?.name)}</div>
     </div>
   </div>
 
@@ -869,13 +878,13 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
     <div class="sig-title">Signatures</div>
     <div class="sig-grid">
       <div>
-        <div class="sig-name">${sale.users?.full_name ?? 'Le vendeur'}</div>
-        <div class="sig-role">Vendeur — ${sale.boutiques?.name ?? ''}</div>
+        <div class="sig-name">${escHtml(sale.users?.full_name) || 'Le vendeur'}</div>
+        <div class="sig-role">Vendeur — ${escHtml(sale.boutiques?.name)}</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du vendeur</div>
       </div>
       <div>
-        <div class="sig-name">${ownerName}</div>
+        <div class="sig-name">${escHtml(ownerName)}</div>
         <div class="sig-role">Propriétaire — UCA</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
@@ -883,7 +892,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
     </div>
   </div>
 
-  <div class="footer">Document officiel UCA · ${sale.sale_number}</div>
+  <div class="footer">Document officiel UCA · ${escHtml(sale.sale_number)}</div>
 </body>
 </html>`
 
