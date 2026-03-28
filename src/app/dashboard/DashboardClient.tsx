@@ -8,7 +8,8 @@ import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
-import PageLayout from '@/components/PageLayout'
+import PageLayout       from '@/components/PageLayout'
+import OnboardingTour   from '@/components/OnboardingTour'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { CRITICAL_STOCK_CARTONS } from '@/lib/constants'
 
@@ -74,15 +75,12 @@ function IconCheck() {
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
-function Panel({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+function Panel({ children, style = {}, tourId }: { children: React.ReactNode; style?: React.CSSProperties; tourId?: string }) {
   return (
-    <div style={{
-      background: C.surface, borderRadius: 12,
-      border: `1px solid ${C.border}`,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      padding: '20px 22px',
-      ...style,
-    }}>
+    <div
+      style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '20px 22px', ...style }}
+      {...(tourId ? { 'data-tour': tourId } : {})}
+    >
       {children}
     </div>
   )
@@ -234,6 +232,8 @@ export default function DashboardClient({
   ]
 
   return (
+    <>
+    <OnboardingTour />
     <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
@@ -266,7 +266,7 @@ export default function DashboardClient({
       </div>
 
       {/* ── KPI cards ── */}
-      <div style={{
+      <div data-tour="tour-kpis" style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: 14, marginBottom: 24,
@@ -324,7 +324,7 @@ export default function DashboardClient({
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: 16, marginBottom: 24,
       }}>
-        <Panel>
+        <Panel tourId="tour-chart">
           <SectionTitle>Ventes des 30 derniers jours</SectionTitle>
           {dailyChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={190}>
@@ -644,5 +644,6 @@ export default function DashboardClient({
         </ModalOverlay>
       )}
     </PageLayout>
+    </>
   )
 }

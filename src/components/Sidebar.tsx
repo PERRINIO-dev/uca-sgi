@@ -91,6 +91,12 @@ const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconReports,   'Rapports',        '/reports',    ['owner', 'admin']],
 ]
 
+const NAV_TOUR_IDS: Record<string, string> = {
+  '/sales':     'tour-nav-sales',
+  '/warehouse': 'tour-nav-warehouse',
+  '/reports':   'tour-nav-reports',
+}
+
 const ROLE_LABELS: Record<string, string> = {
   owner:     'Propriétaire',
   admin:     'Administrateur',
@@ -285,6 +291,7 @@ export default function Sidebar({
             <button
               key={href}
               className={`nav-item${active ? ' nav-active' : ''}`}
+              {...(NAV_TOUR_IDS[href] ? { 'data-tour': NAV_TOUR_IDS[href] } : {})}
               onClick={() => {
                 onClose?.()
                 startTransition(() => router.push(href))
