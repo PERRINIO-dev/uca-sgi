@@ -79,6 +79,17 @@ function IconLogout({ size = 15, color = 'currentColor' }: { size?: number; colo
     </svg>
   )
 }
+function IconPlatform({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="4.5" r="2" stroke={color} strokeWidth="1.5"/>
+      <circle cx="4"  cy="15" r="1.75" stroke={color} strokeWidth="1.4"/>
+      <circle cx="16" cy="15" r="1.75" stroke={color} strokeWidth="1.4"/>
+      <path d="M10 6.5v3.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M10 10L4 13.25M10 10l6 3.25" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  )
+}
 
 // ── Nav config ─────────────────────────────────────────────────────────────────
 type NavIcon = React.FC<{ size?: number; color?: string }>
@@ -132,7 +143,7 @@ export default function Sidebar({
   onClose,
   badgeCounts,
 }: {
-  profile:       { full_name: string; role: string }
+  profile:       { full_name: string; role: string; is_platform_admin?: boolean }
   activeRoute:   string
   onLogout:      () => void
   isMobileOpen?: boolean
@@ -334,6 +345,48 @@ export default function Sidebar({
             </button>
           )
         })}
+
+        {/* ── Platform admin section ── */}
+        {profile.is_platform_admin && (
+          <>
+            <div style={{
+              padding: '14px 12px 6px',
+              fontSize: 9.5, fontWeight: 700,
+              color: 'rgba(255,255,255,0.22)',
+              letterSpacing: '0.13em', textTransform: 'uppercase',
+            }}>
+              Plateforme
+            </div>
+            <button
+              key="/admin"
+              className={`nav-item${activeRoute === '/admin' ? ' nav-active' : ''}`}
+              onClick={() => {
+                onClose?.()
+                startTransition(() => router.push('/admin'))
+              }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+                border: 'none',
+                borderRadius: 8,
+                background: activeRoute === '/admin' ? 'rgba(180,83,9,0.2)' : 'transparent',
+                borderLeft: activeRoute === '/admin' ? '2px solid #D97706' : '2px solid transparent',
+                color: activeRoute === '/admin' ? '#FCD34D' : isPending ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.52)',
+                fontSize: 13.5, fontWeight: activeRoute === '/admin' ? 600 : 400,
+                cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
+                fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                marginBottom: 2,
+                opacity: isPending && activeRoute !== '/admin' ? 0.55 : 1,
+              }}
+            >
+              <IconPlatform
+                size={15}
+                color={activeRoute === '/admin' ? '#FCD34D' : 'rgba(255,255,255,0.42)'}
+              />
+              <span style={{ flex: 1 }}>Administration</span>
+            </button>
+          </>
+        )}
       </nav>
 
       {/* ── Notification toggle ── */}

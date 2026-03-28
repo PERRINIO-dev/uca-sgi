@@ -16,7 +16,7 @@ export default async function SalesPage({
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, boutiques(id, name)')
+    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name)')
     .eq('id', user.id)
     .single()
 

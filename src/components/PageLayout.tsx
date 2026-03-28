@@ -14,7 +14,7 @@ export default function PageLayout({
   children,
   badgeCounts,
 }: {
-  profile:      { full_name: string; role: string }
+  profile:      { full_name: string; role: string; is_platform_admin?: boolean }
   activeRoute:  string
   onLogout:     () => void
   children:     React.ReactNode
@@ -32,6 +32,7 @@ export default function PageLayout({
     '/products':  'Catalogue',
     '/users':     'Utilisateurs',
     '/reports':   'Rapports',
+    '/admin':     'Administration Plateforme',
   }
   const pageTitle = PAGE_TITLES[activeRoute] ?? 'UCA SGI'
 
