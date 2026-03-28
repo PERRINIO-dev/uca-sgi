@@ -400,21 +400,23 @@ export async function addPayment(
     return { error: `Montant dépasse le solde restant (${new Intl.NumberFormat('fr-FR').format(Math.round(remaining))} FCFA).` }
   }
 
-  const { error: insertError } = await supabase
+  const { data: newPayment, error: insertError } = await supabase
     .from('sale_payments')
     .insert({ sale_id: saleId, amount, notes, created_by: user.id })
+    .select('id')
+    .single()
 
   if (insertError) return { error: insertError.message }
   // DB trigger sync_sale_payment_totals() automatically updates sales.amount_paid + payment_status
 
-  // Use admin client to bypass RLS — authorization already enforced above
+  // Use admin client + actual payment UUID as entity_id to satisfy any FK trigger on audit_logs
   await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'PAYMENT_RECORDED',
-    entity_type:        'sale_payments',
+    entity_type:        'sales',
     entity_id:          saleId,
-    data_after:         { amount, notes },
+    data_after:         { amount, notes, payment_id: newPayment?.id },
   })
 
   revalidatePath('/sales')
