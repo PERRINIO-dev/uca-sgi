@@ -34,6 +34,7 @@ export default async function AdminPage() {
     { data: companies },
     { data: allUsers },
     { data: allProducts },
+    { data: auditLogs },
     badgeCounts,
   ] = await Promise.all([
     admin
@@ -41,31 +42,53 @@ export default async function AdminPage() {
       .select('id, name, slug, is_active, created_at')
       .order('created_at', { ascending: true }),
 
-    // Lightweight: only the two columns needed for per-company counts
+    // Full user profiles — needed for drawer member list + owner identification
     admin
       .from('users')
-      .select('company_id, is_active'),
+      .select('id, company_id, is_active, role, full_name, email'),
 
     admin
       .from('products')
       .select('company_id')
       .eq('is_active', true),
 
+    // Platform-level audit events only
+    admin
+      .from('audit_logs')
+      .select(`
+        id, created_at, action_type, entity_type, entity_id,
+        company_id, user_role_snapshot, data_after,
+        users!audit_logs_user_id_fkey ( full_name )
+      `)
+      .in('action_type', [
+        'COMPANY_CREATED',
+        'BOUTIQUE_ACTIVATED',
+        'BOUTIQUE_DEACTIVATED',
+        'PLATFORM_USER_SUSPENDED',
+        'PLATFORM_USER_REACTIVATED',
+        'PLATFORM_USER_PASSWORD_RESET',
+      ])
+      .order('created_at', { ascending: false })
+      .limit(100),
+
     getBadgeCounts(profile.role, supabase),
   ])
 
-  // ── Enrich companies with live stats ──────────────────────────────────────
+  // ── Enrich companies with live stats + owner + member list ────────────────
   const companiesWithStats = (companies ?? []).map(c => ({
     ...c,
-    totalUsers:      (allUsers     ?? []).filter(u => u.company_id === c.id).length,
-    activeUsers:     (allUsers     ?? []).filter(u => u.company_id === c.id && u.is_active).length,
-    activeProducts:  (allProducts  ?? []).filter(p => p.company_id === c.id).length,
+    totalUsers:     (allUsers ?? []).filter(u => u.company_id === c.id).length,
+    activeUsers:    (allUsers ?? []).filter(u => u.company_id === c.id && u.is_active).length,
+    activeProducts: (allProducts ?? []).filter(p => p.company_id === c.id).length,
+    owner:          (allUsers ?? []).find(u => u.company_id === c.id && u.role === 'owner') ?? null,
+    members:        (allUsers ?? []).filter(u => u.company_id === c.id),
   }))
 
   return (
     <AdminClient
       profile={profile}
       companies={companiesWithStats}
+      auditLogs={auditLogs ?? []}
       badgeCounts={badgeCounts}
     />
   )

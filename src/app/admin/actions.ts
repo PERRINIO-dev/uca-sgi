@@ -175,3 +175,87 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
   revalidatePath('/admin')
   return { success: true }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Reset any user's password — platform admin only. */
+export async function resetUserPassword(userId: string, newPassword: string) {
+  const admin = getAdmin()
+  const { user, caller } = await verifyPlatformAdmin()
+
+  if (!user || !caller?.is_platform_admin)
+    return { error: 'Accès réservé aux administrateurs de la plateforme.' }
+
+  if (newPassword.length < 8)
+    return { error: 'Le mot de passe doit contenir au moins 8 caractères.' }
+
+  // Fetch target user for audit context
+  const { data: target } = await admin
+    .from('users')
+    .select('email, company_id')
+    .eq('id', userId)
+    .single()
+
+  if (!target) return { error: 'Utilisateur introuvable.' }
+
+  const { error } = await admin.auth.admin.updateUserById(userId, { password: newPassword })
+  if (error) return { error: error.message }
+
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: caller.is_platform_admin ? 'platform_admin' : caller.role,
+    action_type:        'PLATFORM_USER_PASSWORD_RESET',
+    entity_type:        'users',
+    entity_id:          userId,
+    company_id:         caller.company_id,
+    data_after:         { target_email: target.email, target_company_id: target.company_id },
+  })
+
+  return { success: true }
+}
+
+/** Suspend or reactivate any user across any company — platform admin only. */
+export async function togglePlatformUserActive(userId: string, isActive: boolean) {
+  const admin = getAdmin()
+  const { user, caller } = await verifyPlatformAdmin()
+
+  if (!user || !caller?.is_platform_admin)
+    return { error: 'Accès réservé aux administrateurs de la plateforme.' }
+
+  if (userId === user.id)
+    return { error: 'Impossible de modifier votre propre compte.' }
+
+  const { data: target } = await admin
+    .from('users')
+    .select('email, company_id, role')
+    .eq('id', userId)
+    .single()
+
+  if (!target) return { error: 'Utilisateur introuvable.' }
+
+  // Update profile in DB
+  const { error: profileError } = await admin
+    .from('users')
+    .update({ is_active: isActive })
+    .eq('id', userId)
+
+  if (profileError) return { error: profileError.message }
+
+  // Reflect in Supabase Auth (ban / unban)
+  await admin.auth.admin.updateUserById(userId, {
+    ban_duration: isActive ? 'none' : '876000h',
+  })
+
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: caller.is_platform_admin ? 'platform_admin' : caller.role,
+    action_type:        isActive ? 'PLATFORM_USER_REACTIVATED' : 'PLATFORM_USER_SUSPENDED',
+    entity_type:        'users',
+    entity_id:          userId,
+    company_id:         caller.company_id,
+    data_after:         { target_email: target.email, target_company_id: target.company_id, is_active: isActive },
+  })
+
+  revalidatePath('/admin')
+  return { success: true }
+}
