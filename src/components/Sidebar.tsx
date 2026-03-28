@@ -210,7 +210,9 @@ export default function Sidebar({
     }
   }
 
-  const visibleItems = NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
+  const visibleItems = profile.is_platform_admin
+    ? []  // platform operator: aucun module métier — accès exclusif à /admin
+    : NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
 
   const getNavBadge = (href: string): number => {
     if (!badgeCounts) return 0
