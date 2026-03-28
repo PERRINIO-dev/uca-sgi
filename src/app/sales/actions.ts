@@ -49,7 +49,7 @@ export async function createSale(payload: CreateSalePayload) {
 
   const { data: callerProfile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -91,6 +91,7 @@ export async function createSale(payload: CreateSalePayload) {
         action_type:        'FLOOR_PRICE_VIOLATION_ATTEMPT',
         entity_type:        'sale_items',
         entity_id:          item.product_id,
+        company_id:         callerProfile.company_id,
         data_after: {
           attempted_price: item.unit_price_per_m2,
           floor_price:     dbFloorPrice,
@@ -155,6 +156,7 @@ export async function createSale(payload: CreateSalePayload) {
       notes:          payload.notes,
       status:         'confirmed',
       sale_number:    '',
+      company_id:     callerProfile.company_id,
     })
     .select('id, sale_number')
     .single()
@@ -166,7 +168,7 @@ export async function createSale(payload: CreateSalePayload) {
   // 4. Create sale items (using server-recalculated values)
   const { error: itemsError } = await supabase
     .from('sale_items')
-    .insert(serverItems.map(item => ({ ...item, sale_id: sale.id })))
+    .insert(serverItems.map(item => ({ ...item, sale_id: sale.id, company_id: callerProfile.company_id })))
 
   if (itemsError) {
     await supabase.from('sales').delete().eq('id', sale.id)
@@ -216,12 +218,15 @@ export async function createSale(payload: CreateSalePayload) {
   }
 
   // 5. Create the warehouse order
+  // company_id is inherited automatically by the set_order_number() trigger,
+  // but we pass it explicitly here for defense-in-depth.
   const { error: orderError } = await supabase
     .from('orders')
     .insert({
       sale_id:      sale.id,
       order_number: '',
       status:       'confirmed',
+      company_id:   callerProfile.company_id,
     })
 
   if (orderError) {
@@ -243,7 +248,7 @@ export async function createSale(payload: CreateSalePayload) {
   if (amountPaid > 0) {
     const { data: initPayment } = await supabase
       .from('sale_payments')
-      .insert({ sale_id: sale.id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id })
+      .insert({ sale_id: sale.id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id, company_id: callerProfile.company_id })
       .select('id')
       .single()
     // Trigger sync_sale_payment_totals() fires automatically in DB
@@ -254,6 +259,7 @@ export async function createSale(payload: CreateSalePayload) {
       action_type:        'PAYMENT_RECORDED',
       entity_type:        'sales',
       entity_id:          sale.id,
+      company_id:         callerProfile.company_id,
       data_after:         { amount: amountPaid, notes: 'Paiement initial', payment_id: initPayment?.id },
     })
   }
@@ -265,6 +271,7 @@ export async function createSale(payload: CreateSalePayload) {
     action_type:        'SALE_CREATED',
     entity_type:        'sales',
     entity_id:          sale.id,
+    company_id:         callerProfile.company_id,
     data_after: {
       sale_number:  sale.sale_number,
       total_amount: serverTotal,
@@ -281,7 +288,7 @@ export async function createSale(payload: CreateSalePayload) {
     body:  `Vente ${sale.sale_number} — ${payload.items.length} article(s) à préparer`,
     url:   '/warehouse',
     tag:   `order-${sale.id}`,
-  }).catch(console.error)
+  }, callerProfile.company_id).catch(console.error)
 
   return { success: true, saleNumber: sale.sale_number, saleId: sale.id, serverTotal }
 }
@@ -294,7 +301,7 @@ export async function cancelSale(saleId: string) {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -305,6 +312,8 @@ export async function cancelSale(saleId: string) {
 
   // Use admin client to bypass RLS — authorization is enforced by server-side
   // role check and vendor_id comparison above, not by RLS alone.
+  // company_id filter is added for defense-in-depth even though the admin client
+  // bypasses RLS: prevents a compromised saleId from cancelling another tenant's sale.
   // Admins/owners: cancel any non-final status (including preparing/ready)
   // Vendors: only cancel their own sales when still confirmed/draft
   const { data: updatedSales, error } = isAdminOrOwner
@@ -312,6 +321,7 @@ export async function cancelSale(saleId: string) {
         .from('sales')
         .update({ status: 'cancelled' })
         .eq('id', saleId)
+        .eq('company_id', profile.company_id)
         .in('status', ['draft', 'confirmed', 'preparing', 'ready'])
         .select('id')
     : await adminSupabase
@@ -319,6 +329,7 @@ export async function cancelSale(saleId: string) {
         .update({ status: 'cancelled' })
         .eq('id', saleId)
         .eq('vendor_id', user.id)
+        .eq('company_id', profile.company_id)
         .in('status', ['draft', 'confirmed'])
         .select('id')
 
@@ -370,6 +381,7 @@ export async function cancelSale(saleId: string) {
     action_type:        'SALE_CANCELLED',
     entity_type:        'sales',
     entity_id:          saleId,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/sales')
@@ -391,7 +403,7 @@ export async function addPayment(
   if (!user) return { error: 'Non authentifié.' }
 
   const { data: profile } = await supabase
-    .from('users').select('role').eq('id', user.id).single()
+    .from('users').select('role, company_id').eq('id', user.id).single()
   if (!profile) return { error: 'Profil introuvable.' }
 
   const { data: sale } = await supabase
@@ -410,7 +422,7 @@ export async function addPayment(
 
   const { data: newPayment, error: insertError } = await supabase
     .from('sale_payments')
-    .insert({ sale_id: saleId, amount, notes, created_by: user.id })
+    .insert({ sale_id: saleId, amount, notes, created_by: user.id, company_id: profile.company_id })
     .select('id')
     .single()
 
@@ -424,6 +436,7 @@ export async function addPayment(
     action_type:        'PAYMENT_RECORDED',
     entity_type:        'sales',
     entity_id:          saleId,
+    company_id:         profile.company_id,
     data_after:         { amount, notes, payment_id: newPayment?.id },
   })
 

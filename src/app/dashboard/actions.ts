@@ -19,7 +19,7 @@ async function getCallerProfile() {
   if (!user) return { supabase, user: null, profile: null }
 
   const { data: profile } = await supabase
-    .from('users').select('role').eq('id', user.id).single()
+    .from('users').select('role, company_id').eq('id', user.id).single()
 
   return { supabase, user, profile }
 }
@@ -58,6 +58,7 @@ export async function approveStockRequest(
     action_type:        'STOCK_REQUEST_APPROVED',
     entity_type:        'stock_requests',
     entity_id:          requestId,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/dashboard')
@@ -108,6 +109,7 @@ export async function rejectStockRequest(
     action_type:        'STOCK_REQUEST_REJECTED',
     entity_type:        'stock_requests',
     entity_id:          requestId,
+    company_id:         profile.company_id,
     data_after:         { comment },
   })
 

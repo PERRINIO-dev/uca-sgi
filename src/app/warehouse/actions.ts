@@ -32,7 +32,7 @@ export async function updateOrderStatus(
   // Verify the caller has warehouse access
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -93,6 +93,7 @@ export async function updateOrderStatus(
     action_type:        actionMap[newStatus],
     entity_type:        'orders',
     entity_id:          orderId,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/warehouse')
@@ -134,11 +135,12 @@ export async function updateOrderStatus(
         })
       }
 
-      // Check for low stock post-delivery
+      // Check for low stock post-delivery (admin client — must filter company explicitly)
       const { data: postStocks } = await admin
         .from('stock_view')
         .select('product_id, product_name, available_full_cartons')
         .in('product_id', productIds)
+        .eq('company_id', profile.company_id)
 
       const lowStock = (postStocks ?? []).filter((s: any) => Number(s.available_full_cartons) < LOW_STOCK_CARTONS)
       if (lowStock.length > 0) {
@@ -148,7 +150,7 @@ export async function updateOrderStatus(
           body:  `Stock bas (<${LOW_STOCK_CARTONS} cartons) après livraison : ${names}`,
           url:   '/products',
           tag:   'low-stock',
-        }).catch(console.error)
+        }, profile.company_id).catch(console.error)
       }
     }
   }
@@ -171,7 +173,7 @@ export async function submitStockRequest(payload: {
   // Verify the caller has warehouse access
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -193,6 +195,7 @@ export async function submitStockRequest(payload: {
       justification:        payload.justification,
       stock_before_tiles:   payload.stockBeforeTiles,
       status:               'pending',
+      company_id:           profile.company_id,
     })
     .select('id')
     .single()
@@ -205,6 +208,7 @@ export async function submitStockRequest(payload: {
     action_type:        'STOCK_REQUEST_SUBMITTED',
     entity_type:        'stock_requests',
     entity_id:          data.id,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/warehouse')
@@ -218,7 +222,7 @@ export async function submitStockRequest(payload: {
     body:  `Nouvelle demande pour ${product?.name ?? 'un produit'} — approbation requise`,
     url:   '/dashboard',
     tag:   `stock-request-${data.id}`,
-  }).catch(console.error)
+  }, profile.company_id).catch(console.error)
 
   return { success: true }
 }

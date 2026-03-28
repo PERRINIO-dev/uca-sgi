@@ -28,7 +28,7 @@ export async function createEmployee(payload: {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -44,11 +44,12 @@ export async function createEmployee(payload: {
     return { error: 'Le mot de passe doit contenir au moins 8 caractères.' }
   }
 
-  // Check email uniqueness
+  // Check email uniqueness within the company
   const { data: existing } = await adminSupabase
     .from('users')
     .select('id')
     .eq('email', payload.email.trim().toLowerCase())
+    .eq('company_id', profile.company_id)
     .maybeSingle()
 
   if (existing) {
@@ -84,6 +85,7 @@ export async function createEmployee(payload: {
       role:        payload.role,
       boutique_id: payload.boutiqueId ?? null,
       is_active:   true,
+      company_id:  profile.company_id,
     }, { onConflict: 'id' })
 
   if (profileError) {
@@ -97,6 +99,7 @@ export async function createEmployee(payload: {
     action_type:        'USER_CREATED',
     entity_type:        'users',
     entity_id:          userId,
+    company_id:         profile.company_id,
     data_after: {
       email:    payload.email,
       role:     payload.role,
@@ -120,7 +123,7 @@ export async function toggleUserActive(
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -132,11 +135,12 @@ export async function toggleUserActive(
     return { error: 'Vous ne pouvez pas désactiver votre propre compte.' }
   }
 
-  // Role hierarchy: admin cannot touch owner accounts
+  // Role hierarchy: admin cannot touch owner accounts; also verify target is in same company
   const { data: targetProfile } = await adminSupabase
     .from('users')
     .select('role')
     .eq('id', targetUserId)
+    .eq('company_id', profile.company_id)
     .single()
 
   if (targetProfile?.role === 'owner' && profile.role !== 'owner') {
@@ -156,6 +160,7 @@ export async function toggleUserActive(
     action_type:        isActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
     entity_type:        'users',
     entity_id:          targetUserId,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/users')
@@ -170,7 +175,7 @@ export async function createBoutique(payload: { name: string; address: string })
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -184,7 +189,7 @@ export async function createBoutique(payload: { name: string; address: string })
   const adminSupabase = getAdminClient()
   const { data: boutique, error } = await adminSupabase
     .from('boutiques')
-    .insert({ name: trimmed, address: payload.address.trim(), is_active: true })
+    .insert({ name: trimmed, address: payload.address.trim(), is_active: true, company_id: profile.company_id })
     .select('id')
     .single()
 
@@ -196,6 +201,7 @@ export async function createBoutique(payload: { name: string; address: string })
     action_type:        'BOUTIQUE_CREATED',
     entity_type:        'boutiques',
     entity_id:          boutique.id,
+    company_id:         profile.company_id,
     data_after:         { name: trimmed, address: payload.address.trim() },
   })
 
@@ -215,7 +221,7 @@ export async function resetPassword(
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -227,11 +233,12 @@ export async function resetPassword(
     return { error: 'Le mot de passe doit contenir au moins 8 caractères.' }
   }
 
-  // Role hierarchy: admin cannot reset owner's password
+  // Role hierarchy: admin cannot reset owner's password; verify target is in same company
   const { data: targetProfile } = await adminSupabase
     .from('users')
     .select('role')
     .eq('id', targetUserId)
+    .eq('company_id', profile.company_id)
     .single()
 
   if (targetProfile?.role === 'owner' && profile.role !== 'owner') {
@@ -251,6 +258,7 @@ export async function resetPassword(
     action_type:        'PASSWORD_RESET',
     entity_type:        'users',
     entity_id:          targetUserId,
+    company_id:         profile.company_id,
   })
 
   return { success: true }
@@ -268,7 +276,7 @@ export async function toggleBoutiqueActive(
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -280,6 +288,7 @@ export async function toggleBoutiqueActive(
     .from('boutiques')
     .update({ is_active: isActive })
     .eq('id', boutiqueId)
+    .eq('company_id', profile.company_id)
 
   if (error) return { error: error.message }
 
@@ -289,6 +298,7 @@ export async function toggleBoutiqueActive(
     action_type:        isActive ? 'BOUTIQUE_ACTIVATED' : 'BOUTIQUE_DEACTIVATED',
     entity_type:        'boutiques',
     entity_id:          boutiqueId,
+    company_id:         profile.company_id,
   })
 
   revalidatePath('/users')
@@ -309,7 +319,7 @@ export async function updateEmployee(payload: {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('role')
+    .select('role, company_id')
     .eq('id', user.id)
     .single()
 
@@ -321,11 +331,12 @@ export async function updateEmployee(payload: {
     return { error: 'Une boutique doit être assignée aux vendeurs.' }
   }
 
-  // Role hierarchy: admin cannot edit owner accounts
+  // Role hierarchy: admin cannot edit owner accounts; verify target is in same company
   const { data: targetProfile } = await adminSupabase
     .from('users')
     .select('role')
     .eq('id', payload.userId)
+    .eq('company_id', profile.company_id)
     .single()
 
   if (targetProfile?.role === 'owner' && profile.role !== 'owner') {
@@ -349,6 +360,7 @@ export async function updateEmployee(payload: {
     action_type:        'USER_UPDATED',
     entity_type:        'users',
     entity_id:          payload.userId,
+    company_id:         profile.company_id,
     data_after: {
       full_name:   payload.fullName,
       role:        payload.role,

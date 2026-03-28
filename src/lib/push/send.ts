@@ -38,17 +38,21 @@ async function dispatch(subs: { subscription: unknown }[], payload: PushPayload)
   )
 }
 
-/** Send a push notification to all active users with any of the given roles */
+/** Send a push notification to all active users with any of the given roles,
+ *  scoped to a specific company (admin client bypasses RLS, so we must filter
+ *  company_id explicitly to prevent cross-tenant notification leakage). */
 export async function sendPushToRoles(
-  admin:   AdminClient,
-  roles:   string[],
-  payload: PushPayload,
+  admin:     AdminClient,
+  roles:     string[],
+  payload:   PushPayload,
+  companyId: string,
 ) {
   const { data: users } = await admin
     .from('users')
     .select('id')
     .in('role', roles)
     .eq('is_active', true)
+    .eq('company_id', companyId)
 
   if (!users?.length) return
 

@@ -33,7 +33,7 @@ export async function createProduct(payload: {
   if (!user) return { error: 'Non authentifié.' }
 
   const { data: profile } = await supabase
-    .from('users').select('role').eq('id', user.id).single()
+    .from('users').select('role, company_id').eq('id', user.id).single()
 
   if (!profile || !['owner', 'admin'].includes(profile.role)) {
     return { error: 'Accès refusé.' }
@@ -72,6 +72,7 @@ export async function createProduct(payload: {
       floor_price_per_m2:     payload.floorPricePerM2,
       reference_price_per_m2: payload.referencePricePerM2,
       is_active:              true,
+      company_id:             profile.company_id,
     })
     .select('id, name')
     .single()
@@ -91,6 +92,7 @@ export async function createProduct(payload: {
         total_tiles:     initTiles,
         last_updated_at: new Date().toISOString(),
         last_updated_by: user.id,
+        company_id:      profile.company_id,
       }, { onConflict: 'product_id' })
 
     if (stockError) return { error: stockError.message }
@@ -102,6 +104,7 @@ export async function createProduct(payload: {
     action_type:        'PRODUCT_CREATED',
     entity_type:        'products',
     entity_id:          product.id,
+    company_id:         profile.company_id,
     data_after: {
       name:          payload.name,
       referenceCode: payload.referenceCode,
@@ -130,7 +133,7 @@ export async function updateProduct(payload: {
   if (!user) return { error: 'Non authentifié.' }
 
   const { data: profile } = await supabase
-    .from('users').select('role').eq('id', user.id).single()
+    .from('users').select('role, company_id').eq('id', user.id).single()
 
   if (!profile || !['owner', 'admin'].includes(profile.role)) {
     return { error: 'Accès refusé.' }
@@ -165,6 +168,7 @@ export async function updateProduct(payload: {
     action_type:        'PRODUCT_UPDATED',
     entity_type:        'products',
     entity_id:          payload.productId,
+    company_id:         profile.company_id,
     data_after:         payload,
   })
 
