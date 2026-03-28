@@ -26,7 +26,7 @@ export default async function DashboardPage() {
 
   const [stats, chartData, badgeCounts] = await Promise.all([
     getDashboardStats(),
-    getSalesByPeriod(7),
+    getSalesByPeriod(30),
     getBadgeCounts(profile.role, supabase),
   ])
 
@@ -91,7 +91,7 @@ export default async function DashboardPage() {
   // ── Daily chart data (last 7 days) ────────────────────────────────────────
   const dailyMap: Record<string, number> = {}
   chartData.forEach((s: any) => {
-    const day = new Date(s.created_at).toLocaleDateString('fr-FR', { weekday: 'short' })
+    const day = new Date(s.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
     dailyMap[day] = (dailyMap[day] ?? 0) + Number(s.total_amount)
   })
   const dailyChart = Object.entries(dailyMap).map(([day, ca]) => ({ day, ca }))

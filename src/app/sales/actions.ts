@@ -241,13 +241,21 @@ export async function createSale(payload: CreateSalePayload) {
 
   // 5.5 Record initial payment in history (enables multi-tranche tracking)
   if (amountPaid > 0) {
-    await supabase.from('sale_payments').insert({
-      sale_id:    sale.id,
-      amount:     amountPaid,
-      notes:      'Paiement initial',
-      created_by: user.id,
-    })
+    const { data: initPayment } = await supabase
+      .from('sale_payments')
+      .insert({ sale_id: sale.id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id })
+      .select('id')
+      .single()
     // Trigger sync_sale_payment_totals() fires automatically in DB
+
+    await getAdminClient().from('audit_logs').insert({
+      user_id:            user.id,
+      user_role_snapshot: callerProfile.role,
+      action_type:        'PAYMENT_RECORDED',
+      entity_type:        'sales',
+      entity_id:          sale.id,
+      data_after:         { amount: amountPaid, notes: 'Paiement initial', payment_id: initPayment?.id },
+    })
   }
 
   // 6. Audit log

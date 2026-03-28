@@ -74,7 +74,7 @@ export default function ReportsClient({
   const [filterBoutique, setBoutique] = useState('all')
   const [filterVendor,   setVendor]   = useState('all')
   const [filterStatus,   setStatus]   = useState('all')
-  const [filterDays,     setDays]     = useState('30')
+  const [filterDays,     setDays]     = useState('0')
   const [search,         setSearch]   = useState('')
   const [expandedSale,   setExpanded] = useState<string | null>(null)
 
@@ -85,13 +85,14 @@ export default function ReportsClient({
 
   // ── Apply filters ──────────────────────────────────────────────────────
   const cutoff = useMemo(() => {
+    if (filterDays === '0') return null
     const d = new Date()
     d.setDate(d.getDate() - parseInt(filterDays))
     return d
   }, [filterDays])
 
   const filtered = useMemo(() => sales.filter(s => {
-    if (new Date(s.created_at) < cutoff)                               return false
+    if (cutoff && new Date(s.created_at) < cutoff)                     return false
     if (filterBoutique !== 'all' && s.boutiques?.id !== filterBoutique) return false
     if (filterVendor   !== 'all' && s.users?.id    !== filterVendor)    return false
     if (filterStatus   !== 'all' && s.status       !== filterStatus)    return false
@@ -323,8 +324,8 @@ export default function ReportsClient({
       <div style={{ display: 'flex', gap: 10, marginBottom: 24,
         flexWrap: 'wrap', background: C.surface, padding: '14px 16px',
         borderRadius: 12, border: `1px solid ${C.border}` }}>
-        {([['7', '7 jours'], ['30', '30 jours'],
-          ['60', '60 jours'], ['90', '90 jours']] as [string, string][])
+        {([['0', 'Tout le temps'], ['30', '30 jours'],
+          ['90', '90 jours'], ['365', '1 an'], ['730', '2 ans']] as [string, string][])
           .map(([val, label]) => (
             <button key={val} onClick={() => setDays(val)}
               style={{ padding: '7px 14px', borderRadius: 100,

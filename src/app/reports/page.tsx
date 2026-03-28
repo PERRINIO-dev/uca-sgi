@@ -18,10 +18,7 @@ export default async function ReportsPage() {
   if (!profile) redirect('/login')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
-  // Last 90 days of sales
-  const since = new Date()
-  since.setDate(since.getDate() - 90)
-
+  // All sales — no date limit (payment cycles can span years in this business)
   const { data: sales } = await supabase
     .from('sales')
     .select(`
@@ -37,7 +34,6 @@ export default async function ReportsPage() {
         products ( id, name, reference_code, category )
       )
     `)
-    .gte('created_at', since.toISOString())
     .order('created_at', { ascending: false })
 
   const { data: boutiques } = await supabase

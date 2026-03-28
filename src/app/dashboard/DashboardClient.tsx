@@ -325,7 +325,7 @@ export default function DashboardClient({
         gap: 16, marginBottom: 24,
       }}>
         <Panel>
-          <SectionTitle>Ventes des 7 derniers jours</SectionTitle>
+          <SectionTitle>Ventes des 30 derniers jours</SectionTitle>
           {dailyChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={190}>
               <AreaChart data={dailyChart} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
