@@ -16,6 +16,7 @@ export default async function NewSalePage() {
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.is_platform_admin) redirect('/admin')
   if (!['vendor', 'admin', 'owner'].includes(profile.role)) redirect('/dashboard')
 
   const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)

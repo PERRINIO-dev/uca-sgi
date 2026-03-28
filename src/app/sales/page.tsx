@@ -21,6 +21,7 @@ export default async function SalesPage({
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.is_platform_admin) redirect('/admin')
 
   // Warehouse role has no access to the sales page
   if (profile.role === 'warehouse') redirect('/warehouse')

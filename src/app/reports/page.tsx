@@ -16,6 +16,7 @@ export default async function ReportsPage() {
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.is_platform_admin) redirect('/admin')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
   // All sales — no date limit (payment cycles can span years in this business)

@@ -16,6 +16,7 @@ export default async function UsersPage() {
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.is_platform_admin) redirect('/admin')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
   const [{ data: employees }, { data: boutiques }, badgeCounts] = await Promise.all([

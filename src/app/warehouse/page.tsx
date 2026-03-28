@@ -16,6 +16,7 @@ export default async function WarehousePage() {
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.is_platform_admin) redirect('/admin')
   if (!['warehouse', 'admin', 'owner'].includes(profile.role)) {
     redirect('/dashboard')
   }

@@ -288,7 +288,7 @@ export default function Sidebar({
             fontSize: 10.5, color: 'rgba(255,255,255,0.35)',
             marginTop: 1, fontWeight: 500,
           }}>
-            {ROLE_LABELS[profile.role] ?? profile.role}
+            {profile.is_platform_admin ? 'Opérateur Plateforme' : (ROLE_LABELS[profile.role] ?? profile.role)}
           </div>
         </div>
       </div>
