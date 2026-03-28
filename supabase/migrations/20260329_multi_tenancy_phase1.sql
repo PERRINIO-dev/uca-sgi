@@ -270,15 +270,28 @@ AS
 SELECT
   s.product_id,
   s.company_id,
-  p.name,
+  p.name                                                               AS product_name,
   p.reference_code,
-  p.category,
-  p.unit_price,
-  p.purchase_price,
-  p.min_price,
+  p.tiles_per_carton,
+  p.tile_area_m2,
   s.total_tiles,
   s.reserved_tiles,
-  (s.total_tiles - s.reserved_tiles) AS available_tiles
+
+  -- Available stock (unreserved)
+  (s.total_tiles - s.reserved_tiles)                                   AS available_tiles,
+
+  -- Available stock broken down into full cartons + loose tiles
+  FLOOR((s.total_tiles - s.reserved_tiles) / p.tiles_per_carton)      AS available_full_cartons,
+  ((s.total_tiles - s.reserved_tiles)
+    - FLOOR((s.total_tiles - s.reserved_tiles) / p.tiles_per_carton)
+      * p.tiles_per_carton)                                            AS loose_tiles,
+
+  -- Available surface area in m²
+  ((s.total_tiles - s.reserved_tiles) * p.tile_area_m2)               AS available_m2,
+
+  -- Total cartons in stock (regardless of reservations) — useful for display
+  FLOOR(s.total_tiles / p.tiles_per_carton)                            AS full_cartons
+
 FROM stock     s
 JOIN products  p ON p.id = s.product_id;
 
