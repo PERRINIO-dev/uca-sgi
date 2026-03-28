@@ -948,6 +948,64 @@ const ROLE_LABELS: Record<string, string> = {
   owner: 'Propriétaire', admin: 'Admin', vendor: 'Vendeur', warehouse: 'Entrepôt',
 }
 
+// ── Human-readable audit detail formatter ─────────────────────────────────
+function formatAuditDetails(actionType: string, data: Record<string, unknown> | null): string {
+  const fmtCFA = (n: unknown) =>
+    new Intl.NumberFormat('fr-FR').format(Math.round(Number(n))) + ' FCFA'
+  const str = (v: unknown): string | null =>
+    v != null && v !== '' && v !== 'null' ? String(v) : null
+
+  switch (actionType) {
+    case 'SALE_CREATED':
+      if (!data) return '—'
+      return [
+        data.sale_number  ? `N° ${data.sale_number}`         : null,
+        data.total_amount ? fmtCFA(data.total_amount)        : null,
+        data.item_count   ? `${data.item_count} article(s)`  : null,
+      ].filter(Boolean).join('  ·  ')
+
+    case 'PAYMENT_RECORDED': {
+      if (!data) return '—'
+      const note = str(data.notes)
+      return [
+        data.amount ? fmtCFA(data.amount) : null,
+        note        ? note                 : null,
+      ].filter(Boolean).join(' — ')
+    }
+
+    case 'FLOOR_PRICE_VIOLATION_ATTEMPT':
+      if (!data) return '—'
+      return `Prix tenté : ${fmtCFA(data.attempted_price)}/m²  ·  Plancher : ${fmtCFA(data.floor_price)}/m²`
+
+    case 'STOCK_REQUEST_REJECTED':
+      return str(data?.comment) ?? '—'
+
+    case 'PRODUCT_CREATED':
+    case 'PRODUCT_UPDATED':
+      if (!data) return '—'
+      return [str(data.name), str(data.referenceCode)].filter(Boolean).join('  ·  ')
+
+    case 'USER_CREATED': {
+      if (!data) return '—'
+      const role = ROLE_LABELS[String(data.role)] ?? str(data.role)
+      return [str(data.email), role].filter(Boolean).join('  ·  ')
+    }
+
+    case 'USER_UPDATED': {
+      if (!data) return '—'
+      const role = ROLE_LABELS[String(data.role)] ?? str(data.role)
+      return [str(data.full_name), role].filter(Boolean).join('  ·  ')
+    }
+
+    case 'BOUTIQUE_CREATED':
+      if (!data) return '—'
+      return [str(data.name), str(data.address)].filter(Boolean).join(' — ')
+
+    default:
+      return '—'
+  }
+}
+
 function AuditLogTab({ logs }: { logs: any[] }) {
   const [search, setSearch]     = useState('')
   const [typeFilter, setType]   = useState('')
@@ -1040,7 +1098,7 @@ function AuditLogTab({ logs }: { logs: any[] }) {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: C.bg }}>
                 <tr>
-                  {['Date', 'Action', 'Utilisateur', 'Rôle', 'Entité', 'Détails'].map(h => (
+                  {['Date', 'Action', 'Utilisateur', 'Rôle', 'Détails'].map(h => (
                     <th key={h} style={{
                       padding: '11px 14px', textAlign: 'left',
                       fontSize: 11, fontWeight: 600, color: C.muted,
@@ -1081,15 +1139,8 @@ function AuditLogTab({ logs }: { logs: any[] }) {
                       <td style={{ padding: '11px 14px', fontSize: 12, color: C.muted, fontFamily: FONT, verticalAlign: 'middle' }}>
                         {ROLE_LABELS[log.user_role_snapshot] ?? log.user_role_snapshot ?? '—'}
                       </td>
-                      <td style={{ padding: '11px 14px', fontSize: 11, color: C.slate, fontFamily: FONT, verticalAlign: 'middle' }}>
-                        {log.entity_type ?? '—'}
-                      </td>
-                      <td style={{ padding: '11px 14px', fontSize: 11, color: C.muted, fontFamily: FONT, verticalAlign: 'middle', maxWidth: 200 }}>
-                        {log.data_after
-                          ? Object.entries(log.data_after as Record<string, unknown>)
-                              .map(([k, v]) => `${k}: ${v}`)
-                              .join(' · ')
-                          : '—'}
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.slate, fontFamily: FONT, verticalAlign: 'middle', maxWidth: 260 }}>
+                        {formatAuditDetails(log.action_type, log.data_after as Record<string, unknown> | null)}
                       </td>
                     </tr>
                   )
