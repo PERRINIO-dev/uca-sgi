@@ -1,5 +1,5 @@
-// UCA SGI — Service Worker v3
-const CACHE_NAME   = 'uca-sgi-v3'
+// UCA SGI — Service Worker v4
+const CACHE_NAME   = 'uca-sgi-v4'
 const OFFLINE_URL  = '/offline.html'
 
 // Pages to pre-cache so they're available instantly

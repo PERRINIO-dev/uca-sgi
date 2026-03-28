@@ -54,7 +54,18 @@
       font-size: 14px;
       color: #475569;
       line-height: 1.6;
-      margin-bottom: 28px;
+      margin-bottom: 24px;
+    }
+    .retry-info {
+      font-size: 12px;
+      color: #94A3B8;
+      margin-bottom: 20px;
+      height: 18px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
     }
     button {
       background: #1B3A6B;
@@ -69,6 +80,12 @@
       transition: background 0.15s;
     }
     button:hover { background: #0C1A35; }
+    button.secondary {
+      background: transparent;
+      color: #1B3A6B;
+      border: 1.5px solid #CBD5E1;
+    }
+    button.secondary:hover { background: #F1F5F9; }
   </style>
 </head>
 <body>
@@ -76,10 +93,15 @@
     <div class="logo">UCA</div>
 
     <div class="icon-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M1 6l4 4 4-4"/>
-        <path d="M5 10V3"/>
-        <path d="M23 18a4 4 0 0 1-4 4H5a4 4 0 0 1 0-8h.27A7 7 0 0 1 20.8 9"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"/>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/>
+        <path d="M10.71 5.05A16 16 0 0 1 22.56 9"/>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+        <circle cx="12" cy="20" r="1" fill="#DC2626" stroke="none"/>
       </svg>
     </div>
 
@@ -88,7 +110,65 @@
       Vous êtes actuellement hors ligne.<br>
       Vérifiez votre connexion internet et réessayez.
     </p>
-    <button onclick="window.location.reload()">Réessayer</button>
+
+    <div class="retry-info" id="retry-info"></div>
+
+    <div class="btn-row">
+      <button onclick="manualRetry()">Réessayer</button>
+    </div>
   </div>
+
+  <script>
+    var INTERVAL = 30
+    var countdown = INTERVAL
+    var timer = null
+    var retrying = false
+
+    function updateInfo() {
+      var el = document.getElementById('retry-info')
+      if (retrying) {
+        el.textContent = 'Vérification en cours…'
+      } else {
+        el.textContent = 'Nouvelle tentative dans ' + countdown + ' s'
+      }
+    }
+
+    function tryReconnect() {
+      retrying = true
+      updateInfo()
+      fetch(location.href, { method: 'HEAD', cache: 'no-store' })
+        .then(function(r) {
+          if (r.ok) { window.location.reload(); return }
+          reset()
+        })
+        .catch(function() { reset() })
+    }
+
+    function reset() {
+      retrying = false
+      countdown = INTERVAL
+      updateInfo()
+    }
+
+    function manualRetry() {
+      clearInterval(timer)
+      tryReconnect()
+      timer = setInterval(tick, 1000)
+    }
+
+    function tick() {
+      if (retrying) return
+      countdown--
+      if (countdown <= 0) {
+        tryReconnect()
+        countdown = INTERVAL
+      }
+      updateInfo()
+    }
+
+    // Start immediately
+    updateInfo()
+    timer = setInterval(tick, 1000)
+  </script>
 </body>
 </html>

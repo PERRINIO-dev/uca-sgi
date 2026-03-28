@@ -22,7 +22,8 @@ export default function PageLayout({
 }) {
   const router                    = useRouter()
   const isMobile                  = useIsMobile()
-  const [sidebarOpen, setSidebar] = useState(false)
+  const [sidebarOpen,    setSidebar]    = useState(false)
+  const [updateReady,    setUpdateReady] = useState(false)
 
   const PAGE_TITLES: Record<string, string> = {
     '/dashboard': 'Tableau de bord',
@@ -37,9 +38,21 @@ export default function PageLayout({
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
-    // Register service worker
+    // Register service worker and detect when a new version is ready
     navigator.serviceWorker
       .register('/sw.js', { scope: '/' })
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing
+          if (!newWorker) return
+          newWorker.addEventListener('statechange', () => {
+            // New SW installed and waiting — only notify if a previous SW was controlling
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              setUpdateReady(true)
+            }
+          })
+        })
+      })
       .catch(err => console.error('[SW]', err))
 
     // Listen for SW broadcast: push notification received while page is open
@@ -73,6 +86,61 @@ export default function PageLayout({
   return (
     <>
     <PushSubscription />
+
+    {/* ── SW update toast ── */}
+    {updateReady && (
+      <div style={{
+        position: 'fixed', bottom: 80, left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 9998,
+        background: '#1B3A6B', color: '#fff',
+        borderRadius: 12, padding: '14px 20px',
+        display: 'flex', alignItems: 'center', gap: 14,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+        maxWidth: 'calc(100vw - 32px)',
+        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 2v6h-6"/>
+          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+          <path d="M3 22v-6h6"/>
+          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+        </svg>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 13, fontWeight: 600 }}>Mise à jour disponible</div>
+          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+            Actualisez pour obtenir la dernière version
+          </div>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            background: '#2563EB', border: 'none', color: '#fff',
+            borderRadius: 8, padding: '8px 14px',
+            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            fontFamily: 'inherit', whiteSpace: 'nowrap',
+          }}
+        >
+          Actualiser
+        </button>
+        <button
+          onClick={() => setUpdateReady(false)}
+          style={{
+            background: 'transparent', border: 'none', color: '#64748B',
+            cursor: 'pointer', padding: 4, lineHeight: 1,
+          }}
+          aria-label="Fermer"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="1" y1="1" x2="13" y2="13"/>
+            <line x1="13" y1="1" x2="1" y2="13"/>
+          </svg>
+        </button>
+      </div>
+    )}
+
     <div style={{
       display: 'flex', minHeight: '100vh',
       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
