@@ -23,11 +23,12 @@ export default async function ProductsPage() {
     supabase
       .from('products')
       .select(`
-        id, reference_code, name, category, supplier,
-        width_cm, height_cm, tiles_per_carton,
-        tile_area_m2, carton_area_m2,
-        purchase_price, floor_price_per_m2,
-        reference_price_per_m2, is_active, created_at,
+        id, reference_code, name, category, supplier, is_active, created_at,
+        product_type, unit_label, package_label,
+        width_cm, height_cm, tiles_per_carton, tile_area_m2, carton_area_m2,
+        purchase_price, floor_price_per_m2, reference_price_per_m2,
+        floor_price_per_unit, reference_price_per_unit,
+        piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package,
         stock ( total_tiles, reserved_tiles, last_updated_at )
       `)
       .order('created_at', { ascending: false }),
