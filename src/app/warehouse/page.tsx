@@ -48,7 +48,7 @@ export default async function WarehousePage() {
             id, quantity_tiles, unit_price_per_m2,
             total_price, tile_area_m2_snapshot,
             tiles_per_carton_snapshot,
-            products ( name, reference_code )
+            products ( name, reference_code, product_type, unit_label, package_label )
           )
         )
       `)
@@ -68,7 +68,7 @@ export default async function WarehousePage() {
             id, quantity_tiles,
             tile_area_m2_snapshot,
             tiles_per_carton_snapshot,
-            products ( name, reference_code )
+            products ( name, reference_code, product_type, unit_label, package_label )
           )
         )
       `)
@@ -79,7 +79,7 @@ export default async function WarehousePage() {
     // All active products for stock request form
     supabase
       .from('products')
-      .select('id, name, reference_code, tiles_per_carton, tile_area_m2')
+      .select('id, name, reference_code, product_type, unit_label, package_label, tiles_per_carton, tile_area_m2, piece_length_m, container_volume_l, bag_weight_kg')
       .eq('is_active', true)
       .order('name'),
 

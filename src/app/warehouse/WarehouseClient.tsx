@@ -6,6 +6,10 @@ import { createClient }                 from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
 import PageLayout         from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import {
+  LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS,
+  LOW_STOCK_UNITS,   CRITICAL_STOCK_UNITS,
+} from '@/lib/constants'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -80,11 +84,18 @@ export default function WarehouseClient({
   const [reqCorrectionSign, setReqCorrectionSign] = useState<'negative' | 'positive'>('negative')
   const [reqCartons,        setReqCartons]        = useState('')
   const [reqLoose,          setReqLoose]          = useState('')
+  const [reqQty,            setReqQty]            = useState('')   // non-tile quantity
   const [reqJustif,         setReqJustif]         = useState('')
   const [reqLoading,        setReqLoading]        = useState(false)
   const [reqError,          setReqError]          = useState<string | null>(null)
   const [reqSuccess,        setReqSuccess]        = useState(false)
   const [stockSearch,       setStockSearch]       = useState('')
+
+  // Product lookup map (id → product row) for type-aware display
+  const productMap = useMemo(
+    () => new Map(products.map((p: any) => [p.id, p])),
+    [products]
+  )
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -132,18 +143,29 @@ export default function WarehouseClient({
     })
 
     const rows = items.map((item: any) => {
-      const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-      const tpc         = parseInt(item.tiles_per_carton_snapshot)
-      const m2          = item.quantity_tiles * tileArea
-      const fullCartons = Math.floor(item.quantity_tiles / tpc)
-      const loose       = item.quantity_tiles % tpc
+      const isTile  = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+      const unitLbl = escHtml(item.products?.unit_label ?? (isTile ? 'carreau' : 'unité'))
+      let detailCells: string
+      if (isTile) {
+        const tileArea    = parseFloat(item.tile_area_m2_snapshot)
+        const tpc         = parseInt(item.tiles_per_carton_snapshot)
+        const m2          = item.quantity_tiles * tileArea
+        const fullCartons = Math.floor(item.quantity_tiles / tpc)
+        const loose       = item.quantity_tiles % tpc
+        detailCells = `
+          <td style="text-align:center;font-weight:700">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
+          <td style="text-align:center">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</td>
+          <td style="text-align:right">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>`
+      } else {
+        detailCells = `
+          <td style="text-align:center;font-weight:700;font-size:16px" colspan="2">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${unitLbl}</td>
+          <td></td>`
+      }
       return `
         <tr>
           <td>${escHtml(item.products?.name)}</td>
           <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
-          <td style="text-align:center;font-weight:700">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
-          <td style="text-align:center">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</td>
-          <td style="text-align:right">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
+          ${detailCells}
           <td style="text-align:center">
             <span style="display:inline-block;width:18px;height:18px;border:2px solid #94A3B8;border-radius:3px">&nbsp;</span>
           </td>
@@ -215,9 +237,9 @@ export default function WarehouseClient({
       <tr>
         <th>Produit</th>
         <th>Référence</th>
-        <th style="text-align:center">Cartons</th>
-        <th style="text-align:center">Carreaux</th>
-        <th style="text-align:right">Surface</th>
+        <th style="text-align:center">Colis</th>
+        <th style="text-align:center">Unités</th>
+        <th style="text-align:right">Détail</th>
         <th style="text-align:center">Prélevé</th>
       </tr>
     </thead>
@@ -248,23 +270,30 @@ export default function WarehouseClient({
     setReqLoading(true)
     setReqError(null)
 
-    const prod      = products.find(p => p.id === reqProduct)
-    const tpc       = prod ? parseInt(prod.tiles_per_carton) : 1
-    const cartons   = parseInt(reqCartons)  || 0
-    const loose     = parseInt(reqLoose)    || 0
-    const deltaTiles = (cartons * tpc) + loose
+    const prod    = productMap.get(reqProduct)
+    const isTile  = !prod || prod.product_type === 'tile'
 
-    if (deltaTiles === 0) {
+    let delta: number
+    if (isTile) {
+      const tpc     = prod ? parseInt(prod.tiles_per_carton) : 1
+      const cartons = parseInt(reqCartons) || 0
+      const loose   = parseInt(reqLoose)   || 0
+      delta = (cartons * tpc) + loose
+    } else {
+      delta = parseInt(reqQty) || 0
+    }
+
+    if (delta === 0) {
       setReqError('La quantité doit être supérieure à zéro.')
       setReqLoading(false)
       return
     }
 
-    const stockRow  = stockLevels.find(s => s.product_id === reqProduct)
+    const stockRow   = stockLevels.find((s: any) => s.product_id === reqProduct)
     const stockBefore = stockRow ? parseInt(stockRow.total_tiles) : 0
     const finalDelta  = reqType === 'correction'
-      ? (reqCorrectionSign === 'negative' ? -Math.abs(deltaTiles) : Math.abs(deltaTiles))
-      : deltaTiles
+      ? (reqCorrectionSign === 'negative' ? -Math.abs(delta) : Math.abs(delta))
+      : delta
 
     const result = await submitStockRequest({
       productId:          reqProduct,
@@ -278,7 +307,7 @@ export default function WarehouseClient({
     if (result.error) { setReqError(result.error); return }
 
     setReqSuccess(true)
-    setReqCartons(''); setReqLoose(''); setReqJustif('')
+    setReqCartons(''); setReqLoose(''); setReqQty(''); setReqJustif('')
     setTimeout(() => setReqSuccess(false), 4000)
   }
 
@@ -518,8 +547,7 @@ export default function WarehouseClient({
                         borderCollapse: 'collapse' }}>
                         <thead>
                           <tr>
-                            {['Produit', 'Référence', 'Quantité',
-                              'Cartons', 'Surface'].map(h => (
+                            {['Produit', 'Référence', 'Quantité', 'Détail'].map(h => (
                               <th key={h} style={{ textAlign: 'left',
                                 fontSize: 11, fontWeight: 600,
                                 color: C.muted, textTransform: 'uppercase',
@@ -534,17 +562,25 @@ export default function WarehouseClient({
                         </thead>
                         <tbody>
                           {sale.sale_items.map((item: any) => {
-                            const tileArea = parseFloat(
-                              item.tile_area_m2_snapshot
-                            )
-                            const tpc = parseInt(
-                              item.tiles_per_carton_snapshot
-                            )
-                            const m2 = item.quantity_tiles * tileArea
-                            const fullCartons = Math.floor(
-                              item.quantity_tiles / tpc
-                            )
-                            const loose = item.quantity_tiles % tpc
+                            const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+                            const unitLbl = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
+                            let detail: React.ReactNode
+                            if (isTile) {
+                              const tpc = parseInt(item.tiles_per_carton_snapshot)
+                              const tileArea = parseFloat(item.tile_area_m2_snapshot)
+                              const m2 = item.quantity_tiles * tileArea
+                              const fullCartons = Math.floor(item.quantity_tiles / tpc)
+                              const loose = item.quantity_tiles % tpc
+                              detail = (
+                                <>
+                                  {fullCartons} carton{fullCartons !== 1 ? 's' : ''}
+                                  {loose > 0 && <span style={{ color: C.orange, fontSize: 11 }}> + {loose}</span>}
+                                  {' · '}{fmtM2(m2)}
+                                </>
+                              )
+                            } else {
+                              detail = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                            }
                             return (
                               <tr key={item.id}>
                                 <td style={{ padding: '10px 12px 10px 0',
@@ -558,23 +594,12 @@ export default function WarehouseClient({
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                  {fmtNum(item.quantity_tiles)} car.
+                                  {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : unitLbl}
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, fontWeight: 700,
                                   color: C.ink, fontFamily: FONT }}>
-                                  {fullCartons} carton
-                                  {fullCartons !== 1 ? 's' : ''}
-                                  {loose > 0 && (
-                                    <span style={{ color: C.orange,
-                                      fontSize: 11 }}>
-                                      {' '}+ {loose}
-                                    </span>
-                                  )}
-                                </td>
-                                <td style={{ padding: '10px 12px 10px 0',
-                                  fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                  {fmtM2(m2)}
+                                  {detail}
                                 </td>
                               </tr>
                             )
@@ -655,8 +680,7 @@ export default function WarehouseClient({
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                               <thead>
                                 <tr>
-                                  {['Produit', 'Référence', 'Carreaux',
-                                    'Cartons', 'Surface'].map(h => (
+                                  {['Produit', 'Référence', 'Quantité', 'Détail'].map(h => (
                                     <th key={h} style={{ textAlign: 'left',
                                       fontSize: 11, fontWeight: 600,
                                       color: C.muted, textTransform: 'uppercase',
@@ -671,11 +695,25 @@ export default function WarehouseClient({
                               </thead>
                               <tbody>
                                 {o.sales.sale_items.map((item: any) => {
-                                  const tileArea = parseFloat(item.tile_area_m2_snapshot)
-                                  const tpc      = parseInt(item.tiles_per_carton_snapshot)
-                                  const m2          = item.quantity_tiles * tileArea
-                                  const fullCartons = Math.floor(item.quantity_tiles / tpc)
-                                  const loose       = item.quantity_tiles % tpc
+                                  const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+                                  const unitLbl = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
+                                  let detail: React.ReactNode
+                                  if (isTile) {
+                                    const tpc = parseInt(item.tiles_per_carton_snapshot)
+                                    const tileArea = parseFloat(item.tile_area_m2_snapshot)
+                                    const m2 = item.quantity_tiles * tileArea
+                                    const fullCartons = Math.floor(item.quantity_tiles / tpc)
+                                    const loose = item.quantity_tiles % tpc
+                                    detail = (
+                                      <>
+                                        {fullCartons} carton{fullCartons !== 1 ? 's' : ''}
+                                        {loose > 0 && <span style={{ color: C.orange, fontSize: 11 }}> + {loose}</span>}
+                                        {' · '}{fmtM2(m2)}
+                                      </>
+                                    )
+                                  } else {
+                                    detail = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                                  }
                                   return (
                                     <tr key={item.id}>
                                       <td style={{ padding: '8px 12px 8px 0',
@@ -689,21 +727,12 @@ export default function WarehouseClient({
                                       </td>
                                       <td style={{ padding: '8px 12px 8px 0',
                                         fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                        {fmtNum(item.quantity_tiles)}
-                                      </td>
-                                      <td style={{ padding: '8px 12px 8px 0',
-                                        fontSize: 13, fontWeight: 700, color: C.ink,
-                                        fontFamily: FONT }}>
-                                        {fullCartons}
-                                        {loose > 0 && (
-                                          <span style={{ color: C.orange, fontSize: 11 }}>
-                                            {' '}+ {loose}
-                                          </span>
-                                        )}
+                                        {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : unitLbl}
                                       </td>
                                       <td style={{ padding: '8px 0',
-                                        fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                        {fmtM2(m2)}
+                                        fontSize: 13, fontWeight: 700, color: C.ink,
+                                        fontFamily: FONT }}>
+                                        {detail}
                                       </td>
                                     </tr>
                                   )
@@ -743,14 +772,28 @@ export default function WarehouseClient({
                 item.reference_code.toLowerCase().includes(stockSearch.toLowerCase())
               )
               .map((item: any) => {
-              const availM2   = parseFloat(item.available_m2)
-              const totalM2   = parseFloat(item.total_m2)
-              const available = parseInt(item.available_tiles)
-              const isLow     = available < 50
-              const isCritical = available < 20
+              const prod       = productMap.get(item.product_id)
+              const isTile     = !prod || prod.product_type === 'tile'
+              const unitLabel  = prod?.unit_label ?? (isTile ? 'm²' : 'unité')
+
+              const availM2    = parseFloat(item.available_m2)
+              const totalM2    = parseFloat(item.total_m2)
+              const available  = parseInt(item.available_tiles)
+              const reserved   = parseInt(item.reserved_tiles)
+
+              const isLow      = isTile
+                ? parseInt(item.available_full_cartons) < LOW_STOCK_CARTONS
+                : available < LOW_STOCK_UNITS
+              const isCritical = isTile
+                ? parseInt(item.available_full_cartons) < CRITICAL_STOCK_CARTONS
+                : available < CRITICAL_STOCK_UNITS
 
               const stockColor = isCritical ? C.red : isLow ? C.orange : C.green
-              const pct = totalM2 > 0 ? Math.min(100, (availM2 / totalM2) * 100) : 0
+              const pct = isTile
+                ? (totalM2 > 0 ? Math.min(100, (availM2 / totalM2) * 100) : 0)
+                : (parseInt(item.total_tiles) > 0
+                  ? Math.min(100, (available / parseInt(item.total_tiles)) * 100)
+                  : 0)
 
               return (
                 <div key={item.product_id} style={{
@@ -790,11 +833,15 @@ export default function WarehouseClient({
                       marginBottom: 4 }}>
                       <span style={{ fontSize: 12, fontWeight: 700,
                         color: stockColor, fontFamily: FONT }}>
-                        {fmtM2(availM2)} disponible
+                        {isTile
+                          ? `${fmtM2(availM2)} disponible`
+                          : `${fmtNum(available)} ${unitLabel} disponible${available !== 1 ? 's' : ''}`}
                       </span>
-                      <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
-                        {fmtNum(available)} carreaux
-                      </span>
+                      {isTile && (
+                        <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                          {fmtNum(available)} carreaux
+                        </span>
+                      )}
                     </div>
                     <div style={{ height: 6, background: C.bg,
                       borderRadius: 3, overflow: 'hidden' }}>
@@ -806,17 +853,25 @@ export default function WarehouseClient({
 
                   <div style={{ display: 'grid',
                     gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                    {[
-                      ['Cartons complets', String(item.available_full_cartons)],
-                      ['Carreaux libres',  fmtNum(item.loose_tiles)],
-                      ['Réservés',         fmtNum(item.reserved_tiles) + ' car.'],
-                      ['Total m²',         fmtM2(totalM2)],
-                      ['Mis à jour',
-                        new Date(item.last_updated_at)
-                          .toLocaleDateString('fr-FR', {
-                            day: '2-digit', month: 'short'
-                          })],
-                    ].map(([lbl, val]) => (
+                    {(isTile
+                      ? [
+                          ['Cartons complets', String(item.available_full_cartons)],
+                          ['Carreaux libres',  fmtNum(item.loose_tiles)],
+                          ['Réservés',         fmtNum(reserved) + ' car.'],
+                          ['Total m²',         fmtM2(totalM2)],
+                          ['Mis à jour',
+                            new Date(item.last_updated_at)
+                              .toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })],
+                        ]
+                      : [
+                          ['Disponible', fmtNum(available) + ' ' + unitLabel],
+                          ['Réservé',    fmtNum(reserved)  + ' ' + unitLabel],
+                          ['Total',      fmtNum(parseInt(item.total_tiles)) + ' ' + unitLabel],
+                          ['Mis à jour',
+                            new Date(item.last_updated_at)
+                              .toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })],
+                        ]
+                    ).map(([lbl, val]) => (
                       <div key={lbl} style={{ textAlign: 'center',
                         padding: '8px 4px', background: C.bg,
                         borderRadius: 6 }}>
@@ -905,73 +960,101 @@ export default function WarehouseClient({
                   </select>
                 </div>
 
-                {/* Quantity in cartons + loose tiles */}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center',
-                    justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600,
-                      color: C.ink, fontFamily: FONT }}>
-                      Quantité{' '}
-                      {reqType === 'correction'
-                        ? reqCorrectionSign === 'negative'
-                          ? '(à déduire du stock)'
-                          : '(à ajouter au stock)'
-                        : '(à ajouter au stock)'}
-                    </label>
-                    {reqType === 'correction' && (
-                      <div style={{ display: 'flex', gap: 2,
-                        background: C.bg, padding: 2, borderRadius: 6 }}>
-                        {([['negative', '− Déduction'], ['positive', '+ Ajout']] as const).map(([sign, lbl]) => (
-                          <button key={sign}
-                            onClick={() => setReqCorrectionSign(sign)}
-                            style={{
-                              padding: '4px 10px', borderRadius: 5, border: 'none',
-                              fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                              fontFamily: FONT,
-                              background: reqCorrectionSign === sign
-                                ? (sign === 'negative' ? C.red : C.green)
-                                : 'transparent',
-                              color: reqCorrectionSign === sign ? '#fff' : C.muted,
-                              transition: 'background 0.15s, color 0.15s',
-                            }}>
-                            {lbl}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ flex: 1 }}>
-                      <input type="number" min="0"
-                        value={reqCartons}
-                        onChange={e => setReqCartons(e.target.value)}
-                        placeholder="Cartons"
-                        style={inputStyle} />
+                {/* Quantity — adapts to product type */}
+                {(() => {
+                  const selProd  = productMap.get(reqProduct)
+                  const isTile   = !selProd || selProd.product_type === 'tile'
+                  const unitLbl  = selProd?.unit_label ?? (isTile ? 'carreaux' : 'unités')
+                  const pkgLbl   = selProd?.package_label ?? (isTile ? 'carton' : 'lot')
+
+                  const correctionToggle = reqType === 'correction' ? (
+                    <div style={{ display: 'flex', gap: 2,
+                      background: C.bg, padding: 2, borderRadius: 6 }}>
+                      {([['negative', '− Déduction'], ['positive', '+ Ajout']] as const).map(([sign, lbl]) => (
+                        <button key={sign}
+                          onClick={() => setReqCorrectionSign(sign)}
+                          style={{
+                            padding: '4px 10px', borderRadius: 5, border: 'none',
+                            fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            fontFamily: FONT,
+                            background: reqCorrectionSign === sign
+                              ? (sign === 'negative' ? C.red : C.green)
+                              : 'transparent',
+                            color: reqCorrectionSign === sign ? '#fff' : C.muted,
+                            transition: 'background 0.15s, color 0.15s',
+                          }}>
+                          {lbl}
+                        </button>
+                      ))}
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <input type="number" min="0"
-                        value={reqLoose}
-                        onChange={e => setReqLoose(e.target.value)}
-                        placeholder="Carreaux en plus"
-                        style={inputStyle} />
-                    </div>
-                  </div>
-                  {/* Preview total tiles */}
-                  {(reqCartons || reqLoose) && (() => {
-                    const prod = products.find(p => p.id === reqProduct)
-                    const tpc  = prod ? parseInt(prod.tiles_per_carton) : 1
-                    const c    = parseInt(reqCartons)  || 0
-                    const l    = parseInt(reqLoose)    || 0
-                    const total = (c * tpc) + l
-                    const m2    = total * parseFloat(prod?.tile_area_m2 ?? '0')
-                    return total > 0 ? (
-                      <div style={{ marginTop: 6, fontSize: 12,
-                        color: C.blue, fontWeight: 600, fontFamily: FONT }}>
-                        = {fmtNum(total)} carreaux · {fmtM2(m2)}
+                  ) : null
+
+                  return (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', marginBottom: 6 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600,
+                          color: C.ink, fontFamily: FONT }}>
+                          Quantité{' '}
+                          {reqType === 'correction'
+                            ? reqCorrectionSign === 'negative'
+                              ? '(à déduire du stock)'
+                              : '(à ajouter au stock)'
+                            : '(à ajouter au stock)'}
+                        </label>
+                        {correctionToggle}
                       </div>
-                    ) : null
-                  })()}
-                </div>
+
+                      {isTile ? (
+                        <>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <div style={{ flex: 1 }}>
+                              <input type="number" min="0"
+                                value={reqCartons}
+                                onChange={e => setReqCartons(e.target.value)}
+                                placeholder={pkgLbl.charAt(0).toUpperCase() + pkgLbl.slice(1) + 's'}
+                                style={inputStyle} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <input type="number" min="0"
+                                value={reqLoose}
+                                onChange={e => setReqLoose(e.target.value)}
+                                placeholder="Carreaux en plus"
+                                style={inputStyle} />
+                            </div>
+                          </div>
+                          {(reqCartons || reqLoose) && (() => {
+                            const tpc   = selProd ? parseInt(selProd.tiles_per_carton) : 1
+                            const c     = parseInt(reqCartons) || 0
+                            const l     = parseInt(reqLoose)   || 0
+                            const total = (c * tpc) + l
+                            const m2    = total * parseFloat(selProd?.tile_area_m2 ?? '0')
+                            return total > 0 ? (
+                              <div style={{ marginTop: 6, fontSize: 12,
+                                color: C.blue, fontWeight: 600, fontFamily: FONT }}>
+                                = {fmtNum(total)} carreaux · {fmtM2(m2)}
+                              </div>
+                            ) : null
+                          })()}
+                        </>
+                      ) : (
+                        <>
+                          <input type="number" min="0"
+                            value={reqQty}
+                            onChange={e => setReqQty(e.target.value)}
+                            placeholder={`Quantité (${unitLbl})`}
+                            style={inputStyle} />
+                          {reqQty && parseInt(reqQty) > 0 && (
+                            <div style={{ marginTop: 6, fontSize: 12,
+                              color: C.blue, fontWeight: 600, fontFamily: FONT }}>
+                              = {fmtNum(parseInt(reqQty))} {unitLbl}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )
+                })()}
 
                 {/* Justification */}
                 <div>
@@ -1010,24 +1093,22 @@ export default function WarehouseClient({
                   </div>
                 )}
 
+                {(() => {
+                  const selProd = productMap.get(reqProduct)
+                  const isTile  = !selProd || selProd.product_type === 'tile'
+                  const hasQty  = isTile
+                    ? (parseInt(reqCartons) || 0) + (parseInt(reqLoose) || 0) > 0
+                    : (parseInt(reqQty) || 0) > 0
+                  const disabled = reqLoading || !reqProduct || reqJustif.trim().length < 10 || !hasQty
+                  return (
                 <button
                   className="btn-navy"
                   onClick={handleStockRequest}
-                  disabled={
-                    reqLoading ||
-                    !reqProduct ||
-                    reqJustif.trim().length < 10 ||
-                    (parseInt(reqCartons) || 0) +
-                    (parseInt(reqLoose)   || 0) <= 0
-                  }
+                  disabled={disabled}
                   style={{
                     padding: '13px', borderRadius: 8, border: 'none',
                     cursor: 'pointer', fontFamily: FONT,
-                    background:
-                      reqJustif.trim().length < 10 ||
-                      (parseInt(reqCartons) || 0) +
-                      (parseInt(reqLoose)   || 0) <= 0
-                        ? C.muted : C.navy,
+                    background: disabled ? C.muted : C.navy,
                     color: C.surface, fontSize: 13, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   }}>
@@ -1035,6 +1116,8 @@ export default function WarehouseClient({
                     ? <><span className="spinner" />Envoi…</>
                     : 'Soumettre pour approbation'}
                 </button>
+                  )
+                })()}
               </div>
               </div>
             </div>
