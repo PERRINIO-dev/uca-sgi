@@ -1,7 +1,8 @@
-import { createClient }   from '@/lib/supabase/server'
-import { redirect }       from 'next/navigation'
-import { getBadgeCounts } from '@/lib/supabase/badge-counts'
-import ProductsClient     from './ProductsClient'
+import { createClient }         from '@/lib/supabase/server'
+import { redirect }             from 'next/navigation'
+import { getBadgeCounts }       from '@/lib/supabase/badge-counts'
+import { getProductCategories } from './actions'
+import ProductsClient           from './ProductsClient'
 
 export default async function ProductsPage() {
   const supabase = await createClient()
@@ -19,11 +20,11 @@ export default async function ProductsPage() {
   if (profile.is_platform_admin) redirect('/admin')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 
-  const [{ data: products }, badgeCounts] = await Promise.all([
+  const [{ data: products }, categories, badgeCounts] = await Promise.all([
     supabase
       .from('products')
       .select(`
-        id, reference_code, name, category, supplier, is_active, created_at,
+        id, reference_code, name, category, category_id, supplier, is_active, created_at,
         product_type, unit_label, package_label,
         width_cm, height_cm, tiles_per_carton, tile_area_m2, carton_area_m2,
         purchase_price, floor_price_per_m2, reference_price_per_m2,
@@ -33,6 +34,8 @@ export default async function ProductsPage() {
       `)
       .order('created_at', { ascending: false }),
 
+    getProductCategories(),
+
     getBadgeCounts(profile.role, supabase),
   ])
 
@@ -40,6 +43,7 @@ export default async function ProductsPage() {
     <ProductsClient
       profile={profile}
       products={products ?? []}
+      categories={categories}
       badgeCounts={badgeCounts}
     />
   )

@@ -37,11 +37,27 @@ export interface Boutique {
   is_active: boolean
 }
 
+/**
+ * A product category scoped to a company + product type.
+ * `name` is the display label; `slug` is the normalized form used for
+ * uniqueness constraints and fuzzy matching.
+ */
+export interface ProductCategory {
+  id:           string
+  company_id:   string
+  product_type: ProductType
+  name:         string
+  slug:         string
+  usage_count:  number
+  created_at:   string
+}
+
 export interface Product {
   id:             string
   reference_code: string
   name:           string
-  category:       string
+  category:       string       // denormalized display name (kept for legacy reads)
+  category_id:    string | null
   supplier:       string
   is_active:      boolean
   company_id:     string

@@ -5,8 +5,8 @@ import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProduct, updateProduct } from './actions'
 import PageLayout       from '@/components/PageLayout'
-import type { BadgeCounts } from '@/lib/supabase/badge-counts'
-import type { ProductType } from '@/lib/types'
+import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
+import type { ProductType, ProductCategory } from '@/lib/types'
 import {
   LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS,
   LOW_STOCK_UNITS,   CRITICAL_STOCK_UNITS,
@@ -28,33 +28,6 @@ const fmtM2  = (n: number) =>
   new Intl.NumberFormat('fr-FR', {
     minimumFractionDigits: 4, maximumFractionDigits: 4,
   }).format(n) + ' m²'
-
-// ── Categories by product type ────────────────────────────────────────────────
-
-const CATEGORIES_BY_TYPE: Record<ProductType, string[]> = {
-  tile: [
-    'Carreaux Sol', 'Carreaux Mur', 'Carreaux Extérieur',
-    'Carreaux Décoratifs', 'Mosaïque', 'Plinthes',
-    'Parquet & Stratifié', 'Vinyle & LVT',
-  ],
-  unit: [
-    'Sanitaire', 'Robinetterie',
-    'Meubles de salle de bain', 'Accessoires de salle de bain',
-    'Portes & Fenêtres', 'Accessoires & Outillage', 'Divers',
-  ],
-  linear_m: [
-    'Profilés & Finitions', 'Plinthes', 'Cornières & Seuils',
-    'Moulures', 'Accessoires & Outillage', 'Divers',
-  ],
-  bag: [
-    'Colles & Mortiers', 'Joints & Enduits',
-    'Ciments & Liants', 'Imperméabilisants', 'Divers',
-  ],
-  liter: [
-    'Peinture & Revêtements', 'Imperméabilisants',
-    'Primaires & Apprêts', 'Produits d\'entretien', 'Divers',
-  ],
-}
 
 // Default unit/package labels per type
 const DEFAULT_LABELS: Record<ProductType, { unit: string; pkg: string }> = {
@@ -101,7 +74,7 @@ const emptyForm = (type: ProductType = 'tile') => ({
   productType:  type,
   referenceCode: '',
   name:          '',
-  category:      CATEGORIES_BY_TYPE[type][0] ?? '',
+  category:      '',
   supplier:      '',
   // Tile-specific
   widthCm:             '',
@@ -136,10 +109,12 @@ type FormState = ReturnType<typeof emptyForm>
 export default function ProductsClient({
   profile,
   products,
+  categories,
   badgeCounts,
 }: {
   profile:      any
   products:     any[]
+  categories:   ProductCategory[]
   badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
@@ -167,10 +142,10 @@ export default function ProductsClient({
     if (gen) setField('referenceCode', gen)
   }, [form.name, form.category, productType, form.widthCm, form.heightCm, showCreate])
 
-  // Reset category when type changes
+  // Reset category and labels when type changes
   useEffect(() => {
     if (!showCreate) return
-    setField('category', CATEGORIES_BY_TYPE[productType][0] ?? '')
+    setField('category',     '')
     setField('unitLabel',    DEFAULT_LABELS[productType].unit)
     setField('packageLabel', DEFAULT_LABELS[productType].pkg)
   }, [productType])
@@ -599,9 +574,12 @@ export default function ProductsClient({
                       style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
                   </Field>
                   <Field label="Catégorie *">
-                    <select value={form.category} onChange={e => setField('category', e.target.value)} style={inputStyle}>
-                      {CATEGORIES_BY_TYPE.tile.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <CategoryCombobox
+                      value={form.category}
+                      onChange={v => setField('category', v)}
+                      categories={categories.filter(c => c.product_type === 'tile')}
+                      inputStyle={inputStyle}
+                    />
                   </Field>
                 </Row>
 
@@ -703,9 +681,12 @@ export default function ProductsClient({
                       style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
                   </Field>
                   <Field label="Catégorie *">
-                    <select value={form.category} onChange={e => setField('category', e.target.value)} style={inputStyle}>
-                      {CATEGORIES_BY_TYPE[productType].map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <CategoryCombobox
+                      value={form.category}
+                      onChange={v => setField('category', v)}
+                      categories={categories.filter(c => c.product_type === productType)}
+                      inputStyle={inputStyle}
+                    />
                   </Field>
                 </Row>
 
@@ -817,9 +798,12 @@ export default function ProductsClient({
 
               <Row>
                 <Field label="Catégorie">
-                  <select value={form.category} onChange={e => setField('category', e.target.value)} style={inputStyle}>
-                    {CATEGORIES_BY_TYPE[pt].map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
+                  <CategoryCombobox
+                    value={form.category}
+                    onChange={v => setField('category', v)}
+                    categories={categories.filter(c => c.product_type === pt)}
+                    inputStyle={inputStyle}
+                  />
                 </Field>
                 <Field label="Fournisseur">
                   <input value={form.supplier} onChange={e => setField('supplier', e.target.value)} style={inputStyle} />
@@ -1239,6 +1223,131 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function Row({ children }: { children: React.ReactNode }) {
   return <div style={{ display: 'flex', gap: 10 }}>{children}</div>
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CategoryCombobox
+// ─────────────────────────────────────────────────────────────────────────────
+// Free-text input with dropdown autocomplete.
+// - Existing categories (scoped to company + type) are shown filtered by query.
+// - If the typed value doesn't match any slug, a "+ Créer '...'" option appears.
+// - Selection sets the value; the server action resolves/creates on submit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CategoryCombobox({
+  value,
+  onChange,
+  categories,
+  inputStyle,
+}: {
+  value:      string
+  onChange:   (v: string) => void
+  categories: ProductCategory[]
+  inputStyle: React.CSSProperties
+}) {
+  const [open,  setOpen]  = useState(false)
+  const [query, setQuery] = useState(value)
+  const containerRef      = useRef<HTMLDivElement>(null)
+
+  // Sync query when external value resets (e.g. type change)
+  useEffect(() => { setQuery(value) }, [value])
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  const slugify = (s: string) =>
+    s.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ')
+
+  const querySlug  = slugify(query)
+  const filtered   = querySlug
+    ? categories.filter(c => c.slug.includes(querySlug))
+    : categories
+
+  const exactMatch = categories.some(c => c.slug === querySlug)
+  const showCreate = query.trim().length > 0 && !exactMatch
+
+  const select = (name: string) => {
+    onChange(name)
+    setQuery(name)
+    setOpen(false)
+  }
+
+  const dropdownVisible = open && (filtered.length > 0 || showCreate)
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <input
+        value={query}
+        onChange={e => { setQuery(e.target.value); onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        placeholder="Tapez ou choisissez…"
+        style={inputStyle}
+        autoComplete="off"
+      />
+      {dropdownVisible && (
+        <div style={{
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: C.surface, border: `1.5px solid ${C.border}`,
+          borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+          zIndex: 100, maxHeight: 220, overflowY: 'auto',
+        }}>
+          {filtered.map(c => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => select(c.name)}
+              style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                width: '100%', padding: '9px 12px', border: 'none',
+                background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                fontSize: 13, color: C.ink, fontFamily: FONT,
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <span>{c.name}</span>
+              {c.usage_count > 0 && (
+                <span style={{ fontSize: 11, color: C.muted, marginLeft: 8, flexShrink: 0 }}>
+                  {c.usage_count}
+                </span>
+              )}
+            </button>
+          ))}
+          {showCreate && (
+            <>
+              {filtered.length > 0 && (
+                <div style={{ height: 1, background: C.border, margin: '2px 0' }} />
+              )}
+              <button
+                type="button"
+                onClick={() => select(query.trim())}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  width: '100%', padding: '9px 12px', border: 'none',
+                  background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                  fontSize: 13, color: C.blue, fontWeight: 600, fontFamily: FONT,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = C.blueL)}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 1v10M1 6h10" stroke={C.blue} strokeWidth="1.8" strokeLinecap="round"/>
+                </svg>
+                Créer &ldquo;{query.trim()}&rdquo;
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel }: {
