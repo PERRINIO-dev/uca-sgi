@@ -2,7 +2,7 @@ import { createClient }                           from '@/lib/supabase/server'
 import { redirect }                               from 'next/navigation'
 import { getDashboardStats, getSalesByPeriod }    from '@/lib/supabase/queries'
 import { getBadgeCounts }                         from '@/lib/supabase/badge-counts'
-import { LOW_STOCK_CARTONS }                      from '@/lib/constants'
+import { LOW_STOCK_CARTONS, LOW_STOCK_UNITS }      from '@/lib/constants'
 import DashboardClient                            from './DashboardClient'
 
 export default async function DashboardPage() {
@@ -49,13 +49,15 @@ export default async function DashboardPage() {
   const mtdAvgBasket = mtdCount > 0 ? mtdRevenue / mtdCount : 0
 
   // ── MTD gross margin (owner-only) ─────────────────────────────────────────
-  // Cost = sum(purchase_price_snapshot × quantity_tiles × tile_area_m2_snapshot)
+  // Tile:     cost = purchase_price × quantity_tiles × tile_area_m2
+  // Non-tile: cost = purchase_price × quantity_tiles (no area multiplier)
   const mtdCost = stats.mtdSales.reduce((sum: number, s: any) =>
-    sum + (s.sale_items ?? []).reduce((a: number, item: any) =>
-      a + (Number(item.purchase_price_snapshot) || 0)
-        * Number(item.quantity_tiles)
-        * Number(item.tile_area_m2_snapshot)
-    , 0)
+    sum + (s.sale_items ?? []).reduce((a: number, item: any) => {
+      const pp  = Number(item.purchase_price_snapshot) || 0
+      const qty = Number(item.quantity_tiles)
+      const isTile = item.tile_area_m2_snapshot != null
+      return a + (isTile ? pp * qty * Number(item.tile_area_m2_snapshot) : pp * qty)
+    }, 0)
   , 0)
   const mtdMargin    = mtdRevenue - mtdCost
   const mtdMarginPct = mtdRevenue > 0 ? (mtdMargin / mtdRevenue) * 100 : null
@@ -97,10 +99,22 @@ export default async function DashboardPage() {
   })
   const dailyChart = Object.entries(dailyMap).map(([day, ca]) => ({ day, ca }))
 
-  // ── Stock alerts (available < 50 cartons) ────────────────────────────────
-  const stockAlerts = stats.stockLevels.filter(
-    (s: any) => Number(s.available_full_cartons) < LOW_STOCK_CARTONS
+  // ── Stock alerts — tile: < LOW_STOCK_CARTONS full cartons
+  //                  non-tile: < LOW_STOCK_UNITS available units ──────────────
+  const typeMap = new Map(
+    (stats.productTypes ?? []).map((p: any) => [p.id, p.product_type])
   )
+  const stockAlerts = stats.stockLevels
+    .filter((s: any) => {
+      const type = typeMap.get(s.product_id) ?? 'tile'
+      return type === 'tile'
+        ? Number(s.available_full_cartons) < LOW_STOCK_CARTONS
+        : Number(s.available_tiles)        < LOW_STOCK_UNITS
+    })
+    .map((s: any) => ({
+      ...s,
+      product_type: typeMap.get(s.product_id) ?? 'tile',
+    }))
 
   return (
     <DashboardClient

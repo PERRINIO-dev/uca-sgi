@@ -11,7 +11,7 @@ import {
 import PageLayout       from '@/components/PageLayout'
 import OnboardingTour   from '@/components/OnboardingTour'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
-import { CRITICAL_STOCK_CARTONS } from '@/lib/constants'
+import { CRITICAL_STOCK_CARTONS, CRITICAL_STOCK_UNITS } from '@/lib/constants'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtCFA = (n: number) =>
@@ -430,7 +430,10 @@ export default function DashboardClient({
                       color: req.quantity_tiles_delta > 0 ? C.green : C.red,
                     }}>
                       {req.quantity_tiles_delta > 0 ? '+' : ''}
-                      {fmtNum(req.quantity_tiles_delta)} carreaux
+                      {fmtNum(req.quantity_tiles_delta)}{' '}
+                      {(req.products?.product_type ?? 'tile') === 'tile'
+                        ? 'carreaux'
+                        : (req.products?.unit_label ?? 'unités')}
                     </span>
                   </div>
                   {req.justification && (
@@ -519,11 +522,13 @@ export default function DashboardClient({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(stockAlerts.length > 6 ? stockAlerts.slice(0, 6) : stockAlerts).map((item: any) => {
-                const avail  = Number(item.available_full_cartons)
-                const isCrit = avail < CRITICAL_STOCK_CARTONS
+                const isTile = (item.product_type ?? 'tile') === 'tile'
+                const avail  = isTile ? Number(item.available_full_cartons) : Number(item.available_tiles)
+                const isCrit = isTile ? avail < CRITICAL_STOCK_CARTONS : avail < CRITICAL_STOCK_UNITS
                 const bg     = isCrit ? C.redL    : C.orangeL
                 const clr    = isCrit ? C.red     : C.orange
                 const bdr    = isCrit ? '#FECACA' : '#FDE68A'
+                const unit   = isTile ? 'cartons' : 'unités'
                 return (
                   <div key={item.product_id} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -551,7 +556,7 @@ export default function DashboardClient({
                       <div style={{ fontSize: 18, fontWeight: 800, color: clr, lineHeight: 1, fontFamily: FONT }}>
                         {fmtNum(avail)}
                       </div>
-                      <div style={{ fontSize: 10, color: C.muted, marginTop: 1, fontFamily: FONT }}>cartons</div>
+                      <div style={{ fontSize: 10, color: C.muted, marginTop: 1, fontFamily: FONT }}>{unit}</div>
                     </div>
                   </div>
                 )

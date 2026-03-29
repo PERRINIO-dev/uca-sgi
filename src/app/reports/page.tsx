@@ -32,7 +32,7 @@ export default async function ReportsPage() {
         id, quantity_tiles, unit_price_per_m2,
         total_price, tile_area_m2_snapshot,
         tiles_per_carton_snapshot, purchase_price_snapshot,
-        products ( id, name, reference_code, category )
+        products ( id, name, reference_code, category, product_type, unit_label )
       )
     `)
     .order('created_at', { ascending: false })

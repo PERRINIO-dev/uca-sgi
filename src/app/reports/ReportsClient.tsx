@@ -111,8 +111,10 @@ export default function ReportsClient({
     const delivered = filtered.filter(s => s.status === 'delivered')
     const totalM2   = confirmed.reduce((sum, s) =>
       sum + s.sale_items.reduce((a: number, i: any) =>
-        a + i.quantity_tiles * i.tile_area_m2_snapshot, 0
-      ), 0
+        i.tile_area_m2_snapshot
+          ? a + i.quantity_tiles * parseFloat(i.tile_area_m2_snapshot)
+          : a
+      , 0), 0
     )
     const avgBasket      = confirmed.length > 0 ? totalCA / confirmed.length : 0
     const cancelRate     = filtered.length > 0
@@ -163,23 +165,27 @@ export default function ReportsClient({
     const map: Record<string, {
       name: string; ref: string; category: string
       ca: number; m2: number; units: number; cost: number
+      isTile: boolean; unitLabel: string
     }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
       .forEach(s => s.sale_items.forEach((item: any) => {
-        const id = item.products?.id ?? 'unknown'
+        const id     = item.products?.id ?? 'unknown'
+        const isTile = !!item.tile_area_m2_snapshot
         if (!map[id]) map[id] = {
-          name:     item.products?.name ?? '—',
-          ref:      item.products?.reference_code ?? '—',
-          category: item.products?.category ?? '—',
+          name:      item.products?.name ?? '—',
+          ref:       item.products?.reference_code ?? '—',
+          category:  item.products?.category ?? '—',
           ca: 0, m2: 0, units: 0, cost: 0,
+          isTile,
+          unitLabel: item.products?.unit_label ?? 'unités',
         }
-        const itemM2        = item.quantity_tiles * item.tile_area_m2_snapshot
+        const itemM2        = isTile ? item.quantity_tiles * parseFloat(item.tile_area_m2_snapshot) : 0
         const purchasePrice = parseFloat(item.purchase_price_snapshot ?? '0') || 0
         map[id].ca    += item.total_price
         map[id].m2    += itemM2
         map[id].units += item.quantity_tiles
-        map[id].cost  += purchasePrice * itemM2
+        map[id].cost  += isTile ? purchasePrice * itemM2 : purchasePrice * item.quantity_tiles
       }))
     return Object.values(map).sort((a, b) => b.ca - a.ca)
   }, [filtered])
@@ -212,8 +218,8 @@ export default function ReportsClient({
       'N° Vente', 'Date', 'Statut', 'Client', 'Téléphone',
       'Boutique', 'Vendeur', 'Notes',
       'Produit', 'Référence', 'Catégorie',
-      'Carreaux', 'Cartons', 'Surface (m²)',
-      'Prix/m² (FCFA)', 'Sous-total (FCFA)', 'Total vente (FCFA)',
+      'Quantité', 'Cartons', 'Surface (m²)',
+      'Prix unitaire (FCFA)', 'Sous-total (FCFA)', 'Total vente (FCFA)',
       'Encaissé (FCFA)', 'Statut paiement',
     ]
     const rows: (string | number)[][] = []
@@ -236,12 +242,19 @@ export default function ReportsClient({
         ])
       } else {
         for (const item of items) {
-          const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-          const tpc         = parseInt(item.tiles_per_carton_snapshot)
-          const m2          = item.quantity_tiles * tileArea
-          const fullCartons = Math.floor(item.quantity_tiles / tpc)
-          const loose       = item.quantity_tiles % tpc
-          const cartonsStr  = loose > 0 ? `${fullCartons}+${loose}` : String(fullCartons)
+          const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+          let cartons: string, surface: string
+          if (isTile) {
+            const tpc         = parseInt(item.tiles_per_carton_snapshot)
+            const m2          = item.quantity_tiles * parseFloat(item.tile_area_m2_snapshot)
+            const fullCartons = Math.floor(item.quantity_tiles / tpc)
+            const loose       = item.quantity_tiles % tpc
+            cartons = loose > 0 ? `${fullCartons}+${loose}` : String(fullCartons)
+            surface = m2.toFixed(2)
+          } else {
+            cartons = '—'
+            surface = '—'
+          }
           rows.push([
             s.sale_number,
             new Date(s.created_at).toLocaleDateString('fr-FR'),
@@ -255,8 +268,8 @@ export default function ReportsClient({
             item.products?.reference_code ?? '',
             item.products?.category ?? '',
             item.quantity_tiles,
-            cartonsStr,
-            m2.toFixed(2),
+            cartons,
+            surface,
             Math.round(item.unit_price_per_m2),
             Math.round(item.total_price),
             Math.round(s.total_amount),
@@ -695,7 +708,7 @@ export default function ReportsClient({
                   <tr style={{ borderBottom: `2px solid ${C.border}` }}>
                     {[
                       'Rang', 'Produit', 'Référence', 'Catégorie',
-                      'Surface vendue', 'Carreaux', 'CA généré',
+                      'Surface vendue', 'Quantité', 'CA généré',
                       ...(profile.role === 'owner' ? ['Marge brute', 'Marge %'] : []),
                     ].map(h => <th key={h} style={TH}>{h}</th>)}
                   </tr>
@@ -720,10 +733,10 @@ export default function ReportsClient({
                         {p.category}
                       </td>
                       <td style={{ ...TD, fontSize: 13, color: C.ink }}>
-                        {fmtM2(p.m2)}
+                        {p.isTile && p.m2 > 0 ? fmtM2(p.m2) : '—'}
                       </td>
                       <td style={{ ...TD, fontSize: 13, color: C.ink }}>
-                        {fmtNum(p.units)}
+                        {fmtNum(p.units)}{!p.isTile && ` ${p.unitLabel}`}
                       </td>
                       <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
                         {fmtCFA(p.ca)}
@@ -835,8 +848,7 @@ function ReportSaleDetail({ sale }: { sale: any }) {
           marginBottom: 10 }}>
           <thead>
             <tr>
-              {['Produit', 'Référence', 'Surface', 'Cartons',
-                'Carreaux', 'Prix/m²', 'Sous-total'].map(h => (
+              {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
                 <th key={h} style={{ textAlign: 'left', fontSize: 10,
                   fontWeight: 700, color: C.muted,
                   textTransform: 'uppercase', letterSpacing: '0.05em',
@@ -848,11 +860,30 @@ function ReportSaleDetail({ sale }: { sale: any }) {
           </thead>
           <tbody>
             {(sale.sale_items ?? []).map((item: any) => {
-              const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-              const tpc         = parseInt(item.tiles_per_carton_snapshot)
-              const m2          = item.quantity_tiles * tileArea
-              const fullCartons = Math.floor(item.quantity_tiles / tpc)
-              const loose       = item.quantity_tiles % tpc
+              const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+              let qtyCell: React.ReactNode
+              let priceLabel: string
+              if (isTile) {
+                const tileArea    = parseFloat(item.tile_area_m2_snapshot)
+                const tpc         = parseInt(item.tiles_per_carton_snapshot)
+                const m2          = item.quantity_tiles * tileArea
+                const fullCartons = Math.floor(item.quantity_tiles / tpc)
+                const loose       = item.quantity_tiles % tpc
+                qtyCell = (
+                  <>
+                    {new Intl.NumberFormat('fr-FR', {
+                      minimumFractionDigits: 2, maximumFractionDigits: 2,
+                    }).format(m2)} m²
+                    <span style={{ color: C.muted, fontSize: 11 }}>
+                      {' '}· {fullCartons} ctn{loose > 0 && <span style={{ color: C.orange }}> +{loose}</span>}
+                    </span>
+                  </>
+                )
+                priceLabel = 'FCFA/m²'
+              } else {
+                qtyCell    = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${item.products?.unit_label ?? 'unités'}`
+                priceLabel = 'FCFA/unité'
+              }
               return (
                 <tr key={item.id}>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
@@ -865,26 +896,11 @@ function ReportSaleDetail({ sale }: { sale: any }) {
                   </td>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
                     color: C.ink, fontFamily: FONT2 }}>
-                    {new Intl.NumberFormat('fr-FR', {
-                      minimumFractionDigits: 2, maximumFractionDigits: 2,
-                    }).format(m2)} m²
-                  </td>
-                  <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
-                    color: C.ink, fontFamily: FONT2 }}>
-                    {fullCartons}
-                    {loose > 0 && (
-                      <span style={{ color: C.orange, fontSize: 11 }}>
-                        {' '}+ {loose}
-                      </span>
-                    )}
-                  </td>
-                  <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
-                    color: C.ink, fontFamily: FONT2 }}>
-                    {new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}
+                    {qtyCell}
                   </td>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
                     color: C.muted, fontFamily: FONT2 }}>
-                    {new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA
+                    {new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} {priceLabel}
                   </td>
                   <td style={{ padding: '7px 0', fontSize: 13,
                     fontWeight: 700, color: C.ink, fontFamily: FONT2 }}>

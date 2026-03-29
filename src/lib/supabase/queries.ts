@@ -20,7 +20,7 @@ export async function getDashboardStats() {
   const [
     todayResult, mtdResult, prevMonthResult,
     stockResult, pendingResult, boutiqueResult, activeOrdersResult,
-    creancesResult,
+    creancesResult, productTypesResult,
   ] = await Promise.all([
 
     // Today's sales (all non-cancelled — not just delivered)
@@ -58,7 +58,7 @@ export async function getDashboardStats() {
         id, created_at, request_type,
         quantity_tiles_delta, justification,
         stock_before_tiles, product_id,
-        products(name, reference_code),
+        products(name, reference_code, product_type, unit_label),
         users!stock_requests_requested_by_fkey(full_name)
       `)
       .eq('status', 'pending')
@@ -83,6 +83,11 @@ export async function getDashboardStats() {
       .select('total_amount, amount_paid')
       .in('payment_status', ['partial', 'unpaid'])
       .neq('status', 'cancelled'),
+
+    // Product types for type-aware stock alert thresholds
+    supabase
+      .from('products')
+      .select('id, product_type'),
   ])
 
   return {
@@ -94,6 +99,7 @@ export async function getDashboardStats() {
     weekSales:         boutiqueResult.data    ?? [],
     activeOrdersCount: activeOrdersResult.count ?? 0,
     allTimeCreanceSales: creancesResult.data  ?? [],
+    productTypes:      productTypesResult.data ?? [],
   }
 }
 
