@@ -42,6 +42,7 @@ export default async function SalesPage({
       )
     `)
     .order('created_at', { ascending: false })
+    .limit(300)
 
   if (profile.role === 'vendor') {
     query = query.eq('vendor_id', user.id)

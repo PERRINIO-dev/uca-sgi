@@ -193,9 +193,9 @@ export async function createSale(payload: CreateSalePayload) {
     return { error: itemsError.message }
   }
 
-  // 4.5 Reserve stock — re-read current values right before updating to minimise the
-  // race window (full atomicity requires a SECURITY DEFINER RPC with SELECT FOR UPDATE;
-  // see QA_REPORT.md BUG-04 for the recommended DB-level fix).
+  // 4.5 Reserve stock atomically — uses a SECURITY DEFINER RPC with SELECT FOR UPDATE
+  // so two concurrent sales for the same product cannot both succeed past the
+  // availability check (each holds a row-level lock for the duration of the call).
   const adminSupabase = getAdminClient()
   const reserveMap    = new Map<string, number>()
   for (const item of serverItems) {
@@ -206,33 +206,18 @@ export async function createSale(payload: CreateSalePayload) {
   }
 
   for (const [productId, qty] of reserveMap) {
-    // Fresh read to use the most current reserved_tiles value
-    const { data: freshStock } = await adminSupabase
-      .from('stock')
-      .select('total_tiles, reserved_tiles')
-      .eq('product_id', productId)
-      .single()
+    const { data: reserved, error: rpcError } = await adminSupabase
+      .rpc('reserve_stock_on_sale', { p_product_id: productId, p_quantity: qty })
 
-    if (!freshStock) {
+    if (rpcError || reserved === false) {
+      // Rollback: remove items and sale already inserted above
       await supabase.from('sale_items').delete().eq('sale_id', sale.id)
       await supabase.from('sales').delete().eq('id', sale.id)
-      return { error: 'Erreur lecture du stock. Veuillez réessayer.' }
-    }
-
-    const available = freshStock.total_tiles - freshStock.reserved_tiles
-    if (available < qty) {
-      // Another concurrent sale consumed this stock — rollback
-      await supabase.from('sale_items').delete().eq('sale_id', sale.id)
-      await supabase.from('sales').delete().eq('id', sale.id)
+      if (rpcError) return { error: 'Erreur lors de la réservation du stock. Veuillez réessayer.' }
       return {
-        error: `Stock insuffisant (vente simultanée détectée). Disponible : ${available} carreaux. Veuillez réessayer.`,
+        error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.',
       }
     }
-
-    await adminSupabase
-      .from('stock')
-      .update({ reserved_tiles: freshStock.reserved_tiles + qty })
-      .eq('product_id', productId)
   }
 
   // 5. Create the warehouse order
@@ -249,13 +234,12 @@ export async function createSale(payload: CreateSalePayload) {
 
   if (orderError) {
     // Clean up orphaned sale and items to preserve data consistency
-    // Also release the reservation we just made
+    // Release the reservations we just made using the atomic RPC
     for (const [productId, qty] of reserveMap) {
-      const current = stockMap.get(productId)?.reserved_tiles ?? 0
-      await adminSupabase
-        .from('stock')
-        .update({ reserved_tiles: Math.max(0, current - qty) })
-        .eq('product_id', productId)
+      await adminSupabase.rpc('release_stock_on_cancel', {
+        p_product_id: productId,
+        p_quantity:   qty,
+      })
     }
     await supabase.from('sale_items').delete().eq('sale_id', sale.id)
     await supabase.from('sales').delete().eq('id', sale.id)

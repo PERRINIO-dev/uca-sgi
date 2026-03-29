@@ -62,26 +62,28 @@ export default async function AdminPage() {
       `)
       .in('action_type', [
         'COMPANY_CREATED',
-        'BOUTIQUE_ACTIVATED',
-        'BOUTIQUE_DEACTIVATED',
+        'COMPANY_ACTIVATED',
+        'COMPANY_DEACTIVATED',
         'PLATFORM_USER_SUSPENDED',
         'PLATFORM_USER_REACTIVATED',
         'PLATFORM_USER_PASSWORD_RESET',
       ])
       .order('created_at', { ascending: false })
-      .limit(100),
+      .limit(200),
 
     getBadgeCounts(profile.role, supabase),
   ])
 
-  // ── Enrich companies with live stats + owner + member list ────────────────
+  // ── Enrich companies with live stats + owner only ─────────────────────────
+  // Non-owner team members (vendors, warehouse, admins) are internal to each
+  // company and must not be exposed to the platform operator.
   const companiesWithStats = (companies ?? []).map(c => ({
     ...c,
     totalUsers:     (allUsers ?? []).filter(u => u.company_id === c.id).length,
     activeUsers:    (allUsers ?? []).filter(u => u.company_id === c.id && u.is_active).length,
     activeProducts: (allProducts ?? []).filter(p => p.company_id === c.id).length,
     owner:          (allUsers ?? []).find(u => u.company_id === c.id && u.role === 'owner') ?? null,
-    members:        (allUsers ?? []).filter(u => u.company_id === c.id),
+    members:        [] as NonNullable<typeof allUsers>,
   }))
 
   return (

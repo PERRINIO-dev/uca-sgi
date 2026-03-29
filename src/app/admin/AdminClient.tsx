@@ -35,8 +35,8 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string }> = 
 // ── Audit action display ──────────────────────────────────────────────────────
 const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
   COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenL },
-  BOUTIQUE_ACTIVATED:           { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueL },
-  BOUTIQUE_DEACTIVATED:         { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeL },
+  COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueL },
+  COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeL },
   PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redL },
   PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenL },
   PLATFORM_USER_PASSWORD_RESET: { label: 'Mot de passe réinitialisé', color: C.blue,   bg: C.blueL },
@@ -378,7 +378,7 @@ export default function AdminClient({
 
   // ── Journal helpers ───────────────────────────────────────────────────────
   function getAffectedCompanyName(entry: AuditEntry): string {
-    const isCompanyAction = ['COMPANY_CREATED', 'BOUTIQUE_ACTIVATED', 'BOUTIQUE_DEACTIVATED'].includes(entry.action_type)
+    const isCompanyAction = ['COMPANY_CREATED', 'COMPANY_ACTIVATED', 'COMPANY_DEACTIVATED'].includes(entry.action_type)
     const id = isCompanyAction ? entry.entity_id : entry.data_after?.target_company_id
     if (!id) return '—'
     return companies.find(c => c.id === id)?.name ?? '—'
@@ -395,7 +395,7 @@ export default function AdminClient({
   const filteredAudit = journalFilter === 'all'
     ? auditLogs
     : auditLogs.filter(e => {
-        const isCompanyAction = ['COMPANY_CREATED', 'BOUTIQUE_ACTIVATED', 'BOUTIQUE_DEACTIVATED'].includes(e.action_type)
+        const isCompanyAction = ['COMPANY_CREATED', 'COMPANY_ACTIVATED', 'COMPANY_DEACTIVATED'].includes(e.action_type)
         return isCompanyAction ? e.entity_id === journalFilter : e.data_after?.target_company_id === journalFilter
       })
 
@@ -889,67 +889,7 @@ export default function AdminClient({
               )}
             </div>
 
-            {/* ── Team section ── */}
-            {(() => {
-              const members = drawerCompany.members.filter(m => m.role !== 'owner')
-              return (
-                <div>
-                  <div style={{
-                    fontSize: 10.5, fontWeight: 700, color: C.muted,
-                    letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
-                  }}>
-                    Équipe — {members.length} membre{members.length !== 1 ? 's' : ''}
-                  </div>
-
-                  {members.length === 0 ? (
-                    <div style={{ fontSize: 12, color: C.muted, fontStyle: 'italic' }}>Aucun autre membre.</div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {members.map(member => {
-                        const roleMeta = ROLE_META[member.role] ?? { label: member.role, color: C.slate, bg: C.bg }
-                        return (
-                          <div key={member.id} style={{
-                            display: 'flex', alignItems: 'center', gap: 10,
-                            padding: '10px 12px', borderRadius: 8, background: C.bg,
-                          }}>
-                            <UserInitials name={member.full_name} size={30} />
-                            <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{
-                                fontSize: 13, fontWeight: 600,
-                                color: member.is_active ? C.ink : C.muted,
-                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                              }}>
-                                {member.full_name}
-                              </div>
-                              <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{member.email}</div>
-                            </div>
-                            <Badge color={roleMeta.color} bg={roleMeta.bg}>{roleMeta.label}</Badge>
-                            <button
-                              onClick={() => handleUserToggle(member.id, !member.is_active)}
-                              disabled={togglingUser === member.id}
-                              title={member.is_active ? 'Suspendre cet utilisateur' : 'Réactiver cet utilisateur'}
-                              style={{
-                                padding: '4px 8px',
-                                border: `1px solid ${member.is_active ? C.border : C.orange}`,
-                                borderRadius: 6,
-                                background: member.is_active ? C.surface : C.orangeL,
-                                color: member.is_active ? C.slate : C.orange,
-                                fontSize: 11, fontWeight: 500,
-                                cursor: togglingUser === member.id ? 'wait' : 'pointer',
-                                fontFamily: FONT, flexShrink: 0,
-                                opacity: togglingUser === member.id ? 0.5 : 1,
-                              }}
-                            >
-                              {togglingUser === member.id ? '…' : member.is_active ? 'Suspendre' : 'Réactiver'}
-                            </button>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
+            {/* Team members are internal to each company — not exposed here. */}
           </div>
         </div>
       </>

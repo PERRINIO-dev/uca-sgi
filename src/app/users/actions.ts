@@ -151,6 +151,7 @@ export async function toggleUserActive(
     .from('users')
     .update({ is_active: isActive })
     .eq('id', targetUserId)
+    .eq('company_id', profile.company_id)   // defense-in-depth
 
   if (error) return { error: error.message }
 
@@ -351,6 +352,7 @@ export async function updateEmployee(payload: {
       boutique_id: payload.boutiqueId ?? null,
     })
     .eq('id', payload.userId)
+    .eq('company_id', profile.company_id)   // defense-in-depth
 
   if (error) return { error: error.message }
 
