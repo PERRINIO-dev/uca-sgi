@@ -10,6 +10,7 @@ import {
   LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS,
   LOW_STOCK_UNITS,   CRITICAL_STOCK_UNITS,
 } from '@/lib/constants'
+import { fmtCurrency } from '@/lib/format'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -22,8 +23,6 @@ const C = {
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-const fmtCFA = (n: number) =>
-  new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2  = (n: number) =>
@@ -48,10 +47,11 @@ const REQUEST_STATUS = {
 type Tab = 'orders' | 'stock' | 'requests'
 
 export default function WarehouseClient({
-  profile, orders, deliveredOrders,
+  profile, currency, orders, deliveredOrders,
   stockLevels, products, myRequests, badgeCounts,
 }: {
   profile:         any
+  currency:        string
   orders:          any[]
   deliveredOrders: any[]
   stockLevels:     any[]
@@ -61,6 +61,7 @@ export default function WarehouseClient({
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const fmt = (n: number) => fmtCurrency(n, currency)
 
   // ── Real-time: refresh when sales or stock_requests change ────────────────
   useEffect(() => {

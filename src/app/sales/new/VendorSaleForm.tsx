@@ -6,6 +6,7 @@ import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
 import PageLayout             from '@/components/PageLayout'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
+import { fmtCurrency }        from '@/lib/format'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -18,8 +19,6 @@ const C = {
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-const fmtCFA = (n: number) =>
-  new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2 = (n: number) =>
@@ -43,15 +42,16 @@ interface CartItem {
 }
 
 export default function VendorSaleForm({
-  profile, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts, ownerName = 'Le Propriétaire',
+  profile, currency, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts, ownerName = 'Le Propriétaire',
 }: {
-  profile: any; boutique: any; products: any[]
+  profile: any; currency: string; boutique: any; products: any[]
   allBoutiques: any[]; isOwnerOrAdmin: boolean
   badgeCounts?: BadgeCounts
   ownerName?: string
 }) {
   const router   = useRouter()
   const supabase = createClient()
+  const fmt = (n: number) => fmtCurrency(n, currency)
   const [navPending, startNavTransition] = useTransition()
 
   const [selectedBoutique, setBoutique]     = useState<any>(boutique)
@@ -175,10 +175,10 @@ export default function VendorSaleForm({
         const full = item.quantityCartons
         const loose = item.looseTiles
         qtyCell   = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${full}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''} ctn`
-        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA/m²`
+        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/m²`
       } else {
         qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${unitLbl}`
-        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA/${unitLbl}`
+        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/${unitLbl}`
       }
       return `
         <tr>
@@ -186,7 +186,7 @@ export default function VendorSaleForm({
           <td style="color:#64748B;font-size:11px">${escHtml(item.product?.reference_code)}</td>
           <td style="text-align:center">${qtyCell}</td>
           <td style="text-align:right">${priceCell}</td>
-          <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.totalPrice))} FCFA</td>
+          <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.totalPrice))} ${currency}</td>
         </tr>`
     }).join('')
 
@@ -283,9 +283,9 @@ export default function VendorSaleForm({
   <div class="total-row">
     <div class="total-box">
       <div class="total-label">Montant total</div>
-      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} FCFA</div>
-      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} FCFA</div>` : ''}
-      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste : ${new Intl.NumberFormat('fr-FR').format(balance)} FCFA</div>` : ''}
+      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} ${currency}</div>
+      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} ${currency}</div>` : ''}
+      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste : ${new Intl.NumberFormat('fr-FR').format(balance)} ${currency}</div>` : ''}
     </div>
   </div>
   <div style="display:flex;justify-content:flex-end;margin-bottom:28px">
@@ -489,7 +489,7 @@ export default function VendorSaleForm({
             </p>
             <p style={{ fontSize: 22, fontWeight: 700, color: C.green,
               margin: '0 0 24px', fontFamily: FONT }}>
-              {fmtCFA(successData?.serverTotal ?? cartTotal)}
+              {fmt(successData?.serverTotal ?? cartTotal)}
             </p>
             <div style={{ padding: '14px', background: C.blueL,
               borderRadius: 8, fontSize: 13, color: C.blue, marginBottom: 28,
@@ -879,8 +879,8 @@ export default function VendorSaleForm({
                 {(() => {
                   const isTileProd = (selectedProduct.product_type ?? 'tile') === 'tile'
                   const unitLbl    = selectedProduct.unit_label ?? (isTileProd ? 'm²' : 'unité')
-                  const priceLabel = isTileProd ? 'Prix par m² (FCFA)' : `Prix par ${unitLbl} (FCFA)`
-                  const priceSuffix = isTileProd ? 'FCFA/m²' : `FCFA/${unitLbl}`
+                  const priceLabel = isTileProd ? `Prix par m² (${currency})` : `Prix par ${unitLbl} (${currency})`
+                  const priceSuffix = isTileProd ? `${currency}/m²` : `${currency}/${unitLbl}`
                   return (
                     <>
                       <div style={{ marginBottom: 12 }}>
@@ -944,7 +944,7 @@ export default function VendorSaleForm({
                           fontFamily: FONT,
                         }}>
                         + Ajouter au panier ·{' '}
-                        {computed.price > 0 ? fmtCFA(computed.total) : '—'}
+                        {computed.price > 0 ? fmt(computed.total) : '—'}
                       </button>
                     </>
                   )
@@ -1015,18 +1015,18 @@ export default function VendorSaleForm({
                               {fmtM2(item.quantityM2)} ·{' '}
                               {item.quantityCartons} carton{item.quantityCartons !== 1 ? 's' : ''}
                               {item.looseTiles > 0 ? ` + ${item.looseTiles} car.` : ''} ·{' '}
-                              {fmtNum(item.unitPricePerM2)} FCFA/m²
+                              {fmtNum(item.unitPricePerM2)} {currency}/m²
                             </>
                           ) : (
                             <>
                               {fmtNum(item.quantityTiles)} {item.product.unit_label ?? 'unités'} ·{' '}
-                              {fmtNum(item.unitPricePerM2)} FCFA/{item.product.unit_label ?? 'unité'}
+                              {fmtNum(item.unitPricePerM2)} {currency}/{item.product.unit_label ?? 'unité'}
                             </>
                           )}
                         </div>
                         <div style={{ fontSize: 14, fontWeight: 700,
                           color: C.surface, fontFamily: FONT }}>
-                          {fmtCFA(item.totalPrice)}
+                          {fmt(item.totalPrice)}
                         </div>
                       </div>
                     ))}
@@ -1039,7 +1039,7 @@ export default function VendorSaleForm({
                     </span>
                     <span style={{ color: C.surface, fontSize: 24, fontWeight: 900,
                       letterSpacing: '-0.02em', fontFamily: FONT }}>
-                      {fmtCFA(cartTotal)}
+                      {fmt(cartTotal)}
                     </span>
                   </div>
                 </>
@@ -1172,7 +1172,7 @@ export default function VendorSaleForm({
                         type="number" min="0" step="100"
                         value={amountPaid}
                         onChange={e => setAmountPaid(e.target.value)}
-                        placeholder={`Montant encaissé (max ${fmtCFA(cartTotal)})`}
+                        placeholder={`Montant encaissé (max ${fmt(cartTotal)})`}
                         style={inputStyle()}
                       />
 
@@ -1190,7 +1190,7 @@ export default function VendorSaleForm({
                             display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                           }}>
                             <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
-                              Encaissé : <strong>{fmtCFA(paid)}</strong>
+                              Encaissé : <strong>{fmt(paid)}</strong>
                             </span>
                             {isOver ? (
                               <span style={{ fontSize: 12, color: C.red, fontWeight: 700, fontFamily: FONT }}>
@@ -1202,7 +1202,7 @@ export default function VendorSaleForm({
                               </span>
                             ) : (
                               <span style={{ fontSize: 12, color: C.orange, fontWeight: 700, fontFamily: FONT }}>
-                                Reste : {fmtCFA(balance)}
+                                Reste : {fmt(balance)}
                               </span>
                             )}
                           </div>
@@ -1235,7 +1235,7 @@ export default function VendorSaleForm({
                     }}>
                     {loading
                       ? <><span className="spinner" />Enregistrement…</>
-                      : `Confirmer la vente · ${fmtCFA(cartTotal)}`}
+                      : `Confirmer la vente · ${fmt(cartTotal)}`}
                   </button>
                   <button
                     className="btn-ghost"

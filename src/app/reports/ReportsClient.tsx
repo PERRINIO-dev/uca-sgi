@@ -5,6 +5,7 @@ import { useRouter }         from 'next/navigation'
 import { createClient }      from '@/lib/supabase/client'
 import PageLayout            from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import { fmtCurrency }       from '@/lib/format'
 import {
   AreaChart, Area, BarChart, Bar,
   XAxis, YAxis, CartesianGrid,
@@ -22,8 +23,6 @@ const C = {
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-const fmtCFA = (n: number) =>
-  new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2 = (n: number) =>
@@ -58,9 +57,10 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function ReportsClient({
-  profile, sales, boutiques, vendors, auditLogs, badgeCounts,
+  profile, currency, sales, boutiques, vendors, auditLogs, badgeCounts,
 }: {
   profile:      any
+  currency:     string
   sales:        any[]
   boutiques:    any[]
   vendors:      any[]
@@ -69,6 +69,7 @@ export default function ReportsClient({
 }) {
   const router   = useRouter()
   const supabase = createClient()
+  const fmt = (n: number) => fmtCurrency(n, currency)
 
   const [activeTab,      setTab]      = useState<Tab>('overview')
   const [filterBoutique, setBoutique] = useState('all')
@@ -219,8 +220,8 @@ export default function ReportsClient({
       'Boutique', 'Vendeur', 'Notes',
       'Produit', 'Référence', 'Catégorie',
       'Quantité', 'Cartons', 'Surface (m²)',
-      'Prix unitaire (FCFA)', 'Sous-total (FCFA)', 'Total vente (FCFA)',
-      'Encaissé (FCFA)', 'Statut paiement',
+      `Prix unitaire (${currency})`, `Sous-total (${currency})`, `Total vente (${currency})`,
+      `Encaissé (${currency})`, 'Statut paiement',
     ]
     const rows: (string | number)[][] = []
     for (const s of filtered) {
@@ -426,19 +427,19 @@ export default function ReportsClient({
                 <div style={{ fontSize: 36, fontWeight: 900, color: C.ink,
                   letterSpacing: '-0.03em', lineHeight: 1, fontFamily: FONT,
                   marginBottom: 14 }}>
-                  {fmtCFA(kpis.totalCA)}
+                  {fmt(kpis.totalCA)}
                 </div>
                 {/* Encaissement progress bar */}
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between',
                     alignItems: 'center', marginBottom: 6 }}>
                     <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
-                      Encaissé : <strong style={{ color: C.green }}>{fmtCFA(kpis.totalEncaisse)}</strong>
+                      Encaissé : <strong style={{ color: C.green }}>{fmt(kpis.totalEncaisse)}</strong>
                     </span>
                     <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
                       Créances : <strong style={{
                         color: kpis.totalEnAttente > 0 ? C.orange : C.muted
-                      }}>{fmtCFA(kpis.totalEnAttente)}</strong>
+                      }}>{fmt(kpis.totalEnAttente)}</strong>
                     </span>
                   </div>
                   <div style={{ height: 8, background: C.bg, borderRadius: 4, overflow: 'hidden' }}>
@@ -462,7 +463,7 @@ export default function ReportsClient({
             gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12 }}>
             {([
               ['Créances clients',
-                fmtCFA(kpis.totalEnAttente),
+                fmt(kpis.totalEnAttente),
                 kpis.totalEnAttente > 0 ? C.orange : C.muted,
                 kpis.totalEnAttente > 0 ? C.orange : C.muted,
                 'Montant non encore réglé'],
@@ -471,7 +472,7 @@ export default function ReportsClient({
                 C.blue, C.blue,
                 `dont ${kpis.delivered} livrée${kpis.delivered !== 1 ? 's' : ''}`],
               ['Panier moyen',
-                fmtCFA(kpis.avgBasket),
+                fmt(kpis.avgBasket),
                 C.ink, C.slate,
                 'Par transaction'],
               ['Taux annulation',
@@ -534,7 +535,7 @@ export default function ReportsClient({
                       new Intl.NumberFormat('fr-FR', { notation: 'compact' }).format(v)
                     } />
                   <Tooltip
-                    formatter={(v) => [fmtCFA(Number(v)), 'CA']}
+                    formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: FONT, fontSize: 12 }} />
                   <Area type="monotone" dataKey="ca"
@@ -573,7 +574,7 @@ export default function ReportsClient({
                   <YAxis type="category" dataKey="name" width={90}
                     tick={{ fontSize: 11, fill: C.muted }} />
                   <Tooltip
-                    formatter={(v) => [fmtCFA(Number(v)), 'CA']}
+                    formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: FONT, fontSize: 12 }} />
                   <Bar dataKey="ca" fill={C.navy} radius={[0, 4, 4, 0]} />
@@ -640,7 +641,7 @@ export default function ReportsClient({
                             {s.users?.full_name ?? '—'}
                           </td>
                           <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
-                            {fmtCFA(s.total_amount)}
+                            {fmt(s.total_amount)}
                           </td>
                           <td style={TD}>
                             <span style={{ display: 'inline-flex', alignItems: 'center',
@@ -664,7 +665,7 @@ export default function ReportsClient({
                           <tr key={s.id + '-detail'}
                             style={{ borderBottom: `1px solid ${C.border}` }}>
                             <td colSpan={8} style={{ padding: '0 14px 14px' }}>
-                              <ReportSaleDetail sale={s} />
+                              <ReportSaleDetail sale={s} currency={currency} />
                             </td>
                           </tr>
                         )}
@@ -681,7 +682,7 @@ export default function ReportsClient({
                     </td>
                     <td style={{ padding: '13px 14px', fontSize: 15,
                       fontWeight: 900, color: C.surface, fontFamily: FONT }}>
-                      {fmtCFA(kpis.totalCA)}
+                      {fmt(kpis.totalCA)}
                     </td>
                     <td colSpan={2} />
                   </tr>
@@ -739,13 +740,13 @@ export default function ReportsClient({
                         {fmtNum(p.units)}{!p.isTile && ` ${p.unitLabel}`}
                       </td>
                       <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
-                        {fmtCFA(p.ca)}
+                        {fmt(p.ca)}
                       </td>
                       {profile.role === 'owner' && (
                         <>
                           <td style={{ ...TD, fontSize: 13, fontWeight: 700,
                             color: margin >= 0 ? C.green : C.red }}>
-                            {fmtCFA(margin)}
+                            {fmt(margin)}
                           </td>
                           <td style={{ ...TD, fontSize: 12,
                             color: marginPct >= 0 ? C.green : C.red }}>
@@ -796,14 +797,14 @@ export default function ReportsClient({
                       </div>
                       <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
                         {v.ventes} vente{v.ventes !== 1 ? 's' : ''} ·{' '}
-                        panier moy. {fmtCFA(v.avgBasket)}
+                        panier moy. {fmt(v.avgBasket)}
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 18, fontWeight: 900, color: C.ink,
                       letterSpacing: '-0.02em', fontFamily: FONT }}>
-                      {fmtCFA(v.ca)}
+                      {fmt(v.ca)}
                     </div>
                     <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
                       {share.toFixed(1)} % du CA total
@@ -827,13 +828,14 @@ export default function ReportsClient({
 
       {/* ── AUDIT TAB ── */}
       {activeTab === 'audit' && (
-        <AuditLogTab logs={auditLogs} />
+        <AuditLogTab logs={auditLogs} currency={currency} />
       )}
     </PageLayout>
   )
 }
 
-function ReportSaleDetail({ sale }: { sale: any }) {
+function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
+  const fmt = (n: number) => fmtCurrency(n, currency)
   const FONT2 = "system-ui, -apple-system, 'Segoe UI', sans-serif"
   return (
     <div style={{ background: C.bg, borderRadius: 8,
@@ -879,10 +881,10 @@ function ReportSaleDetail({ sale }: { sale: any }) {
                     </span>
                   </>
                 )
-                priceLabel = 'FCFA/m²'
+                priceLabel = `${currency}/m²`
               } else {
                 qtyCell    = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${item.products?.unit_label ?? 'unités'}`
-                priceLabel = 'FCFA/unité'
+                priceLabel = `${currency}/${item.products?.unit_label ?? 'unité'}`
               }
               return (
                 <tr key={item.id}>
@@ -904,9 +906,7 @@ function ReportSaleDetail({ sale }: { sale: any }) {
                   </td>
                   <td style={{ padding: '7px 0', fontSize: 13,
                     fontWeight: 700, color: C.ink, fontFamily: FONT2 }}>
-                    {new Intl.NumberFormat('fr-FR').format(
-                      Math.round(item.total_price)
-                    )} FCFA
+                    {fmt(item.total_price)}
                   </td>
                 </tr>
               )
@@ -927,9 +927,7 @@ function ReportSaleDetail({ sale }: { sale: any }) {
           {!sale.customer_phone && !sale.notes && <span>Aucune note</span>}
         </div>
         <div style={{ fontSize: 15, fontWeight: 900, color: C.ink, fontFamily: FONT2 }}>
-          Total : {new Intl.NumberFormat('fr-FR').format(
-            Math.round(sale.total_amount)
-          )} FCFA
+          Total : {fmt(sale.total_amount)}
         </div>
       </div>
     </div>
@@ -965,9 +963,8 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 // ── Human-readable audit detail formatter ─────────────────────────────────
-function formatAuditDetails(actionType: string, data: Record<string, unknown> | null): string {
-  const fmtCFA = (n: unknown) =>
-    new Intl.NumberFormat('fr-FR').format(Math.round(Number(n))) + ' FCFA'
+function formatAuditDetails(actionType: string, data: Record<string, unknown> | null, currency: string): string {
+  const fmt = (n: unknown) => fmtCurrency(Math.round(Number(n)), currency)
   const str = (v: unknown): string | null =>
     v != null && v !== '' && v !== 'null' ? String(v) : null
 
@@ -976,7 +973,7 @@ function formatAuditDetails(actionType: string, data: Record<string, unknown> | 
       if (!data) return '—'
       return [
         data.sale_number  ? `N° ${data.sale_number}`         : null,
-        data.total_amount ? fmtCFA(data.total_amount)        : null,
+        data.total_amount ? fmt(data.total_amount)        : null,
         data.item_count   ? `${data.item_count} article(s)`  : null,
       ].filter(Boolean).join('  ·  ')
 
@@ -984,14 +981,14 @@ function formatAuditDetails(actionType: string, data: Record<string, unknown> | 
       if (!data) return '—'
       const note = str(data.notes)
       return [
-        data.amount ? fmtCFA(data.amount) : null,
+        data.amount ? fmt(data.amount) : null,
         note        ? note                 : null,
       ].filter(Boolean).join(' — ')
     }
 
     case 'FLOOR_PRICE_VIOLATION_ATTEMPT':
       if (!data) return '—'
-      return `Prix tenté : ${fmtCFA(data.attempted_price)}/m²  ·  Plancher : ${fmtCFA(data.floor_price)}/m²`
+      return `Prix tenté : ${fmt(data.attempted_price)}/m²  ·  Plancher : ${fmt(data.floor_price)}/m²`
 
     case 'STOCK_REQUEST_REJECTED':
       return str(data?.comment) ?? '—'
@@ -1022,7 +1019,7 @@ function formatAuditDetails(actionType: string, data: Record<string, unknown> | 
   }
 }
 
-function AuditLogTab({ logs }: { logs: any[] }) {
+function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
   const [search, setSearch]     = useState('')
   const [typeFilter, setType]   = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -1156,7 +1153,7 @@ function AuditLogTab({ logs }: { logs: any[] }) {
                         {ROLE_LABELS[log.user_role_snapshot] ?? log.user_role_snapshot ?? '—'}
                       </td>
                       <td style={{ padding: '11px 14px', fontSize: 12, color: C.slate, fontFamily: FONT, verticalAlign: 'middle', maxWidth: 260 }}>
-                        {formatAuditDetails(log.action_type, log.data_after as Record<string, unknown> | null)}
+                        {formatAuditDetails(log.action_type, log.data_after as Record<string, unknown> | null, currency)}
                       </td>
                     </tr>
                   )

@@ -11,7 +11,7 @@ export default async function NewSalePage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name)')
+    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency)')
     .eq('id', user.id)
     .single()
 
@@ -76,9 +76,12 @@ export default async function NewSalePage() {
 
   const ownerName = (ownerRes as any).data?.full_name ?? 'Le Propriétaire'
 
+  const currency = (profile.companies as any)?.currency ?? 'FCFA'
+
   return (
     <VendorSaleForm
       profile={profile}
+      currency={currency}
       boutique={boutique}
       products={enrichedProducts}
       allBoutiques={allBoutiques}

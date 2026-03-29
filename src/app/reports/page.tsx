@@ -11,7 +11,7 @@ export default async function ReportsPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, is_platform_admin')
+    .select('id, full_name, role, is_platform_admin, companies(currency)')
     .eq('id', user.id)
     .single()
 
@@ -62,9 +62,12 @@ export default async function ReportsPage() {
 
   const badgeCounts = await getBadgeCounts(profile.role, supabase)
 
+  const currency = (profile.companies as any)?.currency ?? 'FCFA'
+
   return (
     <ReportsClient
       profile={profile}
+      currency={currency}
       sales={sales ?? []}
       boutiques={boutiques ?? []}
       vendors={vendors ?? []}

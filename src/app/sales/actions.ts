@@ -419,7 +419,7 @@ export async function addPayment(
 
   const remaining = Number(sale.total_amount) - Number(sale.amount_paid ?? 0)
   if (amount > remaining + 0.01) {
-    return { error: `Montant dépasse le solde restant (${new Intl.NumberFormat('fr-FR').format(Math.round(remaining))} FCFA).` }
+    return { error: `Montant dépasse le solde restant (${new Intl.NumberFormat('fr-FR').format(Math.round(remaining))}).` }
   }
 
   const { data: newPayment, error: insertError } = await supabase

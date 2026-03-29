@@ -11,6 +11,7 @@ import {
   LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS,
   LOW_STOCK_UNITS,   CRITICAL_STOCK_UNITS,
 } from '@/lib/constants'
+import { fmtCurrency } from '@/lib/format'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -108,11 +109,13 @@ type FormState = ReturnType<typeof emptyForm>
 
 export default function ProductsClient({
   profile,
+  currency,
   products,
   categories,
   badgeCounts,
 }: {
   profile:      any
+  currency:     string
   products:     any[]
   categories:   ProductCategory[]
   badgeCounts?: BadgeCounts
@@ -491,6 +494,7 @@ export default function ProductsClient({
               key={p.id}
               p={p}
               profile={profile}
+              currency={currency}
               toggleLoadingId={toggleLoadingId}
               onEdit={openEdit}
               onToggle={p => p.is_active ? setConfirmDeactivate(p) : handleToggleActive(p)}
@@ -881,9 +885,10 @@ export default function ProductsClient({
 // Product card — type-aware display
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ProductCard({ p, profile, toggleLoadingId, onEdit, onToggle }: {
+function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }: {
   p:               any
   profile:         any
+  currency:        string
   toggleLoadingId: string | null
   onEdit:          (p: any) => void
   onToggle:        (p: any) => void
@@ -948,8 +953,8 @@ function ProductCard({ p, profile, toggleLoadingId, onEdit, onToggle }: {
       </div>
 
       {/* Info grid */}
-      {pt === 'tile' && <TileInfoGrid p={p} />}
-      {pt !== 'tile' && <NonTileInfoGrid p={p} />}
+      {pt === 'tile' && <TileInfoGrid p={p} currency={currency} />}
+      {pt !== 'tile' && <NonTileInfoGrid p={p} currency={currency} />}
 
       {/* Stock */}
       <StockBlock
@@ -986,8 +991,8 @@ function ProductCard({ p, profile, toggleLoadingId, onEdit, onToggle }: {
 
 // ── Tile info grid (original layout — unchanged) ──────────────────────────────
 
-function TileInfoGrid({ p }: { p: any }) {
-  const fmtCFA = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n))
+function TileInfoGrid({ p, currency }: { p: any; currency: string }) {
+  const fmt = (n: number) => fmtCurrency(n, currency)
   const tileArea = parseFloat(p.tile_area_m2) || 0
   const tpc      = parseInt(p.tiles_per_carton) || 0
 
@@ -997,8 +1002,8 @@ function TileInfoGrid({ p }: { p: any }) {
         ['Format',         `${p.width_cm}×${p.height_cm} cm`],
         ['Surface/car.',   fmtM2(tileArea)],
         ['Car./carton',    String(tpc)],
-        ['Prix plancher',  fmtCFA(p.floor_price_per_m2) + '/m²'],
-        ['Prix référence', fmtCFA(p.reference_price_per_m2) + '/m²'],
+        ['Prix plancher',  fmt(p.floor_price_per_m2) + '/m²'],
+        ['Prix référence', fmt(p.reference_price_per_m2) + '/m²'],
         ['Fournisseur',    p.supplier],
       ] as [string, string][]).map(([lbl, val]) => (
         <InfoCell key={lbl} label={lbl} value={val} />
@@ -1009,14 +1014,14 @@ function TileInfoGrid({ p }: { p: any }) {
 
 // ── Non-tile info grid ────────────────────────────────────────────────────────
 
-function NonTileInfoGrid({ p }: { p: any }) {
-  const fmtCFA  = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n))
+function NonTileInfoGrid({ p, currency }: { p: any; currency: string }) {
+  const fmt     = (n: number) => fmtCurrency(n, currency)
   const pt: ProductType = p.product_type
   const unit    = p.unit_label ?? 'unité'
 
   const rows: [string, string][] = [
-    ['Prix plancher',  fmtCFA(p.floor_price_per_unit)     + ' / ' + unit],
-    ['Prix référence', fmtCFA(p.reference_price_per_unit) + ' / ' + unit],
+    ['Prix plancher',  fmt(p.floor_price_per_unit)     + ' / ' + unit],
+    ['Prix référence', fmt(p.reference_price_per_unit) + ' / ' + unit],
     ['Fournisseur',    p.supplier],
   ]
 

@@ -32,6 +32,7 @@ async function verifyPlatformAdmin() {
 export async function createCompanyWithOwner(payload: {
   companyName:   string
   slug:          string
+  currency:      string
   ownerFullName: string
   ownerEmail:    string
   ownerPassword: string
@@ -46,6 +47,7 @@ export async function createCompanyWithOwner(payload: {
   // ── Input validation ──────────────────────────────────────────────────────
   const name     = payload.companyName.trim()
   const slug     = payload.slug.trim().toLowerCase()
+  const currency = payload.currency.trim().toUpperCase() || 'FCFA'
   const email    = payload.ownerEmail.trim().toLowerCase()
   const fullName = payload.ownerFullName.trim()
   const password = payload.ownerPassword
@@ -88,7 +90,7 @@ export async function createCompanyWithOwner(payload: {
   // ── Create company ────────────────────────────────────────────────────────
   const { data: company, error: companyError } = await admin
     .from('companies')
-    .insert({ name, slug, is_active: true })
+    .insert({ name, slug, currency, is_active: true })
     .select('id, name')
     .single()
 
@@ -151,10 +153,6 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
 
   if (!user || !caller?.is_platform_admin)
     return { error: 'Accès réservé aux administrateurs de la plateforme.' }
-
-  // Prevent deactivating the founding company
-  if (companyId === '00000000-0000-0000-0000-000000000001' && !isActive)
-    return { error: "L'entreprise fondatrice ne peut pas être désactivée." }
 
   const { error } = await admin
     .from('companies')

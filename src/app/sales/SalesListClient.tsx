@@ -6,10 +6,9 @@ import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
 import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
+import { fmtCurrency }       from '@/lib/format'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-const fmtCFA = (n: number) =>
-  new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2 = (n: number) =>
@@ -104,21 +103,30 @@ function IconX({ size = 11 }: { size?: number }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function SalesListClient({
   profile,
+  currency,
   sales,
   badgeCounts,
   errorCode,
   hasBoutiques = true,
   ownerName = 'Le Propriétaire',
+  currentPage = 1,
+  totalPages = 1,
+  totalCount = 0,
 }: {
   profile:       any
+  currency:      string
   sales:         any[]
   badgeCounts?:  BadgeCounts
   errorCode?:    string
   hasBoutiques?: boolean
   ownerName?:    string
+  currentPage?:  number
+  totalPages?:   number
+  totalCount?:   number
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const fmt = (n: number) => fmtCurrency(n, currency)
   const [navPending,       startNavTransition]       = useTransition()
   const [firstSalePending, startFirstSaleTransition] = useTransition()
 
@@ -151,10 +159,6 @@ export default function SalesListClient({
   const [dateTo,         setDateTo]          = useState('')
   const [boutiqueFilter, setBoutiqueFilter]  = useState('')
 
-  // ── Pagination ──
-  const PAGE_SIZE = 50
-  const [page, setPage] = useState(1)
-
   // Unique boutiques from loaded data
   const boutiques = useMemo(() => {
     const map = new Map<string, string>()
@@ -181,19 +185,12 @@ export default function SalesListClient({
   }, [sales, search, statusFilter, paymentFilter, dateFrom, dateTo, boutiqueFilter])
 
   const hasFilters = search || statusFilter || paymentFilter || dateFrom || dateTo || boutiqueFilter
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setDateFrom(''); setDateTo(''); setBoutiqueFilter(''); setPage(1) }
+  const clearFilters = () => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setDateFrom(''); setDateTo(''); setBoutiqueFilter('') }
 
-  // Reset to page 1 whenever any filter changes — derived implicitly since React
-  // will re-render; we update page in each setter below via resetPage helper.
-  const setSearchPaged       = (v: string)  => { setSearch(v);        setPage(1) }
-  const setStatusFilterPaged   = (v: string) => { setStatusFilter(v);   setPage(1) }
-  const setPaymentFilterPaged  = (v: string) => { setPaymentFilter(v);  setPage(1) }
-  const setDateFromPaged       = (v: string) => { setDateFrom(v);       setPage(1) }
-  const setDateToPaged         = (v: string) => { setDateTo(v);         setPage(1) }
-  const setBoutiqueFilterPaged = (v: string) => { setBoutiqueFilter(v); setPage(1) }
-
-  const totalPages  = Math.max(1, Math.ceil(filteredSales.length / PAGE_SIZE))
-  const pagedSales  = filteredSales.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  // ── Server-side page navigation ───────────────────────────────────────────
+  const goToPage = (p: number) => {
+    startNavTransition(() => router.push(`/sales?page=${p}`))
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -308,7 +305,7 @@ export default function SalesListClient({
             </span>
             <input
               value={search}
-              onChange={e => setSearchPaged(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               placeholder="N°, client ou téléphone…"
               style={{
                 width: '100%', paddingLeft: 28, paddingRight: 8,
@@ -322,7 +319,7 @@ export default function SalesListClient({
           {/* Status */}
           <select
             value={statusFilter}
-            onChange={e => setStatusFilterPaged(e.target.value)}
+            onChange={e => setStatusFilter(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -338,7 +335,7 @@ export default function SalesListClient({
           {/* Payment status */}
           <select
             value={paymentFilter}
-            onChange={e => setPaymentFilterPaged(e.target.value)}
+            onChange={e => setPaymentFilter(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orange : C.border}`, borderRadius: 6,
@@ -356,7 +353,7 @@ export default function SalesListClient({
           <input
             type="date"
             value={dateFrom}
-            onChange={e => setDateFromPaged(e.target.value)}
+            onChange={e => setDateFrom(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -369,7 +366,7 @@ export default function SalesListClient({
           <input
             type="date"
             value={dateTo}
-            onChange={e => setDateToPaged(e.target.value)}
+            onChange={e => setDateTo(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -381,7 +378,7 @@ export default function SalesListClient({
           {['owner', 'admin'].includes(profile.role) && boutiques.length > 1 && (
             <select
               value={boutiqueFilter}
-              onChange={e => setBoutiqueFilterPaged(e.target.value)}
+              onChange={e => setBoutiqueFilter(e.target.value)}
               style={{
                 height: 32, paddingLeft: 8, paddingRight: 24,
                 border: `1px solid ${C.border}`, borderRadius: 6,
@@ -490,7 +487,7 @@ export default function SalesListClient({
                 </tr>
               </thead>
               <tbody>
-                {pagedSales.map((sale: any) => {
+                {filteredSales.map((sale: any) => {
                   const cfg    = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG.draft
                   const isOpen = expanded === sale.id
                   return (
@@ -520,7 +517,7 @@ export default function SalesListClient({
                           <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
                         )}
                         <td style={{ ...TD_STYLE, fontWeight: 700 }}>
-                          {fmtCFA(sale.total_amount)}
+                          {fmt(sale.total_amount)}
                         </td>
                         <td style={TD_STYLE}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -587,7 +584,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} onPaymentAdded={() => router.refresh()} />
+                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} currency={currency} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
                       )}
@@ -605,29 +602,29 @@ export default function SalesListClient({
                 flexWrap: 'wrap', gap: 10,
               }}>
                 <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
-                  Page {page} sur {totalPages} · {filteredSales.length} vente{filteredSales.length > 1 ? 's' : ''}
+                  Page {currentPage} sur {totalPages} · {totalCount} vente{totalCount !== 1 ? 's' : ''} au total
                 </span>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
                     className="btn-ghost"
-                    disabled={page === 1}
-                    onClick={() => setPage(p => p - 1)}
+                    disabled={currentPage === 1}
+                    onClick={() => goToPage(currentPage - 1)}
                     style={{
                       padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                      border: `1px solid ${C.border}`, cursor: page === 1 ? 'default' : 'pointer',
-                      background: page === 1 ? C.bg : C.surface, color: page === 1 ? C.muted : C.ink,
+                      border: `1px solid ${C.border}`, cursor: currentPage === 1 ? 'default' : 'pointer',
+                      background: currentPage === 1 ? C.bg : C.surface, color: currentPage === 1 ? C.muted : C.ink,
                       fontFamily: FONT,
                     }}>
                     ← Précédent
                   </button>
                   <button
                     className="btn-ghost"
-                    disabled={page === totalPages}
-                    onClick={() => setPage(p => p + 1)}
+                    disabled={currentPage === totalPages}
+                    onClick={() => goToPage(currentPage + 1)}
                     style={{
                       padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                      border: `1px solid ${C.border}`, cursor: page === totalPages ? 'default' : 'pointer',
-                      background: page === totalPages ? C.bg : C.surface, color: page === totalPages ? C.muted : C.ink,
+                      border: `1px solid ${C.border}`, cursor: currentPage === totalPages ? 'default' : 'pointer',
+                      background: currentPage === totalPages ? C.bg : C.surface, color: currentPage === totalPages ? C.muted : C.ink,
                       fontFamily: FONT,
                     }}>
                     Suivant →
@@ -746,7 +743,7 @@ function escHtml(s: string | null | undefined): string {
     .replace(/'/g, '&#39;')
 }
 
-function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
+function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 'FCFA') {
   const now = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -763,10 +760,10 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
       const fullCartons = Math.floor(item.quantity_tiles / tpc)
       const loose       = item.quantity_tiles % tpc
       qtyCell   = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''} ctn`
-      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA/m²`
+      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} ${currency}/m²`
     } else {
       qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${unitLbl}`
-      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA/${unitLbl}`
+      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} ${currency}/${unitLbl}`
     }
     return `
       <tr>
@@ -774,7 +771,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
         <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
         <td style="text-align:center">${qtyCell}</td>
         <td style="text-align:right">${priceCell}</td>
-        <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.total_price))} FCFA</td>
+        <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.total_price))} ${currency}</td>
       </tr>`
   }).join('')
 
@@ -870,9 +867,9 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
   <div class="total-row">
     <div class="total-box">
       <div class="total-label">Montant total</div>
-      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} FCFA</div>
-      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} FCFA</div>` : ''}
-      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste à payer : ${new Intl.NumberFormat('fr-FR').format(balance)} FCFA</div>` : ''}
+      <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} ${currency}</div>
+      ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} ${currency}</div>` : ''}
+      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste à payer : ${new Intl.NumberFormat('fr-FR').format(balance)} ${currency}</div>` : ''}
     </div>
   </div>
   <div style="display:flex;justify-content:flex-end;margin-bottom:28px">
@@ -914,9 +911,10 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
 }
 
 // ── Sale detail panel ─────────────────────────────────────────────────────────
-function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
-  sale: any; profile: any; ownerName: string; onPaymentAdded: () => void
+function SaleDetail({ sale, profile, ownerName, currency, onPaymentAdded }: {
+  sale: any; profile: any; ownerName: string; currency: string; onPaymentAdded: () => void
 }) {
+  const fmt = (n: number) => fmtCurrency(n, currency)
   const supabase   = useMemo(() => createClient(), [])
   const [payments, setPayments] = useState<any[] | null>(null)
   const [showAdd,  setShowAdd]  = useState(false)
@@ -990,10 +988,10 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
                     </span>
                   </>
                 )
-                priceDisplay = `${fmtNum(item.unit_price_per_m2)} FCFA/m²`
+                priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/m²`
               } else {
                 qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
-                priceDisplay = `${fmtNum(item.unit_price_per_m2)} FCFA/${unitLbl}`
+                priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/${unitLbl}`
               }
               return (
                 <tr key={item.id}>
@@ -1001,7 +999,7 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 11, color: C.muted, fontFamily: FONT }}>{item.products?.reference_code ?? '—'}</td>
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{qtyDisplay}</td>
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{priceDisplay}</td>
-                  <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmtCFA(item.total_price)}</td>
+                  <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmt(item.total_price)}</td>
                 </tr>
               )
             })}
@@ -1029,7 +1027,7 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
                 border: `1px solid ${i === payments.length - 1 ? C.green + '44' : C.border}`,
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: FONT }}>+{fmtCFA(p.amount)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: FONT }}>+{fmt(p.amount)}</span>
                   {p.notes && <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>· {p.notes}</span>}
                 </div>
                 <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
@@ -1061,7 +1059,7 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
                 type="number" min="1" step="100"
                 value={addAmt}
                 onChange={e => setAddAmt(e.target.value)}
-                placeholder="Montant (FCFA)"
+                placeholder={`Montant (${currency})`}
                 style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
               />
               <input
@@ -1105,8 +1103,8 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc.color }} />{pc.label}
             </span>
             <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
-              Encaissé : <strong style={{ color: C.ink }}>{fmtCFA(paid)}</strong>
-              {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmtCFA(balance)}</strong></>)}
+              Encaissé : <strong style={{ color: C.ink }}>{fmt(paid)}</strong>
+              {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmt(balance)}</strong></>)}
             </span>
           </div>
         )
@@ -1137,11 +1135,11 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={() => printSaleReceipt(sale, ownerName)}
+            onClick={() => printSaleReceipt(sale, ownerName, currency)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
             <IconPrint /> Imprimer le reçu
           </button>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontFamily: FONT }}>Total : {fmtCFA(sale.total_amount)}</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontFamily: FONT }}>Total : {fmt(sale.total_amount)}</div>
         </div>
       </div>
     </div>

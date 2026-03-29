@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, email, role, boutique_id, is_active, is_platform_admin')
+    .select('id, full_name, email, role, boutique_id, is_active, is_platform_admin, companies(currency)')
     .eq('id', user.id)
     .single()
 
@@ -116,9 +116,12 @@ export default async function DashboardPage() {
       product_type: typeMap.get(s.product_id) ?? 'tile',
     }))
 
+  const currency = (profile.companies as any)?.currency ?? 'FCFA'
+
   return (
     <DashboardClient
       profile={profile}
+      currency={currency}
       todayRevenue={todayRevenue}
       todayCount={todayCount}
       mtdRevenue={mtdRevenue}

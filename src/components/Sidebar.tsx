@@ -247,25 +247,27 @@ export default function Sidebar({
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
           }}>
-            <span style={{
-              fontSize: 13, fontWeight: 900, color: 'white',
-              fontFamily: 'Georgia, serif', letterSpacing: '-0.02em',
-            }}>U</span>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+            </svg>
           </div>
           <div>
             <div style={{
               fontSize: 15, fontWeight: 800, color: 'white',
               letterSpacing: '-0.02em', lineHeight: 1.1,
-              fontFamily: 'Georgia, serif',
+              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
             }}>
-              UCA
+              SGI
             </div>
             <div style={{
               fontSize: 9, color: 'rgba(255,255,255,0.3)',
               letterSpacing: '0.14em', textTransform: 'uppercase',
               fontWeight: 500, marginTop: 1,
             }}>
-              Gestion Interne
+              Système de Gestion
             </div>
           </div>
         </div>
@@ -392,7 +394,7 @@ export default function Sidebar({
       </nav>
 
       {/* ── Notification toggle ── */}
-      {notifSupported && (
+      {notifSupported && !profile.is_platform_admin && (
         <div style={{ padding: '0 12px 6px' }}>
           <button
             disabled={notifLoading || notifState === 'denied'}

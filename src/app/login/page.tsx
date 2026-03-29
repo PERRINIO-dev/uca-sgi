@@ -100,20 +100,35 @@ export default function LoginPage() {
         }} />
 
         {/* Logo */}
-        <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            fontSize: 44, fontWeight: 900, color: 'white',
-            letterSpacing: '-0.04em', lineHeight: 1,
-            fontFamily: 'Georgia, serif',
+            width: 42, height: 42, borderRadius: 10,
+            background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
           }}>
-            UCA
+            <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
+              <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+              <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+            </svg>
           </div>
-          <div style={{
-            fontSize: 11, color: 'rgba(255,255,255,0.4)',
-            letterSpacing: '0.14em', marginTop: 6,
-            textTransform: 'uppercase', fontWeight: 500,
-          }}>
-            Gestion Interne
+          <div>
+            <div style={{
+              fontSize: 22, fontWeight: 800, color: 'white',
+              letterSpacing: '-0.02em', lineHeight: 1.1,
+              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+            }}>
+              SGI
+            </div>
+            <div style={{
+              fontSize: 11, color: 'rgba(255,255,255,0.4)',
+              letterSpacing: '0.14em', marginTop: 2,
+              textTransform: 'uppercase', fontWeight: 500,
+            }}>
+              Système de Gestion
+            </div>
           </div>
         </div>
 
@@ -122,7 +137,7 @@ export default function LoginPage() {
           <h2 style={{
             fontSize: 26, fontWeight: 700, color: 'white',
             margin: '0 0 14px', letterSpacing: '-0.02em', lineHeight: 1.3,
-            fontFamily: 'Georgia, serif',
+            fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
           }}>
             Pilotez votre activité<br />en temps réel.
           </h2>
@@ -130,7 +145,7 @@ export default function LoginPage() {
             fontSize: 14, color: 'rgba(255,255,255,0.5)',
             margin: '0 0 36px', lineHeight: 1.7,
           }}>
-            Système centralisé pour vos boutiques de carreaux — ventes, stocks, entrepôt et rapports réunis en un seul endroit.
+            Plateforme centralisée de gestion commerciale — ventes, stocks, entrepôt et rapports réunis en un seul endroit.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -154,7 +169,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)' }}>
-          © {new Date().getFullYear()} UCA · Usage interne uniquement
+          © {new Date().getFullYear()} SGI · Tous droits réservés
         </div>
       </div>
 
@@ -193,7 +208,7 @@ export default function LoginPage() {
               <input
                 type="email" required value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="prenom.nom@uca.cm"
+                placeholder="votre@email.com"
                 style={{
                   width: '100%', padding: '11px 14px', borderRadius: 8,
                   border: '1.5px solid #E2E8F0', fontSize: 14,

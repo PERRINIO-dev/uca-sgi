@@ -12,10 +12,9 @@ import PageLayout       from '@/components/PageLayout'
 import OnboardingTour   from '@/components/OnboardingTour'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { CRITICAL_STOCK_CARTONS, CRITICAL_STOCK_UNITS } from '@/lib/constants'
+import { fmtCurrency } from '@/lib/format'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
-const fmtCFA = (n: number) =>
-  new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
 
@@ -115,6 +114,7 @@ function ModalOverlay({ children }: { children: React.ReactNode }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function DashboardClient({
   profile,
+  currency,
   todayRevenue,
   todayCount,
   mtdRevenue,
@@ -132,6 +132,7 @@ export default function DashboardClient({
   badgeCounts,
 }: {
   profile:           any
+  currency:          string
   todayRevenue:      number
   todayCount:        number
   mtdRevenue:        number
@@ -150,6 +151,7 @@ export default function DashboardClient({
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
+  const fmt = (n: number) => fmtCurrency(n, currency)
 
   // ── Real-time: refresh when sales or stock_requests change ────────────────
   useEffect(() => {
@@ -190,15 +192,15 @@ export default function DashboardClient({
     {
       label:  "CA du mois",
       sub:    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-      value:  fmtCFA(mtdRevenue),
+      value:  fmt(mtdRevenue),
       color:  C.blue,
       Icon:   IconRevenue,
       trend:  mtdTrend,
     },
     {
       label:  'Créances clients',
-      sub:    `Ce mois : ${fmtCFA(mtdCreances)}`,
-      value:  fmtCFA(allTimeCreances),
+      sub:    `Ce mois : ${fmt(mtdCreances)}`,
+      value:  fmt(allTimeCreances),
       color:  allTimeCreances > 0 ? C.orange : C.green,
       Icon:   IconBasket,
       trend:  null,
@@ -214,7 +216,7 @@ export default function DashboardClient({
     {
       label:  'Panier moyen (mois)',
       sub:    `${todayCount} vente${todayCount !== 1 ? 's' : ''} aujourd'hui`,
-      value:  fmtCFA(mtdAvgBasket),
+      value:  fmt(mtdAvgBasket),
       color:  C.green,
       Icon:   IconBasket,
       trend:  null,
@@ -224,7 +226,7 @@ export default function DashboardClient({
       sub:    mtdMarginPct !== null
         ? `${mtdMarginPct >= 0 ? '+' : ''}${mtdMarginPct.toFixed(1)} % du CA`
         : 'Aucune vente ce mois',
-      value:  fmtCFA(mtdMargin),
+      value:  fmt(mtdMargin),
       color:  mtdMargin >= 0 ? C.green : C.red,
       Icon:   IconMargin,
       trend:  null,
@@ -339,7 +341,7 @@ export default function DashboardClient({
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: C.muted }} axisLine={false} tickLine={false} tickFormatter={v => (v / 1000) + 'k'} />
                 <Tooltip
-                  formatter={(v) => [fmtCFA(Number(v)), 'CA']}
+                  formatter={(v) => [fmt(Number(v)), 'CA']}
                   contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', fontFamily: FONT }}
                 />
                 <Area type="monotone" dataKey="ca" stroke={C.blue} strokeWidth={2} fill="url(#grad)" />
@@ -360,7 +362,7 @@ export default function DashboardClient({
                 <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => (v / 1000) + 'k'} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: C.ink, fontWeight: 600 }} axisLine={false} tickLine={false} width={80} />
-                <Tooltip formatter={(v) => [fmtCFA(Number(v)), 'CA']} contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: FONT }} />
+                <Tooltip formatter={(v) => [fmt(Number(v)), 'CA']} contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: FONT }} />
                 <Bar dataKey="ca" fill={C.blue} radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>

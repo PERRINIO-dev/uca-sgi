@@ -22,7 +22,6 @@ const C = {
   amber: '#B45309', amberL: '#FFFBEB', amberM: '#FDE68A',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
-const UCA_ID = '00000000-0000-0000-0000-000000000001'
 
 // ── Role display ──────────────────────────────────────────────────────────────
 const ROLE_META: Record<string, { label: string; color: string; bg: string }> = {
@@ -245,7 +244,7 @@ interface Profile {
 
 // ── Form factory ──────────────────────────────────────────────────────────────
 const emptyForm = () => ({
-  companyName: '', slug: '', ownerFullName: '', ownerEmail: '', ownerPassword: '',
+  companyName: '', slug: '', currency: 'FCFA', ownerFullName: '', ownerEmail: '', ownerPassword: '',
 })
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -804,8 +803,7 @@ export default function AdminClient({
                   {drawerCompany.is_active ? 'Actif' : 'Suspendu'}
                 </Badge>
               </div>
-              {drawerCompany.id !== UCA_ID && (
-                <button
+              <button
                   onClick={() => handleToggle(drawerCompany.id, !drawerCompany.is_active)}
                   disabled={toggling === drawerCompany.id}
                   style={{
@@ -821,7 +819,6 @@ export default function AdminClient({
                 >
                   {toggling === drawerCompany.id ? '…' : drawerCompany.is_active ? 'Suspendre l\'entreprise' : 'Réactiver l\'entreprise'}
                 </button>
-              )}
             </div>
 
             {/* ── Owner section ── */}
@@ -1070,7 +1067,7 @@ export default function AdminClient({
               <input type="text" placeholder="ex : Société TechBuild" value={form.companyName} onChange={e => handleNameChange(e.target.value)} required disabled={submitting} style={inputStyle} />
             </div>
 
-            <div style={{ marginBottom: 22 }}>
+            <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>
                 Identifiant unique (slug) *
                 <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— lettres minuscules, chiffres, tirets</span>
@@ -1079,6 +1076,14 @@ export default function AdminClient({
                 <input type="text" placeholder="ex : techbuild" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} required disabled={submitting} style={{ ...inputStyle, paddingLeft: 80 }} />
                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: C.muted, pointerEvents: 'none', fontFamily: 'monospace' }}>sgi.app/</span>
               </div>
+            </div>
+
+            <div style={{ marginBottom: 22 }}>
+              <label style={labelStyle}>
+                Devise *
+                <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— ex : FCFA, EUR, USD, XAF</span>
+              </label>
+              <input type="text" placeholder="FCFA" value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))} required disabled={submitting} style={inputStyle} maxLength={10} />
             </div>
 
             <div style={{ borderTop: `1px solid ${C.border}`, marginBottom: 18 }} />
