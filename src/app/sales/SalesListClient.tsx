@@ -752,18 +752,28 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
     hour: '2-digit', minute: '2-digit',
   })
   const rows = (sale.sale_items ?? []).map((item: any) => {
-    const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-    const tpc         = parseInt(item.tiles_per_carton_snapshot)
-    const m2          = item.quantity_tiles * tileArea
-    const fullCartons = Math.floor(item.quantity_tiles / tpc)
-    const loose       = item.quantity_tiles % tpc
+    const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+    const unitLbl = escHtml(item.products?.unit_label ?? (isTile ? 'm²' : 'unité'))
+    let qtyCell: string
+    let priceCell: string
+    if (isTile) {
+      const tileArea    = parseFloat(item.tile_area_m2_snapshot)
+      const tpc         = parseInt(item.tiles_per_carton_snapshot)
+      const m2          = item.quantity_tiles * tileArea
+      const fullCartons = Math.floor(item.quantity_tiles / tpc)
+      const loose       = item.quantity_tiles % tpc
+      qtyCell   = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''} ctn`
+      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA/m²`
+    } else {
+      qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${unitLbl}`
+      priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA/${unitLbl}`
+    }
     return `
       <tr>
         <td>${escHtml(item.products?.name)}</td>
         <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
-        <td style="text-align:center">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
-        <td style="text-align:center">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
-        <td style="text-align:right">${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} FCFA</td>
+        <td style="text-align:center">${qtyCell}</td>
+        <td style="text-align:right">${priceCell}</td>
         <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.total_price))} FCFA</td>
       </tr>`
   }).join('')
@@ -842,9 +852,8 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire') {
       <tr>
         <th>Produit</th>
         <th>Référence</th>
-        <th style="text-align:center">Surface</th>
-        <th style="text-align:center">Cartons</th>
-        <th style="text-align:right">Prix/m²</th>
+        <th style="text-align:center">Quantité</th>
+        <th style="text-align:right">Prix unitaire</th>
         <th style="text-align:right">Sous-total</th>
       </tr>
     </thead>
@@ -954,7 +963,7 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Produit', 'Référence', 'Surface', 'Cartons', 'Carreaux', 'Prix/m²', 'Sous-total'].map(h => (
+              {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
                 <th key={h} style={{ textAlign: 'left', fontSize: 10, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`, fontFamily: FONT }}>
                   {h}
                 </th>
@@ -963,21 +972,35 @@ function SaleDetail({ sale, profile, ownerName, onPaymentAdded }: {
           </thead>
           <tbody>
             {(sale.sale_items ?? []).map((item: any) => {
-              const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-              const tpc         = parseInt(item.tiles_per_carton_snapshot)
-              const m2          = item.quantity_tiles * tileArea
-              const fullCartons = Math.floor(item.quantity_tiles / tpc)
-              const loose       = item.quantity_tiles % tpc
+              const isTile   = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+              const unitLbl  = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
+              let qtyDisplay: React.ReactNode
+              let priceDisplay: string
+              if (isTile) {
+                const tileArea    = parseFloat(item.tile_area_m2_snapshot)
+                const tpc         = parseInt(item.tiles_per_carton_snapshot)
+                const m2          = item.quantity_tiles * tileArea
+                const fullCartons = Math.floor(item.quantity_tiles / tpc)
+                const loose       = item.quantity_tiles % tpc
+                qtyDisplay = (
+                  <>
+                    {fmtM2(m2)}
+                    <span style={{ color: C.muted, fontSize: 11 }}>
+                      {' '}· {fullCartons} ctn{loose > 0 && <span style={{ color: C.orange }}> +{loose}</span>}
+                    </span>
+                  </>
+                )
+                priceDisplay = `${fmtNum(item.unit_price_per_m2)} FCFA/m²`
+              } else {
+                qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                priceDisplay = `${fmtNum(item.unit_price_per_m2)} FCFA/${unitLbl}`
+              }
               return (
                 <tr key={item.id}>
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>{item.products?.name ?? '—'}</td>
                   <td style={{ padding: '8px 12px 8px 0', fontSize: 11, color: C.muted, fontFamily: FONT }}>{item.products?.reference_code ?? '—'}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtM2(m2)}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                    {fullCartons}{loose > 0 && <span style={{ color: C.orange, fontSize: 11 }}> +{loose}</span>}
-                  </td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtNum(item.quantity_tiles)}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{fmtNum(item.unit_price_per_m2)} FCFA</td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{qtyDisplay}</td>
+                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{priceDisplay}</td>
                   <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmtCFA(item.total_price)}</td>
                 </tr>
               )

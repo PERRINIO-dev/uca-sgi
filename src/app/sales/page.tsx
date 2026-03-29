@@ -38,7 +38,7 @@ export default async function SalesPage({
         id, quantity_tiles, unit_price_per_m2,
         total_price, tile_area_m2_snapshot,
         tiles_per_carton_snapshot,
-        products ( name, reference_code )
+        products ( name, reference_code, product_type, unit_label )
       )
     `)
     .order('created_at', { ascending: false })

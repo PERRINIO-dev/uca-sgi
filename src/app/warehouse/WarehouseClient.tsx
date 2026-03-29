@@ -145,29 +145,31 @@ export default function WarehouseClient({
     const rows = items.map((item: any) => {
       const isTile  = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
       const unitLbl = escHtml(item.products?.unit_label ?? (isTile ? 'carreau' : 'unité'))
-      let detailCells: string
+      let qtyText: string
+      let detailText: string
       if (isTile) {
         const tileArea    = parseFloat(item.tile_area_m2_snapshot)
         const tpc         = parseInt(item.tiles_per_carton_snapshot)
         const m2          = item.quantity_tiles * tileArea
         const fullCartons = Math.floor(item.quantity_tiles / tpc)
         const loose       = item.quantity_tiles % tpc
-        detailCells = `
-          <td style="text-align:center;font-weight:700">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
-          <td style="text-align:center">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</td>
-          <td style="text-align:right">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>`
+        const loosePart   = loose > 0 ? ` <span style="color:#D97706;font-weight:700">+ ${loose} car.</span>` : ''
+        qtyText    = `<strong>${fullCartons}</strong> carton${fullCartons !== 1 ? 's' : ''}${loosePart}`
+        detailText = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} carreaux`
       } else {
-        detailCells = `
-          <td style="text-align:center;font-weight:700;font-size:16px" colspan="2">${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${unitLbl}</td>
-          <td></td>`
+        qtyText    = `<strong>${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</strong> ${unitLbl}`
+        detailText = '—'
       }
       return `
         <tr>
-          <td>${escHtml(item.products?.name)}</td>
-          <td style="color:#64748B;font-size:11px">${escHtml(item.products?.reference_code)}</td>
-          ${detailCells}
+          <td>
+            <div style="font-weight:600">${escHtml(item.products?.name)}</div>
+            <div style="font-size:11px;color:#64748B;margin-top:2px">${escHtml(item.products?.reference_code)}</div>
+          </td>
+          <td style="text-align:center;font-size:14px">${qtyText}</td>
+          <td style="color:#64748B;font-size:12px">${detailText}</td>
           <td style="text-align:center">
-            <span style="display:inline-block;width:18px;height:18px;border:2px solid #94A3B8;border-radius:3px">&nbsp;</span>
+            <span style="display:inline-block;width:20px;height:20px;border:2px solid #94A3B8;border-radius:4px">&nbsp;</span>
           </td>
         </tr>`
     }).join('')
@@ -191,8 +193,11 @@ export default function WarehouseClient({
     .client-block .value { font-size: 14px; font-weight: 700; color: #0F172A; }
     .client-block .sub { font-size: 12px; color: #475569; margin-top: 2px; }
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-    th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; padding: 0 10px 10px 0; border-bottom: 2px solid #0F172A; }
-    td { padding: 12px 10px 12px 0; border-bottom: 1px solid #E2E8F0; vertical-align: middle; }
+    th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; padding: 10px 16px 10px 0; border-bottom: 2px solid #0F172A; }
+    th:nth-child(2) { text-align: center; }
+    th:last-child { text-align: center; width: 60px; }
+    td { padding: 14px 16px 14px 0; border-bottom: 1px solid #E2E8F0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
     .footer { display: flex; gap: 24px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #E2E8F0; }
     .sig-block { flex: 1; }
     .sig-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #94A3B8; margin-bottom: 8px; }
@@ -236,10 +241,8 @@ export default function WarehouseClient({
     <thead>
       <tr>
         <th>Produit</th>
-        <th>Référence</th>
-        <th style="text-align:center">Colis</th>
-        <th style="text-align:center">Unités</th>
-        <th style="text-align:right">Détail</th>
+        <th style="text-align:center">Quantité à prélever</th>
+        <th>Détail</th>
         <th style="text-align:center">Prélevé</th>
       </tr>
     </thead>
