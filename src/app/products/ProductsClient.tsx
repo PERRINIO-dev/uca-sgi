@@ -303,7 +303,7 @@ export default function ProductsClient({
     }
 
     setSuccess('Produit créé avec succès.')
-    setForm(emptyForm('tile'))
+    setForm(emptyForm(productType))
     refCodeTouched.current = false
     setTimeout(() => {
       setSuccess(null)
@@ -567,7 +567,7 @@ export default function ProductsClient({
             {/* Type selector */}
             <div>
               <label style={labelStyle}>Type de produit *</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {(Object.entries(TYPE_LABELS) as [ProductType, string][]).map(([val, lbl]) => (
                   <button
                     key={val}
