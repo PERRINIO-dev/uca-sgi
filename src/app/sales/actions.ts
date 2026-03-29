@@ -16,14 +16,14 @@ function getAdminClient() {
 
 interface SaleItem {
   product_id:                string
-  quantity_tiles:            number
-  unit_price_per_m2:         number
+  quantity_tiles:            number   // tile count for tiles; unit count for others
+  unit_price_per_m2:         number   // price/m² for tiles; price/unit for others
   total_price:               number
   floor_price_snapshot:      number
   reference_price_snapshot:  number
   purchase_price_snapshot:   number
-  tile_area_m2_snapshot:     number
-  tiles_per_carton_snapshot: number
+  tile_area_m2_snapshot:     number | null
+  tiles_per_carton_snapshot: number | null
 }
 
 interface CreateSalePayload {
@@ -63,7 +63,7 @@ export async function createSale(payload: CreateSalePayload) {
 
   const { data: dbProducts } = await supabase
     .from('products')
-    .select('id, floor_price_per_m2, reference_price_per_m2, purchase_price, tile_area_m2, tiles_per_carton')
+    .select('id, product_type, floor_price_per_m2, reference_price_per_m2, floor_price_per_unit, reference_price_per_unit, purchase_price, tile_area_m2, tiles_per_carton')
     .in('id', productIds)
     .eq('is_active', true)
 
@@ -80,11 +80,17 @@ export async function createSale(payload: CreateSalePayload) {
     const dbProd = dbProdMap.get(item.product_id)
     if (!dbProd) return { error: 'Produit introuvable.' }
 
-    const dbFloorPrice = parseFloat(String(dbProd.floor_price_per_m2))
-    const tileAreaM2   = parseFloat(String(dbProd.tile_area_m2))
-    const tpc          = parseInt(String(dbProd.tiles_per_carton))
+    const isTile = (dbProd.product_type ?? 'tile') === 'tile'
 
-    if (item.unit_price_per_m2 < dbFloorPrice) {
+    // Floor price validation — branch by product type
+    const dbFloorPrice = isTile
+      ? parseFloat(String(dbProd.floor_price_per_m2 ?? 0))
+      : parseFloat(String(dbProd.floor_price_per_unit ?? 0))
+    const dbRefPrice = isTile
+      ? parseFloat(String(dbProd.reference_price_per_m2 ?? 0))
+      : parseFloat(String(dbProd.reference_price_per_unit ?? 0))
+
+    if (dbFloorPrice > 0 && item.unit_price_per_m2 < dbFloorPrice) {
       await getAdminClient().from('audit_logs').insert({
         user_id:            user.id,
         user_role_snapshot: callerProfile.role,
@@ -95,20 +101,32 @@ export async function createSale(payload: CreateSalePayload) {
         data_after: {
           attempted_price: item.unit_price_per_m2,
           floor_price:     dbFloorPrice,
+          product_type:    dbProd.product_type,
         },
       })
       return { error: 'Prix inférieur au plancher détecté. Vente refusée.' }
     }
 
-    // Recalculate totals server-side using DB tile dimensions
-    const quantityM2 = item.quantity_tiles * tileAreaM2
-    const itemTotal  = Math.round(item.unit_price_per_m2 * quantityM2)
+    // Recalculate totals server-side
+    let itemTotal: number
+    let tileAreaM2: number | null = null
+    let tpc: number | null = null
+
+    if (isTile) {
+      tileAreaM2 = parseFloat(String(dbProd.tile_area_m2))
+      tpc        = parseInt(String(dbProd.tiles_per_carton))
+      const quantityM2 = item.quantity_tiles * tileAreaM2
+      itemTotal = Math.round(item.unit_price_per_m2 * quantityM2)
+    } else {
+      // Non-tile: total = quantity × unit_price (unit_price_per_m2 stores price/unit)
+      itemTotal = Math.round(item.unit_price_per_m2 * item.quantity_tiles)
+    }
     serverTotal += itemTotal
 
     serverItems.push({
       ...item,
       floor_price_snapshot:      dbFloorPrice,
-      reference_price_snapshot:  parseFloat(String(dbProd.reference_price_per_m2)),
+      reference_price_snapshot:  dbRefPrice,
       purchase_price_snapshot:   parseFloat(String(dbProd.purchase_price ?? 0)) || 0,
       tile_area_m2_snapshot:     tileAreaM2,
       tiles_per_carton_snapshot: tpc,
@@ -132,7 +150,7 @@ export async function createSale(payload: CreateSalePayload) {
     if (!stock) return { error: 'Stock introuvable pour un produit.' }
     const available = stock.total_tiles - stock.reserved_tiles
     if (available < item.quantity_tiles) {
-      return { error: `Stock insuffisant. Disponible : ${available} carreaux.` }
+      return { error: `Stock insuffisant. Disponible : ${available} unité(s).` }
     }
   }
 

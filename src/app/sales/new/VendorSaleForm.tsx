@@ -27,16 +27,18 @@ const fmtM2 = (n: number) =>
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(n) + ' m²'
 
-type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles'
+type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles' | 'qty'
 
 interface CartItem {
   product:         any
   inputMode:       InputMode
+  // unitPricePerM2 stores price/m² for tiles, price/unit for non-tile
   unitPricePerM2:  number
+  // quantityTiles stores tile count for tiles, unit count for non-tile
   quantityTiles:   number
-  quantityM2:      number
-  quantityCartons: number
-  looseTiles:      number
+  quantityM2:      number   // 0 for non-tile
+  quantityCartons: number   // 0 for non-tile
+  looseTiles:      number   // 0 for non-tile
   totalPrice:      number
 }
 
@@ -74,58 +76,77 @@ export default function VendorSaleForm({
   const [step,             setStep]      = useState<'form' | 'success'>('form')
   const [formStep,         setFormStep]  = useState<1 | 2>(1)
 
+  const [inputQty, setInputQty] = useState('')   // non-tile quantity
+
   const resetInputs = () => {
-    setInputM2(''); setInputTiles(''); setCartons(''); setLoose(''); setUnitPrice('')
+    setInputM2(''); setInputTiles(''); setCartons(''); setLoose('')
+    setInputQty(''); setUnitPrice('')
   }
 
-  // ── Computed values ───────────────────────────────────────────────────────
+  // ── Computed values — branches on product type ────────────────────────────
   const computed = useMemo(() => {
     if (!selectedProduct) return null
 
-    const tileArea = parseFloat(selectedProduct.tile_area_m2)
-    const tpc      = parseInt(selectedProduct.tiles_per_carton)
-
-    let tiles = 0
-    if (inputMode === 'm2') {
-      const val = parseFloat(inputM2)
-      if (!val || val <= 0) return null
-      tiles = Math.ceil(val / tileArea)
-    }
-    if (inputMode === 'tiles') {
-      const val = parseInt(inputTiles)
-      if (!val || val <= 0) return null
-      tiles = val
-    }
-    if (inputMode === 'cartons') {
-      const val = parseInt(inputCartons)
-      if (!val || val <= 0) return null
-      tiles = val * tpc
-    }
-    if (inputMode === 'cartons_tiles') {
-      const c = parseInt(inputCartons)    || 0
-      const l = parseInt(inputLooseTiles) || 0
-      if (c <= 0 && l <= 0) return null
-      tiles = c * tpc + l
-    }
-
-    if (tiles <= 0) return null
-
-    const m2             = parseFloat((tiles * tileArea).toFixed(4))
-    const fullCartons    = Math.floor(tiles / tpc)
-    const loose          = tiles % tpc
-    const price          = parseFloat(unitPrice) || 0
-    const total          = m2 * price
-    const floorPrice     = parseFloat(selectedProduct.floor_price_per_m2)
-    const refPrice       = parseFloat(selectedProduct.reference_price_per_m2)
-    const floorViolation = price > 0 && price < floorPrice
+    const isTile = (selectedProduct.product_type ?? 'tile') === 'tile'
+    const price  = parseFloat(unitPrice) || 0
     const availableTiles = parseInt(selectedProduct.available_tiles)
-    const stockInsufficient = tiles > availableTiles
 
-    return {
-      tiles, m2, fullCartons, loose, price, total,
-      floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles,
+    if (isTile) {
+      const tileArea = parseFloat(selectedProduct.tile_area_m2)
+      const tpc      = parseInt(selectedProduct.tiles_per_carton)
+
+      let tiles = 0
+      if (inputMode === 'm2') {
+        const val = parseFloat(inputM2)
+        if (!val || val <= 0) return null
+        tiles = Math.ceil(val / tileArea)
+      } else if (inputMode === 'tiles') {
+        const val = parseInt(inputTiles)
+        if (!val || val <= 0) return null
+        tiles = val
+      } else if (inputMode === 'cartons') {
+        const val = parseInt(inputCartons)
+        if (!val || val <= 0) return null
+        tiles = val * tpc
+      } else if (inputMode === 'cartons_tiles') {
+        const c = parseInt(inputCartons)    || 0
+        const l = parseInt(inputLooseTiles) || 0
+        if (c <= 0 && l <= 0) return null
+        tiles = c * tpc + l
+      }
+
+      if (tiles <= 0) return null
+
+      const m2             = parseFloat((tiles * tileArea).toFixed(4))
+      const fullCartons    = Math.floor(tiles / tpc)
+      const loose          = tiles % tpc
+      const total          = m2 * price
+      const floorPrice     = parseFloat(selectedProduct.floor_price_per_m2 ?? 0)
+      const refPrice       = parseFloat(selectedProduct.reference_price_per_m2 ?? 0)
+      const floorViolation = price > 0 && floorPrice > 0 && price < floorPrice
+      const stockInsufficient = tiles > availableTiles
+
+      return {
+        isTile: true as const, tiles, m2, fullCartons, loose, price, total,
+        floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles,
+      }
+    } else {
+      // Non-tile: single quantity input
+      const qty = parseInt(inputQty) || 0
+      if (qty <= 0) return null
+
+      const floorPrice     = parseFloat(selectedProduct.floor_price_per_unit ?? 0)
+      const refPrice       = parseFloat(selectedProduct.reference_price_per_unit ?? 0)
+      const total          = qty * price
+      const floorViolation = price > 0 && floorPrice > 0 && price < floorPrice
+      const stockInsufficient = qty > availableTiles
+
+      return {
+        isTile: false as const, tiles: qty, m2: 0, fullCartons: 0, loose: 0,
+        price, total, floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles,
+      }
     }
-  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, unitPrice])
+  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, inputQty, unitPrice])
 
   const cartTotal = cart.reduce((sum, i) => sum + i.totalPrice, 0)
 
@@ -145,16 +166,26 @@ export default function VendorSaleForm({
       hour: '2-digit', minute: '2-digit',
     })
     const rows = cart.map(item => {
-      const m2 = item.quantityM2
-      const fullCartons = item.quantityCartons
-      const loose = item.looseTiles
+      const isItemTile = (item.product?.product_type ?? 'tile') === 'tile'
+      const unitLbl    = escHtml(item.product?.unit_label ?? (isItemTile ? 'm²' : 'unité'))
+      let qtyCell: string
+      let priceCell: string
+      if (isItemTile) {
+        const m2   = item.quantityM2
+        const full = item.quantityCartons
+        const loose = item.looseTiles
+        qtyCell   = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${full}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''} ctn`
+        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA/m²`
+      } else {
+        qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${unitLbl}`
+        priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA/${unitLbl}`
+      }
       return `
         <tr>
           <td>${escHtml(item.product?.product_name ?? item.product?.name)}</td>
           <td style="color:#64748B;font-size:11px">${escHtml(item.product?.reference_code)}</td>
-          <td style="text-align:center">${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m²</td>
-          <td style="text-align:center">${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''}</td>
-          <td style="text-align:right">${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} FCFA</td>
+          <td style="text-align:center">${qtyCell}</td>
+          <td style="text-align:right">${priceCell}</td>
           <td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.totalPrice))} FCFA</td>
         </tr>`
     }).join('')
@@ -234,9 +265,8 @@ export default function VendorSaleForm({
       <tr>
         <th>Produit</th>
         <th>Référence</th>
-        <th style="text-align:center">Surface</th>
-        <th style="text-align:center">Cartons</th>
-        <th style="text-align:right">Prix/m²</th>
+        <th style="text-align:center">Quantité</th>
+        <th style="text-align:right">Prix unitaire</th>
         <th style="text-align:right">Sous-total</th>
       </tr>
     </thead>
@@ -310,32 +340,41 @@ export default function VendorSaleForm({
         item.unitPricePerM2     === computed.price
     )
 
-    if (existingIdx >= 0) {
-      const existing   = cart[existingIdx]
-      const newTiles   = existing.quantityTiles + computed.tiles
-      const available  = parseInt(selectedProduct.available_tiles)
+    const isTileProd = computed.isTile
+    const available  = parseInt(selectedProduct.available_tiles)
 
-      // Re-validate merged total against available stock
-      if (newTiles > available) {
+    if (existingIdx >= 0) {
+      const existing = cart[existingIdx]
+      const newQty   = existing.quantityTiles + computed.tiles
+
+      if (newQty > available) {
+        const unit = isTileProd ? 'carreau' : (selectedProduct.unit_label ?? 'unité')
+        const unitPlural = isTileProd ? 'carreaux' : (selectedProduct.unit_label ?? 'unités')
         setError(
-          `Stock insuffisant — vous avez déjà ${existing.quantityTiles} carreau${existing.quantityTiles > 1 ? 'x' : ''} dans le panier ` +
+          `Stock insuffisant — vous avez déjà ${existing.quantityTiles} ${existing.quantityTiles > 1 ? unitPlural : unit} dans le panier ` +
           `pour ce produit (${available} disponible${available > 1 ? 's' : ''} au total).`
         )
         return
       }
 
-      const tpc   = parseInt(selectedProduct.tiles_per_carton)
-      const newM2 = parseFloat(
-        (newTiles * parseFloat(selectedProduct.tile_area_m2)).toFixed(4)
-      )
       const updated = [...cart]
-      updated[existingIdx] = {
-        ...existing,
-        quantityTiles:   newTiles,
-        quantityM2:      newM2,
-        quantityCartons: Math.floor(newTiles / tpc),
-        looseTiles:      newTiles % tpc,
-        totalPrice:      newM2 * computed.price,
+      if (isTileProd) {
+        const tpc   = parseInt(selectedProduct.tiles_per_carton)
+        const newM2 = parseFloat((newQty * parseFloat(selectedProduct.tile_area_m2)).toFixed(4))
+        updated[existingIdx] = {
+          ...existing,
+          quantityTiles:   newQty,
+          quantityM2:      newM2,
+          quantityCartons: Math.floor(newQty / tpc),
+          looseTiles:      newQty % tpc,
+          totalPrice:      newM2 * computed.price,
+        }
+      } else {
+        updated[existingIdx] = {
+          ...existing,
+          quantityTiles: newQty,
+          totalPrice:    newQty * computed.price,
+        }
       }
       setCart(updated)
     } else {
@@ -381,17 +420,24 @@ export default function VendorSaleForm({
       total_amount:   cartTotal,
       amount_paid:    parseFloat(amountPaid) || 0,
       notes:          notes || null,
-      items: cart.map(item => ({
-        product_id:                item.product.product_id,
-        quantity_tiles:            item.quantityTiles,
-        unit_price_per_m2:         item.unitPricePerM2,
-        total_price:               item.totalPrice,
-        floor_price_snapshot:      parseFloat(item.product.floor_price_per_m2),
-        reference_price_snapshot:  parseFloat(item.product.reference_price_per_m2),
-        purchase_price_snapshot:   0, // overwritten server-side from DB
-        tile_area_m2_snapshot:     parseFloat(item.product.tile_area_m2),
-        tiles_per_carton_snapshot: parseInt(item.product.tiles_per_carton),
-      })),
+      items: cart.map(item => {
+        const isItemTile = (item.product.product_type ?? 'tile') === 'tile'
+        return {
+          product_id:                item.product.product_id,
+          quantity_tiles:            item.quantityTiles,
+          unit_price_per_m2:         item.unitPricePerM2,
+          total_price:               item.totalPrice,
+          floor_price_snapshot:      isItemTile
+            ? parseFloat(item.product.floor_price_per_m2 ?? 0)
+            : parseFloat(item.product.floor_price_per_unit ?? 0),
+          reference_price_snapshot:  isItemTile
+            ? parseFloat(item.product.reference_price_per_m2 ?? 0)
+            : parseFloat(item.product.reference_price_per_unit ?? 0),
+          purchase_price_snapshot:   0,  // overwritten server-side from DB
+          tile_area_m2_snapshot:     isItemTile ? parseFloat(item.product.tile_area_m2) : null,
+          tiles_per_carton_snapshot: isItemTile ? parseInt(item.product.tiles_per_carton) : null,
+        }
+      }),
     })
 
     setLoading(false)
@@ -614,12 +660,23 @@ export default function VendorSaleForm({
                     p.reference_code.toLowerCase().includes(productSearch.toLowerCase())
                   )
                   .map(prod => {
-                  const isSelected = selectedProduct?.product_id === prod.product_id
-                  const availM2    = parseFloat(prod.available_tiles)
-                                   * parseFloat(prod.tile_area_m2)
+                  const isSelected  = selectedProduct?.product_id === prod.product_id
+                  const prodIsTile  = (prod.product_type ?? 'tile') === 'tile'
+                  const availCount  = parseInt(prod.available_tiles)
+                  const availDisplay = prodIsTile
+                    ? fmtM2(availCount * parseFloat(prod.tile_area_m2))
+                    : `${fmtNum(availCount)} ${prod.unit_label ?? 'unités'}`
+                  const isLow = prodIsTile ? availCount < 50 : availCount < 10
+                  const subtitle = prodIsTile
+                    ? `${prod.reference_code} · ${prod.tiles_per_carton} car./carton`
+                    : `${prod.reference_code} · ${prod.unit_label ?? ''}`
                   return (
                     <button key={prod.product_id}
-                      onClick={() => { setProduct(prod); resetInputs() }}
+                      onClick={() => {
+                        setProduct(prod)
+                        setInputMode(prodIsTile ? 'm2' : 'qty')
+                        resetInputs()
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center',
                         justifyContent: 'space-between',
@@ -636,14 +693,14 @@ export default function VendorSaleForm({
                           {prod.product_name}
                         </div>
                         <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>
-                          {prod.reference_code} · {prod.tiles_per_carton} car./carton
+                          {subtitle}
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontSize: 11, color: C.muted }}>Dispo.</div>
                         <div style={{ fontSize: 13, fontWeight: 900,
-                          color: parseInt(prod.available_tiles) < 50 ? C.red : C.green }}>
-                          {fmtM2(availM2)}
+                          color: isLow ? C.red : C.green }}>
+                          {availDisplay}
                         </div>
                       </div>
                     </button>
@@ -659,118 +716,158 @@ export default function VendorSaleForm({
               <Card>
                 <SectionLabel>2. Quantité</SectionLabel>
 
-                {/* Mode tabs */}
-                <div style={{ display: 'grid',
-                  gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
-                  {([
-                    ['m2',           'm²'],
-                    ['cartons_tiles','Cartons + carreaux'],
-                  ] as [InputMode, string][]).map(([mode, label]) => (
-                    <button key={mode}
-                      onClick={() => { setInputMode(mode); resetInputs() }}
-                      style={{
-                        padding: '10px 4px', borderRadius: 7,
-                        fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                        background: inputMode === mode ? C.navy : C.surface,
-                        color: inputMode === mode ? C.surface : C.muted,
-                        border: `1.5px solid ${inputMode === mode ? C.navy : C.border}`,
-                        fontFamily: FONT,
-                      }}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {inputMode === 'm2' && (
-                  <div>
-                    <label style={{ fontSize: 12, fontWeight: 600,
-                      color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                      Quantité en m²
-                    </label>
-                    <input type="number" min="0" step="0.01"
-                      value={inputM2}
-                      onChange={e => setInputM2(e.target.value)}
-                      placeholder="ex : 12.5"
-                      style={inputStyle(computed?.stockInsufficient ?? false)} />
-                  </div>
-                )}
-
-                {inputMode === 'cartons_tiles' && (
-                  <div style={{ display: 'flex', gap: 10 }}>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 12, fontWeight: 600,
-                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                        Cartons complets
-                      </label>
-                      <input type="number" min="0" step="1"
-                        value={inputCartons}
-                        onChange={e => setCartons(e.target.value)}
-                        placeholder="ex : 3"
-                        style={inputStyle(computed?.stockInsufficient ?? false)} />
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <label style={{ fontSize: 12, fontWeight: 600,
-                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                        Carreaux en plus
-                      </label>
-                      <input type="number" min="0"
-                        max={String(parseInt(selectedProduct.tiles_per_carton) - 1)}
-                        step="1"
-                        value={inputLooseTiles}
-                        onChange={e => setLoose(e.target.value)}
-                        placeholder={`0 – ${parseInt(selectedProduct.tiles_per_carton) - 1}`}
-                        style={inputStyle()} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Equivalences */}
-                {computed && (
-                  <div style={{ marginTop: 14, padding: 12, background: C.bg,
-                    borderRadius: 8, border: `1px solid ${C.border}` }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
-                      textTransform: 'uppercase', letterSpacing: '0.06em',
-                      marginBottom: 10, fontFamily: FONT }}>
-                      Équivalences
-                    </div>
+                {(selectedProduct.product_type ?? 'tile') === 'tile' ? (
+                  <>
+                    {/* Mode tabs — tile only */}
                     <div style={{ display: 'grid',
-                      gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                      gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                       {([
-                        ['Surface',  fmtM2(computed.m2),     inputMode === 'm2'],
-                        ['Cartons',  computed.fullCartons + (computed.loose ? ` + ${computed.loose} car.` : ''),
-                                     inputMode === 'cartons' || inputMode === 'cartons_tiles'],
-                        ['Carreaux', fmtNum(computed.tiles), inputMode === 'tiles'],
-                      ] as [string, string, boolean][]).map(([lbl, val, active]) => (
-                        <div key={lbl} style={{ textAlign: 'center',
-                          padding: '8px 6px',
-                          background: active ? C.blueL : C.surface,
-                          borderRadius: 6,
-                          border: `1px solid ${active ? C.blue : C.border}` }}>
-                          <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{lbl}</div>
-                          <div style={{ fontSize: 14, fontWeight: 700,
-                            color: active ? C.blue : C.ink, fontFamily: FONT }}>{val}</div>
-                        </div>
+                        ['m2',           'm²'],
+                        ['cartons_tiles','Cartons + carreaux'],
+                      ] as [InputMode, string][]).map(([mode, label]) => (
+                        <button key={mode}
+                          onClick={() => { setInputMode(mode); resetInputs() }}
+                          style={{
+                            padding: '10px 4px', borderRadius: 7,
+                            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                            background: inputMode === mode ? C.navy : C.surface,
+                            color: inputMode === mode ? C.surface : C.muted,
+                            border: `1.5px solid ${inputMode === mode ? C.navy : C.border}`,
+                            fontFamily: FONT,
+                          }}>
+                          {label}
+                        </button>
                       ))}
                     </div>
-                    {computed.loose > 0 && inputMode !== 'cartons_tiles' && (
-                      <div style={{ marginTop: 8, padding: '6px 10px',
-                        background: C.orangeL, borderRadius: 6,
-                        fontSize: 11, color: C.orange, fontFamily: FONT }}>
-                        Carton incomplet — {computed.loose} carreau
-                        {computed.loose > 1 ? 'x' : ''} issus d'un carton ouvert
+
+                    {inputMode === 'm2' && (
+                      <div>
+                        <label style={{ fontSize: 12, fontWeight: 600,
+                          color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                          Quantité en m²
+                        </label>
+                        <input type="number" min="0" step="0.01"
+                          value={inputM2}
+                          onChange={e => setInputM2(e.target.value)}
+                          placeholder="ex : 12.5"
+                          style={inputStyle(computed?.stockInsufficient ?? false)} />
                       </div>
                     )}
-                    {computed.stockInsufficient && (
-                      <div style={{ marginTop: 8, padding: '8px 10px',
-                        background: C.redL, borderRadius: 6,
-                        fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
-                        Stock insuffisant — disponible :{' '}
-                        {fmtM2(parseInt(selectedProduct.available_tiles)
-                          * parseFloat(selectedProduct.tile_area_m2))}{' '}
-                        ({fmtNum(computed.availableTiles)} carreaux)
+
+                    {inputMode === 'cartons_tiles' && (
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: 12, fontWeight: 600,
+                            color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            Cartons complets
+                          </label>
+                          <input type="number" min="0" step="1"
+                            value={inputCartons}
+                            onChange={e => setCartons(e.target.value)}
+                            placeholder="ex : 3"
+                            style={inputStyle(computed?.stockInsufficient ?? false)} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <label style={{ fontSize: 12, fontWeight: 600,
+                            color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            Carreaux en plus
+                          </label>
+                          <input type="number" min="0"
+                            max={String(parseInt(selectedProduct.tiles_per_carton) - 1)}
+                            step="1"
+                            value={inputLooseTiles}
+                            onChange={e => setLoose(e.target.value)}
+                            placeholder={`0 – ${parseInt(selectedProduct.tiles_per_carton) - 1}`}
+                            style={inputStyle()} />
+                        </div>
                       </div>
                     )}
-                  </div>
+
+                    {/* Equivalences — tile */}
+                    {computed && (
+                      <div style={{ marginTop: 14, padding: 12, background: C.bg,
+                        borderRadius: 8, border: `1px solid ${C.border}` }}>
+                        <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
+                          textTransform: 'uppercase', letterSpacing: '0.06em',
+                          marginBottom: 10, fontFamily: FONT }}>
+                          Équivalences
+                        </div>
+                        <div style={{ display: 'grid',
+                          gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                          {([
+                            ['Surface',  fmtM2(computed.m2),     inputMode === 'm2'],
+                            ['Cartons',  computed.fullCartons + (computed.loose ? ` + ${computed.loose} car.` : ''),
+                                         inputMode === 'cartons' || inputMode === 'cartons_tiles'],
+                            ['Carreaux', fmtNum(computed.tiles), inputMode === 'tiles'],
+                          ] as [string, string, boolean][]).map(([lbl, val, active]) => (
+                            <div key={lbl} style={{ textAlign: 'center',
+                              padding: '8px 6px',
+                              background: active ? C.blueL : C.surface,
+                              borderRadius: 6,
+                              border: `1px solid ${active ? C.blue : C.border}` }}>
+                              <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{lbl}</div>
+                              <div style={{ fontSize: 14, fontWeight: 700,
+                                color: active ? C.blue : C.ink, fontFamily: FONT }}>{val}</div>
+                            </div>
+                          ))}
+                        </div>
+                        {computed.loose > 0 && inputMode !== 'cartons_tiles' && (
+                          <div style={{ marginTop: 8, padding: '6px 10px',
+                            background: C.orangeL, borderRadius: 6,
+                            fontSize: 11, color: C.orange, fontFamily: FONT }}>
+                            Carton incomplet — {computed.loose} carreau
+                            {computed.loose > 1 ? 'x' : ''} issus d'un carton ouvert
+                          </div>
+                        )}
+                        {computed.stockInsufficient && (
+                          <div style={{ marginTop: 8, padding: '8px 10px',
+                            background: C.redL, borderRadius: 6,
+                            fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                            Stock insuffisant — disponible :{' '}
+                            {fmtM2(parseInt(selectedProduct.available_tiles)
+                              * parseFloat(selectedProduct.tile_area_m2))}{' '}
+                            ({fmtNum(computed.availableTiles)} carreaux)
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  /* Non-tile: single quantity input */
+                  <>
+                    <div>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                        Quantité ({selectedProduct.unit_label ?? 'unités'})
+                      </label>
+                      <input type="number" min="1" step="1"
+                        value={inputQty}
+                        onChange={e => setInputQty(e.target.value)}
+                        placeholder="ex : 5"
+                        style={inputStyle(computed?.stockInsufficient ?? false)} />
+                    </div>
+                    {computed && (
+                      <div style={{ marginTop: 12, padding: 12, background: C.bg,
+                        borderRadius: 8, border: `1px solid ${C.border}` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'center' }}>
+                          <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>
+                            {fmtNum(computed.tiles)} {selectedProduct.unit_label ?? 'unités'}
+                          </span>
+                          <span style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
+                            Dispo : {fmtNum(computed.availableTiles)} {selectedProduct.unit_label ?? 'unités'}
+                          </span>
+                        </div>
+                        {computed.stockInsufficient && (
+                          <div style={{ marginTop: 8, padding: '8px 10px',
+                            background: C.redL, borderRadius: 6,
+                            fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                            Stock insuffisant — disponible : {fmtNum(computed.availableTiles)} {selectedProduct.unit_label ?? 'unités'}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
                 )}
               </Card>
             )}
@@ -779,63 +876,79 @@ export default function VendorSaleForm({
             {selectedProduct && computed && computed.tiles > 0 && (
               <Card>
                 <SectionLabel>3. Prix négocié</SectionLabel>
-                <div style={{ marginBottom: 12 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                    Prix par m² (FCFA)
-                  </label>
-                  <input type="number" min="0"
-                    value={unitPrice}
-                    onChange={e => setUnitPrice(e.target.value)}
-                    placeholder={`min. ${fmtNum(computed.floorPrice)}`}
-                    style={inputStyle(computed.floorViolation)} />
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                  <div style={{ flex: 1, padding: '9px 10px', background: C.redL,
-                    borderRadius: 7, border: `1px solid ${C.red}33` }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: C.red,
-                      textTransform: 'uppercase', fontFamily: FONT }}>Plancher</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.red, fontFamily: FONT }}>
-                      {fmtNum(computed.floorPrice)} FCFA/m²
-                    </div>
-                  </div>
-                  <div style={{ flex: 1, padding: '9px 10px', background: C.bg,
-                    borderRadius: 7, border: `1px solid ${C.border}` }}>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
-                      textTransform: 'uppercase', fontFamily: FONT }}>Référence</div>
-                    <div style={{ fontSize: 15, fontWeight: 700, color: C.muted, fontFamily: FONT }}>
-                      {fmtNum(computed.refPrice)} FCFA/m²
-                    </div>
-                  </div>
-                </div>
-                {computed.floorViolation && (
-                  <div style={{ padding: '10px 12px', background: C.redL,
-                    borderRadius: 8, border: `1px solid ${C.red}`,
-                    fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12,
-                    fontFamily: FONT }}>
-                    Prix inférieur au plancher — vente bloquée
-                  </div>
-                )}
-                <button
-                  className="btn-primary"
-                  onClick={addToCart}
-                  disabled={
-                    !computed || computed.floorViolation ||
-                    computed.stockInsufficient ||
-                    computed.price <= 0 || computed.tiles <= 0
-                  }
-                  style={{
-                    width: '100%', padding: '12px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer',
-                    background: computed.floorViolation ||
-                      computed.stockInsufficient || computed.price <= 0
-                      ? C.muted : C.blue,
-                    color: C.surface, fontSize: 13, fontWeight: 700,
-                    fontFamily: FONT,
-                  }}>
-                  + Ajouter au panier ·{' '}
-                  {computed.price > 0 ? fmtCFA(computed.total) : '—'}
-                </button>
+                {(() => {
+                  const isTileProd = (selectedProduct.product_type ?? 'tile') === 'tile'
+                  const unitLbl    = selectedProduct.unit_label ?? (isTileProd ? 'm²' : 'unité')
+                  const priceLabel = isTileProd ? 'Prix par m² (FCFA)' : `Prix par ${unitLbl} (FCFA)`
+                  const priceSuffix = isTileProd ? 'FCFA/m²' : `FCFA/${unitLbl}`
+                  return (
+                    <>
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontSize: 12, fontWeight: 600,
+                          color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                          {priceLabel}
+                        </label>
+                        <input type="number" min="0"
+                          value={unitPrice}
+                          onChange={e => setUnitPrice(e.target.value)}
+                          placeholder={computed.floorPrice > 0 ? `min. ${fmtNum(computed.floorPrice)}` : 'ex : 5000'}
+                          style={inputStyle(computed.floorViolation)} />
+                      </div>
+                      {(computed.floorPrice > 0 || computed.refPrice > 0) && (
+                        <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                          {computed.floorPrice > 0 && (
+                            <div style={{ flex: 1, padding: '9px 10px', background: C.redL,
+                              borderRadius: 7, border: `1px solid ${C.red}33` }}>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: C.red,
+                                textTransform: 'uppercase', fontFamily: FONT }}>Plancher</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: C.red, fontFamily: FONT }}>
+                                {fmtNum(computed.floorPrice)} {priceSuffix}
+                              </div>
+                            </div>
+                          )}
+                          {computed.refPrice > 0 && (
+                            <div style={{ flex: 1, padding: '9px 10px', background: C.bg,
+                              borderRadius: 7, border: `1px solid ${C.border}` }}>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
+                                textTransform: 'uppercase', fontFamily: FONT }}>Référence</div>
+                              <div style={{ fontSize: 15, fontWeight: 700, color: C.muted, fontFamily: FONT }}>
+                                {fmtNum(computed.refPrice)} {priceSuffix}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {computed.floorViolation && (
+                        <div style={{ padding: '10px 12px', background: C.redL,
+                          borderRadius: 8, border: `1px solid ${C.red}`,
+                          fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12,
+                          fontFamily: FONT }}>
+                          Prix inférieur au plancher — vente bloquée
+                        </div>
+                      )}
+                      <button
+                        className="btn-primary"
+                        onClick={addToCart}
+                        disabled={
+                          computed.floorViolation ||
+                          computed.stockInsufficient ||
+                          computed.price <= 0 || computed.tiles <= 0
+                        }
+                        style={{
+                          width: '100%', padding: '12px', borderRadius: 8,
+                          border: 'none', cursor: 'pointer',
+                          background: computed.floorViolation ||
+                            computed.stockInsufficient || computed.price <= 0
+                            ? C.muted : C.blue,
+                          color: C.surface, fontSize: 13, fontWeight: 700,
+                          fontFamily: FONT,
+                        }}>
+                        + Ajouter au panier ·{' '}
+                        {computed.price > 0 ? fmtCFA(computed.total) : '—'}
+                      </button>
+                    </>
+                  )
+                })()}
               </Card>
             )}
           </div>}
@@ -897,10 +1010,19 @@ export default function VendorSaleForm({
                         </div>
                         <div style={{ fontSize: 11,
                           color: 'rgba(255,255,255,0.5)', marginBottom: 6, fontFamily: FONT }}>
-                          {fmtM2(item.quantityM2)} ·{' '}
-                          {item.quantityCartons} carton{item.quantityCartons !== 1 ? 's' : ''}
-                          {item.looseTiles > 0 ? ` + ${item.looseTiles} car.` : ''} ·{' '}
-                          {fmtNum(item.unitPricePerM2)} FCFA/m²
+                          {(item.product.product_type ?? 'tile') === 'tile' ? (
+                            <>
+                              {fmtM2(item.quantityM2)} ·{' '}
+                              {item.quantityCartons} carton{item.quantityCartons !== 1 ? 's' : ''}
+                              {item.looseTiles > 0 ? ` + ${item.looseTiles} car.` : ''} ·{' '}
+                              {fmtNum(item.unitPricePerM2)} FCFA/m²
+                            </>
+                          ) : (
+                            <>
+                              {fmtNum(item.quantityTiles)} {item.product.unit_label ?? 'unités'} ·{' '}
+                              {fmtNum(item.unitPricePerM2)} FCFA/{item.product.unit_label ?? 'unité'}
+                            </>
+                          )}
                         </div>
                         <div style={{ fontSize: 14, fontWeight: 700,
                           color: C.surface, fontFamily: FONT }}>

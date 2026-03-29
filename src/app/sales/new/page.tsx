@@ -45,7 +45,7 @@ export default async function NewSalePage() {
 
     supabase
       .from('products')
-      .select('id, floor_price_per_m2, reference_price_per_m2, tiles_per_carton, tile_area_m2')
+      .select('id, product_type, unit_label, package_label, floor_price_per_m2, reference_price_per_m2, floor_price_per_unit, reference_price_per_unit, tiles_per_carton, tile_area_m2')
       .eq('is_active', true),
 
     getBadgeCounts(profile.role, supabase),
@@ -65,8 +65,13 @@ export default async function NewSalePage() {
     .filter((p: any) => pricingMap[p.product_id] !== undefined)
     .map((p: any) => ({
       ...p,
-      floor_price_per_m2:     pricingMap[p.product_id].floor_price_per_m2,
-      reference_price_per_m2: pricingMap[p.product_id].reference_price_per_m2,
+      product_type:             pricingMap[p.product_id].product_type,
+      unit_label:               pricingMap[p.product_id].unit_label,
+      package_label:            pricingMap[p.product_id].package_label,
+      floor_price_per_m2:       pricingMap[p.product_id].floor_price_per_m2,
+      reference_price_per_m2:   pricingMap[p.product_id].reference_price_per_m2,
+      floor_price_per_unit:     pricingMap[p.product_id].floor_price_per_unit,
+      reference_price_per_unit: pricingMap[p.product_id].reference_price_per_unit,
     }))
 
   const ownerName = (ownerRes as any).data?.full_name ?? 'Le Propriétaire'
