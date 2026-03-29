@@ -777,7 +777,8 @@ export default function WarehouseClient({
               const unitLabel  = prod?.unit_label ?? (isTile ? 'm²' : 'unité')
 
               const availM2    = parseFloat(item.available_m2)
-              const totalM2    = parseFloat(item.total_m2)
+              // stock_view has no total_m2 column — compute from total_tiles × tile_area_m2
+              const totalM2    = parseFloat(item.tile_area_m2) * parseInt(item.total_tiles)
               const available  = parseInt(item.available_tiles)
               const reserved   = parseInt(item.reserved_tiles)
 
@@ -859,17 +860,11 @@ export default function WarehouseClient({
                           ['Carreaux libres',  fmtNum(item.loose_tiles)],
                           ['Réservés',         fmtNum(reserved) + ' car.'],
                           ['Total m²',         fmtM2(totalM2)],
-                          ['Mis à jour',
-                            new Date(item.last_updated_at)
-                              .toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })],
                         ]
                       : [
                           ['Disponible', fmtNum(available) + ' ' + unitLabel],
                           ['Réservé',    fmtNum(reserved)  + ' ' + unitLabel],
                           ['Total',      fmtNum(parseInt(item.total_tiles)) + ' ' + unitLabel],
-                          ['Mis à jour',
-                            new Date(item.last_updated_at)
-                              .toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })],
                         ]
                     ).map(([lbl, val]) => (
                       <div key={lbl} style={{ textAlign: 'center',
