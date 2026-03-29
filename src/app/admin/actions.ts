@@ -133,7 +133,7 @@ export async function createCompanyWithOwner(payload: {
   // ── Audit log (recorded in the platform admin's company context) ──────────
   await admin.from('audit_logs').insert({
     user_id:            user.id,
-    user_role_snapshot: caller.role,
+    user_role_snapshot: caller.is_platform_admin ? 'platform_admin' : caller.role,
     action_type:        'COMPANY_CREATED',
     entity_type:        'companies',
     entity_id:          company.id,
@@ -165,8 +165,8 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
 
   await admin.from('audit_logs').insert({
     user_id:            user.id,
-    user_role_snapshot: caller.role,
-    action_type:        isActive ? 'BOUTIQUE_ACTIVATED' : 'BOUTIQUE_DEACTIVATED',
+    user_role_snapshot: caller.is_platform_admin ? 'platform_admin' : caller.role,
+    action_type:        isActive ? 'COMPANY_ACTIVATED' : 'COMPANY_DEACTIVATED',
     entity_type:        'companies',
     entity_id:          companyId,
     company_id:         caller.company_id,
