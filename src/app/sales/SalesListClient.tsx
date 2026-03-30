@@ -125,6 +125,7 @@ export default function SalesListClient({
   errorCode,
   hasBoutiques = true,
   ownerName = 'Le Propriétaire',
+  companyName = 'SGI',
   currentPage = 1,
   totalPages = 1,
   totalCount = 0,
@@ -143,6 +144,7 @@ export default function SalesListClient({
   errorCode?:       string
   hasBoutiques?:    boolean
   ownerName?:       string
+  companyName?:     string
   currentPage?:     number
   totalPages?:      number
   totalCount?:      number
@@ -189,13 +191,15 @@ export default function SalesListClient({
   const [dateTo,        setDateTo]       = useState(activeDateTo)
   const [boutiqueId,    setBoutiqueId]   = useState(activeBoutiqueId)
 
-  // Avoid firing debounce effect on initial mount
-  const didMount = useRef(false)
-  useEffect(() => { didMount.current = true }, [])
-
   // Debounced text search → navigate to page 1 with new search param
+  // isFirstRender is set to false inside the effect on the first run,
+  // so the effect guard is self-contained and doesn't race with other effects.
+  const isFirstRender = useRef(true)
   useEffect(() => {
-    if (!didMount.current) return
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
     const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo, boutiqueId }
     const t = setTimeout(() => {
       startNavTransition(() => router.push(buildUrl(1, f)))
@@ -630,7 +634,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} currency={currency} onPaymentAdded={() => router.refresh()} />
+                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} companyName={companyName} currency={currency} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
                       )}
@@ -789,7 +793,7 @@ function escHtml(s: string | null | undefined): string {
     .replace(/'/g, '&#39;')
 }
 
-function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 'FCFA') {
+function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 'FCFA', companyName = 'SGI') {
   const now = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -862,7 +866,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
   <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
-      <div class="logo">UC<span>A</span></div>
+      <div class="logo">${escHtml(companyName)}</div>
       <div style="font-size:11px;color:#64748B;margin-top:2px">Reçu de vente officiel</div>
     </div>
     <div class="meta">
@@ -937,14 +941,14 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
       </div>
       <div>
         <div class="sig-name">${escHtml(ownerName)}</div>
-        <div class="sig-role">Propriétaire — UCA</div>
+        <div class="sig-role">Propriétaire — ${escHtml(companyName)}</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
       </div>
     </div>
   </div>
 
-  <div class="footer">Document officiel UCA · ${escHtml(sale.sale_number)}</div>
+  <div class="footer">Document officiel ${escHtml(companyName)} · ${escHtml(sale.sale_number)}</div>
 </body>
 </html>`
 
@@ -957,8 +961,8 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
 }
 
 // ── Sale detail panel ─────────────────────────────────────────────────────────
-function SaleDetail({ sale, profile, ownerName, currency, onPaymentAdded }: {
-  sale: any; profile: any; ownerName: string; currency: string; onPaymentAdded: () => void
+function SaleDetail({ sale, profile, ownerName, companyName, currency, onPaymentAdded }: {
+  sale: any; profile: any; ownerName: string; companyName: string; currency: string; onPaymentAdded: () => void
 }) {
   const fmt = (n: number) => fmtCurrency(n, currency)
   const supabase   = useMemo(() => createClient(), [])
@@ -1181,7 +1185,7 @@ function SaleDetail({ sale, profile, ownerName, currency, onPaymentAdded }: {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button
-            onClick={() => printSaleReceipt(sale, ownerName, currency)}
+            onClick={() => printSaleReceipt(sale, ownerName, currency, companyName)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
             <IconPrint /> Imprimer le reçu
           </button>

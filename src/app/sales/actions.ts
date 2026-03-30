@@ -325,7 +325,7 @@ export async function cancelSale(saleId: string) {
         .eq('id', saleId)
         .eq('company_id', profile.company_id)
         .in('status', ['draft', 'confirmed', 'preparing', 'ready'])
-        .select('id')
+        .select('id, sale_number, customer_name')
     : await adminSupabase
         .from('sales')
         .update({ status: 'cancelled' })
@@ -333,7 +333,7 @@ export async function cancelSale(saleId: string) {
         .eq('vendor_id', user.id)
         .eq('company_id', profile.company_id)
         .in('status', ['draft', 'confirmed'])
-        .select('id')
+        .select('id, sale_number, customer_name')
 
   if (error) return { error: error.message }
 
@@ -377,6 +377,7 @@ export async function cancelSale(saleId: string) {
     }
   }
 
+  const cancelledSale = updatedSales[0]
   await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
@@ -384,6 +385,7 @@ export async function cancelSale(saleId: string) {
     entity_type:        'sales',
     entity_id:          saleId,
     company_id:         profile.company_id,
+    data_after:         { sale_number: cancelledSale?.sale_number, customer_name: cancelledSale?.customer_name },
   })
 
   revalidatePath('/sales')

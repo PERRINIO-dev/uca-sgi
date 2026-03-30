@@ -47,11 +47,12 @@ const REQUEST_STATUS = {
 type Tab = 'orders' | 'stock' | 'requests'
 
 export default function WarehouseClient({
-  profile, currency, orders, deliveredOrders,
+  profile, currency, companyName = 'SGI', orders, deliveredOrders,
   stockLevels, products, myRequests, badgeCounts,
 }: {
   profile:         any
   currency:        string
+  companyName?:    string
   orders:          any[]
   deliveredOrders: any[]
   stockLevels:     any[]
@@ -213,7 +214,7 @@ export default function WarehouseClient({
   <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
-      <div class="logo">UC<span>A</span></div>
+      <div class="logo">${escHtml(companyName)}</div>
       <div style="font-size:11px;color:#64748B;margin-top:2px">Fiche de préparation de commande</div>
     </div>
     <div class="meta">

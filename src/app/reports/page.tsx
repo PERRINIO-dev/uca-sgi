@@ -58,7 +58,7 @@ export default async function ReportsPage() {
       users!audit_logs_user_id_fkey ( full_name )
     `)
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(500)
 
   const badgeCounts = await getBadgeCounts(profile.role, supabase)
 

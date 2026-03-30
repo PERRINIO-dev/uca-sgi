@@ -43,7 +43,7 @@ export async function updateOrderStatus(
   // Fetch order to validate current status
   const { data: order } = await supabase
     .from('orders')
-    .select('id, sale_id, status')
+    .select('id, sale_id, status, order_number')
     .eq('id', orderId)
     .single()
 
@@ -94,6 +94,7 @@ export async function updateOrderStatus(
     entity_type:        'orders',
     entity_id:          orderId,
     company_id:         profile.company_id,
+    data_after:         { order_number: order.order_number, previous_status: order.status, new_status: newStatus },
   })
 
   revalidatePath('/warehouse')
@@ -214,6 +215,9 @@ export async function submitStockRequest(payload: {
 
   if (error) return { error: error.message }
 
+  const { data: product } = await supabase
+    .from('products').select('name').eq('id', payload.productId).single()
+
   await supabase.from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
@@ -221,14 +225,16 @@ export async function submitStockRequest(payload: {
     entity_type:        'stock_requests',
     entity_id:          data.id,
     company_id:         profile.company_id,
+    data_after: {
+      product_name:       product?.name ?? '',
+      request_type:       payload.requestType,
+      quantity_delta:     payload.quantityTilesDelta,
+      justification:      payload.justification,
+    },
   })
 
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
-
-  // Notify admin/owner about the pending approval
-  const { data: product } = await supabase
-    .from('products').select('name').eq('id', payload.productId).single()
   sendPushToRoles(getAdmin(), ['admin', 'owner'], {
     title: 'Demande de stock',
     body:  `Nouvelle demande pour ${product?.name ?? 'un produit'} — approbation requise`,

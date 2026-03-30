@@ -11,7 +11,7 @@ export default async function WarehousePage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, is_platform_admin, companies(currency)')
+    .select('id, full_name, role, boutique_id, is_platform_admin, companies(currency, name)')
     .eq('id', user.id)
     .single()
 
@@ -109,12 +109,14 @@ export default async function WarehousePage() {
   const activeProductIds = new Set((products ?? []).map((p: any) => p.id))
   const stockLevels = (allStockLevels ?? []).filter((s: any) => activeProductIds.has(s.product_id))
 
-  const currency = (profile.companies as any)?.currency ?? 'FCFA'
+  const currency    = (profile.companies as any)?.currency    ?? 'FCFA'
+  const companyName = (profile.companies as any)?.name ?? 'SGI'
 
   return (
     <WarehouseClient
       profile={profile}
       currency={currency}
+      companyName={companyName}
       orders={orders ?? []}
       deliveredOrders={deliveredOrders ?? []}
       stockLevels={stockLevels ?? []}

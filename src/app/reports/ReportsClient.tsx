@@ -990,8 +990,52 @@ function formatAuditDetails(actionType: string, data: Record<string, unknown> | 
       if (!data) return '—'
       return `Prix tenté : ${fmt(data.attempted_price)}/m²  ·  Plancher : ${fmt(data.floor_price)}/m²`
 
+    case 'SALE_CANCELLED': {
+      if (!data) return '—'
+      return [
+        data.sale_number   ? `N° ${data.sale_number}`                    : null,
+        data.customer_name ? `Client : ${str(data.customer_name)}`       : null,
+      ].filter(Boolean).join('  ·  ')
+    }
+
+    case 'ORDER_PREPARING':
+    case 'ORDER_READY':
+    case 'ORDER_DELIVERED': {
+      if (!data) return '—'
+      const statusLabel: Record<string, string> = {
+        preparing: 'En préparation', ready: 'Prête', delivered: 'Livrée',
+      }
+      return [
+        data.order_number ? `${str(data.order_number)}`                              : null,
+        data.new_status   ? `→ ${statusLabel[str(data.new_status) ?? ''] ?? str(data.new_status)}` : null,
+      ].filter(Boolean).join('  ')
+    }
+
+    case 'STOCK_REQUEST_SUBMITTED': {
+      if (!data) return '—'
+      const typeLabel: Record<string, string> = { stock_in: 'Entrée', correction: 'Correction' }
+      return [
+        data.product_name ? str(data.product_name)                                  : null,
+        data.request_type ? typeLabel[str(data.request_type) ?? ''] ?? ''           : null,
+        data.quantity_delta !== undefined ? `Δ ${data.quantity_delta}`               : null,
+      ].filter(Boolean).join('  ·  ')
+    }
+
+    case 'STOCK_REQUEST_APPROVED': {
+      if (!data) return '—'
+      return [
+        data.product_name   ? str(data.product_name)                                : null,
+        data.quantity_delta !== undefined ? `Δ ${data.quantity_delta}`              : null,
+        data.comment        ? `Note : ${str(data.comment)}`                         : null,
+      ].filter(Boolean).join('  ·  ')
+    }
+
     case 'STOCK_REQUEST_REJECTED':
-      return str(data?.comment) ?? '—'
+      if (!data) return '—'
+      return [
+        data.product_name ? str(data.product_name) : null,
+        data.comment      ? str(data.comment)       : null,
+      ].filter(Boolean).join(' — ')
 
     case 'PRODUCT_CREATED':
     case 'PRODUCT_UPDATED':

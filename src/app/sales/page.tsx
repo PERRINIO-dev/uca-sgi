@@ -23,7 +23,7 @@ export default async function SalesPage({
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency)')
+    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency, name)')
     .eq('id', user.id)
     .single()
 
@@ -120,6 +120,7 @@ export default async function SalesPage({
   const hasBoutiques  = isOwnerOrAdmin ? boutiquesList.length > 0 : true
   const ownerName     = (ownerResult as any).data?.full_name ?? 'Le Propriétaire'
   const currency      = (profile.companies as any)?.currency ?? 'FCFA'
+  const companyName   = (profile.companies as any)?.name ?? 'SGI'
   const total         = totalCount ?? 0
   const totalPages    = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
@@ -133,6 +134,7 @@ export default async function SalesPage({
       errorCode={params.error}
       hasBoutiques={hasBoutiques}
       ownerName={ownerName}
+      companyName={companyName}
       currentPage={currentPage}
       totalPages={totalPages}
       totalCount={total}

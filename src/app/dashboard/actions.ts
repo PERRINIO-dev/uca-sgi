@@ -52,6 +52,13 @@ export async function approveStockRequest(
 
   if (rpcError) return { error: rpcError.message }
 
+  // Fetch request details for audit + notification (single query for both)
+  const { data: req } = await supabase
+    .from('stock_requests')
+    .select('requested_by, quantity_tiles_delta, request_type, products(name)')
+    .eq('id', requestId)
+    .single()
+
   await supabase.from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
@@ -59,17 +66,16 @@ export async function approveStockRequest(
     entity_type:        'stock_requests',
     entity_id:          requestId,
     company_id:         profile.company_id,
+    data_after: {
+      product_name:   (req?.products as any)?.name ?? '',
+      request_type:   req?.request_type,
+      quantity_delta: req?.quantity_tiles_delta,
+      comment:        comment ?? null,
+    },
   })
 
   revalidatePath('/dashboard')
   revalidatePath('/warehouse')
-
-  // Notify the requester that their request was approved
-  const { data: req } = await supabase
-    .from('stock_requests')
-    .select('requested_by, products(name)')
-    .eq('id', requestId)
-    .single()
   if (req?.requested_by) {
     sendPushToUser(getAdmin(), req.requested_by, {
       title: 'Demande approuvée',
@@ -103,6 +109,13 @@ export async function rejectStockRequest(
 
   if (error) return { error: error.message }
 
+  // Fetch request details for audit + notification (single query)
+  const { data: req } = await supabase
+    .from('stock_requests')
+    .select('requested_by, quantity_tiles_delta, request_type, products(name)')
+    .eq('id', requestId)
+    .single()
+
   await supabase.from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
@@ -110,18 +123,16 @@ export async function rejectStockRequest(
     entity_type:        'stock_requests',
     entity_id:          requestId,
     company_id:         profile.company_id,
-    data_after:         { comment },
+    data_after: {
+      product_name:   (req?.products as any)?.name ?? '',
+      request_type:   req?.request_type,
+      quantity_delta: req?.quantity_tiles_delta,
+      comment,
+    },
   })
 
   revalidatePath('/dashboard')
   revalidatePath('/warehouse')
-
-  // Notify the requester that their request was rejected
-  const { data: req } = await supabase
-    .from('stock_requests')
-    .select('requested_by, products(name)')
-    .eq('id', requestId)
-    .single()
   if (req?.requested_by) {
     sendPushToUser(getAdmin(), req.requested_by, {
       title: 'Demande refusée',
