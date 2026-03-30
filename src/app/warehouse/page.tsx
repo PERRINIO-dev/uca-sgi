@@ -74,7 +74,7 @@ export default async function WarehousePage() {
       `)
       .eq('status', 'delivered')
       .order('delivery_confirmed_at', { ascending: false })
-      .limit(10),
+      .limit(30),
 
     // All active products for stock request form
     supabase
@@ -83,7 +83,7 @@ export default async function WarehousePage() {
       .eq('is_active', true)
       .order('name'),
 
-    // All stock levels (filtered in JS after both resolve)
+    // Stock levels — filtered to active products in JS after parallel resolution
     supabase
       .from('stock_view')
       .select('*')
@@ -100,7 +100,7 @@ export default async function WarehousePage() {
       `)
       .eq('requested_by', user.id)
       .order('created_at', { ascending: false })
-      .limit(15),
+      .limit(50),
 
     getBadgeCounts(profile.role, supabase),
   ])

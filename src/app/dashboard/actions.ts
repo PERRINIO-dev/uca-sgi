@@ -1,17 +1,11 @@
 'use server'
 
-import { createClient }                      from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { revalidatePath }                    from 'next/cache'
-import { sendPushToUser }                    from '@/lib/push/send'
+import { createClient }    from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { revalidatePath } from 'next/cache'
+import { sendPushToUser } from '@/lib/push/send'
 
-function getAdmin() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  )
-}
+const getAdmin = getAdminClient
 
 async function getCallerProfile() {
   const supabase = await createClient()

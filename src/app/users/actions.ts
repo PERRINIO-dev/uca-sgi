@@ -1,17 +1,8 @@
 'use server'
 
-import { createClient }                      from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { revalidatePath }                    from 'next/cache'
-
-// Admin client with service role — bypasses RLS
-function getAdminClient() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-}
+import { createClient }    from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { revalidatePath } from 'next/cache'
 
 export async function createEmployee(payload: {
   email:      string
@@ -262,6 +253,7 @@ export async function resetPassword(
     company_id:         profile.company_id,
   })
 
+  revalidatePath('/users')
   return { success: true }
 }
 

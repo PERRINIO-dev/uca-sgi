@@ -1,18 +1,9 @@
 'use server'
 
-import { createClient }                      from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { revalidatePath }                    from 'next/cache'
-import { sendPushToRoles }                   from '@/lib/push/send'
-
-// Admin client bypasses RLS — needed to update stock.reserved_tiles
-function getAdminClient() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  )
-}
+import { createClient }    from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { revalidatePath } from 'next/cache'
+import { sendPushToRoles } from '@/lib/push/send'
 
 interface SaleItem {
   product_id:                string

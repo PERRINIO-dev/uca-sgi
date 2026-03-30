@@ -4,12 +4,12 @@ import PwaInstallPrompt     from '@/components/PwaInstallPrompt'
 import NetworkStatusBanner  from '@/components/NetworkStatusBanner'
 
 export const metadata: Metadata = {
-  title:       'UCA SGI',
-  description: 'Système de gestion interne — UCA',
+  title:       'SGI',
+  description: 'Système de Gestion Interne',
   appleWebApp: {
     capable:         true,
     statusBarStyle:  'black-translucent',
-    title:           'UCA SGI',
+    title:           'SGI',
   },
 }
 

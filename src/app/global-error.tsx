@@ -11,7 +11,7 @@ export default function GlobalError({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[UCA SGI] Erreur critique (layout) :', error)
+    console.error('[SGI] Erreur critique (layout) :', error)
   }, [error])
 
   return (

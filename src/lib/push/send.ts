@@ -6,7 +6,7 @@ function ensureVapid() {
   if (vapidConfigured) return
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return
   webPush.setVapidDetails(
-    'mailto:contact@uca-cm.com',
+    process.env.VAPID_CONTACT ?? 'mailto:admin@sgi.app',
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY,
   )

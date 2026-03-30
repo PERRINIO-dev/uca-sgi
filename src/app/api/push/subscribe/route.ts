@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse }          from 'next/server'
 import { createServerClient }                 from '@supabase/ssr'
-import { createClient as createAdminClient }  from '@supabase/supabase-js'
-import { cookies }                            from 'next/headers'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { cookies }        from 'next/headers'
 
-function getAdmin() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  )
-}
+const getAdmin = getAdminClient
 
 async function getUser() {
   const cookieStore = await cookies()

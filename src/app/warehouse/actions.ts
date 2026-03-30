@@ -1,18 +1,13 @@
 'use server'
 
-import { createClient }                      from '@/lib/supabase/server'
-import { createClient as createAdminClient } from '@supabase/supabase-js'
-import { revalidatePath }                    from 'next/cache'
-import { sendPushToRoles, sendPushToUser }   from '@/lib/push/send'
+import { createClient }    from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
+import { revalidatePath } from 'next/cache'
+import { sendPushToRoles, sendPushToUser } from '@/lib/push/send'
 import { LOW_STOCK_CARTONS, LOW_STOCK_UNITS } from '@/lib/constants'
 
-function getAdmin() {
-  return createAdminClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } },
-  )
-}
+// Local alias — warehouse actions use getAdmin() name internally
+const getAdmin = getAdminClient
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   confirmed: ['preparing'],

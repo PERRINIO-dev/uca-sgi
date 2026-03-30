@@ -10,7 +10,7 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[UCA SGI] Erreur applicative :', error)
+    console.error('[SGI] Erreur applicative :', error)
   }, [error])
 
   return (

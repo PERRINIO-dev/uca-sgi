@@ -53,7 +53,7 @@ export default function PwaInstallPrompt() {
       boxShadow:  '0 -4px 24px rgba(0,0,0,0.25)',
       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
     }}>
-      {/* UCA logo chip */}
+      {/* App logo chip */}
       <div style={{
         width:          44,
         height:         44,
@@ -63,19 +63,21 @@ export default function PwaInstallPrompt() {
         alignItems:     'center',
         justifyContent: 'center',
         flexShrink:     0,
-        fontSize:       15,
-        fontWeight:     800,
-        fontFamily:     'Georgia, serif',
-        color:          '#fff',
-        letterSpacing:  '1px',
+        flexDirection:  'column',
+        gap:            2,
       }}>
-        UCA
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.9"/>
+          <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.6"/>
+          <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.6"/>
+          <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.9"/>
+        </svg>
       </div>
 
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>
-          Installer UCA SGI
+          Installer SGI
         </div>
         <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>
           Accès rapide depuis votre écran d'accueil

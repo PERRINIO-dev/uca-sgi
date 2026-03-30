@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name:             'UCA SGI',
-    short_name:       'UCA SGI',
-    description:      'Système de gestion interne — UCA',
+    name:             'SGI',
+    short_name:       'SGI',
+    description:      'Système de Gestion Interne',
     start_url:        '/',
     display:          'standalone',
     background_color: '#F8FAFC',
