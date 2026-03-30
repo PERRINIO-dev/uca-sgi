@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useEffect, useTransition, useCallback } from 'react'
+import React, { useState, useMemo, useEffect, useRef, useTransition, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
@@ -101,6 +101,22 @@ function IconX({ size = 11 }: { size?: number }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
+// ── URL builder (pure function, no hooks) ─────────────────────────────────────
+function buildUrl(page: number, f: {
+  search: string; status: string; payment: string
+  dateFrom: string; dateTo: string; boutiqueId: string
+}) {
+  const p = new URLSearchParams()
+  if (f.search)    p.set('search',     f.search)
+  if (f.status)    p.set('status',     f.status)
+  if (f.payment)   p.set('payment',    f.payment)
+  if (f.dateFrom)  p.set('dateFrom',   f.dateFrom)
+  if (f.dateTo)    p.set('dateTo',     f.dateTo)
+  if (f.boutiqueId) p.set('boutique_id', f.boutiqueId)
+  p.set('page', String(page))
+  return `/sales?${p.toString()}`
+}
+
 export default function SalesListClient({
   profile,
   currency,
@@ -112,17 +128,31 @@ export default function SalesListClient({
   currentPage = 1,
   totalPages = 1,
   totalCount = 0,
+  boutiquesList = [],
+  activeSearch = '',
+  activeStatus = '',
+  activePayment = '',
+  activeDateFrom = '',
+  activeDateTo = '',
+  activeBoutiqueId = '',
 }: {
-  profile:       any
-  currency:      string
-  sales:         any[]
-  badgeCounts?:  BadgeCounts
-  errorCode?:    string
-  hasBoutiques?: boolean
-  ownerName?:    string
-  currentPage?:  number
-  totalPages?:   number
-  totalCount?:   number
+  profile:          any
+  currency:         string
+  sales:            any[]
+  badgeCounts?:     BadgeCounts
+  errorCode?:       string
+  hasBoutiques?:    boolean
+  ownerName?:       string
+  currentPage?:     number
+  totalPages?:      number
+  totalCount?:      number
+  boutiquesList?:   { id: string; name: string }[]
+  activeSearch?:    string
+  activeStatus?:    string
+  activePayment?:   string
+  activeDateFrom?:  string
+  activeDateTo?:    string
+  activeBoutiqueId?: string
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -151,45 +181,66 @@ export default function SalesListClient({
   const [cancelling,  setCancelling] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
 
-  // ── Filters ──
-  const [search,         setSearch]          = useState('')
-  const [statusFilter,   setStatusFilter]    = useState('')
-  const [paymentFilter,  setPaymentFilter]   = useState('')
-  const [dateFrom,       setDateFrom]        = useState('')
-  const [dateTo,         setDateTo]          = useState('')
-  const [boutiqueFilter, setBoutiqueFilter]  = useState('')
+  // ── Filters — initialized from server-applied values ─────────────────────
+  const [search,        setSearch]       = useState(activeSearch)
+  const [statusFilter,  setStatusFilter] = useState(activeStatus)
+  const [paymentFilter, setPaymentFilter] = useState(activePayment)
+  const [dateFrom,      setDateFrom]     = useState(activeDateFrom)
+  const [dateTo,        setDateTo]       = useState(activeDateTo)
+  const [boutiqueId,    setBoutiqueId]   = useState(activeBoutiqueId)
 
-  // Unique boutiques from loaded data
-  const boutiques = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const s of sales) {
-      const name = s.boutiques?.name
-      if (name) map.set(name, name)
-    }
-    return Array.from(map.keys()).sort()
-  }, [sales])
+  // Avoid firing debounce effect on initial mount
+  const didMount = useRef(false)
+  useEffect(() => { didMount.current = true }, [])
 
-  const filteredSales = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    const from = dateFrom ? new Date(dateFrom) : null
-    const to   = dateTo   ? new Date(dateTo + 'T23:59:59') : null
-    return sales.filter(s => {
-      if (q && !s.sale_number?.toLowerCase().includes(q) && !s.customer_name?.toLowerCase().includes(q) && !s.customer_phone?.toLowerCase().includes(q)) return false
-      if (statusFilter && s.status !== statusFilter) return false
-      if (paymentFilter && s.payment_status !== paymentFilter) return false
-      if (from && new Date(s.created_at) < from) return false
-      if (to   && new Date(s.created_at) > to)   return false
-      if (boutiqueFilter && s.boutiques?.name !== boutiqueFilter) return false
-      return true
-    })
-  }, [sales, search, statusFilter, paymentFilter, dateFrom, dateTo, boutiqueFilter])
+  // Debounced text search → navigate to page 1 with new search param
+  useEffect(() => {
+    if (!didMount.current) return
+    const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo, boutiqueId }
+    const t = setTimeout(() => {
+      startNavTransition(() => router.push(buildUrl(1, f)))
+    }, 400)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
-  const hasFilters = search || statusFilter || paymentFilter || dateFrom || dateTo || boutiqueFilter
-  const clearFilters = () => { setSearch(''); setStatusFilter(''); setPaymentFilter(''); setDateFrom(''); setDateTo(''); setBoutiqueFilter('') }
+  const handleStatusChange = (val: string) => {
+    setStatusFilter(val)
+    const f = { search, status: val, payment: paymentFilter, dateFrom, dateTo, boutiqueId }
+    startNavTransition(() => router.push(buildUrl(1, f)))
+  }
+  const handlePaymentChange = (val: string) => {
+    setPaymentFilter(val)
+    const f = { search, status: statusFilter, payment: val, dateFrom, dateTo, boutiqueId }
+    startNavTransition(() => router.push(buildUrl(1, f)))
+  }
+  const handleDateFromChange = (val: string) => {
+    setDateFrom(val)
+    const f = { search, status: statusFilter, payment: paymentFilter, dateFrom: val, dateTo, boutiqueId }
+    startNavTransition(() => router.push(buildUrl(1, f)))
+  }
+  const handleDateToChange = (val: string) => {
+    setDateTo(val)
+    const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo: val, boutiqueId }
+    startNavTransition(() => router.push(buildUrl(1, f)))
+  }
+  const handleBoutiqueChange = (val: string) => {
+    setBoutiqueId(val)
+    const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo, boutiqueId: val }
+    startNavTransition(() => router.push(buildUrl(1, f)))
+  }
 
-  // ── Server-side page navigation ───────────────────────────────────────────
+  const hasFilters = !!(search || statusFilter || paymentFilter || dateFrom || dateTo || boutiqueId)
+  const clearFilters = () => {
+    setSearch(''); setStatusFilter(''); setPaymentFilter('')
+    setDateFrom(''); setDateTo(''); setBoutiqueId('')
+    startNavTransition(() => router.push('/sales?page=1'))
+  }
+
+  // ── Server-side page navigation (preserves active filters) ────────────────
   const goToPage = (p: number) => {
-    startNavTransition(() => router.push(`/sales?page=${p}`))
+    const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo, boutiqueId }
+    startNavTransition(() => router.push(buildUrl(p, f)))
   }
 
   const handleLogout = async () => {
@@ -246,16 +297,11 @@ export default function SalesListClient({
             Ventes
           </h1>
           <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
-            {sales.length === 0
+            {totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
-              ? `${filteredSales.length} résultat${filteredSales.length !== 1 ? 's' : ''} sur ${sales.length} vente${sales.length > 1 ? 's' : ''}`
-              : `${sales.length} vente${sales.length > 1 ? 's' : ''} · cliquer une ligne pour le détail`}
-            {sales.length >= 500 && (
-              <span style={{ marginLeft: 8, color: C.orange, fontWeight: 600 }}>
-                · Affichage limité aux 500 dernières ventes
-              </span>
-            )}
+              ? `${totalCount} résultat${totalCount !== 1 ? 's' : ''}`
+              : `${totalCount} vente${totalCount !== 1 ? 's' : ''} · cliquer une ligne pour le détail`}
           </p>
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
@@ -319,7 +365,7 @@ export default function SalesListClient({
           {/* Status */}
           <select
             value={statusFilter}
-            onChange={e => setStatusFilter(e.target.value)}
+            onChange={e => handleStatusChange(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -335,7 +381,7 @@ export default function SalesListClient({
           {/* Payment status */}
           <select
             value={paymentFilter}
-            onChange={e => setPaymentFilter(e.target.value)}
+            onChange={e => handlePaymentChange(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orange : C.border}`, borderRadius: 6,
@@ -353,7 +399,7 @@ export default function SalesListClient({
           <input
             type="date"
             value={dateFrom}
-            onChange={e => setDateFrom(e.target.value)}
+            onChange={e => handleDateFromChange(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -366,7 +412,7 @@ export default function SalesListClient({
           <input
             type="date"
             value={dateTo}
-            onChange={e => setDateTo(e.target.value)}
+            onChange={e => handleDateToChange(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: 6,
@@ -375,19 +421,19 @@ export default function SalesListClient({
             }}
           />
           {/* Boutique (only for admin/owner who can see all boutiques) */}
-          {['owner', 'admin'].includes(profile.role) && boutiques.length > 1 && (
+          {['owner', 'admin'].includes(profile.role) && boutiquesList.length > 1 && (
             <select
-              value={boutiqueFilter}
-              onChange={e => setBoutiqueFilter(e.target.value)}
+              value={boutiqueId}
+              onChange={e => handleBoutiqueChange(e.target.value)}
               style={{
                 height: 32, paddingLeft: 8, paddingRight: 24,
                 border: `1px solid ${C.border}`, borderRadius: 6,
-                fontSize: 12, fontFamily: FONT, color: boutiqueFilter ? C.ink : C.muted,
+                fontSize: 12, fontFamily: FONT, color: boutiqueId ? C.ink : C.muted,
                 background: C.bg, cursor: 'pointer', outline: 'none', flex: '0 0 auto',
               }}
             >
               <option value="">Toutes les boutiques</option>
-              {boutiques.map(b => <option key={b} value={b}>{b}</option>)}
+              {boutiquesList.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           )}
           {/* Clear */}
@@ -456,7 +502,7 @@ export default function SalesListClient({
               </button>
             )}
           </div>
-        ) : filteredSales.length === 0 ? (
+        ) : sales.length === 0 && hasFilters ? (
           <div style={{ padding: '48px 24px', textAlign: 'center' }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
               Aucun résultat
@@ -487,7 +533,7 @@ export default function SalesListClient({
                 </tr>
               </thead>
               <tbody>
-                {filteredSales.map((sale: any) => {
+                {sales.map((sale: any) => {
                   const cfg    = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG.draft
                   const isOpen = expanded === sale.id
                   return (

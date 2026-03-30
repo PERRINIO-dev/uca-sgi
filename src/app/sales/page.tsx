@@ -8,7 +8,11 @@ const PAGE_SIZE = 50
 export default async function SalesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; page?: string }>
+  searchParams: Promise<{
+    error?: string; page?: string
+    search?: string; status?: string; payment?: string
+    dateFrom?: string; dateTo?: string; boutique_id?: string
+  }>
 }) {
   const params = await searchParams
   const supabase = await createClient()
@@ -30,6 +34,15 @@ export default async function SalesPage({
   if (profile.role === 'warehouse') redirect('/warehouse')
 
   const offset = (currentPage - 1) * PAGE_SIZE
+  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+
+  // Sanitize filter params
+  const search     = params.search?.trim() ?? ''
+  const status     = params.status ?? ''
+  const payment    = params.payment ?? ''
+  const dateFrom   = params.dateFrom ?? ''
+  const dateTo     = params.dateTo ?? ''
+  const boutiqueId = params.boutique_id ?? ''
 
   let query = supabase
     .from('sales')
@@ -53,32 +66,66 @@ export default async function SalesPage({
     .from('sales')
     .select('id', { count: 'exact', head: true })
 
+  // Role-based filter: vendors see only their own sales
   if (profile.role === 'vendor') {
     query      = query.eq('vendor_id', user.id)
     countQuery = countQuery.eq('vendor_id', user.id)
   }
 
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  // Text search across sale number, customer name, phone
+  if (search) {
+    const escaped = search.replace(/%/g, '\\%').replace(/_/g, '\\_')
+    const like    = `%${escaped}%`
+    query      = query.or(`sale_number.ilike.${like},customer_name.ilike.${like},customer_phone.ilike.${like}`)
+    countQuery = countQuery.or(`sale_number.ilike.${like},customer_name.ilike.${like},customer_phone.ilike.${like}`)
+  }
+
+  if (status) {
+    query      = query.eq('status', status)
+    countQuery = countQuery.eq('status', status)
+  }
+
+  if (payment) {
+    query      = query.eq('payment_status', payment)
+    countQuery = countQuery.eq('payment_status', payment)
+  }
+
+  if (dateFrom) {
+    query      = query.gte('created_at', dateFrom + 'T00:00:00')
+    countQuery = countQuery.gte('created_at', dateFrom + 'T00:00:00')
+  }
+
+  if (dateTo) {
+    query      = query.lte('created_at', dateTo + 'T23:59:59')
+    countQuery = countQuery.lte('created_at', dateTo + 'T23:59:59')
+  }
+
+  if (boutiqueId) {
+    query      = query.eq('boutique_id', boutiqueId)
+    countQuery = countQuery.eq('boutique_id', boutiqueId)
+  }
 
   const [{ data: sales }, { count: totalCount }, badgeCounts, boutiquesResult, ownerResult] = await Promise.all([
     query,
     countQuery,
     getBadgeCounts(profile.role, supabase),
-    // Fetch boutique count for owner/admin so the client can warn before navigating
+    // Fetch all active boutiques for the filter dropdown (owner/admin only)
     isOwnerOrAdmin
-      ? supabase.from('boutiques').select('id', { count: 'exact', head: true }).eq('is_active', true)
-      : Promise.resolve({ count: 1 }),
+      ? supabase.from('boutiques').select('id, name').eq('is_active', true).order('name')
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     supabase.from('users').select('full_name').eq('role', 'owner').limit(1).single(),
   ])
 
-  const hasBoutiques = isOwnerOrAdmin ? ((boutiquesResult as any).count ?? 0) > 0 : true
-  const ownerName = (ownerResult as any).data?.full_name ?? 'Le Propriétaire'
-  const currency = (profile.companies as any)?.currency ?? 'FCFA'
-  const total = totalCount ?? 0
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const boutiquesList = isOwnerOrAdmin ? ((boutiquesResult as any).data ?? []) : []
+  const hasBoutiques  = isOwnerOrAdmin ? boutiquesList.length > 0 : true
+  const ownerName     = (ownerResult as any).data?.full_name ?? 'Le Propriétaire'
+  const currency      = (profile.companies as any)?.currency ?? 'FCFA'
+  const total         = totalCount ?? 0
+  const totalPages    = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   return (
     <SalesListClient
+      key={`${currentPage}-${search}-${status}-${payment}-${dateFrom}-${dateTo}-${boutiqueId}`}
       profile={profile}
       currency={currency}
       sales={sales ?? []}
@@ -89,6 +136,13 @@ export default async function SalesPage({
       currentPage={currentPage}
       totalPages={totalPages}
       totalCount={total}
+      boutiquesList={boutiquesList}
+      activeSearch={search}
+      activeStatus={status}
+      activePayment={payment}
+      activeDateFrom={dateFrom}
+      activeDateTo={dateTo}
+      activeBoutiqueId={boutiqueId}
     />
   )
 }
