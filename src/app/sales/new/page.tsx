@@ -11,7 +11,7 @@ export default async function NewSalePage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency)')
+    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency, name)')
     .eq('id', user.id)
     .single()
 
@@ -45,7 +45,7 @@ export default async function NewSalePage() {
 
     supabase
       .from('products')
-      .select('id, product_type, unit_label, package_label, floor_price_per_m2, reference_price_per_m2, floor_price_per_unit, reference_price_per_unit, tiles_per_carton, tile_area_m2')
+      .select('id, product_type, unit_label, package_label, floor_price_per_m2, reference_price_per_m2, floor_price_per_unit, reference_price_per_unit, tiles_per_carton, tile_area_m2, piece_length_m, container_volume_l, bag_weight_kg')
       .eq('is_active', true),
 
     getBadgeCounts(profile.role, supabase),
@@ -72,11 +72,15 @@ export default async function NewSalePage() {
       reference_price_per_m2:   pricingMap[p.product_id].reference_price_per_m2,
       floor_price_per_unit:     pricingMap[p.product_id].floor_price_per_unit,
       reference_price_per_unit: pricingMap[p.product_id].reference_price_per_unit,
+      piece_length_m:           pricingMap[p.product_id].piece_length_m,
+      container_volume_l:       pricingMap[p.product_id].container_volume_l,
+      bag_weight_kg:            pricingMap[p.product_id].bag_weight_kg,
     }))
 
   const ownerName = (ownerRes as any).data?.full_name ?? 'Le Propriétaire'
 
-  const currency = (profile.companies as any)?.currency ?? 'FCFA'
+  const currency    = (profile.companies as any)?.currency ?? 'FCFA'
+  const companyName = (profile.companies as any)?.name     ?? 'SGI'
 
   return (
     <VendorSaleForm
@@ -88,6 +92,7 @@ export default async function NewSalePage() {
       isOwnerOrAdmin={isOwnerOrAdmin}
       badgeCounts={badgeCounts}
       ownerName={ownerName}
+      companyName={companyName}
     />
   )
 }

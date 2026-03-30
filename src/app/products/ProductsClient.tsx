@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createProduct, updateProduct } from './actions'
@@ -124,6 +124,7 @@ export default function ProductsClient({
   const supabase = createClient()
 
   const [showCreate,        setShowCreate]        = useState(false)
+  const [modalStep,         setModalStep]         = useState<1|2|3|4>(1)
   const [editProduct,       setEditProduct]       = useState<any>(null)
   const [confirmDeactivate, setConfirmDeactivate] = useState<any>(null)
   const [form,              setForm]              = useState<FormState>(emptyForm('tile'))
@@ -290,6 +291,37 @@ export default function ProductsClient({
     }, 1800)
   }
 
+  // ── Wizard step validation ────────────────────────────────────────────────
+  const advanceModalStep = () => {
+    setError(null)
+    if (modalStep === 1) {
+      setModalStep(2)
+    } else if (modalStep === 2) {
+      if (!form.name.trim())     { setError('Le nom du produit est requis.'); return }
+      if (!form.supplier.trim()) { setError('Le fournisseur est requis.'); return }
+      if (productType === 'tile') {
+        if (!form.widthCm || !form.heightCm) { setError('Les dimensions sont requises.'); return }
+        if (!form.tilesPerCarton)            { setError('Le nombre de carreaux par carton est requis.'); return }
+      }
+      if (productType === 'linear_m' && !form.pieceLengthM)   { setError('La longueur par barre est requise.'); return }
+      if (productType === 'liter'    && !form.containerVolumeL) { setError('Le volume par contenant est requis.'); return }
+      setModalStep(3)
+    } else if (modalStep === 3) {
+      const isTileType = productType === 'tile'
+      const floor = parseFloat(isTileType ? form.floorPricePerM2   : form.floorPricePerUnit)
+      const ref   = parseFloat(isTileType ? form.referencePricePerM2 : form.referencePricePerUnit)
+      if (!floor || !ref)  { setError('Les prix plancher et référence sont requis.'); return }
+      if (floor >= ref)    { setError('Le prix plancher doit être inférieur au prix de référence.'); return }
+      if (profile.role === 'owner' && form.purchasePrice) {
+        const purchase = parseFloat(form.purchasePrice)
+        if (!isNaN(purchase) && purchase >= floor) {
+          setError("Le prix d'achat doit être inférieur au prix plancher."); return
+        }
+      }
+      setModalStep(4)
+    }
+  }
+
   // ── Edit ──────────────────────────────────────────────────────────────────
   const openEdit = (p: any) => {
     const pt: ProductType = p.product_type ?? 'tile'
@@ -447,6 +479,7 @@ export default function ProductsClient({
             setError(null)
             setSuccess(null)
             refCodeTouched.current = false
+            setModalStep(1)
             setShowCreate(true)
           }}
           style={{ padding: '11px 20px', background: C.navy,
@@ -538,148 +571,85 @@ export default function ProductsClient({
         </Modal>
       )}
 
-      {/* ── Create modal ── */}
+      {/* ── Create modal (4-step wizard) ── */}
       {showCreate && (
-        <Modal title="Nouveau produit" onClose={() => setShowCreate(false)}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <Modal title="Nouveau produit" onClose={() => { setShowCreate(false); setModalStep(1) }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
-            {/* Type selector */}
-            <div>
-              <label style={labelStyle}>Type de produit *</label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {(Object.entries(TYPE_LABELS) as [ProductType, string][]).map(([val, lbl]) => (
+            {/* Step indicator */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+              {([
+                [1, 'Mode'],
+                [2, 'Configuration'],
+                [3, 'Prix & stock'],
+                [4, 'Résumé'],
+              ] as [number, string][]).map(([n, label], i) => (
+                <React.Fragment key={n}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div style={{
+                      width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: modalStep === n ? C.navy : modalStep > n ? C.green : C.border,
+                      color: modalStep >= n ? '#fff' : C.muted,
+                      fontSize: 11, fontWeight: 700,
+                    }}>
+                      {modalStep > n
+                        ? <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        : n}
+                    </div>
+                    <span style={{
+                      fontSize: 10, fontWeight: modalStep === n ? 700 : 400,
+                      color: modalStep === n ? C.navy : C.muted, fontFamily: FONT,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {label}
+                    </span>
+                  </div>
+                  {i < 3 && (
+                    <div style={{ flex: 1, height: 2, background: modalStep > n ? C.green : C.border,
+                      marginBottom: 18, marginLeft: 4, marginRight: 4 }} />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* ── STEP 1 — Comment vendez-vous ce produit ? ── */}
+            {modalStep === 1 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ fontSize: 13, color: C.slate, margin: '0 0 6px', fontFamily: FONT, lineHeight: 1.6 }}>
+                  Choisissez comment ce produit est vendu sur le terrain. Le formulaire s'adaptera automatiquement.
+                </p>
+                {([
+                  ['tile',     'Par surface (m²)',     'Carrelage, parquet — vente en m² ou en cartons + carreaux'],
+                  ['unit',     'À la pièce',           "Robinet, lavabo, WC, ampoule, porte — stock à l'unité"],
+                  ['bag',      'Par sac',              'Ciment, colle, sable, gravier — stock et vente en sacs'],
+                  ['liter',    'Par volume (litre)',   'Peinture, résine — vente au litre ou au bidon'],
+                  ['linear_m', 'Au mètre linéaire',   'Tuyaux PVC, câbles — vente au mètre ou à la barre/rouleau'],
+                ] as [ProductType, string, string][]).map(([val, lbl, sub]) => (
                   <button
                     key={val}
                     type="button"
-                    onClick={() => {
-                      setField('productType', val)
-                      refCodeTouched.current = false
-                    }}
+                    onClick={() => { setField('productType', val); refCodeTouched.current = false }}
                     style={{
-                      padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
-                      fontSize: 12, fontWeight: 600, fontFamily: FONT, textAlign: 'left',
+                      padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
+                      textAlign: 'left', fontFamily: FONT,
                       border: `2px solid ${productType === val ? C.blue : C.border}`,
                       background: productType === val ? C.blueL : C.surface,
-                      color: productType === val ? C.blue : C.slate,
                     }}>
-                    {lbl}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: productType === val ? C.blue : C.ink }}>
+                      {lbl}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{sub}</div>
                   </button>
                 ))}
               </div>
-            </div>
-
-            {/* ── TILE FORM — logique originale inchangée ── */}
-            {productType === 'tile' && (
-              <>
-                <Row>
-                  <Field label="Code référence *">
-                    <input value={form.referenceCode} readOnly
-                      placeholder="Généré automatiquement"
-                      style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
-                  </Field>
-                  <Field label="Catégorie *">
-                    <CategoryCombobox
-                      value={form.category}
-                      onChange={v => setField('category', v)}
-                      categories={categories.filter(c => c.product_type === 'tile')}
-                      inputStyle={inputStyle}
-                    />
-                  </Field>
-                </Row>
-
-                <Field label="Nom du produit *">
-                  <input value={form.name} onChange={e => setField('name', e.target.value)}
-                    placeholder="ex : Granit Noir 60×60" style={inputStyle} />
-                </Field>
-
-                <Field label="Fournisseur *">
-                  <input value={form.supplier} onChange={e => setField('supplier', e.target.value)}
-                    placeholder="ex : Ceramiche Italia" style={inputStyle} />
-                </Field>
-
-                <Row>
-                  <Field label="Largeur (cm) *">
-                    <input type="number" min="1" value={form.widthCm}
-                      onChange={e => setField('widthCm', e.target.value)}
-                      placeholder="ex : 60" style={inputStyle} />
-                  </Field>
-                  <Field label="Hauteur (cm) *">
-                    <input type="number" min="1" value={form.heightCm}
-                      onChange={e => setField('heightCm', e.target.value)}
-                      placeholder="ex : 60" style={inputStyle} />
-                  </Field>
-                  <Field label="Car./carton *">
-                    <input type="number" min="1" value={form.tilesPerCarton}
-                      onChange={e => setField('tilesPerCarton', e.target.value)}
-                      placeholder="ex : 4" style={inputStyle} />
-                  </Field>
-                </Row>
-
-                {tileAreaPreview && (
-                  <div style={{ padding: '10px 12px', background: C.blueL,
-                    borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
-                    Surface/carreau : <strong>{tileAreaPreview.area.toFixed(4)} m²</strong>
-                    {tileAreaPreview.cartonArea > 0 && (
-                      <> · Carton : <strong>{tileAreaPreview.cartonArea.toFixed(4)} m²</strong></>
-                    )}
-                  </div>
-                )}
-
-                <Row>
-                  {profile.role === 'owner' && (
-                    <Field label="Prix d'achat/m² *">
-                      <input type="number" min="0" value={form.purchasePrice}
-                        onChange={e => setField('purchasePrice', e.target.value)}
-                        placeholder="ex : 8000" style={inputStyle} />
-                    </Field>
-                  )}
-                  <Field label="Prix plancher/m² *">
-                    <input type="number" min="0" value={form.floorPricePerM2}
-                      onChange={e => setField('floorPricePerM2', e.target.value)}
-                      placeholder="ex : 12000" style={inputStyle} />
-                  </Field>
-                  <Field label="Prix référence/m² *">
-                    <input type="number" min="0" value={form.referencePricePerM2}
-                      onChange={e => setField('referencePricePerM2', e.target.value)}
-                      placeholder="ex : 15000" style={inputStyle} />
-                  </Field>
-                </Row>
-
-                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: C.muted,
-                    textTransform: 'uppercase', letterSpacing: '0.07em',
-                    marginBottom: 12, fontFamily: FONT }}>
-                    Stock initial (optionnel)
-                  </div>
-                  <Row>
-                    <Field label="Cartons complets">
-                      <input type="number" min="0" value={form.initialCartons}
-                        onChange={e => setField('initialCartons', e.target.value)}
-                        placeholder="ex : 50" style={inputStyle} />
-                    </Field>
-                    <Field label="Carreaux en plus">
-                      <input type="number" min="0" value={form.initialLooseTiles}
-                        onChange={e => setField('initialLooseTiles', e.target.value)}
-                        placeholder="ex : 3" style={inputStyle} />
-                    </Field>
-                  </Row>
-                  {(form.initialCartons || form.initialLooseTiles) && form.tilesPerCarton && (
-                    <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 6, fontFamily: FONT }}>
-                      = {fmtNum(
-                        (parseInt(form.initialCartons) || 0) * parseInt(form.tilesPerCarton)
-                        + (parseInt(form.initialLooseTiles) || 0)
-                      )} carreaux total
-                    </div>
-                  )}
-                </div>
-              </>
             )}
 
-            {/* ── NON-TILE COMMON FIELDS ── */}
-            {productType !== 'tile' && (
-              <>
+            {/* ── STEP 2 — Configuration physique ── */}
+            {modalStep === 2 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <Row>
-                  <Field label="Code référence *">
+                  <Field label="Code référence">
                     <input value={form.referenceCode} readOnly
                       placeholder="Généré automatiquement"
                       style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
@@ -696,95 +666,357 @@ export default function ProductsClient({
 
                 <Field label="Nom du produit *">
                   <input value={form.name} onChange={e => setField('name', e.target.value)}
-                    placeholder="ex : Mitigeur lavabo chromé" style={inputStyle} />
+                    placeholder={
+                      productType === 'tile'     ? 'ex : Granit Noir 60×60'
+                    : productType === 'bag'      ? 'ex : Ciment Portland CPA 42.5'
+                    : productType === 'liter'    ? 'ex : Peinture blanche satinée 20L'
+                    : productType === 'linear_m' ? 'ex : Tuyau PVC ⌀32'
+                    : 'ex : Mitigeur lavabo chromé'
+                    }
+                    style={inputStyle} />
                 </Field>
 
                 <Field label="Fournisseur *">
                   <input value={form.supplier} onChange={e => setField('supplier', e.target.value)}
-                    placeholder="ex : Ideal Standard" style={inputStyle} />
+                    placeholder="ex : Ceramiche Italia" style={inputStyle} />
                 </Field>
 
-                <Row>
-                  <Field label="Unité de vente">
-                    <input value={form.unitLabel} onChange={e => setField('unitLabel', e.target.value)}
-                      style={inputStyle} />
-                  </Field>
-                  <Field label="Conditionnement">
-                    <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)}
-                      style={inputStyle} />
-                  </Field>
-                </Row>
+                {/* Tile dimensions */}
+                {productType === 'tile' && (
+                  <>
+                    <Row>
+                      <Field label="Largeur (cm) *">
+                        <input type="number" min="1" value={form.widthCm}
+                          onChange={e => setField('widthCm', e.target.value)}
+                          placeholder="ex : 60" style={inputStyle} />
+                      </Field>
+                      <Field label="Hauteur (cm) *">
+                        <input type="number" min="1" value={form.heightCm}
+                          onChange={e => setField('heightCm', e.target.value)}
+                          placeholder="ex : 60" style={inputStyle} />
+                      </Field>
+                      <Field label="Car./carton *">
+                        <input type="number" min="1" value={form.tilesPerCarton}
+                          onChange={e => setField('tilesPerCarton', e.target.value)}
+                          placeholder="ex : 4" style={inputStyle} />
+                      </Field>
+                    </Row>
+                    {tileAreaPreview && (
+                      <div style={{ padding: '10px 14px', background: C.blueL,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                        1 carreau = <strong>{tileAreaPreview.area.toFixed(4)} m²</strong>
+                        {tileAreaPreview.cartonArea > 0 && (
+                          <> · 1 carton = <strong>{tileAreaPreview.cartonArea.toFixed(4)} m²</strong></>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
 
-                {/* linear_m specific */}
+                {/* linear_m */}
                 {productType === 'linear_m' && (
-                  <Field label="Longueur par barre/pièce (m) *">
-                    <input type="number" min="0.01" step="0.01" value={form.pieceLengthM}
-                      onChange={e => setField('pieceLengthM', e.target.value)}
-                      placeholder="ex : 2.5" style={inputStyle} />
-                  </Field>
-                )}
-
-                {/* liter specific */}
-                {productType === 'liter' && (
-                  <Field label="Volume par contenant (L) *">
-                    <input type="number" min="0.1" step="0.1" value={form.containerVolumeL}
-                      onChange={e => setField('containerVolumeL', e.target.value)}
-                      placeholder="ex : 5" style={inputStyle} />
-                  </Field>
-                )}
-
-                {/* bag specific */}
-                {productType === 'bag' && (
-                  <Field label="Poids par sac (kg)">
-                    <input type="number" min="0.1" step="0.1" value={form.bagWeightKg}
-                      onChange={e => setField('bagWeightKg', e.target.value)}
-                      placeholder="ex : 25" style={inputStyle} />
-                  </Field>
-                )}
-
-                {/* Pricing */}
-                <Row>
-                  {profile.role === 'owner' && (
-                    <Field label={`Prix d'achat / ${form.unitLabel} *`}>
-                      <input type="number" min="0" value={form.purchasePrice}
-                        onChange={e => setField('purchasePrice', e.target.value)}
-                        placeholder="ex : 5000" style={inputStyle} />
+                  <>
+                    <Row>
+                      <Field label="Unité de vente">
+                        <input value={form.unitLabel} onChange={e => setField('unitLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                      <Field label="Conditionnement">
+                        <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                    </Row>
+                    <Field label={`Longueur par ${form.packageLabel || 'barre'} (m) *`}>
+                      <input type="number" min="0.01" step="0.01" value={form.pieceLengthM}
+                        onChange={e => setField('pieceLengthM', e.target.value)}
+                        placeholder="ex : 6" style={inputStyle} />
                     </Field>
-                  )}
-                  <Field label={`Prix plancher / ${form.unitLabel} *`}>
-                    <input type="number" min="0" value={form.floorPricePerUnit}
-                      onChange={e => setField('floorPricePerUnit', e.target.value)}
-                      placeholder="ex : 8000" style={inputStyle} />
-                  </Field>
-                  <Field label={`Prix référence / ${form.unitLabel} *`}>
-                    <input type="number" min="0" value={form.referencePricePerUnit}
-                      onChange={e => setField('referencePricePerUnit', e.target.value)}
-                      placeholder="ex : 12000" style={inputStyle} />
-                  </Field>
-                </Row>
+                    {form.pieceLengthM && (
+                      <div style={{ padding: '8px 14px', background: C.blueL,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                        1 {form.packageLabel || 'barre'} = <strong>{form.pieceLengthM} m</strong>
+                        {' · '}Le vendeur saisit en mètres ou en {form.packageLabel || 'barres'}
+                      </div>
+                    )}
+                  </>
+                )}
 
-                {/* Packaging */}
-                <Row>
-                  <Field label={`${form.packageLabel}s par lot (optionnel)`}>
-                    <input type="number" min="1" value={form.piecesPerPackage}
-                      onChange={e => setField('piecesPerPackage', e.target.value)}
-                      placeholder="ex : 12" style={inputStyle} />
-                  </Field>
-                  <Field label="Stock initial (optionnel)">
-                    <input type="number" min="0" value={form.initialQuantity}
-                      onChange={e => setField('initialQuantity', e.target.value)}
-                      placeholder={`Nb de ${form.unitLabel}s`} style={inputStyle} />
-                  </Field>
-                </Row>
-              </>
+                {/* liter */}
+                {productType === 'liter' && (
+                  <>
+                    <Row>
+                      <Field label="Unité de vente">
+                        <input value={form.unitLabel} onChange={e => setField('unitLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                      <Field label="Conditionnement">
+                        <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                    </Row>
+                    <Field label={`Volume par ${form.packageLabel || 'bidon'} (L) *`}>
+                      <input type="number" min="0.1" step="0.1" value={form.containerVolumeL}
+                        onChange={e => setField('containerVolumeL', e.target.value)}
+                        placeholder="ex : 20" style={inputStyle} />
+                    </Field>
+                    {form.containerVolumeL && (
+                      <div style={{ padding: '8px 14px', background: C.blueL,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                        1 {form.packageLabel || 'bidon'} = <strong>{form.containerVolumeL} L</strong>
+                        {' · '}Le vendeur saisit en litres ou en {form.packageLabel || 'bidons'}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* bag */}
+                {productType === 'bag' && (
+                  <>
+                    <Row>
+                      <Field label="Unité de vente">
+                        <input value={form.unitLabel} onChange={e => setField('unitLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                      <Field label="Conditionnement">
+                        <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                    </Row>
+                    <Field label="Poids par sac (kg)">
+                      <input type="number" min="0.1" step="0.1" value={form.bagWeightKg}
+                        onChange={e => setField('bagWeightKg', e.target.value)}
+                        placeholder="ex : 50" style={inputStyle} />
+                    </Field>
+                    {form.bagWeightKg && (
+                      <div style={{ padding: '8px 14px', background: C.blueL,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                        1 sac = <strong>{form.bagWeightKg} kg</strong>
+                        {' · '}Stock et vente comptés en nombre de sacs
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* unit */}
+                {productType === 'unit' && (
+                  <>
+                    <Row>
+                      <Field label="Unité de vente">
+                        <input value={form.unitLabel} onChange={e => setField('unitLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                      <Field label="Conditionnement">
+                        <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)} style={inputStyle} />
+                      </Field>
+                    </Row>
+                    <div style={{ padding: '8px 14px', background: C.greenL,
+                      borderRadius: 8, fontSize: 12, color: C.green, fontFamily: FONT }}>
+                      Produit vendu à la pièce · Stock compté en {form.unitLabel || 'pièces'}
+                    </div>
+                  </>
+                )}
+              </div>
             )}
 
-            <FormFooter
-              error={error} success={success} loading={loading}
-              onConfirm={handleCreate}
-              onCancel={() => setShowCreate(false)}
-              confirmLabel="Créer le produit"
-            />
+            {/* ── STEP 3 — Prix & stock ── */}
+            {modalStep === 3 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontSize: 13, color: C.slate, margin: '0 0 4px', fontFamily: FONT, lineHeight: 1.5 }}>
+                  Prix par <strong>{productType === 'tile' ? 'm²' : (form.unitLabel || 'unité')}</strong>
+                </p>
+                <Row>
+                  {profile.role === 'owner' && (
+                    <Field label="Prix d'achat *">
+                      <input type="number" min="0" value={form.purchasePrice}
+                        onChange={e => setField('purchasePrice', e.target.value)}
+                        placeholder="ex : 8 000" style={inputStyle} />
+                    </Field>
+                  )}
+                  <Field label="Prix plancher *">
+                    <input type="number" min="0"
+                      value={productType === 'tile' ? form.floorPricePerM2   : form.floorPricePerUnit}
+                      onChange={e => setField(productType === 'tile' ? 'floorPricePerM2' : 'floorPricePerUnit', e.target.value)}
+                      placeholder="ex : 12 000" style={inputStyle} />
+                  </Field>
+                  <Field label="Prix référence *">
+                    <input type="number" min="0"
+                      value={productType === 'tile' ? form.referencePricePerM2 : form.referencePricePerUnit}
+                      onChange={e => setField(productType === 'tile' ? 'referencePricePerM2' : 'referencePricePerUnit', e.target.value)}
+                      placeholder="ex : 15 000" style={inputStyle} />
+                  </Field>
+                </Row>
+
+                <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.muted,
+                    textTransform: 'uppercase', letterSpacing: '0.07em',
+                    marginBottom: 12, fontFamily: FONT }}>
+                    Stock initial (optionnel)
+                  </div>
+                  {productType === 'tile' ? (
+                    <>
+                      <Row>
+                        <Field label="Cartons complets">
+                          <input type="number" min="0" value={form.initialCartons}
+                            onChange={e => setField('initialCartons', e.target.value)}
+                            placeholder="ex : 50" style={inputStyle} />
+                        </Field>
+                        <Field label="Carreaux en plus">
+                          <input type="number" min="0" value={form.initialLooseTiles}
+                            onChange={e => setField('initialLooseTiles', e.target.value)}
+                            placeholder="ex : 3" style={inputStyle} />
+                        </Field>
+                      </Row>
+                      {(form.initialCartons || form.initialLooseTiles) && form.tilesPerCarton && (
+                        <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 6, fontFamily: FONT }}>
+                          = {fmtNum(
+                            (parseInt(form.initialCartons) || 0) * parseInt(form.tilesPerCarton)
+                            + (parseInt(form.initialLooseTiles) || 0)
+                          )} carreaux total
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <Row>
+                      <Field label={`${form.packageLabel || 'Unités'} par lot (optionnel)`}>
+                        <input type="number" min="1" value={form.piecesPerPackage}
+                          onChange={e => setField('piecesPerPackage', e.target.value)}
+                          placeholder="ex : 12" style={inputStyle} />
+                      </Field>
+                      <Field label={`Stock initial (${form.unitLabel || 'unités'})`}>
+                        <input type="number" min="0" value={form.initialQuantity}
+                          onChange={e => setField('initialQuantity', e.target.value)}
+                          placeholder="ex : 200" style={inputStyle} />
+                      </Field>
+                    </Row>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── STEP 4 — Résumé intelligent ── */}
+            {modalStep === 4 && (() => {
+              const isTileType     = productType === 'tile'
+              const tileAreaVal    = isTileType && form.widthCm && form.heightCm
+                ? (parseFloat(form.widthCm) / 100) * (parseFloat(form.heightCm) / 100) : null
+              const cartonAreaVal  = tileAreaVal && form.tilesPerCarton
+                ? tileAreaVal * parseInt(form.tilesPerCarton) : null
+              const initStock      = isTileType
+                ? (parseInt(form.initialCartons) || 0) * (parseInt(form.tilesPerCarton) || 0)
+                  + (parseInt(form.initialLooseTiles) || 0)
+                : parseInt(form.initialQuantity) || 0
+              const convLine       =
+                isTileType && tileAreaVal
+                  ? `1 carreau = ${tileAreaVal.toFixed(4)} m² · 1 carton = ${(cartonAreaVal ?? 0).toFixed(4)} m²`
+                : productType === 'linear_m' && form.pieceLengthM
+                  ? `1 ${form.packageLabel || 'barre'} = ${form.pieceLengthM} m`
+                : productType === 'liter' && form.containerVolumeL
+                  ? `1 ${form.packageLabel || 'bidon'} = ${form.containerVolumeL} L`
+                : productType === 'bag' && form.bagWeightKg
+                  ? `1 sac = ${form.bagWeightKg} kg`
+                : null
+              const priceUnit      = isTileType ? 'm²' : (form.unitLabel || 'unité')
+              const refP           = parseFloat(isTileType ? form.referencePricePerM2 : form.referencePricePerUnit)
+              const floorP         = parseFloat(isTileType ? form.floorPricePerM2     : form.floorPricePerUnit)
+              const stockLine      = isTileType
+                ? `${form.initialCartons || 0} carton(s)${parseInt(form.initialLooseTiles) > 0 ? ` + ${form.initialLooseTiles} carreau(x)` : ''}`
+                : `${initStock} ${form.unitLabel || 'unité'}(s)`
+              const sellMode: Record<ProductType, string> = {
+                tile:     'Par surface (m²) — cartons + carreaux',
+                unit:     'À la pièce',
+                bag:      'Par sac',
+                liter:    'Par volume (litre)',
+                linear_m: 'Au mètre linéaire — barres/rouleaux',
+              }
+              const rows: [string, string][] = [
+                ['Mode de vente',  sellMode[productType]],
+                ...(convLine ? [['Conversion', convLine] as [string, string]] : []),
+                ['Stock initial',  stockLine],
+                ['Prix référence', `${fmtNum(refP)} / ${priceUnit}`],
+                ['Prix plancher',  `${fmtNum(floorP)} / ${priceUnit}`],
+                ...(profile.role === 'owner' && form.purchasePrice
+                  ? [["Prix d'achat", `${fmtNum(parseFloat(form.purchasePrice))} / ${priceUnit}`] as [string, string]]
+                  : []),
+              ]
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+                    Vérifiez les informations avant de créer le produit.
+                  </p>
+                  <div style={{ background: C.blueL, borderRadius: 12,
+                    border: `1.5px solid ${C.blue}33`, padding: '18px 20px' }}>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: C.ink,
+                      letterSpacing: '-0.02em', fontFamily: FONT, marginBottom: 4 }}>
+                      {form.name || '—'}
+                    </div>
+                    <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT, marginBottom: 14 }}>
+                      {form.referenceCode} · {form.category} · {form.supplier}
+                    </div>
+                    {rows.map(([label, value]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between',
+                        alignItems: 'center', padding: '8px 0',
+                        borderTop: `1px solid ${C.blue}22` }}>
+                        <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>{label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })()}
+
+            {/* Error / success feedback */}
+            {error && (
+              <div style={{ padding: '10px 14px', background: C.redL, borderRadius: 8,
+                fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                {error}
+              </div>
+            )}
+            {success && (
+              <div style={{ padding: '10px 14px', background: C.greenL, borderRadius: 8,
+                fontSize: 12, fontWeight: 600, color: C.green, fontFamily: FONT }}>
+                {success}
+              </div>
+            )}
+
+            {/* Wizard navigation */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => { setShowCreate(false); setModalStep(1) }}
+                  style={{ padding: '10px 16px', borderRadius: 8,
+                    border: `1.5px solid ${C.border}`, background: C.surface,
+                    color: C.slate, fontSize: 13, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: FONT }}>
+                  Annuler
+                </button>
+                {modalStep > 1 && (
+                  <button
+                    onClick={() => { setError(null); setModalStep(prev => (prev - 1) as 1|2|3|4) }}
+                    style={{ padding: '10px 16px', borderRadius: 8,
+                      border: `1.5px solid ${C.border}`, background: C.surface,
+                      color: C.navy, fontSize: 13, fontWeight: 600,
+                      cursor: 'pointer', fontFamily: FONT }}>
+                    ← Retour
+                  </button>
+                )}
+              </div>
+              {modalStep < 4 ? (
+                <button
+                  onClick={advanceModalStep}
+                  style={{ padding: '10px 24px', borderRadius: 8,
+                    border: 'none', background: C.navy,
+                    color: 'white', fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: FONT }}>
+                  Suivant →
+                </button>
+              ) : (
+                <button
+                  onClick={handleCreate}
+                  disabled={loading}
+                  style={{ padding: '10px 24px', borderRadius: 8,
+                    border: 'none',
+                    background: loading ? C.muted : C.green,
+                    color: 'white', fontSize: 13, fontWeight: 700,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    fontFamily: FONT,
+                    display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  {loading ? <><span className="spinner" />Création…</> : 'Créer le produit'}
+                </button>
+              )}
+            </div>
           </div>
         </Modal>
       )}

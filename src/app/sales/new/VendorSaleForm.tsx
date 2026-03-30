@@ -26,7 +26,7 @@ const fmtM2 = (n: number) =>
     minimumFractionDigits: 2, maximumFractionDigits: 2,
   }).format(n) + ' m²'
 
-type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles' | 'qty'
+type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles' | 'qty' | 'linear_pieces' | 'liter_containers'
 
 interface CartItem {
   product:         any
@@ -42,12 +42,13 @@ interface CartItem {
 }
 
 export default function VendorSaleForm({
-  profile, currency, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts, ownerName = 'Le Propriétaire',
+  profile, currency, boutique, products, allBoutiques, isOwnerOrAdmin, badgeCounts, ownerName = 'Le Propriétaire', companyName = 'SGI',
 }: {
   profile: any; currency: string; boutique: any; products: any[]
   allBoutiques: any[]; isOwnerOrAdmin: boolean
   badgeCounts?: BadgeCounts
   ownerName?: string
+  companyName?: string
 }) {
   const router   = useRouter()
   const supabase = createClient()
@@ -76,11 +77,14 @@ export default function VendorSaleForm({
   const [step,             setStep]      = useState<'form' | 'success'>('form')
   const [formStep,         setFormStep]  = useState<1 | 2>(1)
 
-  const [inputQty, setInputQty] = useState('')   // non-tile quantity
+  const [inputQty,        setInputQty]        = useState('')   // non-tile: unit_label quantity
+  const [inputPieces,     setInputPieces]     = useState('')   // linear_m: barres/rouleaux count
+  const [inputContainers, setInputContainers] = useState('')   // liter: bidons count
 
   const resetInputs = () => {
     setInputM2(''); setInputTiles(''); setCartons(''); setLoose('')
-    setInputQty(''); setUnitPrice('')
+    setInputQty(''); setInputPieces(''); setInputContainers('')
+    setUnitPrice('')
   }
 
   // ── Computed values — branches on product type ────────────────────────────
@@ -131,8 +135,19 @@ export default function VendorSaleForm({
         floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles,
       }
     } else {
-      // Non-tile: single quantity input
-      const qty = parseInt(inputQty) || 0
+      // Non-tile: supports unit input, or piece/container conversions
+      let qty = 0
+
+      if (inputMode === 'linear_pieces' && selectedProduct.piece_length_m) {
+        const pieces = parseInt(inputPieces) || 0
+        qty = pieces * parseFloat(selectedProduct.piece_length_m)
+      } else if (inputMode === 'liter_containers' && selectedProduct.container_volume_l) {
+        const containers = parseInt(inputContainers) || 0
+        qty = containers * parseFloat(selectedProduct.container_volume_l)
+      } else {
+        qty = parseFloat(inputQty) || 0
+      }
+
       if (qty <= 0) return null
 
       const floorPrice     = parseFloat(selectedProduct.floor_price_per_unit ?? 0)
@@ -146,7 +161,7 @@ export default function VendorSaleForm({
         price, total, floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles,
       }
     }
-  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, inputQty, unitPrice])
+  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, inputQty, inputPieces, inputContainers, unitPrice])
 
   const cartTotal = cart.reduce((sum, i) => sum + i.totalPrice, 0)
 
@@ -232,7 +247,7 @@ export default function VendorSaleForm({
   <button class="back-btn" onclick="window.close()">← Retour à l'application</button>
   <div class="header">
     <div>
-      <div class="logo">UC<span>A</span></div>
+      <div class="logo">${escHtml(companyName)}</div>
       <div style="font-size:11px;color:#64748B;margin-top:2px">Reçu de vente officiel</div>
     </div>
     <div class="meta">
@@ -307,7 +322,7 @@ export default function VendorSaleForm({
       </div>
       <div class="sig-block">
         <div class="sig-name">${escHtml(ownerName)}</div>
-        <div class="sig-role">Propriétaire — UCA</div>
+        <div class="sig-role">Propriétaire — ${escHtml(companyName)}</div>
         <div class="sig-line"></div>
         <div class="sig-sub">Signature du propriétaire</div>
       </div>
@@ -315,7 +330,7 @@ export default function VendorSaleForm({
   </div>
 
   <div class="footer">
-    UCA — Reçu généré le ${now} · Document officiel
+    ${escHtml(companyName)} — Reçu généré le ${now} · Document officiel
   </div>
 </body>
 </html>`
@@ -832,43 +847,206 @@ export default function VendorSaleForm({
                       </div>
                     )}
                   </>
-                ) : (
-                  /* Non-tile: single quantity input */
-                  <>
-                    <div>
-                      <label style={{ fontSize: 12, fontWeight: 600,
-                        color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
-                        Quantité ({selectedProduct.unit_label ?? 'unités'})
-                      </label>
-                      <input type="number" min="1" step="1"
-                        value={inputQty}
-                        onChange={e => setInputQty(e.target.value)}
-                        placeholder="ex : 5"
-                        style={inputStyle(computed?.stockInsufficient ?? false)} />
-                    </div>
-                    {computed && (
-                      <div style={{ marginTop: 12, padding: 12, background: C.bg,
-                        borderRadius: 8, border: `1px solid ${C.border}` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between',
-                          alignItems: 'center' }}>
-                          <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>
-                            {fmtNum(computed.tiles)} {selectedProduct.unit_label ?? 'unités'}
-                          </span>
-                          <span style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
-                            Dispo : {fmtNum(computed.availableTiles)} {selectedProduct.unit_label ?? 'unités'}
-                          </span>
+                ) : (() => {
+                  const prodType       = selectedProduct.product_type ?? 'unit'
+                  const unitLbl        = selectedProduct.unit_label    ?? 'unité'
+                  const pkgLbl         = selectedProduct.package_label ?? (prodType === 'liter' ? 'bidon' : 'barre')
+                  const hasPieceConv   = prodType === 'linear_m' && selectedProduct.piece_length_m
+                  const hasContConv    = prodType === 'liter'    && selectedProduct.container_volume_l
+                  const hasBagWeight   = prodType === 'bag'      && selectedProduct.bag_weight_kg
+
+                  return (
+                    <>
+                      {/* Mode tabs — linear_m with piece_length_m */}
+                      {hasPieceConv && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
+                          {([
+                            ['qty',           `En ${unitLbl}`],
+                            ['linear_pieces', `En ${pkgLbl}`],
+                          ] as [InputMode, string][]).map(([mode, label]) => (
+                            <button key={mode}
+                              onClick={() => { setInputMode(mode); resetInputs() }}
+                              style={{
+                                padding: '10px 4px', borderRadius: 7,
+                                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                                background: inputMode === mode ? C.navy : C.surface,
+                                color:      inputMode === mode ? C.surface : C.muted,
+                                border: `1.5px solid ${inputMode === mode ? C.navy : C.border}`,
+                                fontFamily: FONT,
+                              }}>
+                              {label}
+                            </button>
+                          ))}
                         </div>
-                        {computed.stockInsufficient && (
-                          <div style={{ marginTop: 8, padding: '8px 10px',
-                            background: C.redL, borderRadius: 6,
-                            fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
-                            Stock insuffisant — disponible : {fmtNum(computed.availableTiles)} {selectedProduct.unit_label ?? 'unités'}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
+                      )}
+
+                      {/* Mode tabs — liter with container_volume_l */}
+                      {hasContConv && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
+                          {([
+                            ['qty',              `En ${unitLbl}`],
+                            ['liter_containers', `En ${pkgLbl}`],
+                          ] as [InputMode, string][]).map(([mode, label]) => (
+                            <button key={mode}
+                              onClick={() => { setInputMode(mode); resetInputs() }}
+                              style={{
+                                padding: '10px 4px', borderRadius: 7,
+                                fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                                background: inputMode === mode ? C.navy : C.surface,
+                                color:      inputMode === mode ? C.surface : C.muted,
+                                border: `1.5px solid ${inputMode === mode ? C.navy : C.border}`,
+                                fontFamily: FONT,
+                              }}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Input field */}
+                      {inputMode === 'linear_pieces' ? (
+                        <div>
+                          <label style={{ fontSize: 12, fontWeight: 600,
+                            color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            Nombre de {pkgLbl}s
+                          </label>
+                          <input type="number" min="1" step="1"
+                            value={inputPieces}
+                            onChange={e => setInputPieces(e.target.value)}
+                            placeholder={`ex : 3 ${pkgLbl}s`}
+                            style={inputStyle(computed?.stockInsufficient ?? false)} />
+                        </div>
+                      ) : inputMode === 'liter_containers' ? (
+                        <div>
+                          <label style={{ fontSize: 12, fontWeight: 600,
+                            color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            Nombre de {pkgLbl}s
+                          </label>
+                          <input type="number" min="1" step="1"
+                            value={inputContainers}
+                            onChange={e => setInputContainers(e.target.value)}
+                            placeholder={`ex : 2 ${pkgLbl}s`}
+                            style={inputStyle(computed?.stockInsufficient ?? false)} />
+                        </div>
+                      ) : (
+                        <div>
+                          <label style={{ fontSize: 12, fontWeight: 600,
+                            color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            Quantité ({unitLbl})
+                          </label>
+                          <input type="number" min="1" step="1"
+                            value={inputQty}
+                            onChange={e => setInputQty(e.target.value)}
+                            placeholder="ex : 5"
+                            style={inputStyle(computed?.stockInsufficient ?? false)} />
+                        </div>
+                      )}
+
+                      {/* Info / equivalences panel */}
+                      {computed && (
+                        <div style={{ marginTop: 12, padding: 12, background: C.bg,
+                          borderRadius: 8, border: `1px solid ${C.border}` }}>
+                          {(inputMode === 'linear_pieces' || inputMode === 'liter_containers') ? (
+                            <>
+                              <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
+                                textTransform: 'uppercase', letterSpacing: '0.06em',
+                                marginBottom: 10, fontFamily: FONT }}>
+                                Équivalences
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                <div style={{ textAlign: 'center', padding: '8px 6px',
+                                  background: C.surface, borderRadius: 6,
+                                  border: `1px solid ${C.border}` }}>
+                                  <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: C.blue, fontFamily: FONT }}>
+                                    {inputMode === 'linear_pieces'
+                                      ? (parseInt(inputPieces) || 0)
+                                      : (parseInt(inputContainers) || 0)}
+                                  </div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '8px 6px',
+                                  background: C.blueL, borderRadius: 6,
+                                  border: `1px solid ${C.blue}33` }}>
+                                  <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
+                                  <div style={{ fontSize: 14, fontWeight: 700, color: C.blue, fontFamily: FONT }}>
+                                    {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(computed.tiles)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ marginTop: 8, fontSize: 12, color: C.muted,
+                                fontFamily: FONT, textAlign: 'center' }}>
+                                Disponible : {fmtNum(computed.availableTiles)} {unitLbl}
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between',
+                                alignItems: 'center' }}>
+                                <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>
+                                  {new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(computed.tiles)} {unitLbl}
+                                </span>
+                                <span style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
+                                  Dispo : {fmtNum(computed.availableTiles)} {unitLbl}
+                                </span>
+                              </div>
+                              {/* linear_m in meters → show bar breakdown */}
+                              {hasPieceConv && computed.tiles > 0 && (() => {
+                                const pieceLen   = parseFloat(selectedProduct.piece_length_m)
+                                const fullPieces = Math.floor(computed.tiles / pieceLen)
+                                const remainM    = Math.round((computed.tiles % pieceLen) * 100) / 100
+                                return (
+                                  <div style={{ marginTop: 8, padding: '6px 10px',
+                                    background: C.blueL, borderRadius: 6,
+                                    fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                                    = {fullPieces} {pkgLbl}{fullPieces !== 1 ? 's' : ''}
+                                    {remainM > 0 ? ` + ${remainM} m` : ' complets'}
+                                  </div>
+                                )
+                              })()}
+                              {/* bag → show kg total */}
+                              {hasBagWeight && computed.tiles > 0 && (
+                                <div style={{ marginTop: 8, padding: '6px 10px',
+                                  background: C.blueL, borderRadius: 6,
+                                  fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                                  = {fmtNum(Math.round(computed.tiles * parseFloat(selectedProduct.bag_weight_kg)))} kg total
+                                </div>
+                              )}
+                              {/* liter in L → show container breakdown */}
+                              {hasContConv && computed.tiles > 0 && (() => {
+                                const vol        = parseFloat(selectedProduct.container_volume_l)
+                                const fullCont   = Math.floor(computed.tiles / vol)
+                                const remainL    = Math.round((computed.tiles % vol) * 10) / 10
+                                return (
+                                  <div style={{ marginTop: 8, padding: '6px 10px',
+                                    background: C.blueL, borderRadius: 6,
+                                    fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                                    = {fullCont} {pkgLbl}{fullCont !== 1 ? 's' : ''}
+                                    {remainL > 0 ? ` + ${remainL} L` : ' complets'}
+                                  </div>
+                                )
+                              })()}
+                            </>
+                          )}
+
+                          {/* Bag weight info (pieces/containers mode) */}
+                          {hasBagWeight && computed.tiles > 0 && inputMode !== 'qty' && (
+                            <div style={{ marginTop: 8, fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                              = {fmtNum(Math.round(computed.tiles * parseFloat(selectedProduct.bag_weight_kg)))} kg total
+                            </div>
+                          )}
+
+                          {computed.stockInsufficient && (
+                            <div style={{ marginTop: 8, padding: '8px 10px',
+                              background: C.redL, borderRadius: 6,
+                              fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                              Stock insuffisant — disponible : {fmtNum(computed.availableTiles)} {unitLbl}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </Card>
             )}
 
