@@ -87,7 +87,7 @@ export async function updateOrderStatus(
     delivered: 'ORDER_DELIVERED',
   } as const
 
-  await supabase.from('audit_logs').insert({
+  await getAdmin().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        actionMap[newStatus],
@@ -218,7 +218,7 @@ export async function submitStockRequest(payload: {
   const { data: product } = await supabase
     .from('products').select('name').eq('id', payload.productId).single()
 
-  await supabase.from('audit_logs').insert({
+  await getAdmin().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'STOCK_REQUEST_SUBMITTED',

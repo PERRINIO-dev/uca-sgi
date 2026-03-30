@@ -1141,7 +1141,9 @@ export default function WarehouseClient({
                 const cfg = REQUEST_STATUS[
                   req.status as keyof typeof REQUEST_STATUS
                 ]
-                const isNeg = req.quantity_tiles_delta < 0
+                const isNeg   = req.quantity_tiles_delta < 0
+                const isTileReq = !req.products?.product_type || req.products.product_type === 'tile'
+                const unitLblReq = isTileReq ? 'carreau' : (req.products?.unit_label ?? 'unité')
                 return (
                   <div key={req.id} style={{
                     background: C.surface, borderRadius: 10,
@@ -1174,7 +1176,7 @@ export default function WarehouseClient({
                       <span style={{ fontSize: 13, fontWeight: 700,
                         color: isNeg ? C.red : C.green, fontFamily: FONT }}>
                         {isNeg ? '' : '+'}
-                        {fmtNum(req.quantity_tiles_delta)} carreaux
+                        {fmtNum(Math.abs(req.quantity_tiles_delta))} {unitLblReq}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: C.muted,

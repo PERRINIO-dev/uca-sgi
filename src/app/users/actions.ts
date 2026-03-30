@@ -93,7 +93,7 @@ export async function createEmployee(payload: {
     return { error: profileError.message }
   }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'USER_CREATED',
@@ -155,7 +155,7 @@ export async function toggleUserActive(
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        isActive ? 'USER_ACTIVATED' : 'USER_DEACTIVATED',
@@ -196,7 +196,7 @@ export async function createBoutique(payload: { name: string; address: string })
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'BOUTIQUE_CREATED',
@@ -253,7 +253,7 @@ export async function resetPassword(
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'PASSWORD_RESET',
@@ -293,7 +293,7 @@ export async function toggleBoutiqueActive(
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        isActive ? 'BOUTIQUE_ACTIVATED' : 'BOUTIQUE_DEACTIVATED',
@@ -356,7 +356,7 @@ export async function updateEmployee(payload: {
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'USER_UPDATED',

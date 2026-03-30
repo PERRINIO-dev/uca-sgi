@@ -96,7 +96,7 @@ export default async function WarehousePage() {
         id, created_at, request_type,
         quantity_tiles_delta, justification,
         status, review_comment,
-        products ( name, reference_code )
+        products ( name, reference_code, product_type, unit_label )
       `)
       .eq('requested_by', user.id)
       .order('created_at', { ascending: false })

@@ -59,7 +59,7 @@ export async function approveStockRequest(
     .eq('id', requestId)
     .single()
 
-  await supabase.from('audit_logs').insert({
+  await getAdmin().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'STOCK_REQUEST_APPROVED',
@@ -116,7 +116,7 @@ export async function rejectStockRequest(
     .eq('id', requestId)
     .single()
 
-  await supabase.from('audit_logs').insert({
+  await getAdmin().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'STOCK_REQUEST_REJECTED',

@@ -301,7 +301,7 @@ export async function createProduct(payload: CreateProductPayload) {
       if (stockError) return { error: stockError.message }
     }
 
-    await supabase.from('audit_logs').insert({
+    await getAdminClient().from('audit_logs').insert({
       user_id:            user.id,
       user_role_snapshot: profile.role,
       action_type:        'PRODUCT_CREATED',
@@ -387,7 +387,7 @@ export async function createProduct(payload: CreateProductPayload) {
     if (stockError) return { error: stockError.message }
   }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'PRODUCT_CREATED',
@@ -478,7 +478,7 @@ export async function updateProduct(payload: {
 
     if (error) return { error: error.message }
 
-    await supabase.from('audit_logs').insert({
+    await getAdminClient().from('audit_logs').insert({
       user_id:            user.id,
       user_role_snapshot: profile.role,
       action_type:        'PRODUCT_UPDATED',
@@ -519,7 +519,7 @@ export async function updateProduct(payload: {
 
   if (error) return { error: error.message }
 
-  await supabase.from('audit_logs').insert({
+  await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
     action_type:        'PRODUCT_UPDATED',
