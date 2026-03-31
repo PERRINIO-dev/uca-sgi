@@ -261,11 +261,11 @@ export default function UsersClient({
       <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Utilisateurs
           </h1>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
             {employees.filter(e => e.is_active).length} compte
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''} actif
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''}
@@ -278,19 +278,20 @@ export default function UsersClient({
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
               padding: '10px 16px', background: C.surface,
-              color: C.slate, border: `1.5px solid ${C.border}`, borderRadius: 8,
+              color: C.slate, border: `1.5px solid ${C.border}`, borderRadius: 9,
               fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
             }}>
             <IconStore />
             Boutiques ({boutiques.filter(b => b.is_active).length}/{boutiques.length})
           </button>
           <button
-            className="btn-navy"
+            className="btn-meram"
             onClick={() => { setShowCreate(true); setCreateError(null); setCreateSuccess(null) }}
-            style={{ padding: '10px 20px', background: C.navy,
-              color: C.surface, border: 'none', borderRadius: 8,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
-            + Nouvel employé
+            style={{ padding: '10px 20px', border: 'none', borderRadius: 9,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+              display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            Nouvel employé
           </button>
         </div>
       </div>
@@ -573,13 +574,13 @@ export default function UsersClient({
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                className="btn-navy"
+                className="btn-meram"
                 onClick={handleEdit} disabled={editLoading}
-                style={{ flex: 1, padding: '11px', background: editLoading ? C.muted : C.navy,
-                  color: C.surface, border: 'none', borderRadius: 8,
+                style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
                   fontSize: 13, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                {editLoading ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer les modifications'}
+                  fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  opacity: editLoading ? 0.7 : 1 }}>
+                {editLoading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Enregistrement…</> : 'Enregistrer les modifications'}
               </button>
             </div>
 
@@ -714,16 +715,15 @@ export default function UsersClient({
                       onKeyDown={e => { if (e.key === 'Enter') handleCreateBoutique() }}
                       style={{ ...inputStyle, flex: 1 }} />
                     <button
-                      className="btn-navy"
+                      className="btn-meram"
                       onClick={handleCreateBoutique}
                       disabled={boutiqueLoading || !newBoutiqueName.trim()}
-                      style={{ padding: '10px 16px', borderRadius: 8,
-                        background: (boutiqueLoading || !newBoutiqueName.trim()) ? C.muted : C.navy,
-                        color: C.surface, border: 'none',
+                      style={{ padding: '10px 16px', borderRadius: 9, border: 'none',
                         fontSize: 13, fontWeight: 700, cursor: 'pointer',
                         fontFamily: FONT, whiteSpace: 'nowrap', flexShrink: 0,
-                        display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-                      {boutiqueLoading ? <><span className="spinner" />…</> : 'Ajouter'}
+                        display: 'inline-flex', alignItems: 'center', gap: 7,
+                        opacity: (boutiqueLoading || !newBoutiqueName.trim()) ? 0.5 : 1 }}>
+                      {boutiqueLoading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />…</> : 'Ajouter'}
                     </button>
                   </div>
                 </div>
@@ -889,16 +889,15 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
   return (
     <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
       <button
-        className="btn-navy"
+        className="btn-meram"
         onClick={onConfirm} disabled={loading || disabled}
-        style={{ flex: 1, padding: '11px',
-          background: (loading || disabled) ? C.muted : C.navy,
-          color: C.surface, border: 'none', borderRadius: 8,
+        style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
           fontSize: 13, fontWeight: 700,
           cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
           fontFamily: FONT, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', gap: 7 }}>
-        {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
+          justifyContent: 'center', gap: 7,
+          opacity: (loading || disabled) ? 0.7 : 1 }}>
+        {loading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />{confirmLabel}…</> : confirmLabel}
       </button>
       <button
         className="btn-ghost"

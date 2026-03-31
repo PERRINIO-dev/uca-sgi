@@ -297,10 +297,10 @@ export default function SalesListClient({
         flexWrap: 'wrap', gap: 12,
       }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Ventes
           </h1>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
             {totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
@@ -310,7 +310,7 @@ export default function SalesListClient({
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
           <button
-            className="btn-navy"
+            className="btn-meram"
             disabled={navPending}
             onClick={() => {
               if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
@@ -322,18 +322,19 @@ export default function SalesListClient({
             }}
             style={{
               padding: '10px 20px',
-              background: navPending ? C.slate : C.navy, color: 'white',
-              border: 'none', borderRadius: 8,
-              fontSize: 13, fontWeight: 600,
+              border: 'none', borderRadius: 9,
+              fontSize: 13, fontWeight: 700,
               cursor: navPending ? 'not-allowed' : 'pointer',
               fontFamily: FONT,
               display: 'flex', alignItems: 'center', gap: 8,
-              transition: 'background 0.15s',
+              opacity: navPending ? 0.7 : 1,
             }}
           >
             {navPending ? (
-              <><span className="spinner" />Chargement…</>
-            ) : '+ Nouvelle vente'}
+              <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Chargement…</>
+            ) : (
+              <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
+            )}
           </button>
         )}
       </div>
@@ -480,7 +481,7 @@ export default function SalesListClient({
             </p>
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
               <button
-                className="btn-navy"
+                className="btn-meram"
                 disabled={firstSalePending}
                 onClick={() => {
                   if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
@@ -491,17 +492,17 @@ export default function SalesListClient({
                   startFirstSaleTransition(() => router.push('/sales/new'))
                 }}
                 style={{
-                  padding: '10px 24px',
-                  background: firstSalePending ? C.slate : C.navy, color: 'white',
-                  border: 'none', borderRadius: 8,
-                  fontSize: 13, fontWeight: 600,
+                  padding: '11px 24px',
+                  border: 'none', borderRadius: 9,
+                  fontSize: 13, fontWeight: 700,
                   cursor: firstSalePending ? 'not-allowed' : 'pointer',
                   fontFamily: FONT,
                   display: 'inline-flex', alignItems: 'center', gap: 8,
+                  opacity: firstSalePending ? 0.7 : 1,
                 }}
               >
                 {firstSalePending ? (
-                  <><span className="spinner" />Chargement…</>
+                  <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Chargement…</>
                 ) : 'Créer la première vente'}
               </button>
             )}
@@ -1001,9 +1002,10 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
     (['owner', 'admin'].includes(profile.role) || sale.vendor_id === profile.id)
 
   return (
-    <div style={{ background: C.bg, borderRadius: 8, padding: '14px 16px', border: `1px solid ${C.border}`, marginTop: 2 }}>
+    <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, marginTop: 4, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
       {/* Articles */}
+      <div style={{ padding: '14px 16px 0', borderBottom: `1px solid ${C.border}` }}>
       <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
         Détail des articles
       </div>
@@ -1056,9 +1058,10 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
           </tbody>
         </table>
       </div>
+      </div>
 
       {/* ── Historique des paiements ── */}
-      <div style={{ borderTop: `1px solid ${C.border}`, marginTop: 14, paddingTop: 12 }}>
+      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
           Historique des paiements
         </div>
@@ -1148,7 +1151,8 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
         const balance = Math.max(0, parseFloat(sale.total_amount) - paid)
         if (!pc) return null
         return (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginTop: 10, padding: '8px 12px', borderRadius: 8, background: pc.bg, border: `1px solid ${pc.color}33` }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${C.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 12px', borderRadius: 8, background: pc.bg, border: `1px solid ${pc.color}33` }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: pc.color, fontFamily: FONT }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc.color }} />{pc.label}
             </span>
@@ -1157,11 +1161,12 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
               {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmt(balance)}</strong></>)}
             </span>
           </div>
+          </div>
         )
       })()}
 
       {/* ── Footer ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${C.border}`, paddingTop: 10, marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ fontSize: 12, color: C.slate, display: 'flex', gap: 16, flexWrap: 'wrap', fontFamily: FONT }}>
           {sale.customer_phone && (
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -1189,7 +1194,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
             <IconPrint /> Imprimer le reçu
           </button>
-          <div style={{ fontSize: 15, fontWeight: 800, color: C.ink, fontFamily: FONT }}>Total : {fmt(sale.total_amount)}</div>
+          <div style={{ fontSize: 16, fontWeight: 900, color: C.ink, fontFamily: FONT, letterSpacing: '-0.02em' }}>{fmt(sale.total_amount)}</div>
         </div>
       </div>
     </div>

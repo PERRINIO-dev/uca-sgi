@@ -311,8 +311,8 @@ export default function ReportsClient({
       <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Rapports
           </h1>
           <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
@@ -321,10 +321,10 @@ export default function ReportsClient({
           </p>
         </div>
         <button
-          className="btn-navy"
+          className="btn-meram"
           onClick={exportCSV}
-          style={{ padding: '10px 18px', background: C.navy,
-            color: C.surface, border: 'none', borderRadius: 8,
+          style={{ padding: '10px 18px',
+            border: 'none', borderRadius: 9,
             fontSize: 13, fontWeight: 700, cursor: 'pointer',
             fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -344,9 +344,9 @@ export default function ReportsClient({
             <button key={val} onClick={() => setDays(val)}
               style={{ padding: '7px 14px', borderRadius: 100,
                 fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                background: filterDays === val ? C.navy : C.bg,
+                background: filterDays === val ? C.blue : C.bg,
                 color:      filterDays === val ? C.surface : C.slate,
-                border: `1.5px solid ${filterDays === val ? C.navy : C.border}`,
+                border: `1.5px solid ${filterDays === val ? C.blue : C.border}`,
                 fontFamily: FONT }}>
               {label}
             </button>

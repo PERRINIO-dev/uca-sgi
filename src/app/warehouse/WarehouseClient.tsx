@@ -336,11 +336,11 @@ export default function WarehouseClient({
 
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Entrepôt
           </h1>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
             {TAB_LABELS[activeTab]} ·{' '}
             {orders.length} commande{orders.length !== 1 ? 's' : ''} active
             {orders.length !== 1 ? 's' : ''} · Entrepôt Central
@@ -494,18 +494,18 @@ export default function WarehouseClient({
                       )}
                       {order.status === 'ready' && (
                         <button
-                          className="btn-navy"
+                          className="btn-meram"
                           onClick={() => handleOrderAction(order.id, 'delivered')}
                           disabled={loadingOrder === order.id}
                           style={{
-                            padding: '9px 16px', background: C.navy,
-                            color: C.surface, border: 'none', borderRadius: 7,
+                            padding: '9px 16px', border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
                             cursor: 'pointer', fontFamily: FONT,
                             display: 'inline-flex', alignItems: 'center', gap: 6,
+                            opacity: loadingOrder === order.id ? 0.7 : 1,
                           }}>
                           {loadingOrder === order.id ? (
-                            <><span className="spinner" />En cours…</>
+                            <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />En cours…</>
                           ) : 'Confirmer livraison'}
                         </button>
                       )}
@@ -1102,18 +1102,18 @@ export default function WarehouseClient({
                   const disabled = reqLoading || !reqProduct || reqJustif.trim().length < 10 || !hasQty
                   return (
                 <button
-                  className="btn-navy"
+                  className="btn-meram"
                   onClick={handleStockRequest}
                   disabled={disabled}
                   style={{
                     padding: '13px', borderRadius: 8, border: 'none',
-                    cursor: 'pointer', fontFamily: FONT,
-                    background: disabled ? C.muted : C.navy,
-                    color: C.surface, fontSize: 13, fontWeight: 700,
+                    cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: FONT,
+                    fontSize: 13, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    opacity: disabled ? 0.45 : 1,
                   }}>
                   {reqLoading
-                    ? <><span className="spinner" />Envoi…</>
+                    ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Envoi…</>
                     : 'Soumettre pour approbation'}
                 </button>
                   )
@@ -1229,14 +1229,14 @@ export default function WarehouseClient({
               </p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
-                  className="btn-navy"
+                  className="btn-meram"
                   onClick={handleConfirmDelivery}
                   disabled={!!loadingOrder}
                   style={{ flex: 1, padding: '12px',
-                    background: C.navy, color: C.surface,
                     border: 'none', borderRadius: 8, fontSize: 13,
                     fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    opacity: !!loadingOrder ? 0.7 : 1,
                   }}>
                   {loadingOrder ? (
                     <><span className="spinner" />En cours…</>

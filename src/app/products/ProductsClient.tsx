@@ -463,17 +463,18 @@ export default function ProductsClient({
       <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.02em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Catalogue produits
           </h1>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
             {products.filter(p => p.is_active).length} produit
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''} actif
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
+          className="btn-meram"
           onClick={() => {
             setForm(emptyForm('tile'))
             setError(null)
@@ -482,10 +483,11 @@ export default function ProductsClient({
             setModalStep(1)
             setShowCreate(true)
           }}
-          style={{ padding: '11px 20px', background: C.navy,
-            color: C.surface, border: 'none', borderRadius: 8,
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
-          + Nouveau produit
+          style={{ padding: '11px 20px', border: 'none', borderRadius: 9,
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+            display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+          Nouveau produit
         </button>
       </div>
 
@@ -616,32 +618,57 @@ export default function ProductsClient({
             {/* ── STEP 1 — Comment vendez-vous ce produit ? ── */}
             {modalStep === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontSize: 13, color: C.slate, margin: '0 0 6px', fontFamily: FONT, lineHeight: 1.6 }}>
-                  Choisissez comment ce produit est vendu sur le terrain. Le formulaire s'adaptera automatiquement.
+                <p style={{ fontSize: 13, color: C.muted, margin: '0 0 4px', fontFamily: FONT, lineHeight: 1.6 }}>
+                  Choisissez comment ce produit est vendu. Le formulaire s'adaptera automatiquement.
                 </p>
                 {([
-                  ['tile',     'Par surface (m²)',     'Carrelage, parquet — vente en m² ou en cartons + carreaux'],
-                  ['unit',     'À la pièce',           "Robinet, lavabo, WC, ampoule, porte — stock à l'unité"],
-                  ['bag',      'Par sac',              'Ciment, colle, sable, gravier — stock et vente en sacs'],
-                  ['liter',    'Par volume (litre)',   'Peinture, résine — vente au litre ou au bidon'],
-                  ['linear_m', 'Au mètre linéaire',   'Tuyaux PVC, câbles — vente au mètre ou à la barre/rouleau'],
-                ] as [ProductType, string, string][]).map(([val, lbl, sub]) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => { setField('productType', val); refCodeTouched.current = false }}
-                    style={{
-                      padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
-                      textAlign: 'left', fontFamily: FONT,
-                      border: `2px solid ${productType === val ? C.blue : C.border}`,
-                      background: productType === val ? C.blueL : C.surface,
-                    }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: productType === val ? C.blue : C.ink }}>
-                      {lbl}
-                    </div>
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{sub}</div>
-                  </button>
-                ))}
+                  ['tile',     'Carrelage / m²',       'Vente en m² ou en cartons + carreaux', '#2563EB', '#EFF6FF',
+                    <svg key="t" width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="1" y="1" width="7" height="7" rx="1.5" fill="#2563EB"/><rect x="12" y="1" width="7" height="7" rx="1.5" fill="#2563EB"/><rect x="1" y="12" width="7" height="7" rx="1.5" fill="#2563EB"/><rect x="12" y="12" width="7" height="7" rx="1.5" fill="#2563EB"/></svg>,
+                  ],
+                  ['unit',     'Pièce / unité',        'Robinet, lavabo, porte — stock à la pièce', '#7C3AED', '#F5F3FF',
+                    <svg key="u" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L18 7v8L10 19 2 15V7L10 2z" stroke="#7C3AED" strokeWidth="1.6" strokeLinejoin="round"/><path d="M2 7l8 4.5 8-4.5M10 2v17" stroke="#7C3AED" strokeWidth="1.4" strokeLinejoin="round"/></svg>,
+                  ],
+                  ['bag',      'Sac / conditionnement','Ciment, colle, sable — stock en sacs', '#D97706', '#FFFBEB',
+                    <svg key="b" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 8h12l-2 10H6L4 8z" stroke="#D97706" strokeWidth="1.6" strokeLinejoin="round"/><path d="M7 8c0-3.3 1.3-6 3-6s3 2.7 3 6" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+                  ],
+                  ['liter',    'Litre / volume',       'Peinture, résine — vente au litre ou au bidon', '#0891B2', '#ECFEFF',
+                    <svg key="l" width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2L5 10a5 5 0 1 0 10 0L10 2z" stroke="#0891B2" strokeWidth="1.6" strokeLinejoin="round"/><path d="M7 13a3 3 0 0 0 3 3" stroke="#0891B2" strokeWidth="1.3" strokeLinecap="round" opacity="0.6"/></svg>,
+                  ],
+                  ['linear_m', 'Mètre linéaire',       'Tuyaux PVC, câbles — vente au mètre ou à la barre', '#059669', '#F0FDF4',
+                    <svg key="m" width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="1" y="7" width="18" height="6" rx="2" stroke="#059669" strokeWidth="1.6"/><path d="M5 7v2.5M9 7v3.5M13 7v2.5M17 7v2.5" stroke="#059669" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+                  ],
+                ] as [ProductType, string, string, string, string, React.ReactNode][]).map(([val, lbl, sub, color, bg, icon]) => {
+                  const isSelected = productType === val
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => { setField('productType', val); refCodeTouched.current = false }}
+                      style={{
+                        padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+                        textAlign: 'left', fontFamily: FONT,
+                        border: `2px solid ${isSelected ? color : C.border}`,
+                        background: isSelected ? bg : C.surface,
+                        display: 'flex', alignItems: 'center', gap: 14,
+                        transition: 'border-color 0.15s, background 0.15s',
+                      }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 12, background: isSelected ? bg : C.bg, border: `1px solid ${isSelected ? color + '40' : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {icon}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: isSelected ? color : C.ink, fontFamily: FONT }}>
+                          {lbl}
+                        </div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 3, fontFamily: FONT }}>{sub}</div>
+                      </div>
+                      {isSelected && (
+                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4l2.5 2.5L9 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
 
@@ -1147,29 +1174,40 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
 
   const stockColor = !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green
 
+  const typeConfig: Record<ProductType, { color: string; bg: string }> = {
+    tile:     { color: '#2563EB', bg: '#EFF6FF' },
+    unit:     { color: '#7C3AED', bg: '#F5F3FF' },
+    bag:      { color: '#D97706', bg: '#FFFBEB' },
+    liter:    { color: '#0891B2', bg: '#ECFEFF' },
+    linear_m: { color: '#059669', bg: '#F0FDF4' },
+  }
+  const tcfg = typeConfig[pt] ?? typeConfig.unit
+
   return (
     <div style={{
-      background: C.surface, borderRadius: 12,
+      background: C.surface, borderRadius: 14,
       border: `1px solid ${C.border}`,
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      padding: '20px 22px',
+      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      overflow: 'hidden',
       opacity: p.is_active ? 1 : 0.6,
-      borderLeft: `4px solid ${stockColor}`,
     }}>
+      {/* Color top stripe based on stock status */}
+      <div style={{ height: 3, background: !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green }} />
+
+      <div style={{ padding: '16px 18px 16px' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, fontFamily: FONT }}>
-            {p.name}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, gap: 10, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 9, background: tcfg.bg, border: `1px solid ${tcfg.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ProductTypeIcon type={pt} color={tcfg.color} />
           </div>
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
-            {p.reference_code} · {p.category}
-            {pt !== 'tile' && (
-              <span style={{ marginLeft: 6, padding: '2px 7px', borderRadius: 100,
-                background: C.bg, border: `1px solid ${C.border}`, fontSize: 10, fontWeight: 600 }}>
-                {TYPE_LABELS[pt]}
-              </span>
-            )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {p.name}
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+              {p.reference_code}{p.category ? ` · ${p.category}` : ''}
+            </div>
           </div>
         </div>
         <span style={{ display: 'inline-flex', alignItems: 'center',
@@ -1198,7 +1236,7 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => onEdit(p)}
           style={{ flex: 1, padding: '8px', background: C.blueL, color: C.blue,
-            border: `1px solid transparent`, borderRadius: 7,
+            border: `1px solid ${C.blue}20`, borderRadius: 8,
             fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
           Modifier
         </button>
@@ -1208,7 +1246,7 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
           style={{ flex: 1, padding: '8px',
             background: p.is_active ? C.redL   : C.greenL,
             color:      p.is_active ? C.red    : C.green,
-            border: 'none', borderRadius: 7,
+            border: 'none', borderRadius: 8,
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             fontFamily: FONT }}>
@@ -1217,8 +1255,20 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
             : p.is_active ? 'Désactiver' : 'Réactiver'}
         </button>
       </div>
+      </div>
     </div>
   )
+}
+
+function ProductTypeIcon({ type, color }: { type: string; color: string }) {
+  const s = 15
+  switch (type) {
+    case 'tile': return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="5.5" height="5.5" rx="1.2" fill={color}/><rect x="9.5" y="1" width="5.5" height="5.5" rx="1.2" fill={color}/><rect x="1" y="9.5" width="5.5" height="5.5" rx="1.2" fill={color}/><rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1.2" fill={color}/></svg>
+    case 'bag':  return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M3 6h10l-1.5 8H4.5L3 6z" stroke={color} strokeWidth="1.4" strokeLinejoin="round"/><path d="M5.5 6C5.5 3.5 6.5 2 8 2s2.5 1.5 2.5 4" stroke={color} strokeWidth="1.4" strokeLinecap="round"/></svg>
+    case 'liter': return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 2L4 8a4 4 0 1 0 8 0L8 2z" stroke={color} strokeWidth="1.4" strokeLinejoin="round"/></svg>
+    case 'linear_m': return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><rect x="1" y="5.5" width="14" height="5" rx="1.5" stroke={color} strokeWidth="1.4"/><path d="M4 5.5v2M7 5.5v3M10 5.5v2M13 5.5v2" stroke={color} strokeWidth="1.2" strokeLinecap="round"/></svg>
+    default: return <svg width={s} height={s} viewBox="0 0 16 16" fill="none"><path d="M8 1.5L14 5v6L8 14.5 2 11V5L8 1.5z" stroke={color} strokeWidth="1.4" strokeLinejoin="round"/><path d="M2 5l6 3.5 6-3.5M8 1.5v13" stroke={color} strokeWidth="1.2" strokeLinejoin="round"/></svg>
+  }
 }
 
 // ── Tile info grid (original layout — unchanged) ──────────────────────────────

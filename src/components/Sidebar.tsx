@@ -5,34 +5,47 @@ import { useTransition, useEffect, useState } from 'react'
 import { useIsMobile }      from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
-// ── Design tokens ──────────────────────────────────────────────────────────────
-const S = {
-  bg:          '#0D1117',
-  surface:     '#161B22',
-  border:      'rgba(255,255,255,0.06)',
-  text:        'rgba(255,255,255,0.90)',
-  textMuted:   'rgba(255,255,255,0.42)',
-  textDim:     'rgba(255,255,255,0.24)',
-  activeText:  '#FFFFFF',
-  activeBg:    'rgba(59,130,246,0.14)',
-  activeBorder:'#3B82F6',
-  hoverBg:     'rgba(255,255,255,0.05)',
-  blue:        '#3B82F6',
-  blueGlow:    'rgba(59,130,246,0.35)',
-  red:         '#F85149',
-  amber:       '#D29922',
-  amberBg:     'rgba(210,153,34,0.14)',
-}
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-// ── SVG icon set ──────────────────────────────────────────────────────────────
+// ── Boutiques platform tokens (white premium) ─────────────────────────────────
+const B = {
+  bg:          '#FFFFFF',
+  bgHover:     '#F5F7FA',
+  border:      '#E5E7EB',
+  borderStrong:'#D1D5DB',
+  text:        '#111827',
+  textSub:     '#6B7280',
+  textDim:     '#9CA3AF',
+  activeBg:    '#EFF6FF',
+  activeBorder:'#2563EB',
+  activeText:  '#1D4ED8',
+  activeIcon:  '#2563EB',
+  badgeBg:     '#EF4444',
+}
+
+// ── Admin platform tokens (dark) ──────────────────────────────────────────────
+const A = {
+  bg:          '#0D1117',
+  bgHover:     'rgba(255,255,255,0.05)',
+  border:      'rgba(255,255,255,0.06)',
+  text:        'rgba(255,255,255,0.90)',
+  textSub:     'rgba(255,255,255,0.45)',
+  textDim:     'rgba(255,255,255,0.22)',
+  activeBg:    'rgba(210,153,34,0.14)',
+  activeBorder:'#D29922',
+  activeText:  '#FCD34D',
+  activeIcon:  '#FCD34D',
+  badgeBg:     '#EF4444',
+}
+
+// ── SVG icons ─────────────────────────────────────────────────────────────────
 function IconDashboard({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
-      <rect x="2" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.85"/>
-      <rect x="10.5" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.55"/>
-      <rect x="2" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.55"/>
-      <rect x="10.5" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.85"/>
+      <rect x="2" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.9"/>
+      <rect x="10.5" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.5"/>
+      <rect x="2" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.5"/>
+      <rect x="10.5" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.9"/>
     </svg>
   )
 }
@@ -117,68 +130,6 @@ function IconClose({ size = 14, color = 'currentColor' }: { size?: number; color
   )
 }
 
-// ── Meram wordmark ────────────────────────────────────────────────────────────
-function MeramLogo() {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      {/* M monogram */}
-      <div style={{
-        width: 34, height: 34, borderRadius: 9,
-        background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0,
-        boxShadow: '0 2px 10px rgba(37,99,235,0.45)',
-      }}>
-        <svg width="18" height="15" viewBox="0 0 18 15" fill="none">
-          <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-      <div>
-        <div style={{
-          fontSize: 17, fontWeight: 800, color: '#FFFFFF',
-          letterSpacing: '-0.03em', lineHeight: 1,
-          fontFamily: FONT,
-        }}>
-          MERAM
-        </div>
-        <div style={{
-          fontSize: 9, color: S.textDim,
-          letterSpacing: '0.18em', textTransform: 'uppercase',
-          fontWeight: 600, marginTop: 3,
-        }}>
-          Manage · Sell · Optimize
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── User avatar ───────────────────────────────────────────────────────────────
-function Avatar({ name }: { name: string }) {
-  const parts   = name.trim().split(' ')
-  const letters = parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase()
-
-  // Deterministic hue from name
-  const hue = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360
-
-  return (
-    <div style={{
-      width: 36, height: 36, borderRadius: '50%',
-      background: `linear-gradient(135deg, hsl(${hue},60%,35%) 0%, hsl(${(hue+30)%360},70%,50%) 100%)`,
-      border: '2px solid rgba(255,255,255,0.12)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
-      fontSize: 13, fontWeight: 700, color: '#FFFFFF',
-      letterSpacing: '0.03em',
-      boxShadow: '0 0 0 3px rgba(255,255,255,0.06)',
-    }}>
-      {letters}
-    </div>
-  )
-}
-
 // ── Nav config ─────────────────────────────────────────────────────────────────
 type NavIcon = React.FC<{ size?: number; color?: string }>
 const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
@@ -189,18 +140,75 @@ const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
   [IconReports,   'Rapports',        '/reports',    ['owner', 'admin']],
 ]
-
 const NAV_TOUR_IDS: Record<string, string> = {
   '/sales':     'tour-nav-sales',
   '/warehouse': 'tour-nav-warehouse',
   '/reports':   'tour-nav-reports',
 }
-
 const ROLE_LABELS: Record<string, string> = {
   owner:     'Propriétaire',
   admin:     'Administrateur',
   vendor:    'Vendeur',
   warehouse: 'Magasinier',
+}
+
+// ── Avatar ────────────────────────────────────────────────────────────────────
+function Avatar({ name, dark = false }: { name: string; dark?: boolean }) {
+  const parts   = name.trim().split(' ')
+  const letters = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase()
+  const hue = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360
+  return (
+    <div style={{
+      width: 34, height: 34, borderRadius: '50%',
+      background: dark
+        ? `linear-gradient(135deg,hsl(${hue},55%,30%),hsl(${(hue+30)%360},65%,45%))`
+        : `linear-gradient(135deg,hsl(${hue},55%,50%),hsl(${(hue+30)%360},70%,65%))`,
+      border: dark ? '2px solid rgba(255,255,255,0.12)' : `2px solid hsl(${hue},40%,85%)`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+      fontSize: 12, fontWeight: 700, color: '#FFFFFF',
+      letterSpacing: '0.03em',
+    }}>
+      {letters}
+    </div>
+  )
+}
+
+// ── MERAM Logo ────────────────────────────────────────────────────────────────
+function MeramLogo({ dark = false }: { dark?: boolean }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 9,
+        background: 'linear-gradient(145deg,#1D4ED8 0%,#3B82F6 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, boxShadow: '0 2px 8px rgba(37,99,235,0.38)',
+      }}>
+        <svg width="17" height="14" viewBox="0 0 18 15" fill="none">
+          <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div style={{
+          fontSize: 16, fontWeight: 800,
+          color: dark ? '#FFFFFF' : '#111827',
+          letterSpacing: '-0.03em', lineHeight: 1, fontFamily: FONT,
+        }}>
+          MERAM
+        </div>
+        <div style={{
+          fontSize: 8.5,
+          color: dark ? 'rgba(255,255,255,0.28)' : '#9CA3AF',
+          letterSpacing: '0.16em', textTransform: 'uppercase',
+          fontWeight: 600, marginTop: 3,
+        }}>
+          Manage · Sell · Optimize
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -226,6 +234,10 @@ export default function Sidebar({
   const [notifState,     setNotifState]     = useState<'subscribed' | 'denied' | 'default'>('default')
   const [notifLoading,   setNotifLoading]   = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+
+  const isAdmin = profile.is_platform_admin === true
+  // Use dark tokens for admin, light tokens for boutiques
+  const T = isAdmin ? A : B
 
   useEffect(() => {
     visibleItems.forEach(([,, href]) => { router.prefetch(href) })
@@ -276,7 +288,7 @@ export default function Sidebar({
     }
   }
 
-  const visibleItems = profile.is_platform_admin
+  const visibleItems = isAdmin
     ? []
     : NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
 
@@ -291,61 +303,72 @@ export default function Sidebar({
     <>
     <aside style={{
       width: 240,
-      background: S.bg,
+      background: T.bg,
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
       position: 'fixed',
       top: 0, left: 0, bottom: 0,
       transform: isMobileOpen ? 'translateX(0)' : 'translateX(-240px)',
-      transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
+      transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
       zIndex: 160,
       fontFamily: FONT,
-      borderRight: `1px solid ${S.border}`,
+      borderRight: `1px solid ${T.border}`,
+      boxShadow: isAdmin ? 'none' : '2px 0 16px rgba(0,0,0,0.06)',
     }}>
 
-      {/* ── Logo / Brand ── */}
+      {/* ── Blue gradient accent stripe (boutiques only) ── */}
+      {!isAdmin && (
+        <div style={{
+          height: 3,
+          background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 60%, #60A5FA 100%)',
+          flexShrink: 0,
+        }} />
+      )}
+
+      {/* ── Logo ── */}
       <div style={{
-        padding: '22px 20px 18px',
-        borderBottom: `1px solid ${S.border}`,
+        padding: isAdmin ? '20px 20px 16px' : '18px 20px 14px',
+        borderBottom: `1px solid ${T.border}`,
         flexShrink: 0,
       }}>
-        <MeramLogo />
+        <MeramLogo dark={isAdmin} />
       </div>
 
       {/* ── User profile ── */}
       <div style={{
-        padding: '14px 16px',
-        borderBottom: `1px solid ${S.border}`,
-        display: 'flex', alignItems: 'center', gap: 11,
+        padding: '12px 16px',
+        borderBottom: `1px solid ${T.border}`,
+        display: 'flex', alignItems: 'center', gap: 10,
         flexShrink: 0,
+        background: isAdmin ? 'transparent' : '#FAFBFC',
       }}>
-        <Avatar name={profile.full_name} />
+        <Avatar name={profile.full_name} dark={isAdmin} />
         <div style={{ minWidth: 0 }}>
           <div style={{
-            fontSize: 13, fontWeight: 600, color: S.text,
+            fontSize: 13, fontWeight: 600, color: T.text,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {profile.full_name}
           </div>
           <div style={{
-            fontSize: 11, color: S.textMuted,
+            fontSize: 11, color: T.textSub,
             marginTop: 2, fontWeight: 500,
           }}>
-            {profile.is_platform_admin ? 'Opérateur Plateforme' : (ROLE_LABELS[profile.role] ?? profile.role)}
+            {isAdmin ? 'Opérateur Plateforme' : (ROLE_LABELS[profile.role] ?? profile.role)}
           </div>
         </div>
       </div>
 
       {/* ── Navigation ── */}
-      <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '10px 10px', overflowY: 'auto' }}>
 
-        {/* Section label */}
         {visibleItems.length > 0 && (
           <div style={{
             padding: '4px 10px 8px',
-            fontSize: 9.5, fontWeight: 700, color: S.textDim,
-            letterSpacing: '0.14em', textTransform: 'uppercase',
+            fontSize: 9.5, fontWeight: 700,
+            color: T.textDim,
+            letterSpacing: '0.13em', textTransform: 'uppercase',
           }}>
             Navigation
           </div>
@@ -365,36 +388,30 @@ export default function Sidebar({
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 11,
-                width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
+                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
                 border: 'none',
                 borderRadius: 8,
-                background: active ? S.activeBg : 'transparent',
-                borderLeft: `2px solid ${active ? S.activeBorder : 'transparent'}`,
-                color: active ? S.activeText : isPending ? S.textDim : S.textMuted,
+                background: active ? T.activeBg : 'transparent',
+                borderLeft: `2.5px solid ${active ? T.activeBorder : 'transparent'}`,
+                color: active ? T.activeText : isPending ? T.textDim : T.textSub,
                 fontSize: 13.5, fontWeight: active ? 600 : 400,
                 cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
                 fontFamily: FONT,
                 marginBottom: 2,
                 opacity: isPending && !active ? 0.5 : 1,
-                transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
+                transition: 'background 0.12s ease, color 0.12s ease',
               }}
             >
-              <Icon
-                size={17}
-                color={active ? '#93C5FD' : S.textMuted}
-              />
+              <Icon size={17} color={active ? T.activeIcon : T.textSub} />
               <span style={{ flex: 1 }}>{label}</span>
               {badge > 0 && (
                 <span style={{
-                  minWidth: 18, height: 18,
-                  padding: '0 5px',
-                  borderRadius: 9,
-                  background: '#EF4444',
-                  color: '#fff',
+                  minWidth: 18, height: 18, padding: '0 5px',
+                  borderRadius: 9, background: T.badgeBg, color: '#fff',
                   fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   lineHeight: 1, flexShrink: 0,
-                  boxShadow: '0 1px 4px rgba(239,68,68,0.45)',
+                  boxShadow: '0 1px 4px rgba(239,68,68,0.4)',
                 }}>
                   {badge > 99 ? '99+' : badge}
                 </span>
@@ -403,19 +420,16 @@ export default function Sidebar({
           )
         })}
 
-        {/* ── Platform admin nav ── */}
-        {profile.is_platform_admin && (
+        {/* ── Admin nav ── */}
+        {isAdmin && (
           <>
             <div style={{
-              padding: '14px 10px 8px',
-              fontSize: 9.5, fontWeight: 700,
-              color: S.textDim,
-              letterSpacing: '0.14em', textTransform: 'uppercase',
+              padding: '14px 10px 8px', fontSize: 9.5, fontWeight: 700,
+              color: T.textDim, letterSpacing: '0.13em', textTransform: 'uppercase',
             }}>
               Plateforme
             </div>
             <button
-              key="/admin"
               className={`nav-item${activeRoute === '/admin' ? ' nav-active' : ''}`}
               onClick={() => {
                 onClose?.()
@@ -423,21 +437,16 @@ export default function Sidebar({
               }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 11,
-                width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
-                border: 'none',
-                borderRadius: 8,
-                background: activeRoute === '/admin' ? S.amberBg : 'transparent',
-                borderLeft: `2px solid ${activeRoute === '/admin' ? S.amber : 'transparent'}`,
-                color: activeRoute === '/admin' ? '#FCD34D' : S.textMuted,
+                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+                border: 'none', borderRadius: 8, marginBottom: 2,
+                background: activeRoute === '/admin' ? T.activeBg : 'transparent',
+                borderLeft: `2.5px solid ${activeRoute === '/admin' ? T.activeBorder : 'transparent'}`,
+                color: activeRoute === '/admin' ? T.activeText : T.textSub,
                 fontSize: 13.5, fontWeight: activeRoute === '/admin' ? 600 : 400,
-                cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
-                fontFamily: FONT, marginBottom: 2,
+                cursor: 'pointer', textAlign: 'left', fontFamily: FONT,
               }}
             >
-              <IconPlatform
-                size={17}
-                color={activeRoute === '/admin' ? '#FCD34D' : S.textMuted}
-              />
+              <IconPlatform size={17} color={activeRoute === '/admin' ? T.activeIcon : T.textSub} />
               <span style={{ flex: 1 }}>Administration</span>
             </button>
           </>
@@ -445,39 +454,33 @@ export default function Sidebar({
       </nav>
 
       {/* ── Notification toggle ── */}
-      {notifSupported && !profile.is_platform_admin && (
+      {notifSupported && !isAdmin && (
         <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <button
             disabled={notifLoading || notifState === 'denied'}
             onClick={handleNotifToggle}
             title={
-              notifState === 'subscribed' ? 'Notifications activées — cliquer pour désactiver'
-              : notifState === 'denied'   ? 'Notifications bloquées par le navigateur'
+              notifState === 'subscribed' ? 'Notifications activées — désactiver'
+              : notifState === 'denied'   ? 'Notifications bloquées'
               : 'Activer les notifications push'
             }
             style={{
-              width: '100%', padding: '8px 12px',
-              borderRadius: 8,
-              background: notifState === 'subscribed' ? 'rgba(59,130,246,0.10)' : 'transparent',
-              border: `1px solid ${notifState === 'subscribed' ? 'rgba(59,130,246,0.22)' : S.border}`,
-              color: notifLoading ? S.textDim
-                : notifState === 'subscribed' ? '#93C5FD'
-                : notifState === 'denied'     ? S.textDim
-                : S.textMuted,
+              width: '100%', padding: '8px 12px', borderRadius: 8,
+              background: notifState === 'subscribed' ? '#EFF6FF' : 'transparent',
+              border: `1px solid ${notifState === 'subscribed' ? '#BFDBFE' : T.border}`,
+              color: notifState === 'subscribed' ? '#2563EB'
+                : notifState === 'denied' ? T.textDim : T.textSub,
               fontSize: 11.5, fontWeight: 500,
               cursor: notifLoading || notifState === 'denied' ? 'not-allowed' : 'pointer',
-              fontFamily: FONT,
-              display: 'flex', alignItems: 'center', gap: 8,
+              fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 8,
               transition: 'all 0.15s ease',
             }}
           >
             {notifLoading
-              ? <span className="spinner" style={{ width: 12, height: 12 }} />
-              : <IconBell
-                  size={13}
-                  color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? S.textDim : S.textMuted}
-                  filled={notifState === 'subscribed'}
-                />
+              ? <span className="spinner-blue" style={{ width: 12, height: 12 }} />
+              : <IconBell size={13}
+                  color={notifState === 'subscribed' ? '#2563EB' : notifState === 'denied' ? T.textDim : T.textSub}
+                  filled={notifState === 'subscribed'} />
             }
             {notifLoading
               ? 'En cours…'
@@ -489,111 +492,60 @@ export default function Sidebar({
       )}
 
       {/* ── Logout ── */}
-      <div style={{ padding: '6px 10px 20px', borderTop: `1px solid ${S.border}`, flexShrink: 0 }}>
+      <div style={{ padding: '6px 10px 18px', borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
         <button
           className="nav-item"
           onClick={() => setShowLogoutModal(true)}
           style={{
-            width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
-            borderRadius: 8,
-            background: 'transparent',
-            border: 'none',
-            borderLeft: '2px solid transparent',
-            color: S.textMuted,
-            fontSize: 13.5, fontWeight: 400,
-            cursor: 'pointer',
-            fontFamily: FONT,
+            width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+            borderRadius: 8, background: 'transparent',
+            border: 'none', borderLeft: '2.5px solid transparent',
+            color: T.textSub, fontSize: 13.5, fontWeight: 400,
+            cursor: 'pointer', fontFamily: FONT,
             display: 'flex', alignItems: 'center', gap: 11,
           }}
         >
-          <IconLogout size={16} color={S.textMuted} />
+          <IconLogout size={16} color={T.textSub} />
           <span>Déconnexion</span>
         </button>
       </div>
     </aside>
 
-    {/* ── Logout confirmation modal ── */}
+    {/* ── Logout modal ── */}
     {showLogoutModal && (
-      <div
-        className="modal-overlay"
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.65)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: 20,
-          backdropFilter: 'blur(4px)',
-          fontFamily: FONT,
-        }}
-      >
+      <div className="modal-overlay" style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: FONT,
+      }}>
         <div className="modal-panel" style={{
           background: '#FFFFFF', borderRadius: 16,
           width: '100%', maxWidth: 400,
           boxShadow: '0 32px 80px rgba(0,0,0,0.22)',
           overflow: 'hidden',
         }}>
-          {/* Header */}
-          <div style={{
-            padding: '20px 24px 16px',
-            borderBottom: '1px solid #F1F5F9',
-            display: 'flex', alignItems: 'flex-start', gap: 14,
-          }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 10,
-              background: '#FEF2F2',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}>
+          <div style={{ height: 4, background: 'linear-gradient(90deg,#EF4444,#F87171)' }} />
+          <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <IconLogout size={18} color="#DC2626" />
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0D1117', marginBottom: 4 }}>
-                Confirmer la déconnexion
-              </div>
-              <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
-                Vous devrez vous reconnecter pour accéder au système.
-              </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Confirmer la déconnexion</div>
+              <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>Vous devrez vous reconnecter pour accéder au système.</div>
             </div>
-            <button
-              onClick={() => setShowLogoutModal(false)}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                color: '#94A3B8', padding: 2, flexShrink: 0,
-              }}
-            >
-              <IconClose size={14} color="#94A3B8" />
+            <button onClick={() => setShowLogoutModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 2 }}>
+              <IconClose size={14} color="#9CA3AF" />
             </button>
           </div>
-          {/* Body */}
-          <div style={{ padding: '20px 24px 24px' }}>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                className="btn-red"
-                onClick={() => { setShowLogoutModal(false); onLogout() }}
-                style={{
-                  flex: 1, padding: '12px',
-                  background: '#DC2626', color: '#FFFFFF',
-                  border: 'none', borderRadius: 9,
-                  fontSize: 13.5, fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                <IconLogout size={15} color="white" />
-                Se déconnecter
-              </button>
-              <button
-                className="btn-ghost"
-                onClick={() => setShowLogoutModal(false)}
-                style={{
-                  padding: '12px 20px',
-                  background: '#F8FAFC', color: '#475569',
-                  border: '1.5px solid #E2E8F0', borderRadius: 9,
-                  fontSize: 13.5, fontWeight: 500, cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Annuler
-              </button>
-            </div>
+          <div style={{ padding: '20px 24px 24px', display: 'flex', gap: 10 }}>
+            <button className="btn-red" onClick={() => { setShowLogoutModal(false); onLogout() }}
+              style={{ flex: 1, padding: '12px', background: '#DC2626', color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              <IconLogout size={15} color="white" /> Se déconnecter
+            </button>
+            <button className="btn-ghost" onClick={() => setShowLogoutModal(false)}
+              style={{ padding: '12px 20px', background: '#F9FAFB', color: '#6B7280', border: '1.5px solid #E5E7EB', borderRadius: 9, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Annuler
+            </button>
           </div>
         </div>
       </div>
