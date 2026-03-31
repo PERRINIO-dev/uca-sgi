@@ -573,15 +573,15 @@ export default function ProductsClient({
         </Modal>
       )}
 
-      {/* ── Create modal (4-step wizard) ── */}
+      {/* ── Create drawer (4-step wizard) ── */}
       {showCreate && (
-        <Modal title="Nouveau produit" onClose={() => { setShowCreate(false); setModalStep(1) }}>
+        <CreateDrawer title="Nouveau produit" step={modalStep} onClose={() => { setShowCreate(false); setModalStep(1) }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
             {/* Step indicator */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
               {([
-                [1, 'Mode'],
+                [1, 'Type'],
                 [2, 'Configuration'],
                 [3, 'Prix & stock'],
                 [4, 'Résumé'],
@@ -591,7 +591,7 @@ export default function ProductsClient({
                     <div style={{
                       width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: modalStep === n ? C.navy : modalStep > n ? C.green : C.border,
+                      background: modalStep === n ? C.blue : modalStep > n ? C.green : C.border,
                       color: modalStep >= n ? '#fff' : C.muted,
                       fontSize: 11, fontWeight: 700,
                     }}>
@@ -601,7 +601,7 @@ export default function ProductsClient({
                     </div>
                     <span style={{
                       fontSize: 10, fontWeight: modalStep === n ? 700 : 400,
-                      color: modalStep === n ? C.navy : C.muted, fontFamily: FONT,
+                      color: modalStep === n ? C.blue : C.muted, fontFamily: FONT,
                       whiteSpace: 'nowrap',
                     }}>
                       {label}
@@ -1014,7 +1014,7 @@ export default function ProductsClient({
                     onClick={() => { setError(null); setModalStep(prev => (prev - 1) as 1|2|3|4) }}
                     style={{ padding: '10px 16px', borderRadius: 8,
                       border: `1.5px solid ${C.border}`, background: C.surface,
-                      color: C.navy, fontSize: 13, fontWeight: 600,
+                      color: C.blue, fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: FONT }}>
                     ← Retour
                   </button>
@@ -1022,12 +1022,14 @@ export default function ProductsClient({
               </div>
               {modalStep < 4 ? (
                 <button
+                  className="btn-meram"
                   onClick={advanceModalStep}
-                  style={{ padding: '10px 24px', borderRadius: 8,
-                    border: 'none', background: C.navy,
-                    color: 'white', fontSize: 13, fontWeight: 700,
-                    cursor: 'pointer', fontFamily: FONT }}>
-                  Suivant →
+                  style={{ padding: '10px 24px', borderRadius: 9,
+                    border: 'none', fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer', fontFamily: FONT,
+                    display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                  Suivant
+                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5h10M7 1l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </button>
               ) : (
                 <button
@@ -1045,7 +1047,7 @@ export default function ProductsClient({
               )}
             </div>
           </div>
-        </Modal>
+        </CreateDrawer>
       )}
 
       {/* ── Edit modal ── */}
@@ -1445,6 +1447,84 @@ const labelStyle: React.CSSProperties = {
   fontSize: 11.5, fontWeight: 600, color: C.slate,
   display: 'block', marginBottom: 6, fontFamily: FONT,
   textTransform: 'uppercase', letterSpacing: '0.05em',
+}
+
+// ── Full-height drawer from right (for create wizard) ────────────────────────
+
+// ── Full-height drawer from right (for create wizard) ────────────────────────
+
+function CreateDrawer({ title, step, children, onClose }: {
+  title:    string
+  step:     number
+  children: React.ReactNode
+  onClose:  () => void
+}) {
+  const stepSubtitles = ['', 'Type de produit', 'Configuration physique', 'Prix & stock initial', 'Vérification finale']
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 1000,
+      display: 'flex', justifyContent: 'flex-end',
+    }}>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0,
+          background: 'rgba(15,23,42,0.42)',
+          backdropFilter: 'blur(4px)',
+          animation: 'modalBackdrop 0.2s ease',
+        }}
+      />
+      {/* Drawer panel */}
+      <div className="drawer-panel" style={{
+        position: 'relative',
+        width: '100%', maxWidth: 560,
+        background: C.surface,
+        boxShadow: '-12px 0 48px rgba(0,0,0,0.18)',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Blue accent stripe */}
+        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8 0%,#3B82F6 60%,#60A5FA 100%)', flexShrink: 0 }} />
+        {/* Drawer header */}
+        <div style={{
+          padding: '18px 24px 14px',
+          borderBottom: `1px solid ${C.border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexShrink: 0,
+        }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.025em', fontFamily: FONT }}>
+              {title}
+            </h3>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: C.muted, fontFamily: FONT }}>
+              Étape {step} — {stepSubtitles[step]}
+            </p>
+          </div>
+          <button onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: C.bg, border: `1px solid ${C.border}`,
+              cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted,
+            }}>
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
+        {/* Scrollable content */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function Modal({ title, children, onClose }: {

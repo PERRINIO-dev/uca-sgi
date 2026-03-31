@@ -380,7 +380,7 @@ export default function Sidebar({
           return (
             <button
               key={href}
-              className={`nav-item${active ? ' nav-active' : ''}`}
+              className={`nav-item ${isAdmin ? 'nav-item-dark' : 'nav-item-light'}${active ? ' nav-active' : ''}`}
               {...(NAV_TOUR_IDS[href] ? { 'data-tour': NAV_TOUR_IDS[href] } : {})}
               onClick={() => {
                 onClose?.()
@@ -430,7 +430,7 @@ export default function Sidebar({
               Plateforme
             </div>
             <button
-              className={`nav-item${activeRoute === '/admin' ? ' nav-active' : ''}`}
+              className={`nav-item nav-item-dark${activeRoute === '/admin' ? ' nav-active' : ''}`}
               onClick={() => {
                 onClose?.()
                 startTransition(() => router.push('/admin'))
@@ -494,7 +494,7 @@ export default function Sidebar({
       {/* ── Logout ── */}
       <div style={{ padding: '6px 10px 18px', borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
         <button
-          className="nav-item"
+          className={`nav-item ${isAdmin ? 'nav-item-dark' : 'nav-item-light'}`}
           onClick={() => setShowLogoutModal(true)}
           style={{
             width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',

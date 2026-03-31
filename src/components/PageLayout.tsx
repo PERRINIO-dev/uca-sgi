@@ -20,10 +20,10 @@ const PAGE_TITLES: Record<string, string> = {
 }
 
 // ── Mobile header hamburger icon ──────────────────────────────────────────────
-function IconMenu({ size = 18 }: { size?: number }) {
+function IconMenu({ size = 18, color = 'white' }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 14" fill="none">
-      <path d="M1 1h16M1 7h16M1 13h10" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M1 1h16M1 7h16M1 13h10" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -176,30 +176,35 @@ export default function PageLayout({
       {isMobile && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: '#0D1117',
+          background: isAdmin ? '#0D1117' : '#FFFFFF',
           display: 'flex', alignItems: 'center',
           padding: '0 16px', gap: 14, zIndex: 200,
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+          borderBottom: isAdmin
+            ? '1px solid rgba(255,255,255,0.06)'
+            : '1px solid #E5E7EB',
+          boxShadow: isAdmin
+            ? '0 4px 16px rgba(0,0,0,0.25)'
+            : '0 1px 6px rgba(0,0,0,0.06)',
         }}>
           <button
             onClick={() => setSidebar(o => !o)}
             style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.10)',
-              borderRadius: 9, color: 'white',
+              background: isAdmin ? 'rgba(255,255,255,0.07)' : '#F3F4F6',
+              border: `1px solid ${isAdmin ? 'rgba(255,255,255,0.10)' : '#E5E7EB'}`,
+              borderRadius: 9,
               width: 38, height: 38,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0,
               transition: 'background 0.15s ease',
             }}
           >
-            <IconMenu size={18} />
+            <IconMenu size={18} color={isAdmin ? 'white' : '#374151'} />
           </button>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontSize: 15, fontWeight: 700, color: 'white',
+              fontSize: 15, fontWeight: 700,
+              color: isAdmin ? 'white' : '#111827',
               letterSpacing: '-0.01em',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
@@ -222,7 +227,8 @@ export default function PageLayout({
               </svg>
             </div>
             <span style={{
-              fontSize: 13, fontWeight: 800, color: 'white',
+              fontSize: 13, fontWeight: 800,
+              color: isAdmin ? 'white' : '#111827',
               letterSpacing: '-0.02em',
             }}>
               MERAM
