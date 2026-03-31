@@ -4,12 +4,12 @@ import PwaInstallPrompt     from '@/components/PwaInstallPrompt'
 import NetworkStatusBanner  from '@/components/NetworkStatusBanner'
 
 export const metadata: Metadata = {
-  title:       'SGI',
-  description: 'Système de Gestion Interne',
+  title:       'MERAM',
+  description: 'Manage · Sell · Optimize — Plateforme de gestion commerciale',
   appleWebApp: {
     capable:         true,
     statusBarStyle:  'black-translucent',
-    title:           'SGI',
+    title:           'MERAM',
   },
 }
 

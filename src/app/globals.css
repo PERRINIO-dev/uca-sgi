@@ -6,11 +6,11 @@
   to   { opacity: 1 }
 }
 @keyframes modalPanel {
-  from { opacity: 0; transform: translateY(16px) scale(0.97) }
+  from { opacity: 0; transform: translateY(20px) scale(0.96) }
   to   { opacity: 1; transform: translateY(0)    scale(1) }
 }
 @keyframes slideDown {
-  from { opacity: 0; transform: translateY(-8px) }
+  from { opacity: 0; transform: translateY(-10px) }
   to   { opacity: 1; transform: translateY(0) }
 }
 @keyframes spin {
@@ -21,17 +21,30 @@
   to   { opacity: 1 }
 }
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(8px) }
+  from { opacity: 0; transform: translateY(10px) }
   to   { opacity: 1; transform: translateY(0) }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px) }
+  to   { opacity: 1; transform: translateX(0) }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.3) }
+  50%       { box-shadow: 0 0 0 6px rgba(37,99,235,0) }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0 }
+  100% { background-position: 200% 0 }
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box }
 body {
-  background: #F8FAFC;
-  color: #0F172A;
+  background: #F0F2F5;
+  color: #0D1117;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -48,12 +61,25 @@ input, select, textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+/* ── Dark input (admin platform) ────────────────────────────────────────── */
+input.dark-input,
+select.dark-input,
+textarea.dark-input {
+  background: #0D1117 !important;
+  border-color: #30363D !important;
+  color: #E6EDF3 !important;
+}
+input.dark-input:focus-visible,
+select.dark-input:focus-visible,
+textarea.dark-input:focus-visible {
+  border-color: #58A6FF !important;
+  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15) !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   BUTTON SYSTEM — all interactive states live here so inline styles
-   (which cannot define :hover) are no longer needed for interaction.
+   BUTTON SYSTEM
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Universal button feel */
 button {
   transition:
     background 0.14s ease,
@@ -66,11 +92,10 @@ button {
 }
 button:not(:disabled):active {
   transform: translateY(1px) !important;
-  opacity: 0.9 !important;
+  opacity: 0.88 !important;
 }
-button:disabled { cursor: not-allowed !important; opacity: 0.55 !important; }
+button:disabled { cursor: not-allowed !important; opacity: 0.48 !important; }
 
-/* Focus ring for all buttons */
 button:focus-visible {
   outline: 2px solid #2563EB !important;
   outline-offset: 2px !important;
@@ -79,27 +104,52 @@ button:focus-visible {
 /* ── Primary (blue) ─────────────────────────────────────────── */
 .btn-primary:hover:not(:disabled) {
   background: #1D4ED8 !important;
-  box-shadow: 0 4px 16px rgba(37,99,235,0.30) !important;
+  box-shadow: 0 4px 18px rgba(37,99,235,0.35) !important;
+  transform: translateY(-1px) !important;
+}
+/* ── MERAM gradient blue ─────────────────────────────────────── */
+.btn-meram {
+  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 60%, #3B82F6 100%) !important;
+  border: none !important;
+  color: white !important;
+  position: relative;
+  overflow: hidden;
+}
+.btn-meram::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.btn-meram:hover:not(:disabled)::after { opacity: 1; }
+.btn-meram:hover:not(:disabled) {
+  box-shadow: 0 6px 24px rgba(37,99,235,0.40) !important;
+  transform: translateY(-1px) !important;
 }
 /* ── Navy (dark blue) ───────────────────────────────────────── */
 .btn-navy:hover:not(:disabled) {
   background: #122A52 !important;
-  box-shadow: 0 4px 14px rgba(15,34,64,0.28) !important;
+  box-shadow: 0 4px 16px rgba(15,34,64,0.30) !important;
+  transform: translateY(-1px) !important;
 }
 /* ── Green (confirm / success) ──────────────────────────────── */
 .btn-green:hover:not(:disabled) {
   background: #047857 !important;
-  box-shadow: 0 4px 14px rgba(5,150,105,0.28) !important;
+  box-shadow: 0 4px 16px rgba(5,150,105,0.30) !important;
+  transform: translateY(-1px) !important;
 }
 /* ── Orange (warn / preparing) ──────────────────────────────── */
 .btn-orange:hover:not(:disabled) {
   background: #B45309 !important;
-  box-shadow: 0 4px 14px rgba(217,119,6,0.25) !important;
+  box-shadow: 0 4px 14px rgba(217,119,6,0.28) !important;
 }
 /* ── Red / Danger ───────────────────────────────────────────── */
 .btn-red:hover:not(:disabled) {
   background: #B91C1C !important;
-  box-shadow: 0 4px 14px rgba(220,38,38,0.28) !important;
+  box-shadow: 0 4px 16px rgba(220,38,38,0.30) !important;
+  transform: translateY(-1px) !important;
 }
 /* ── Ghost (light bg, border) ───────────────────────────────── */
 .btn-ghost:hover:not(:disabled) {
@@ -123,18 +173,26 @@ button:focus-visible {
   background: #F1F5F9 !important;
   border-color: #CBD5E1 !important;
 }
+/* ── Dark ghost (admin platform) ────────────────────────────── */
+.btn-dark-ghost:hover:not(:disabled) {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: #30363D !important;
+}
+/* ── Dark danger (admin) ─────────────────────────────────────── */
+.btn-dark-danger:hover:not(:disabled) {
+  background: rgba(248,81,73,0.15) !important;
+  border-color: #F85149 !important;
+  color: #F85149 !important;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TABLE ROWS — hover states
+   TABLE ROWS
    ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Standard non-clickable row */
 .trow:hover > td,
 .trow:hover > th {
   background-color: #F8FAFC !important;
   transition: background-color 0.1s ease;
 }
-/* Clickable / expandable row */
 .trow-click {
   cursor: pointer;
 }
@@ -143,24 +201,56 @@ button:focus-visible {
   background-color: #EFF6FF !important;
   transition: background-color 0.1s ease;
 }
+/* Dark table rows (admin) */
+.trow-dark:hover > td,
+.trow-dark:hover > th {
+  background-color: #1C2128 !important;
+}
+.trow-dark-click:hover > td,
+.trow-dark-click:hover > th {
+  background-color: rgba(88,166,255,0.06) !important;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SIDEBAR NAV ITEMS
    ═══════════════════════════════════════════════════════════════════════════ */
 .nav-item:not(.nav-active):hover {
-  background: rgba(255,255,255,0.08) !important;
-  color: rgba(255,255,255,0.82) !important;
+  background: rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.85) !important;
+}
+.nav-item:not(.nav-active):hover svg path,
+.nav-item:not(.nav-active):hover svg rect,
+.nav-item:not(.nav-active):hover svg circle {
+  stroke: rgba(255,255,255,0.65) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    INTERACTIVE CARDS
    ═══════════════════════════════════════════════════════════════════════════ */
 .card-hover {
-  transition: box-shadow 0.18s ease, transform 0.18s ease !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
 }
 .card-hover:hover {
-  box-shadow: 0 6px 24px rgba(0,0,0,0.09) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
   transform: translateY(-2px);
+  border-color: #CBD5E1 !important;
+}
+/* KPI card hover */
+.kpi-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+.kpi-card:hover {
+  box-shadow: 0 8px 28px rgba(0,0,0,0.10) !important;
+  transform: translateY(-2px);
+}
+/* Dark card hover (admin) */
+.card-hover-dark {
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+}
+.card-hover-dark:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  transform: translateY(-2px);
+  border-color: #30363D !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -168,7 +258,7 @@ button:focus-visible {
    ═══════════════════════════════════════════════════════════════════════════ */
 .spinner {
   width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.30);
+  border: 2px solid rgba(255,255,255,0.28);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
@@ -202,6 +292,10 @@ button:focus-visible {
 ::-webkit-scrollbar-thumb    { background: #CBD5E1; border-radius: 10px }
 ::-webkit-scrollbar-thumb:hover { background: #94A3B8 }
 
+/* Dark scrollbar */
+.dark-scroll::-webkit-scrollbar-thumb    { background: #30363D }
+.dark-scroll::-webkit-scrollbar-thumb:hover { background: #484F58 }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BADGE / STATUS PILL
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -227,17 +321,36 @@ button:focus-visible {
    MODAL ANIMATION
    ═══════════════════════════════════════════════════════════════════════════ */
 .modal-overlay { animation: modalBackdrop 0.18s ease forwards; }
-.modal-panel   { animation: modalPanel    0.22s ease forwards; }
+.modal-panel   { animation: modalPanel    0.24s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SECTION LABEL
    ═══════════════════════════════════════════════════════════════════════════ */
 .section-label {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.10em;
   color: #94A3B8;
+}
+
+/* ── Number rendering ───────────────────────────────────────────────────── */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ── Premium gradient text ──────────────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, #1D4ED8, #3B82F6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Drawer slide-in ────────────────────────────────────────────────────── */
+.drawer-panel {
+  animation: slideInRight 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

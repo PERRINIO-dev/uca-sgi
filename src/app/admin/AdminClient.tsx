@@ -11,15 +11,21 @@ import {
 } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens — ADMIN dark platform ───────────────────────────────────────
 const C = {
-  ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
-  border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  amber: '#B45309', amberL: '#FFFBEB', amberM: '#FDE68A',
+  ink:     '#E6EDF3',
+  slate:   '#8B949E',
+  muted:   '#484F58',
+  border:  '#21262D',
+  bg:      '#0D1117',
+  surface: '#161B22',
+  surfaceElev: '#1C2128',
+  navy:    '#1B3A6B', navyDark: '#0D1117',
+  blue:    '#58A6FF', blueL:  'rgba(88,166,255,0.12)',
+  green:   '#3FB950', greenL: 'rgba(63,185,80,0.14)',
+  orange:  '#D29922', orangeL:'rgba(210,153,34,0.14)',
+  red:     '#F85149', redL:   'rgba(248,81,73,0.14)',
+  amber:   '#D29922', amberL: 'rgba(210,153,34,0.14)', amberM: '#30363D',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
@@ -161,9 +167,10 @@ function CompanyInitials({ name, size = 40 }: { name: string; size?: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: 10,
-      background: `hsl(${hue}, 55%, 18%)`,
+      background: `linear-gradient(135deg, hsl(${hue},55%,20%) 0%, hsl(${(hue+30)%360},60%,28%) 100%)`,
+      border: `1px solid hsl(${hue},40%,30%)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      fontSize: size * 0.38, fontWeight: 700, color: `hsl(${hue}, 70%, 72%)`,
+      fontSize: size * 0.38, fontWeight: 700, color: `hsl(${hue}, 80%, 78%)`,
       letterSpacing: '-0.02em',
     }}>
       {letters}
@@ -315,7 +322,7 @@ export default function AdminClient({
     width: '100%', padding: '9px 12px',
     border: `1.5px solid ${C.border}`, borderRadius: 8,
     fontSize: 13, fontFamily: FONT, color: C.ink,
-    background: C.surface, outline: 'none', boxSizing: 'border-box',
+    background: C.bg, outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 600,
@@ -416,11 +423,12 @@ export default function AdminClient({
         {/* ── Banner ── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
-          padding: '10px 16px', borderRadius: 10, marginBottom: 28,
-          background: C.amberL, border: `1px solid ${C.amberM}`,
+          padding: '11px 16px', borderRadius: 10, marginBottom: 28,
+          background: 'rgba(210,153,34,0.10)',
+          border: '1px solid rgba(210,153,34,0.22)',
         }}>
-          <IconShield size={16} color={C.amber} />
-          <span style={{ fontSize: 12.5, fontWeight: 600, color: C.amber }}>
+          <IconShield size={15} color={C.amber} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: C.amber, letterSpacing: '0.01em' }}>
             Administration Plateforme — vue transversale, toutes entreprises
           </span>
         </div>
@@ -432,20 +440,23 @@ export default function AdminClient({
           marginBottom: 28, flexWrap: 'wrap',
         }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em' }}>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>
               Gestion de la plateforme
             </h1>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: C.slate }}>
+            <p style={{ margin: '5px 0 0', fontSize: 13, color: C.slate }}>
               Gérez les entreprises clientes et consultez l'historique des actions.
             </p>
           </div>
           <button
             onClick={() => { setShowModal(true); setFormError(null) }}
             style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              padding: '10px 18px', background: C.amber, color: '#fff',
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '10px 18px',
+              background: 'linear-gradient(135deg, #B45309 0%, #D97706 100%)',
+              color: '#fff',
               border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', flexShrink: 0, fontFamily: FONT,
+              boxShadow: '0 4px 16px rgba(180,83,9,0.35)',
             }}
           >
             <IconPlus size={14} color="#fff" />
@@ -470,30 +481,32 @@ export default function AdminClient({
         )}
 
         {/* ── KPI cards ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {[
-            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, bg: C.amberL, iconColor: C.amber },
-            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    bg: C.blueL,  iconColor: C.blue },
-            { label: 'Produits actifs',      value: String(totalProducts),                     Icon: IconBox,      bg: C.greenL, iconColor: C.green },
-          ].map(({ label, value, Icon, bg, iconColor }) => (
-            <div key={label} style={{
-              background: C.surface, borderRadius: 12, padding: '18px 20px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)', border: `1px solid ${C.border}`,
-              display: 'flex', alignItems: 'center', gap: 14,
+            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber, bg: C.amberL },
+            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.blue,  bg: C.blueL },
+            { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenL },
+          ].map(({ label, value, Icon, accent, bg }) => (
+            <div key={label} className="card-hover-dark" style={{
+              background: C.surface, borderRadius: 14, overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: `1px solid ${C.border}`,
             }}>
-              <div style={{ width: 38, height: 38, borderRadius: 9, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <Icon size={17} color={iconColor} />
-              </div>
-              <div>
-                <div style={{ fontSize: 22, fontWeight: 800, color: C.ink, letterSpacing: '-0.02em' }}>{value}</div>
-                <div style={{ fontSize: 11.5, color: C.muted, marginTop: 1 }}>{label}</div>
+              <div style={{ height: 3, background: `linear-gradient(90deg, ${accent} 0%, ${accent}66 100%)` }} />
+              <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon size={18} color={accent} />
+                </div>
+                <div>
+                  <div className="num" style={{ fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>{value}</div>
+                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>{label}</div>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         {/* ── Tab bar ── */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: '4px', background: C.surface, borderRadius: 10, width: 'fit-content', border: `1px solid ${C.border}` }}>
           {([
             { id: 'companies', label: `Entreprises (${companies.length})`, Icon: IconBuilding },
             { id: 'journal',   label: `Journal (${auditLogs.length})`,      Icon: IconHistory },
@@ -503,17 +516,17 @@ export default function AdminClient({
               onClick={() => setActiveTab(id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
-                padding: '9px 16px', borderRadius: 8,
-                background: activeTab === id ? C.surface : 'transparent',
+                padding: '8px 16px', borderRadius: 7,
+                background: activeTab === id ? C.surfaceElev : 'transparent',
                 border: activeTab === id ? `1px solid ${C.border}` : '1px solid transparent',
-                color: activeTab === id ? C.ink : C.muted,
+                color: activeTab === id ? C.ink : C.slate,
                 fontSize: 13, fontWeight: activeTab === id ? 600 : 400,
                 cursor: 'pointer', fontFamily: FONT,
-                boxShadow: activeTab === id ? '0 1px 3px rgba(0,0,0,0.05)' : 'none',
+                boxShadow: activeTab === id ? '0 2px 8px rgba(0,0,0,0.30)' : 'none',
                 transition: 'all 0.15s',
               }}
             >
-              <Icon size={14} color={activeTab === id ? C.ink : C.muted} />
+              <Icon size={14} color={activeTab === id ? C.blue : C.slate} />
               {label}
             </button>
           ))}
@@ -538,8 +551,8 @@ export default function AdminClient({
                       {['Entreprise', 'Propriétaire', 'Utilisateurs', 'Produits', 'Créée le', 'Statut', ''].map(h => (
                         <th key={h} style={{
                           padding: '10px 16px', textAlign: 'left',
-                          fontSize: 11, fontWeight: 600, color: C.muted,
-                          letterSpacing: '0.05em', textTransform: 'uppercase',
+                          fontSize: 10.5, fontWeight: 700, color: C.muted,
+                          letterSpacing: '0.10em', textTransform: 'uppercase',
                           borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
                         }}>
                           {h}
@@ -560,8 +573,9 @@ export default function AdminClient({
                             <div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{company.name}</div>
                               <div style={{
-                                fontSize: 11, color: C.muted, marginTop: 2,
+                                fontSize: 10.5, color: C.slate, marginTop: 2,
                                 fontFamily: 'monospace', background: C.bg,
+                                border: `1px solid ${C.border}`,
                                 padding: '1px 6px', borderRadius: 4, display: 'inline-block',
                               }}>
                                 {company.slug}

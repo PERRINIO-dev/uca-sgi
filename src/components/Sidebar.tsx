@@ -5,64 +5,84 @@ import { useTransition, useEffect, useState } from 'react'
 import { useIsMobile }      from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
+// ── Design tokens ──────────────────────────────────────────────────────────────
+const S = {
+  bg:          '#0D1117',
+  surface:     '#161B22',
+  border:      'rgba(255,255,255,0.06)',
+  text:        'rgba(255,255,255,0.90)',
+  textMuted:   'rgba(255,255,255,0.42)',
+  textDim:     'rgba(255,255,255,0.24)',
+  activeText:  '#FFFFFF',
+  activeBg:    'rgba(59,130,246,0.14)',
+  activeBorder:'#3B82F6',
+  hoverBg:     'rgba(255,255,255,0.05)',
+  blue:        '#3B82F6',
+  blueGlow:    'rgba(59,130,246,0.35)',
+  red:         '#F85149',
+  amber:       '#D29922',
+  amberBg:     'rgba(210,153,34,0.14)',
+}
+const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+
 // ── SVG icon set ──────────────────────────────────────────────────────────────
-function IconDashboard({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconDashboard({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="7" height="7" rx="1.5" fill={color} opacity="0.9"/>
-      <rect x="11" y="2" width="7" height="7" rx="1.5" fill={color} opacity="0.9"/>
-      <rect x="2" y="11" width="7" height="7" rx="1.5" fill={color} opacity="0.9"/>
-      <rect x="11" y="11" width="7" height="7" rx="1.5" fill={color} opacity="0.9"/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.85"/>
+      <rect x="10.5" y="2" width="7.5" height="7.5" rx="2" fill={color} opacity="0.55"/>
+      <rect x="2" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.55"/>
+      <rect x="10.5" y="10.5" width="7.5" height="7.5" rx="2" fill={color} opacity="0.85"/>
     </svg>
   )
 }
-function IconSales({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconSales({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M3 4h1.5l2.5 8h8l1.5-5H6.5" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="8.5" cy="15.5" r="1.25" fill={color}/>
-      <circle cx="14.5" cy="15.5" r="1.25" fill={color}/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M2.5 4h1.8l2.8 8.5h7.5l1.9-5.5H6" stroke={color} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="8" cy="16" r="1.4" fill={color}/>
+      <circle cx="14" cy="16" r="1.4" fill={color}/>
     </svg>
   )
 }
-function IconWarehouse({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconWarehouse({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 8.5L10 3l8 5.5V17H2V8.5Z" stroke={color} strokeWidth="1.6" strokeLinejoin="round"/>
-      <rect x="7" y="12" width="6" height="5" rx="1" stroke={color} strokeWidth="1.4"/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M2 8.8L10 3l8 5.8V17.5H2V8.8Z" stroke={color} strokeWidth="1.6" strokeLinejoin="round"/>
+      <rect x="7" y="11.5" width="6" height="6" rx="1" stroke={color} strokeWidth="1.4"/>
     </svg>
   )
 }
-function IconCatalog({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconCatalog({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <rect x="2" y="2" width="7" height="5" rx="1.5" stroke={color} strokeWidth="1.5"/>
       <rect x="11" y="2" width="7" height="5" rx="1.5" stroke={color} strokeWidth="1.5"/>
       <rect x="2" y="9" width="7" height="5" rx="1.5" stroke={color} strokeWidth="1.5"/>
       <rect x="11" y="9" width="7" height="5" rx="1.5" stroke={color} strokeWidth="1.5"/>
-      <rect x="2" y="16" width="16" height="2" rx="1" fill={color} opacity="0.6"/>
+      <rect x="2" y="16" width="16" height="2" rx="1" fill={color} opacity="0.5"/>
     </svg>
   )
 }
-function IconUsers({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconUsers({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <circle cx="8" cy="6" r="3" stroke={color} strokeWidth="1.6"/>
-      <path d="M2 17c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M2 17c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
       <path d="M14 8a2.5 2.5 0 100-5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M17 17c0-2.21-1.343-3.79-3-4.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M17 17c0-2.2-1.3-3.8-3-4.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   )
 }
-function IconReports({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconReports({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <rect x="3" y="2" width="14" height="16" rx="2" stroke={color} strokeWidth="1.5"/>
-      <path d="M7 7h6M7 10h6M7 13h3.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M7 7h6M7 10.5h6M7 14h4" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   )
 }
-function IconBell({ size = 15, color = 'currentColor', filled = false }: { size?: number; color?: string; filled?: boolean }) {
+function IconBell({ size = 16, color = 'currentColor', filled = false }: { size?: number; color?: string; filled?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -70,24 +90,92 @@ function IconBell({ size = 15, color = 'currentColor', filled = false }: { size?
     </svg>
   )
 }
-function IconLogout({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconLogout({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M13 4.5l4 5.5-4 5.5" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M17 10H8" stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M13.5 4.5l4 5.5-4 5.5" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M17.5 10H8" stroke={color} strokeWidth="1.6" strokeLinecap="round"/>
       <path d="M8 3H5a2 2 0 00-2 2v10a2 2 0 002 2h3" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
-function IconPlatform({ size = 16, color = 'currentColor' }: { size?: number; color?: string }) {
+function IconPlatform({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="10" cy="4.5" r="2" stroke={color} strokeWidth="1.5"/>
-      <circle cx="4"  cy="15" r="1.75" stroke={color} strokeWidth="1.4"/>
-      <circle cx="16" cy="15" r="1.75" stroke={color} strokeWidth="1.4"/>
-      <path d="M10 6.5v3.5" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
-      <path d="M10 10L4 13.25M10 10l6 3.25" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="5" width="16" height="12" rx="1.5" stroke={color} strokeWidth="1.5"/>
+      <path d="M6 10h2M12 10h2M6 13h2M12 13h2" stroke={color} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M9 17V9" stroke={color} strokeWidth="1.4"/>
+      <path d="M6 5V3.5a1 1 0 011-1h6a1 1 0 011 1V5" stroke={color} strokeWidth="1.4"/>
     </svg>
+  )
+}
+function IconClose({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M1 1l12 12M13 1L1 13" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+// ── Meram wordmark ────────────────────────────────────────────────────────────
+function MeramLogo() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* M monogram */}
+      <div style={{
+        width: 34, height: 34, borderRadius: 9,
+        background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+        boxShadow: '0 2px 10px rgba(37,99,235,0.45)',
+      }}>
+        <svg width="18" height="15" viewBox="0 0 18 15" fill="none">
+          <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div style={{
+          fontSize: 17, fontWeight: 800, color: '#FFFFFF',
+          letterSpacing: '-0.03em', lineHeight: 1,
+          fontFamily: FONT,
+        }}>
+          MERAM
+        </div>
+        <div style={{
+          fontSize: 9, color: S.textDim,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          fontWeight: 600, marginTop: 3,
+        }}>
+          Manage · Sell · Optimize
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── User avatar ───────────────────────────────────────────────────────────────
+function Avatar({ name }: { name: string }) {
+  const parts   = name.trim().split(' ')
+  const letters = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase()
+
+  // Deterministic hue from name
+  const hue = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360
+
+  return (
+    <div style={{
+      width: 36, height: 36, borderRadius: '50%',
+      background: `linear-gradient(135deg, hsl(${hue},60%,35%) 0%, hsl(${(hue+30)%360},70%,50%) 100%)`,
+      border: '2px solid rgba(255,255,255,0.12)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+      fontSize: 13, fontWeight: 700, color: '#FFFFFF',
+      letterSpacing: '0.03em',
+      boxShadow: '0 0 0 3px rgba(255,255,255,0.06)',
+    }}>
+      {letters}
+    </div>
   )
 }
 
@@ -115,26 +203,7 @@ const ROLE_LABELS: Record<string, string> = {
   warehouse: 'Magasinier',
 }
 
-function Initials({ name }: { name: string }) {
-  const parts   = name.trim().split(' ')
-  const letters = parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase()
-  return (
-    <div style={{
-      width: 34, height: 34, borderRadius: '50%',
-      background: 'rgba(59,130,246,0.2)',
-      border: '1.5px solid rgba(59,130,246,0.35)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
-      fontSize: 12, fontWeight: 700, color: '#93C5FD',
-      letterSpacing: '0.04em',
-    }}>
-      {letters}
-    </div>
-  )
-}
-
+// ═════════════════════════════════════════════════════════════════════════════
 export default function Sidebar({
   profile,
   activeRoute,
@@ -158,14 +227,12 @@ export default function Sidebar({
   const [notifLoading,   setNotifLoading]   = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
-  // Prefetch all accessible routes on mount so navigation feels instant
   useEffect(() => {
     visibleItems.forEach(([,, href]) => { router.prefetch(href) })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
-    // Run only on the client — avoids SSR/hydration mismatch
     if (!('Notification' in window) || !('serviceWorker' in navigator)) return
     setNotifSupported(true)
     if (Notification.permission === 'denied') { setNotifState('denied'); return }
@@ -182,7 +249,6 @@ export default function Sidebar({
     setNotifLoading(true)
     try {
       if (notifState === 'subscribed') {
-        // Unsubscribe
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.getSubscription()
         if (sub) {
@@ -211,7 +277,7 @@ export default function Sidebar({
   }
 
   const visibleItems = profile.is_platform_admin
-    ? []  // platform operator: aucun module métier — accès exclusif à /admin
+    ? []
     : NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
 
   const getNavBadge = (href: string): number => {
@@ -225,72 +291,46 @@ export default function Sidebar({
     <>
     <aside style={{
       width: 240,
-      background: '#0C1A35',
+      background: S.bg,
       display: 'flex',
       flexDirection: 'column',
       flexShrink: 0,
       position: 'fixed',
       top: 0, left: 0, bottom: 0,
       transform: isMobileOpen ? 'translateX(0)' : 'translateX(-240px)',
-      transition: 'transform 0.25s ease',
+      transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
       zIndex: 160,
-      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-      borderRight: '1px solid rgba(255,255,255,0.05)',
+      fontFamily: FONT,
+      borderRight: `1px solid ${S.border}`,
     }}>
 
-      {/* ── Logo ── */}
-      <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-          }}>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
-              <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
-              <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
-              <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
-              <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{
-              fontSize: 15, fontWeight: 800, color: 'white',
-              letterSpacing: '-0.02em', lineHeight: 1.1,
-              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-            }}>
-              SGI
-            </div>
-            <div style={{
-              fontSize: 9, color: 'rgba(255,255,255,0.3)',
-              letterSpacing: '0.14em', textTransform: 'uppercase',
-              fontWeight: 500, marginTop: 1,
-            }}>
-              Système de Gestion
-            </div>
-          </div>
-        </div>
+      {/* ── Logo / Brand ── */}
+      <div style={{
+        padding: '22px 20px 18px',
+        borderBottom: `1px solid ${S.border}`,
+        flexShrink: 0,
+      }}>
+        <MeramLogo />
       </div>
 
       {/* ── User profile ── */}
       <div style={{
-        padding: '12px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        display: 'flex', alignItems: 'center', gap: 10,
-        margin: '0 4px',
+        padding: '14px 16px',
+        borderBottom: `1px solid ${S.border}`,
+        display: 'flex', alignItems: 'center', gap: 11,
+        flexShrink: 0,
       }}>
-        <Initials name={profile.full_name} />
+        <Avatar name={profile.full_name} />
         <div style={{ minWidth: 0 }}>
           <div style={{
-            fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.92)',
+            fontSize: 13, fontWeight: 600, color: S.text,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {profile.full_name}
           </div>
           <div style={{
-            fontSize: 10.5, color: 'rgba(255,255,255,0.35)',
-            marginTop: 1, fontWeight: 500,
+            fontSize: 11, color: S.textMuted,
+            marginTop: 2, fontWeight: 500,
           }}>
             {profile.is_platform_admin ? 'Opérateur Plateforme' : (ROLE_LABELS[profile.role] ?? profile.role)}
           </div>
@@ -298,7 +338,19 @@ export default function Sidebar({
       </div>
 
       {/* ── Navigation ── */}
-      <nav style={{ flex: 1, padding: '10px 8px', overflowY: 'auto' }}>
+      <nav style={{ flex: 1, padding: '12px 10px', overflowY: 'auto' }}>
+
+        {/* Section label */}
+        {visibleItems.length > 0 && (
+          <div style={{
+            padding: '4px 10px 8px',
+            fontSize: 9.5, fontWeight: 700, color: S.textDim,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+          }}>
+            Navigation
+          </div>
+        )}
+
         {visibleItems.map(([Icon, label, href]) => {
           const active = activeRoute === href
           const badge  = getNavBadge(href)
@@ -312,23 +364,24 @@ export default function Sidebar({
                 startTransition(() => router.push(href))
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+                display: 'flex', alignItems: 'center', gap: 11,
+                width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
                 border: 'none',
                 borderRadius: 8,
-                background: active ? 'rgba(59,130,246,0.16)' : 'transparent',
-                borderLeft: active ? '2px solid #3B82F6' : '2px solid transparent',
-                color: active ? '#fff' : isPending ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.52)',
+                background: active ? S.activeBg : 'transparent',
+                borderLeft: `2px solid ${active ? S.activeBorder : 'transparent'}`,
+                color: active ? S.activeText : isPending ? S.textDim : S.textMuted,
                 fontSize: 13.5, fontWeight: active ? 600 : 400,
                 cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
-                fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+                fontFamily: FONT,
                 marginBottom: 2,
-                opacity: isPending && !active ? 0.55 : 1,
+                opacity: isPending && !active ? 0.5 : 1,
+                transition: 'background 0.15s ease, color 0.15s ease, border-color 0.15s ease',
               }}
             >
               <Icon
-                size={15}
-                color={active ? '#93C5FD' : 'rgba(255,255,255,0.42)'}
+                size={17}
+                color={active ? '#93C5FD' : S.textMuted}
               />
               <span style={{ flex: 1 }}>{label}</span>
               {badge > 0 && (
@@ -340,8 +393,8 @@ export default function Sidebar({
                   color: '#fff',
                   fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  lineHeight: 1,
-                  flexShrink: 0,
+                  lineHeight: 1, flexShrink: 0,
+                  boxShadow: '0 1px 4px rgba(239,68,68,0.45)',
                 }}>
                   {badge > 99 ? '99+' : badge}
                 </span>
@@ -350,14 +403,14 @@ export default function Sidebar({
           )
         })}
 
-        {/* ── Platform admin section ── */}
+        {/* ── Platform admin nav ── */}
         {profile.is_platform_admin && (
           <>
             <div style={{
-              padding: '14px 12px 6px',
+              padding: '14px 10px 8px',
               fontSize: 9.5, fontWeight: 700,
-              color: 'rgba(255,255,255,0.22)',
-              letterSpacing: '0.13em', textTransform: 'uppercase',
+              color: S.textDim,
+              letterSpacing: '0.14em', textTransform: 'uppercase',
             }}>
               Plateforme
             </div>
@@ -369,23 +422,21 @@ export default function Sidebar({
                 startTransition(() => router.push('/admin'))
               }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+                display: 'flex', alignItems: 'center', gap: 11,
+                width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
                 border: 'none',
                 borderRadius: 8,
-                background: activeRoute === '/admin' ? 'rgba(180,83,9,0.2)' : 'transparent',
-                borderLeft: activeRoute === '/admin' ? '2px solid #D97706' : '2px solid transparent',
-                color: activeRoute === '/admin' ? '#FCD34D' : isPending ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.52)',
+                background: activeRoute === '/admin' ? S.amberBg : 'transparent',
+                borderLeft: `2px solid ${activeRoute === '/admin' ? S.amber : 'transparent'}`,
+                color: activeRoute === '/admin' ? '#FCD34D' : S.textMuted,
                 fontSize: 13.5, fontWeight: activeRoute === '/admin' ? 600 : 400,
                 cursor: isPending ? 'default' : 'pointer', textAlign: 'left',
-                fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-                marginBottom: 2,
-                opacity: isPending && activeRoute !== '/admin' ? 0.55 : 1,
+                fontFamily: FONT, marginBottom: 2,
               }}
             >
               <IconPlatform
-                size={15}
-                color={activeRoute === '/admin' ? '#FCD34D' : 'rgba(255,255,255,0.42)'}
+                size={17}
+                color={activeRoute === '/admin' ? '#FCD34D' : S.textMuted}
               />
               <span style={{ flex: 1 }}>Administration</span>
             </button>
@@ -395,29 +446,36 @@ export default function Sidebar({
 
       {/* ── Notification toggle ── */}
       {notifSupported && !profile.is_platform_admin && (
-        <div style={{ padding: '0 12px 6px' }}>
+        <div style={{ padding: '0 10px 6px', flexShrink: 0 }}>
           <button
             disabled={notifLoading || notifState === 'denied'}
             onClick={handleNotifToggle}
-            title={notifState === 'subscribed' ? 'Notifications activées — cliquer pour désactiver' : notifState === 'denied' ? 'Notifications bloquées par le navigateur' : 'Activer les notifications'}
+            title={
+              notifState === 'subscribed' ? 'Notifications activées — cliquer pour désactiver'
+              : notifState === 'denied'   ? 'Notifications bloquées par le navigateur'
+              : 'Activer les notifications push'
+            }
             style={{
               width: '100%', padding: '8px 12px',
               borderRadius: 8,
-              background: notifState === 'subscribed' ? 'rgba(59,130,246,0.12)' : 'transparent',
-              border: notifState === 'subscribed' ? '1px solid rgba(59,130,246,0.25)' : '1px solid rgba(255,255,255,0.06)',
-              color: notifLoading ? 'rgba(255,255,255,0.45)' : notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)',
+              background: notifState === 'subscribed' ? 'rgba(59,130,246,0.10)' : 'transparent',
+              border: `1px solid ${notifState === 'subscribed' ? 'rgba(59,130,246,0.22)' : S.border}`,
+              color: notifLoading ? S.textDim
+                : notifState === 'subscribed' ? '#93C5FD'
+                : notifState === 'denied'     ? S.textDim
+                : S.textMuted,
               fontSize: 11.5, fontWeight: 500,
               cursor: notifLoading || notifState === 'denied' ? 'not-allowed' : 'pointer',
-              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-              display: 'flex', alignItems: 'center', gap: 7,
-              transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+              fontFamily: FONT,
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.15s ease',
             }}
           >
             {notifLoading
               ? <span className="spinner" style={{ width: 12, height: 12 }} />
               : <IconBell
                   size={13}
-                  color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.32)'}
+                  color={notifState === 'subscribed' ? '#93C5FD' : notifState === 'denied' ? S.textDim : S.textMuted}
                   filled={notifState === 'subscribed'}
                 />
             }
@@ -431,91 +489,106 @@ export default function Sidebar({
       )}
 
       {/* ── Logout ── */}
-      <div style={{ padding: '6px 12px 16px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ padding: '6px 10px 20px', borderTop: `1px solid ${S.border}`, flexShrink: 0 }}>
         <button
           className="nav-item"
           onClick={() => setShowLogoutModal(true)}
           style={{
-            width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',
+            width: '100%', padding: isMobile ? '13px 12px' : '11px 12px',
             borderRadius: 8,
             background: 'transparent',
-            border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.42)',
-            fontSize: 13, fontWeight: 500,
+            border: 'none',
+            borderLeft: '2px solid transparent',
+            color: S.textMuted,
+            fontSize: 13.5, fontWeight: 400,
             cursor: 'pointer',
-            fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            fontFamily: FONT,
+            display: 'flex', alignItems: 'center', gap: 11,
           }}
         >
-          <IconLogout size={14} color="rgba(255,255,255,0.42)" />
-          Déconnexion
+          <IconLogout size={16} color={S.textMuted} />
+          <span>Déconnexion</span>
         </button>
       </div>
     </aside>
 
     {/* ── Logout confirmation modal ── */}
     {showLogoutModal && (
-      <div style={{
-        position: 'fixed', inset: 0,
-        background: 'rgba(15,23,42,0.6)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 20,
-        backdropFilter: 'blur(3px)',
-        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-      }}>
-        <div style={{
-          background: '#FFFFFF', borderRadius: 14,
+      <div
+        className="modal-overlay"
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.65)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 20,
+          backdropFilter: 'blur(4px)',
+          fontFamily: FONT,
+        }}
+      >
+        <div className="modal-panel" style={{
+          background: '#FFFFFF', borderRadius: 16,
           width: '100%', maxWidth: 400,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.22)',
           overflow: 'hidden',
         }}>
           {/* Header */}
           <div style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid #E2E8F0',
-            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '20px 24px 16px',
+            borderBottom: '1px solid #F1F5F9',
+            display: 'flex', alignItems: 'flex-start', gap: 14,
           }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 9,
+              width: 40, height: 40, borderRadius: 10,
               background: '#FEF2F2',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
-              <IconLogout size={16} color="#DC2626" />
+              <IconLogout size={18} color="#DC2626" />
             </div>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#0F172A' }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#0D1117', marginBottom: 4 }}>
                 Confirmer la déconnexion
               </div>
-              <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>
+              <div style={{ fontSize: 13, color: '#64748B', lineHeight: 1.5 }}>
                 Vous devrez vous reconnecter pour accéder au système.
               </div>
             </div>
+            <button
+              onClick={() => setShowLogoutModal(false)}
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#94A3B8', padding: 2, flexShrink: 0,
+              }}
+            >
+              <IconClose size={14} color="#94A3B8" />
+            </button>
           </div>
           {/* Body */}
-          <div style={{ padding: '20px 24px' }}>
-            <p style={{ fontSize: 14, color: '#475569', margin: '0 0 20px', lineHeight: 1.6 }}>
-              Êtes-vous sûr de vouloir vous déconnecter ?
-            </p>
+          <div style={{ padding: '20px 24px 24px' }}>
             <div style={{ display: 'flex', gap: 10 }}>
               <button
+                className="btn-red"
                 onClick={() => { setShowLogoutModal(false); onLogout() }}
                 style={{
-                  flex: 1, padding: '11px',
+                  flex: 1, padding: '12px',
                   background: '#DC2626', color: '#FFFFFF',
-                  border: 'none', borderRadius: 8,
-                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  border: 'none', borderRadius: 9,
+                  fontSize: 13.5, fontWeight: 700, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
+                <IconLogout size={15} color="white" />
                 Se déconnecter
               </button>
               <button
+                className="btn-ghost"
                 onClick={() => setShowLogoutModal(false)}
                 style={{
-                  padding: '11px 20px',
+                  padding: '12px 20px',
                   background: '#F8FAFC', color: '#475569',
-                  border: '1px solid #E2E8F0', borderRadius: 8,
-                  fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                  border: '1.5px solid #E2E8F0', borderRadius: 9,
+                  fontSize: 13.5, fontWeight: 500, cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 Annuler

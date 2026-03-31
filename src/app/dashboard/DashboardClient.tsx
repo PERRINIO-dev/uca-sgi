@@ -20,14 +20,15 @@ const fmtNum = (n: number) =>
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  ink:     '#0F172A', slate:  '#475569', muted:  '#94A3B8',
-  border:  '#E2E8F0', bg:     '#F8FAFC', surface: '#FFFFFF',
-  navy:    '#1B3A6B', navyDark: '#0C1A35',
-  blue:    '#2563EB', blueL:  '#EFF6FF',
-  green:   '#059669', greenL: '#ECFDF5',
-  orange:  '#D97706', orangeL: '#FFFBEB',
-  red:     '#DC2626', redL:   '#FEF2F2',
-  gold:    '#B45309', goldL:  '#FFFBEB',
+  ink:     '#0D1117', slate:  '#4A5568', muted:  '#8B949E',
+  border:  '#E1E4E8', bg:     '#F0F2F5', surface: '#FFFFFF',
+  navy:    '#1B3A6B', navyDark: '#0D1117',
+  blue:    '#2563EB', blueL:  '#EFF6FF', blueGlow: 'rgba(37,99,235,0.18)',
+  green:   '#10B981', greenL: '#ECFDF5', greenGlow: 'rgba(16,185,129,0.18)',
+  orange:  '#F59E0B', orangeL: '#FFFBEB', orangeGlow: 'rgba(245,158,11,0.18)',
+  red:     '#EF4444', redL:   '#FEF2F2', redGlow: 'rgba(239,68,68,0.18)',
+  gold:    '#D97706', goldL:  '#FFFBEB',
+  purple:  '#8B5CF6', purpleL: '#F5F3FF', purpleGlow: 'rgba(139,92,246,0.18)',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
@@ -77,7 +78,8 @@ function IconCheck() {
 function Panel({ children, style = {}, tourId }: { children: React.ReactNode; style?: React.CSSProperties; tourId?: string }) {
   return (
     <div
-      style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', padding: '20px 22px', ...style }}
+      className="card-hover"
+      style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '20px 22px', ...style }}
       {...(tourId ? { 'data-tour': tourId } : {})}
     >
       {children}
@@ -194,6 +196,7 @@ export default function DashboardClient({
       sub:    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
       value:  fmt(mtdRevenue),
       color:  C.blue,
+      glow:   C.blueGlow,
       Icon:   IconRevenue,
       trend:  mtdTrend,
     },
@@ -202,6 +205,7 @@ export default function DashboardClient({
       sub:    `Ce mois : ${fmt(mtdCreances)}`,
       value:  fmt(allTimeCreances),
       color:  allTimeCreances > 0 ? C.orange : C.green,
+      glow:   allTimeCreances > 0 ? C.orangeGlow : C.greenGlow,
       Icon:   IconBasket,
       trend:  null,
     },
@@ -209,7 +213,8 @@ export default function DashboardClient({
       label:  'Commandes actives',
       sub:    'Confirmées · en préparation · prêtes',
       value:  String(activeOrdersCount),
-      color:  C.navy,
+      color:  C.purple,
+      glow:   C.purpleGlow,
       Icon:   IconCount,
       trend:  null,
     },
@@ -218,6 +223,7 @@ export default function DashboardClient({
       sub:    `${todayCount} vente${todayCount !== 1 ? 's' : ''} aujourd'hui`,
       value:  fmt(mtdAvgBasket),
       color:  C.green,
+      glow:   C.greenGlow,
       Icon:   IconBasket,
       trend:  null,
     },
@@ -228,6 +234,7 @@ export default function DashboardClient({
         : 'Aucune vente ce mois',
       value:  fmt(mtdMargin),
       color:  mtdMargin >= 0 ? C.green : C.red,
+      glow:   mtdMargin >= 0 ? C.greenGlow : C.redGlow,
       Icon:   IconMargin,
       trend:  null,
     }] : []),
@@ -239,32 +246,33 @@ export default function DashboardClient({
     <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{
-          fontSize: 22, fontWeight: 700, color: C.ink,
-          margin: '0 0 6px', letterSpacing: '-0.02em', fontFamily: FONT,
-        }}>
-          Tableau de bord
-        </h1>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+      <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <h1 style={{
+            fontSize: 24, fontWeight: 800, color: C.ink,
+            margin: '0 0 5px', letterSpacing: '-0.03em', fontFamily: FONT,
+          }}>
+            Tableau de bord
+          </h1>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
             {new Date().toLocaleDateString('fr-FR', {
               weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
             })}
           </p>
-          {pendingRequests.length > 0 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              background: C.goldL, color: C.gold,
-              border: `1px solid #FDE68A`,
-              borderRadius: 100, padding: '3px 10px',
-              fontSize: 11, fontWeight: 600, fontFamily: FONT,
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
-              {pendingRequests.length} approbation{pendingRequests.length > 1 ? 's' : ''} en attente
-            </span>
-          )}
         </div>
+        {pendingRequests.length > 0 && (
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: C.goldL, color: C.gold,
+            border: `1px solid #FDE68A`,
+            borderRadius: 100, padding: '5px 14px',
+            fontSize: 11.5, fontWeight: 700, fontFamily: FONT,
+            boxShadow: '0 1px 4px rgba(217,119,6,0.15)',
+          }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
+            {pendingRequests.length} approbation{pendingRequests.length > 1 ? 's' : ''} en attente
+          </span>
+        )}
       </div>
 
       {/* ── KPI cards ── */}
@@ -273,48 +281,63 @@ export default function DashboardClient({
         gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
         gap: 14, marginBottom: 24,
       }}>
-        {kpis.map(({ label, sub, value, color, Icon, trend }) => (
-          <div key={label} style={{
-            background: C.surface, borderRadius: 14,
+        {kpis.map(({ label, sub, value, color, glow, Icon, trend }) => (
+          <div key={label} className="kpi-card" style={{
+            background: C.surface, borderRadius: 16,
             border: `1px solid ${C.border}`,
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-            padding: '18px 20px',
-            borderLeft: `4px solid ${color}`,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+            overflow: 'hidden',
+            position: 'relative',
           }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start',
-              justifyContent: 'space-between', marginBottom: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
-                textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
-                {label}
-              </div>
-              <div style={{
-                width: 36, height: 36, borderRadius: 9,
-                background: color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, boxShadow: `0 3px 10px ${color}45`,
-              }}>
-                <Icon />
-              </div>
-            </div>
+            {/* Gradient top bar */}
             <div style={{
-              fontSize: 28, fontWeight: 800, color: C.ink,
-              letterSpacing: '-0.03em', lineHeight: 1.1, fontFamily: FONT,
-              marginBottom: 6,
-            }}>
-              {value}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</span>
-              {trend !== null && trend !== undefined && (
-                <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '1px 7px',
-                  borderRadius: 100, fontFamily: FONT,
-                  background: trend >= 0 ? C.greenL : C.redL,
-                  color: trend >= 0 ? C.green : C.red,
+              height: 3,
+              background: `linear-gradient(90deg, ${color} 0%, ${color}88 100%)`,
+            }} />
+            <div style={{ padding: '16px 20px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start',
+                justifyContent: 'space-between', marginBottom: 14 }}>
+                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted,
+                  textTransform: 'uppercase', letterSpacing: '0.10em', fontFamily: FONT }}>
+                  {label}
+                </div>
+                <div style={{
+                  width: 38, height: 38, borderRadius: 10,
+                  background: `linear-gradient(135deg, ${color}22 0%, ${color}40 100%)`,
+                  border: `1px solid ${color}30`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  {trend >= 0 ? '+' : ''}{trend.toFixed(0)} %
-                </span>
-              )}
+                  <div style={{ color }}>
+                    <Icon />
+                  </div>
+                </div>
+              </div>
+              <div className="num" style={{
+                fontSize: 26, fontWeight: 800, color: C.ink,
+                letterSpacing: '-0.03em', lineHeight: 1.1, fontFamily: FONT,
+                marginBottom: 8,
+              }}>
+                {value}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</span>
+                {trend !== null && trend !== undefined && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '2px 8px',
+                    borderRadius: 100, fontFamily: FONT,
+                    background: trend >= 0 ? C.greenL : C.redL,
+                    color: trend >= 0 ? C.green : C.red,
+                    display: 'inline-flex', alignItems: 'center', gap: 3,
+                  }}>
+                    {trend >= 0
+                      ? <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    }
+                    {trend >= 0 ? '+' : ''}{trend.toFixed(0)} %
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -329,26 +352,39 @@ export default function DashboardClient({
         <Panel tourId="tour-chart">
           <SectionTitle>Ventes des 30 derniers jours</SectionTitle>
           {dailyChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={190}>
-              <AreaChart data={dailyChart} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={dailyChart} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
                 <defs>
-                  <linearGradient id="grad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={C.blue} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
+                  <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={C.blue} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={C.blue} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
-                <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.muted }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: C.muted }} axisLine={false} tickLine={false} tickFormatter={v => (v / 1000) + 'k'} />
+                <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.muted, fontFamily: FONT }} axisLine={false} tickLine={false} dy={6} />
+                <YAxis tick={{ fontSize: 10, fill: C.muted, fontFamily: FONT }} axisLine={false} tickLine={false} tickFormatter={v => (v / 1000) + 'k'} width={36} />
                 <Tooltip
                   formatter={(v) => [fmt(Number(v)), 'CA']}
-                  contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}`, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', fontFamily: FONT }}
+                  contentStyle={{
+                    fontSize: 12.5, borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+                    fontFamily: FONT, padding: '8px 14px',
+                  }}
+                  labelStyle={{ fontWeight: 700, color: C.ink, marginBottom: 4 }}
+                  cursor={{ stroke: C.blue, strokeWidth: 1, strokeDasharray: '4 4' }}
                 />
-                <Area type="monotone" dataKey="ca" stroke={C.blue} strokeWidth={2} fill="url(#grad)" />
+                <Area
+                  type="monotone" dataKey="ca"
+                  stroke={C.blue} strokeWidth={2.5}
+                  fill="url(#gradBlue)"
+                  dot={false}
+                  activeDot={{ r: 5, fill: C.blue, strokeWidth: 2, stroke: '#fff' }}
+                />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ height: 190, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
+            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
               Aucune vente sur la période
             </div>
           )}
@@ -357,17 +393,26 @@ export default function DashboardClient({
         <Panel>
           <SectionTitle>CA par boutique (mois en cours)</SectionTitle>
           {boutiqueStats.length > 0 ? (
-            <ResponsiveContainer width="100%" height={190}>
-              <BarChart data={boutiqueStats} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} tickFormatter={v => (v / 1000) + 'k'} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: C.ink, fontWeight: 600 }} axisLine={false} tickLine={false} width={80} />
-                <Tooltip formatter={(v) => [fmt(Number(v)), 'CA']} contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}`, fontFamily: FONT }} />
-                <Bar dataKey="ca" fill={C.blue} radius={[0, 6, 6, 0]} />
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={boutiqueStats} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={true} horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: C.muted, fontFamily: FONT }} tickFormatter={v => (v / 1000) + 'k'} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 12.5, fill: C.ink, fontWeight: 600, fontFamily: FONT }} axisLine={false} tickLine={false} width={85} />
+                <Tooltip
+                  formatter={(v) => [fmt(Number(v)), 'CA']}
+                  contentStyle={{
+                    fontSize: 12.5, borderRadius: 10,
+                    border: `1px solid ${C.border}`,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
+                    fontFamily: FONT, padding: '8px 14px',
+                  }}
+                  cursor={{ fill: 'rgba(37,99,235,0.04)' }}
+                />
+                <Bar dataKey="ca" fill={C.blue} radius={[0, 8, 8, 0]} maxBarSize={28} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ height: 190, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
+            <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
               Aucune vente ce mois
             </div>
           )}

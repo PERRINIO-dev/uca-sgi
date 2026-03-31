@@ -7,6 +7,50 @@ import Sidebar                 from '@/components/Sidebar'
 import PushSubscription        from '@/components/PushSubscription'
 import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 
+const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+
+const PAGE_TITLES: Record<string, string> = {
+  '/dashboard': 'Tableau de bord',
+  '/sales':     'Ventes',
+  '/warehouse': 'Entrepôt',
+  '/products':  'Catalogue',
+  '/users':     'Utilisateurs',
+  '/reports':   'Rapports',
+  '/admin':     'Administration',
+}
+
+// ── Mobile header hamburger icon ──────────────────────────────────────────────
+function IconMenu({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 14" fill="none">
+      <path d="M1 1h16M1 7h16M1 13h10" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+// ── Refresh icon ──────────────────────────────────────────────────────────────
+function IconRefresh({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 2v6h-6"/>
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+      <path d="M3 22v-6h6"/>
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+    </svg>
+  )
+}
+
+// ── Close icon ────────────────────────────────────────────────────────────────
+function IconClose({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M1 1l12 12M13 1L1 13" stroke="#64748B" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
 export default function PageLayout({
   profile,
   activeRoute,
@@ -22,24 +66,15 @@ export default function PageLayout({
 }) {
   const router                    = useRouter()
   const isMobile                  = useIsMobile()
-  const [sidebarOpen,    setSidebar]    = useState(false)
-  const [updateReady,    setUpdateReady] = useState(false)
+  const [sidebarOpen, setSidebar] = useState(false)
+  const [updateReady, setUpdateReady] = useState(false)
 
-  const PAGE_TITLES: Record<string, string> = {
-    '/dashboard': 'Tableau de bord',
-    '/sales':     'Ventes',
-    '/warehouse': 'Entrepôt',
-    '/products':  'Catalogue',
-    '/users':     'Utilisateurs',
-    '/reports':   'Rapports',
-    '/admin':     'Administration Plateforme',
-  }
-  const pageTitle = PAGE_TITLES[activeRoute] ?? 'UCA SGI'
+  const pageTitle = PAGE_TITLES[activeRoute] ?? 'MERAM'
+  const isAdmin   = activeRoute === '/admin'
 
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return
 
-    // Register service worker and detect when a new version is ready
     navigator.serviceWorker
       .register('/sw.js', { scope: '/' })
       .then(reg => {
@@ -47,7 +82,6 @@ export default function PageLayout({
           const newWorker = reg.installing
           if (!newWorker) return
           newWorker.addEventListener('statechange', () => {
-            // New SW installed and waiting — only notify if a previous SW was controlling
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               setUpdateReady(true)
             }
@@ -56,8 +90,6 @@ export default function PageLayout({
       })
       .catch(err => console.error('[SW]', err))
 
-    // Listen for SW broadcast: push notification received while page is open
-    // → refresh immediately so data is current before user even taps the notif
     const handleSwMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PUSH_RECEIVED') {
         router.refresh()
@@ -65,9 +97,6 @@ export default function PageLayout({
     }
     navigator.serviceWorker.addEventListener('message', handleSwMessage)
 
-    // Refresh when app returns to foreground (e.g. user taps notification,
-    // switches back from another app, or reopens the PWA from home screen).
-    // Debounced to avoid triggering during SPA navigation transitions.
     let visibilityTimer: ReturnType<typeof setTimeout> | null = null
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
@@ -94,31 +123,29 @@ export default function PageLayout({
         position: 'fixed', bottom: 80, left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 9998,
-        background: '#1B3A6B', color: '#fff',
-        borderRadius: 12, padding: '14px 20px',
+        background: '#161B22',
+        color: '#E6EDF3',
+        borderRadius: 14, padding: '14px 18px',
         display: 'flex', alignItems: 'center', gap: 14,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.40)',
         maxWidth: 'calc(100vw - 32px)',
-        fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+        fontFamily: FONT,
+        border: '1px solid rgba(255,255,255,0.08)',
+        animation: 'slideUp 0.3s ease forwards',
       }}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-          stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 2v6h-6"/>
-          <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-          <path d="M3 22v-6h6"/>
-          <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-        </svg>
+        <IconRefresh size={18} />
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 13, fontWeight: 600 }}>Mise à jour disponible</div>
-          <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 2 }}>
+          <div style={{ fontSize: 11, color: '#8B949E', marginTop: 2 }}>
             Actualisez pour obtenir la dernière version
           </div>
         </div>
         <button
+          className="btn-meram"
           onClick={() => window.location.reload()}
           style={{
-            background: '#2563EB', border: 'none', color: '#fff',
-            borderRadius: 8, padding: '8px 14px',
+            border: 'none', color: '#fff',
+            borderRadius: 8, padding: '7px 14px',
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             fontFamily: 'inherit', whiteSpace: 'nowrap',
           }}
@@ -130,49 +157,46 @@ export default function PageLayout({
           style={{
             background: 'transparent', border: 'none', color: '#64748B',
             cursor: 'pointer', padding: 4, lineHeight: 1,
+            display: 'flex', alignItems: 'center',
           }}
           aria-label="Fermer"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
-            stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <line x1="1" y1="1" x2="13" y2="13"/>
-            <line x1="13" y1="1" x2="1" y2="13"/>
-          </svg>
+          <IconClose size={14} />
         </button>
       </div>
     )}
 
     <div style={{
       display: 'flex', minHeight: '100vh',
-      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
-      background: '#F8FAFC',
+      fontFamily: FONT,
+      background: isAdmin ? '#0D1117' : '#F0F2F5',
     }}>
 
       {/* ── Mobile top bar ── */}
       {isMobile && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: '#0C1A35',
+          background: '#0D1117',
           display: 'flex', alignItems: 'center',
-          padding: '0 16px', gap: 12, zIndex: 200,
+          padding: '0 16px', gap: 14, zIndex: 200,
           borderBottom: '1px solid rgba(255,255,255,0.06)',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
         }}>
           <button
             onClick={() => setSidebar(o => !o)}
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: 8, color: 'white',
-              width: 36, height: 36,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.10)',
+              borderRadius: 9, color: 'white',
+              width: 38, height: 38,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0,
+              transition: 'background 0.15s ease',
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M2 4h12M2 8h12M2 12h12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+            <IconMenu size={18} />
           </button>
+
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontSize: 15, fontWeight: 700, color: 'white',
@@ -181,13 +205,28 @@ export default function PageLayout({
             }}>
               {pageTitle}
             </div>
+          </div>
+
+          {/* MERAM mini wordmark */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+          }}>
             <div style={{
-              fontSize: 9.5, color: 'rgba(255,255,255,0.3)',
-              letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 1,
-              fontFamily: 'Georgia, serif',
+              width: 26, height: 26, borderRadius: 7,
+              background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(37,99,235,0.4)',
             }}>
-              UCA SGI
+              <svg width="13" height="11" viewBox="0 0 18 15" fill="none">
+                <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
+            <span style={{
+              fontSize: 13, fontWeight: 800, color: 'white',
+              letterSpacing: '-0.02em',
+            }}>
+              MERAM
+            </span>
           </div>
         </div>
       )}
@@ -198,9 +237,9 @@ export default function PageLayout({
           onClick={() => setSidebar(false)}
           style={{
             position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.6)',
+            background: 'rgba(0,0,0,0.65)',
             zIndex: 150,
-            backdropFilter: 'blur(2px)',
+            backdropFilter: 'blur(3px)',
           }}
         />
       )}
