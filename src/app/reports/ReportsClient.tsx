@@ -280,9 +280,11 @@ export default function ReportsClient({
         }
       }
     }
+    const escCsv = (v: string | number) =>
+      `"${String(v).replace(/\r?\n/g, ' ').replace(/"/g, '""')}"`
     const csv = [headers, ...rows]
-      .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
-      .join('\n')
+      .map(r => r.map(escCsv).join(','))
+      .join('\r\n')
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
     const url  = URL.createObjectURL(blob)
     const link = document.createElement('a')

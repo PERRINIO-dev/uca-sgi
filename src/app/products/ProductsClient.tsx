@@ -325,6 +325,8 @@ export default function ProductsClient({
   // ── Edit ──────────────────────────────────────────────────────────────────
   const openEdit = (p: any) => {
     const pt: ProductType = p.product_type ?? 'tile'
+    setError(null)
+    setSuccess(null)
     setEditProduct(p)
     setForm({
       ...emptyForm(pt),
