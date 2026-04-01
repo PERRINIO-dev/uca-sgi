@@ -169,28 +169,24 @@ export default function PageLayout({
     <div style={{
       display: 'flex', minHeight: '100vh',
       fontFamily: FONT,
-      background: isAdmin ? '#0D1117' : '#F0F2F5',
+      background: '#F0F2F5',
     }}>
 
       {/* ── Mobile top bar ── */}
       {isMobile && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: isAdmin ? '#0D1117' : '#FFFFFF',
+          background: '#FFFFFF',
           display: 'flex', alignItems: 'center',
           padding: '0 16px', gap: 14, zIndex: 200,
-          borderBottom: isAdmin
-            ? '1px solid rgba(255,255,255,0.06)'
-            : '1px solid #E5E7EB',
-          boxShadow: isAdmin
-            ? '0 4px 16px rgba(0,0,0,0.25)'
-            : '0 1px 6px rgba(0,0,0,0.06)',
+          borderBottom: '1px solid #E5E7EB',
+          boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
         }}>
           <button
             onClick={() => setSidebar(o => !o)}
             style={{
-              background: isAdmin ? 'rgba(255,255,255,0.07)' : '#F3F4F6',
-              border: `1px solid ${isAdmin ? 'rgba(255,255,255,0.10)' : '#E5E7EB'}`,
+              background: '#F3F4F6',
+              border: '1px solid #E5E7EB',
               borderRadius: 9,
               width: 38, height: 38,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -198,13 +194,13 @@ export default function PageLayout({
               transition: 'background 0.15s ease',
             }}
           >
-            <IconMenu size={18} color={isAdmin ? 'white' : '#374151'} />
+            <IconMenu size={18} color="#374151" />
           </button>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontSize: 15, fontWeight: 700,
-              color: isAdmin ? 'white' : '#111827',
+              color: '#111827',
               letterSpacing: '-0.01em',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
@@ -228,7 +224,7 @@ export default function PageLayout({
             </div>
             <span style={{
               fontSize: 13, fontWeight: 800,
-              color: isAdmin ? 'white' : '#111827',
+              color: '#111827',
               letterSpacing: '-0.02em',
             }}>
               MERAM

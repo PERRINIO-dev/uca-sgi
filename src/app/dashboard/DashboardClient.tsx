@@ -20,7 +20,7 @@ const fmtNum = (n: number) =>
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  ink:     '#0D1117', slate:  '#4A5568', muted:  '#8B949E',
+  ink:     '#0F172A', slate:  '#475569', muted:  '#94A3B8',
   border:  '#E1E4E8', bg:     '#F0F2F5', surface: '#FFFFFF',
   navy:    '#1B3A6B', navyDark: '#0D1117',
   blue:    '#2563EB', blueL:  '#EFF6FF', blueGlow: 'rgba(37,99,235,0.18)',
@@ -101,7 +101,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function ModalOverlay({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{
+    <div className="modal-overlay" style={{
       position: 'fixed', inset: 0,
       background: 'rgba(15,23,42,0.55)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -624,12 +624,13 @@ export default function DashboardClient({
       {/* ── Reject modal ── */}
       {rejectId && (
         <ModalOverlay>
-          <div style={{
+          <div className="modal-panel" style={{
             background: C.surface, borderRadius: 14,
             width: '100%', maxWidth: 440,
             boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
             overflow: 'hidden',
           }}>
+            <div style={{ height: 3, background: 'linear-gradient(90deg,#DC2626,#EF4444)' }} />
             <div style={{
               padding: '16px 20px',
               borderBottom: `1px solid ${C.border}`,

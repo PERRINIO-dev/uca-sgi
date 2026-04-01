@@ -331,7 +331,7 @@ export default function SalesListClient({
             }}
           >
             {navPending ? (
-              <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Chargement…</>
+              <><span className="spinner" />Chargement…</>
             ) : (
               <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
             )}
@@ -502,7 +502,7 @@ export default function SalesListClient({
                 }}
               >
                 {firstSalePending ? (
-                  <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Chargement…</>
+                  <><span className="spinner" />Chargement…</>
                 ) : 'Créer la première vente'}
               </button>
             )}
@@ -548,7 +548,7 @@ export default function SalesListClient({
                         onClick={() => setExpanded(isOpen ? null : sale.id)}
                         style={{ background: isOpen ? C.bg : C.surface }}
                       >
-                        <td style={{ ...TD_STYLE, fontWeight: 700, color: C.navy }}>
+                        <td style={{ ...TD_STYLE, fontWeight: 700, color: C.blue }}>
                           {sale.sale_number}
                         </td>
                         <td style={{ ...TD_STYLE, color: C.slate, fontSize: 12 }}>
@@ -1096,7 +1096,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
           <button
             className="btn-outline-navy"
             onClick={() => setShowAdd(true)}
-            style={{ marginTop: 10, padding: '7px 14px', borderRadius: 7, border: `1.5px solid ${C.navy}`, background: 'transparent', color: C.navy, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            style={{ marginTop: 10, padding: '7px 14px', borderRadius: 7, border: `1.5px solid ${C.blue}`, background: 'transparent', color: C.blue, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
@@ -1126,10 +1126,10 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
             {addError && <div style={{ fontSize: 12, color: C.red, marginTop: 6, fontFamily: FONT }}>{addError}</div>}
             <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
               <button
-                className="btn-navy"
+                className="btn-meram"
                 onClick={handleAdd}
                 disabled={adding}
-                style={{ padding: '8px 16px', borderRadius: 6, background: adding ? C.muted : C.navy, color: 'white', border: 'none', fontSize: 12, fontWeight: 600, cursor: adding ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                style={{ padding: '8px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: adding ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 {adding ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer'}
               </button>
               <button

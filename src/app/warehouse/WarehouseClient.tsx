@@ -361,7 +361,7 @@ export default function WarehouseClient({
               style={{
                 padding: '8px 18px', borderRadius: 100,
                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: activeTab === id ? C.navy : 'transparent',
+                background: activeTab === id ? C.blue : 'transparent',
                 color: activeTab === id ? C.surface : C.slate,
                 border: 'none', display: 'flex',
                 alignItems: 'center', gap: 6,
@@ -505,7 +505,7 @@ export default function WarehouseClient({
                             opacity: loadingOrder === order.id ? 0.7 : 1,
                           }}>
                           {loadingOrder === order.id ? (
-                            <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />En cours…</>
+                            <><span className="spinner" />En cours…</>
                           ) : 'Confirmer livraison'}
                         </button>
                       )}
@@ -903,7 +903,7 @@ export default function WarehouseClient({
               overflow: 'hidden' }}>
               <div style={{ padding: '16px 20px',
                 borderBottom: `1px solid ${C.border}`,
-                background: C.navy }}>
+                background: C.blue }}>
                 <div style={{ fontSize: 14, fontWeight: 700,
                   color: C.surface, fontFamily: FONT }}>
                   Nouvelle demande
@@ -932,7 +932,7 @@ export default function WarehouseClient({
                           flex: 1, padding: '8px', borderRadius: 100,
                           fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', fontFamily: FONT,
-                          background: reqType === t ? C.navy : 'transparent',
+                          background: reqType === t ? C.blue : 'transparent',
                           color: reqType === t ? C.surface : C.slate,
                           border: 'none',
                         }}>
@@ -1113,7 +1113,7 @@ export default function WarehouseClient({
                     opacity: disabled ? 0.45 : 1,
                   }}>
                   {reqLoading
-                    ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Envoi…</>
+                    ? <><span className="spinner" />Envoi…</>
                     : 'Soumettre pour approbation'}
                 </button>
                   )
@@ -1215,7 +1215,7 @@ export default function WarehouseClient({
             boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
             <div style={{ padding: '18px 24px',
               borderBottom: `1px solid ${C.border}`,
-              background: C.navy }}>
+              background: C.blue }}>
               <h3 style={{ margin: 0, fontSize: 16,
                 fontWeight: 700, color: C.surface, fontFamily: FONT }}>
                 Confirmer la livraison

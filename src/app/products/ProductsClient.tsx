@@ -1553,6 +1553,7 @@ function Modal({ title, children, onClose }: {
         animation: 'modalPanel 0.22s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
+        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
         <div style={{ padding: '20px 24px 16px',
           borderBottom: `1px solid #F1F5F9`,
           display: 'flex', alignItems: 'center',
@@ -1759,7 +1760,7 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
         </button>
         <button onClick={onConfirm} disabled={loading}
           style={{ padding: '9px 20px', borderRadius: 8, border: 'none',
-            background: loading ? C.muted : C.navy,
+            background: loading ? C.muted : C.blue,
             color: 'white', fontSize: 13, fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
             fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8 }}>

@@ -580,7 +580,7 @@ export default function UsersClient({
                   fontSize: 13, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
                   fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   opacity: editLoading ? 0.7 : 1 }}>
-                {editLoading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Enregistrement…</> : 'Enregistrer les modifications'}
+                {editLoading ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer les modifications'}
               </button>
             </div>
 
@@ -723,7 +723,7 @@ export default function UsersClient({
                         fontFamily: FONT, whiteSpace: 'nowrap', flexShrink: 0,
                         display: 'inline-flex', alignItems: 'center', gap: 7,
                         opacity: (boutiqueLoading || !newBoutiqueName.trim()) ? 0.5 : 1 }}>
-                      {boutiqueLoading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />…</> : 'Ajouter'}
+                      {boutiqueLoading ? <><span className="spinner" />…</> : 'Ajouter'}
                     </button>
                   </div>
                 </div>
@@ -765,9 +765,9 @@ function RoleSelector({ value, onChange }: {
         <button key={r} type="button" onClick={() => onChange(r)}
           style={{ flex: 1, padding: '9px 4px', borderRadius: 7,
             fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
-            background: value === r ? C.navy    : C.surface,
+            background: value === r ? C.blue    : C.surface,
             color:      value === r ? C.surface : C.slate,
-            border: `1.5px solid ${value === r ? C.navy : C.border}`,
+            border: `1.5px solid ${value === r ? C.blue : C.border}`,
             fontFamily: FONT, transition: 'all 0.12s' }}>
           {l}
         </button>
@@ -804,6 +804,7 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
         animation: 'modalPanel 0.22s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
+        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
         {/* Header */}
         <div style={{ padding: '20px 24px 16px',
           borderBottom: `1px solid ${C.border}`,
@@ -897,7 +898,7 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
           fontFamily: FONT, display: 'flex', alignItems: 'center',
           justifyContent: 'center', gap: 7,
           opacity: (loading || disabled) ? 0.7 : 1 }}>
-        {loading ? <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />{confirmLabel}…</> : confirmLabel}
+        {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
       </button>
       <button
         className="btn-ghost"

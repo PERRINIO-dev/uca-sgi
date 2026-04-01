@@ -23,18 +23,19 @@ const B = {
   badgeBg:     '#EF4444',
 }
 
-// ── Admin platform tokens (dark) ──────────────────────────────────────────────
+// ── Admin platform tokens (light — matches boutique) ──────────────────────────
 const A = {
-  bg:          '#0D1117',
-  bgHover:     'rgba(255,255,255,0.05)',
-  border:      'rgba(255,255,255,0.06)',
-  text:        'rgba(255,255,255,0.90)',
-  textSub:     'rgba(255,255,255,0.45)',
-  textDim:     'rgba(255,255,255,0.22)',
-  activeBg:    'rgba(210,153,34,0.14)',
-  activeBorder:'#D29922',
-  activeText:  '#FCD34D',
-  activeIcon:  '#FCD34D',
+  bg:          '#FFFFFF',
+  bgHover:     '#F5F7FA',
+  border:      '#E5E7EB',
+  borderStrong:'#D1D5DB',
+  text:        '#111827',
+  textSub:     '#6B7280',
+  textDim:     '#9CA3AF',
+  activeBg:    '#EFF6FF',
+  activeBorder:'#2563EB',
+  activeText:  '#1D4ED8',
+  activeIcon:  '#2563EB',
   badgeBg:     '#EF4444',
 }
 
@@ -314,25 +315,23 @@ export default function Sidebar({
       zIndex: 160,
       fontFamily: FONT,
       borderRight: `1px solid ${T.border}`,
-      boxShadow: isAdmin ? 'none' : '2px 0 16px rgba(0,0,0,0.06)',
+      boxShadow: '2px 0 16px rgba(0,0,0,0.06)',
     }}>
 
-      {/* ── Blue gradient accent stripe (boutiques only) ── */}
-      {!isAdmin && (
-        <div style={{
-          height: 3,
-          background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 60%, #60A5FA 100%)',
-          flexShrink: 0,
-        }} />
-      )}
+      {/* ── Blue gradient accent stripe ── */}
+      <div style={{
+        height: 3,
+        background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 60%, #60A5FA 100%)',
+        flexShrink: 0,
+      }} />
 
       {/* ── Logo ── */}
       <div style={{
-        padding: isAdmin ? '20px 20px 16px' : '18px 20px 14px',
+        padding: '18px 20px 14px',
         borderBottom: `1px solid ${T.border}`,
         flexShrink: 0,
       }}>
-        <MeramLogo dark={isAdmin} />
+        <MeramLogo dark={false} />
       </div>
 
       {/* ── User profile ── */}
@@ -341,9 +340,9 @@ export default function Sidebar({
         borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', gap: 10,
         flexShrink: 0,
-        background: isAdmin ? 'transparent' : '#FAFBFC',
+        background: '#FAFBFC',
       }}>
-        <Avatar name={profile.full_name} dark={isAdmin} />
+        <Avatar name={profile.full_name} dark={false} />
         <div style={{ minWidth: 0 }}>
           <div style={{
             fontSize: 13, fontWeight: 600, color: T.text,
@@ -380,7 +379,7 @@ export default function Sidebar({
           return (
             <button
               key={href}
-              className={`nav-item ${isAdmin ? 'nav-item-dark' : 'nav-item-light'}${active ? ' nav-active' : ''}`}
+              className={`nav-item nav-item-light${active ? ' nav-active' : ''}`}
               {...(NAV_TOUR_IDS[href] ? { 'data-tour': NAV_TOUR_IDS[href] } : {})}
               onClick={() => {
                 onClose?.()
@@ -430,7 +429,7 @@ export default function Sidebar({
               Plateforme
             </div>
             <button
-              className={`nav-item nav-item-dark${activeRoute === '/admin' ? ' nav-active' : ''}`}
+              className={`nav-item nav-item-light${activeRoute === '/admin' ? ' nav-active' : ''}`}
               onClick={() => {
                 onClose?.()
                 startTransition(() => router.push('/admin'))
@@ -494,7 +493,7 @@ export default function Sidebar({
       {/* ── Logout ── */}
       <div style={{ padding: '6px 10px 18px', borderTop: `1px solid ${T.border}`, flexShrink: 0 }}>
         <button
-          className={`nav-item ${isAdmin ? 'nav-item-dark' : 'nav-item-light'}`}
+          className="nav-item nav-item-light"
           onClick={() => setShowLogoutModal(true)}
           style={{
             width: '100%', padding: isMobile ? '13px 12px' : '10px 12px',

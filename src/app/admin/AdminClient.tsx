@@ -11,21 +11,21 @@ import {
 } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
-// ── Design tokens — ADMIN dark platform ───────────────────────────────────────
+// ── Design tokens — ADMIN light platform ──────────────────────────────────────
 const C = {
-  ink:     '#E6EDF3',
-  slate:   '#8B949E',
-  muted:   '#484F58',
-  border:  '#21262D',
-  bg:      '#0D1117',
-  surface: '#161B22',
-  surfaceElev: '#1C2128',
-  navy:    '#1B3A6B', navyDark: '#0D1117',
-  blue:    '#58A6FF', blueL:  'rgba(88,166,255,0.12)',
-  green:   '#3FB950', greenL: 'rgba(63,185,80,0.14)',
-  orange:  '#D29922', orangeL:'rgba(210,153,34,0.14)',
-  red:     '#F85149', redL:   'rgba(248,81,73,0.14)',
-  amber:   '#D29922', amberL: 'rgba(210,153,34,0.14)', amberM: '#30363D',
+  ink:     '#0F172A',
+  slate:   '#475569',
+  muted:   '#94A3B8',
+  border:  '#E2E8F0',
+  bg:      '#F8FAFC',
+  surface: '#FFFFFF',
+  surfaceElev: '#F1F5F9',
+  navy:    '#1B3A6B', navyDark: '#0C1A35',
+  blue:    '#2563EB', blueL:  '#EFF6FF',
+  green:   '#059669', greenL: '#ECFDF5',
+  orange:  '#D97706', orangeL:'#FFFBEB',
+  red:     '#DC2626', redL:   '#FEF2F2',
+  amber:   '#B45309', amberL: '#FEF3C7', amberM: '#E5E7EB',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
@@ -167,10 +167,10 @@ function CompanyInitials({ name, size = 40 }: { name: string; size?: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: 10,
-      background: `linear-gradient(135deg, hsl(${hue},55%,20%) 0%, hsl(${(hue+30)%360},60%,28%) 100%)`,
-      border: `1px solid hsl(${hue},40%,30%)`,
+      background: `linear-gradient(135deg, hsl(${hue},55%,88%) 0%, hsl(${(hue+30)%360},60%,80%) 100%)`,
+      border: `1px solid hsl(${hue},40%,78%)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      fontSize: size * 0.38, fontWeight: 700, color: `hsl(${hue}, 80%, 78%)`,
+      fontSize: size * 0.38, fontWeight: 700, color: `hsl(${hue}, 60%, 28%)`,
       letterSpacing: '-0.02em',
     }}>
       {letters}
@@ -186,9 +186,9 @@ function UserInitials({ name, size = 32 }: { name: string; size?: number }) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: '#1E293B', border: '1.5px solid #334155',
+      background: '#E2E8F0', border: '1.5px solid #CBD5E1',
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-      fontSize: size * 0.34, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.04em',
+      fontSize: size * 0.34, fontWeight: 700, color: '#475569', letterSpacing: '0.04em',
     }}>
       {letters}
     </div>
@@ -322,7 +322,7 @@ export default function AdminClient({
     width: '100%', padding: '9px 12px',
     border: `1.5px solid ${C.border}`, borderRadius: 8,
     fontSize: 13, fontFamily: FONT, color: C.ink,
-    background: C.bg, outline: 'none', boxSizing: 'border-box',
+    background: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 600,
@@ -424,11 +424,11 @@ export default function AdminClient({
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '11px 16px', borderRadius: 10, marginBottom: 28,
-          background: 'rgba(210,153,34,0.10)',
-          border: '1px solid rgba(210,153,34,0.22)',
+          background: C.blueL,
+          border: `1px solid #BFDBFE`,
         }}>
-          <IconShield size={15} color={C.amber} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.amber, letterSpacing: '0.01em' }}>
+          <IconShield size={15} color={C.blue} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: C.blue, letterSpacing: '0.01em' }}>
             Administration Plateforme — vue transversale, toutes entreprises
           </span>
         </div>
@@ -448,15 +448,13 @@ export default function AdminClient({
             </p>
           </div>
           <button
+            className="btn-meram"
             onClick={() => { setShowModal(true); setFormError(null) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 18px',
-              background: 'linear-gradient(135deg, #B45309 0%, #D97706 100%)',
-              color: '#fff',
-              border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700,
+              borderRadius: 9, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', flexShrink: 0, fontFamily: FONT,
-              boxShadow: '0 4px 16px rgba(180,83,9,0.35)',
             }}
           >
             <IconPlus size={14} color="#fff" />
@@ -487,9 +485,9 @@ export default function AdminClient({
             { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.blue,  bg: C.blueL },
             { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenL },
           ].map(({ label, value, Icon, accent, bg }) => (
-            <div key={label} className="card-hover-dark" style={{
+            <div key={label} className="card-hover" style={{
               background: C.surface, borderRadius: 14, overflow: 'hidden',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: `1px solid ${C.border}`,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: `1px solid ${C.border}`,
             }}>
               <div style={{ height: 3, background: `linear-gradient(90deg, ${accent} 0%, ${accent}66 100%)` }} />
               <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -506,7 +504,7 @@ export default function AdminClient({
         </div>
 
         {/* ── Tab bar ── */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: '4px', background: C.surface, borderRadius: 10, width: 'fit-content', border: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', gap: 4, marginBottom: 20, padding: '4px', background: C.bg, borderRadius: 10, width: 'fit-content', border: `1px solid ${C.border}` }}>
           {([
             { id: 'companies', label: `Entreprises (${companies.length})`, Icon: IconBuilding },
             { id: 'journal',   label: `Journal (${auditLogs.length})`,      Icon: IconHistory },
@@ -517,12 +515,12 @@ export default function AdminClient({
               style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 padding: '8px 16px', borderRadius: 7,
-                background: activeTab === id ? C.surfaceElev : 'transparent',
+                background: activeTab === id ? C.surface : 'transparent',
                 border: activeTab === id ? `1px solid ${C.border}` : '1px solid transparent',
                 color: activeTab === id ? C.ink : C.slate,
                 fontSize: 13, fontWeight: activeTab === id ? 600 : 400,
                 cursor: 'pointer', fontFamily: FONT,
-                boxShadow: activeTab === id ? '0 2px 8px rgba(0,0,0,0.30)' : 'none',
+                boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.15s',
               }}
             >
@@ -564,6 +562,7 @@ export default function AdminClient({
                     {companies.map((company, i) => (
                       <tr
                         key={company.id}
+                        className="trow-click"
                         style={{ borderBottom: i < companies.length - 1 ? `1px solid ${C.border}` : 'none' }}
                       >
                         {/* Company */}
@@ -666,7 +665,7 @@ export default function AdminClient({
                 onChange={e => setJournalFilter(e.target.value)}
                 style={{
                   padding: '6px 10px', borderRadius: 7,
-                  border: `1px solid ${C.border}`, background: C.surface,
+                  border: `1px solid ${C.border}`, background: '#FFFFFF',
                   fontSize: 12.5, color: C.ink, fontFamily: FONT,
                   cursor: 'pointer', outline: 'none',
                 }}
@@ -705,7 +704,7 @@ export default function AdminClient({
                       const company = getAffectedCompanyName(entry)
                       const detail  = getAuditDetail(entry)
                       return (
-                        <tr key={entry.id} style={{ borderBottom: i < filteredAudit.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+                        <tr key={entry.id} className="trow" style={{ borderBottom: i < filteredAudit.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                           <td style={{ padding: '12px 16px', fontSize: 12.5, color: C.slate, whiteSpace: 'nowrap' }}>
                             {fmtDateTime(entry.created_at)}
                           </td>
@@ -752,14 +751,15 @@ export default function AdminClient({
         />
 
         {/* Panel */}
-        <div style={{
+        <div className="drawer-panel" style={{
           position: 'fixed', top: 0, right: 0, bottom: 0,
           width: '100%', maxWidth: 440,
-          background: C.surface, zIndex: 501,
-          boxShadow: '-8px 0 40px rgba(0,0,0,0.15)',
+          background: '#FFFFFF', zIndex: 501,
+          boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
           display: 'flex', flexDirection: 'column',
           fontFamily: FONT,
         }}>
+          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
 
           {/* Sticky header */}
           <div style={{
@@ -919,11 +919,12 @@ export default function AdminClient({
           zIndex: 600, padding: 20, backdropFilter: 'blur(3px)', fontFamily: FONT,
         }}
       >
-        <div style={{
-          background: C.surface, borderRadius: 14,
+        <div className="modal-panel" style={{
+          background: '#FFFFFF', borderRadius: 14,
           width: '100%', maxWidth: 420,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.22)', overflow: 'hidden',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.18)', overflow: 'hidden',
         }}>
+          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)' }} />
           {/* Header */}
           <div style={{
             padding: '16px 20px', borderBottom: `1px solid ${C.border}`,
@@ -992,20 +993,21 @@ export default function AdminClient({
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10 }}>
               <button
+                className="btn-meram"
                 onClick={handlePasswordReset}
                 disabled={resetLoading || resetPwd.length < 8}
                 style={{
                   flex: 1, padding: '11px',
-                  background: resetLoading || resetPwd.length < 8 ? C.muted : C.blue,
-                  color: '#fff', border: 'none', borderRadius: 9,
+                  border: 'none', borderRadius: 9,
                   fontSize: 13.5, fontWeight: 700,
                   cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT, transition: 'background 0.15s',
+                  fontFamily: FONT,
                 }}
               >
                 {resetLoading ? 'En cours…' : 'Confirmer'}
               </button>
               <button
+                className="btn-ghost"
                 onClick={() => { setResetTarget(null); setResetError(null); setResetPwd('') }}
                 disabled={resetLoading}
                 style={{
@@ -1036,12 +1038,13 @@ export default function AdminClient({
           zIndex: 700, padding: 20, backdropFilter: 'blur(3px)', fontFamily: FONT,
         }}
       >
-        <div style={{
-          background: C.surface, borderRadius: 16,
+        <div className="modal-panel" style={{
+          background: '#FFFFFF', borderRadius: 16,
           width: '100%', maxWidth: 520,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.22)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
           maxHeight: '90vh', overflowY: 'auto',
         }}>
+          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
 
           {/* Modal header */}
           <div style={{
@@ -1049,8 +1052,8 @@ export default function AdminClient({
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: C.amberL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconBuilding size={16} color={C.amber} />
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: C.blueL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconBuilding size={16} color={C.blue} />
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Nouvelle entreprise</div>
@@ -1071,8 +1074,8 @@ export default function AdminClient({
 
           <form onSubmit={handleSubmit} style={{ padding: '22px' }}>
             {/* Section 1 */}
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <IconBuilding size={12} color={C.amber} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <IconBuilding size={12} color={C.blue} />
               Informations de l'entreprise
             </div>
 
@@ -1138,10 +1141,10 @@ export default function AdminClient({
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="submit" disabled={submitting} style={{ flex: 1, padding: '11px', background: submitting ? C.muted : C.amber, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT, transition: 'background 0.15s' }}>
+              <button type="submit" className="btn-meram" disabled={submitting} style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT }}>
                 {submitting ? 'Création en cours…' : 'Créer l\'entreprise'}
               </button>
-              <button type="button" onClick={() => !submitting && setShowModal(false)} disabled={submitting} style={{ padding: '11px 18px', background: C.bg, color: C.slate, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: FONT }}>
+              <button type="button" className="btn-ghost" onClick={() => !submitting && setShowModal(false)} disabled={submitting} style={{ padding: '11px 18px', background: C.bg, color: C.slate, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: FONT }}>
                 Annuler
               </button>
             </div>

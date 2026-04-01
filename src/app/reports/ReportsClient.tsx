@@ -393,7 +393,7 @@ export default function ReportsClient({
           <button key={id} onClick={() => setTab(id)}
             style={{ padding: '8px 18px', borderRadius: 100,
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              background: activeTab === id ? C.navy : 'transparent',
+              background: activeTab === id ? C.blue : 'transparent',
               color:      activeTab === id ? C.surface : C.slate,
               border: 'none', fontFamily: FONT,
               transition: 'all 0.15s ease' }}>
@@ -577,7 +577,7 @@ export default function ReportsClient({
                     formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: FONT, fontSize: 12 }} />
-                  <Bar dataKey="ca" fill={C.navy} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="ca" fill={C.blue} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               </div>
@@ -816,7 +816,7 @@ export default function ReportsClient({
                   <div style={{
                     height: '100%', borderRadius: 3,
                     width: `${share}%`,
-                    background: idx === 0 ? C.gold : C.navy,
+                    background: idx === 0 ? C.gold : C.blue,
                     transition: 'width 0.5s ease',
                   }} />
                 </div>
@@ -940,13 +940,13 @@ const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }
   SALE_CANCELLED:            { label: 'Vente annulée',           color: C.red,    bg: C.redL },
   ORDER_PREPARING:           { label: 'Préparation commencée',   color: C.orange, bg: C.orangeL },
   ORDER_READY:               { label: 'Commande prête',          color: C.green,  bg: C.greenL },
-  ORDER_DELIVERED:           { label: 'Livraison confirmée',     color: C.navy,   bg: C.blueL },
+  ORDER_DELIVERED:           { label: 'Livraison confirmée',     color: C.blue,   bg: C.blueL },
   STOCK_REQUEST_SUBMITTED:   { label: 'Demande stock soumise',   color: C.gold,   bg: C.goldL },
   STOCK_REQUEST_APPROVED:    { label: 'Demande stock approuvée', color: C.green,  bg: C.greenL },
   STOCK_REQUEST_REJECTED:    { label: 'Demande stock rejetée',   color: C.red,    bg: C.redL },
   PRODUCT_CREATED:           { label: 'Produit créé',            color: C.blue,   bg: C.blueL },
   PRODUCT_UPDATED:           { label: 'Produit modifié',         color: C.blue,   bg: C.blueL },
-  USER_CREATED:              { label: 'Utilisateur créé',        color: C.navy,   bg: C.blueL },
+  USER_CREATED:              { label: 'Utilisateur créé',        color: C.blue,   bg: C.blueL },
   USER_ACTIVATED:            { label: 'Utilisateur activé',      color: C.green,  bg: C.greenL },
   USER_DEACTIVATED:          { label: 'Utilisateur désactivé',   color: C.red,    bg: C.redL },
   USER_UPDATED:              { label: 'Utilisateur modifié',     color: C.slate,  bg: '#F1F5F9' },
@@ -954,7 +954,7 @@ const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }
   BOUTIQUE_ACTIVATED:        { label: 'Boutique activée',        color: C.green,  bg: C.greenL },
   BOUTIQUE_DEACTIVATED:      { label: 'Boutique désactivée',     color: C.red,    bg: C.redL },
   FLOOR_PRICE_VIOLATION_ATTEMPT: { label: 'Tentative prix plancher', color: C.red, bg: C.redL },
-  BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.navy,   bg: C.blueL },
+  BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.blue,   bg: C.blueL },
   PAYMENT_RECORDED:              { label: 'Paiement enregistré',     color: C.green,  bg: C.greenL },
 }
 

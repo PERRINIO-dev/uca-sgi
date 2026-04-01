@@ -371,7 +371,7 @@ export default function VendorSaleForm({
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.navy}`, background: C.surface, color: C.navy, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
                   Nouvelle vente
                 </button>
                 <button disabled={navPending}
@@ -417,7 +417,7 @@ export default function VendorSaleForm({
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 100, padding: '4px 6px' }}>
             {([{ n: 1, label: 'Sélection' }, { n: 2, label: 'Client' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
               <React.Fragment key={n}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.navy : 'transparent', transition: 'background 0.2s ease' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.blue : 'transparent', transition: 'background 0.2s ease' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#fff' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
                     {formStep > n ? <svg width="9" height="8" viewBox="0 0 9 8" fill="none"><path d="M1 4l2.5 2.5L8 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> : n}
                   </div>
@@ -575,7 +575,7 @@ export default function VendorSaleForm({
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                         {([['m2', 'm²'], ['cartons_tiles', 'Cartons + pièces']] as [InputMode, string][]).map(([mode, label]) => (
                           <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.navy : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.navy : C.border}`, fontFamily: FONT }}>
+                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: FONT }}>
                             {label}
                           </button>
                         ))}
@@ -647,7 +647,7 @@ export default function VendorSaleForm({
                               [hasPieceConv ? 'linear_pieces' : 'liter_containers', `En ${pkgLbl}`],
                             ] as [InputMode, string][]).map(([mode, label]) => (
                               <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.navy : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.navy : C.border}`, fontFamily: FONT }}>
+                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: FONT }}>
                                 {label}
                               </button>
                             ))}
@@ -1001,7 +1001,7 @@ export default function VendorSaleForm({
             <button className="btn-meram" onClick={handleConfirm} disabled={loading}
               style={{ width: '100%', padding: '16px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
               {loading ? (
-                <><span className="spinner-blue" style={{ borderTopColor: '#fff', borderColor: 'rgba(255,255,255,0.3)' }} />Enregistrement…</>
+                <><span className="spinner" />Enregistrement…</>
               ) : (
                 <><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer · {fmt(cartTotal)}</>
               )}

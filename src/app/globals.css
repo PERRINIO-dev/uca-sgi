@@ -212,20 +212,8 @@ button:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SIDEBAR NAV ITEMS
+   SIDEBAR NAV ITEMS — light sidebar (both boutiques and admin platform)
    ═══════════════════════════════════════════════════════════════════════════ */
-/* Dark sidebar (admin platform) */
-.nav-item-dark:not(.nav-active):hover {
-  background: rgba(255,255,255,0.07) !important;
-  color: rgba(255,255,255,0.85) !important;
-}
-.nav-item-dark:not(.nav-active):hover svg path,
-.nav-item-dark:not(.nav-active):hover svg rect,
-.nav-item-dark:not(.nav-active):hover svg circle {
-  stroke: rgba(255,255,255,0.65) !important;
-  fill-opacity: 0.8 !important;
-}
-/* Light sidebar (boutiques) */
 .nav-item-light:not(.nav-active):hover {
   background: #F1F5F9 !important;
   color: #111827 !important;
