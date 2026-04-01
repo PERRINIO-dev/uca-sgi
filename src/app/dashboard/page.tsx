@@ -18,6 +18,7 @@ export default async function DashboardPage() {
     .single()
 
   if (!profile) redirect('/login')
+  if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
   if (!['owner', 'admin'].includes(profile.role)) {
     if (profile.role === 'vendor')    redirect('/sales')

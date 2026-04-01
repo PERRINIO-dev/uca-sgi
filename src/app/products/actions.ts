@@ -51,9 +51,19 @@ export async function getProductCategories(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
 
+  // Fetch caller's company_id — never rely on RLS alone for isolation
+  const { data: profile } = await supabase
+    .from('users')
+    .select('company_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.company_id) return []
+
   let query = supabase
     .from('product_categories')
     .select('id, company_id, product_type, name, slug, usage_count, created_at')
+    .eq('company_id', profile.company_id)
     .order('usage_count', { ascending: false })
     .order('name',        { ascending: true  })
 

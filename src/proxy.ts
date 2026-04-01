@@ -40,6 +40,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // Root → redirect based on auth state
+  if (pathname === '/') {
+    return NextResponse.redirect(
+      new URL(user ? '/dashboard' : '/login', request.url)
+    )
+  }
+
   // Block deactivated accounts — check is_active from public.users
   if (user && !isPublicRoute) {
     const { data: profile } = await supabase

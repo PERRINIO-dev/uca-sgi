@@ -11,11 +11,12 @@ export default async function NewSalePage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, boutique_id, is_platform_admin, boutiques(id, name), companies(currency, name)')
+    .select('id, full_name, role, is_active, boutique_id, is_platform_admin, boutiques(id, name), companies(currency, name)')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/login')
+  if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
   if (!['vendor', 'admin', 'owner'].includes(profile.role)) redirect('/dashboard')
 

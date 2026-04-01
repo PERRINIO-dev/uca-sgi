@@ -8,6 +8,7 @@ import PageLayout             from '@/components/PageLayout'
 import { useIsMobile }        from '@/hooks/useIsMobile'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
 import { fmtCurrency }        from '@/lib/format'
+import { pluralize }          from '@/lib/pluralize'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -169,7 +170,8 @@ export default function VendorSaleForm({
         qtyCell   = `${new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(m2)} m² · ${full}${loose>0?` <span style="color:#D97706">+${loose}</span>`:''} ctn`
         priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/m²`
       } else {
-        qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${unitLbl}`
+        const pLbl = pluralize(unitLbl, item.quantityTiles)
+        qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${pLbl}`
         priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/${unitLbl}`
       }
       return `<tr><td>${escHtml(item.product?.product_name??item.product?.name)}</td><td style="color:#64748B;font-size:11px">${escHtml(item.product?.reference_code)}</td><td style="text-align:center">${qtyCell}</td><td style="text-align:right">${priceCell}</td><td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.totalPrice))} ${currency}</td></tr>`
@@ -207,9 +209,8 @@ export default function VendorSaleForm({
       const existing = cart[existingIdx]
       const newQty   = existing.quantityTiles + computed.tiles
       if (newQty > available) {
-        const unit = isTileProd ? 'carreau' : (selectedProduct.unit_label ?? 'unité')
-        const unitP = isTileProd ? 'carreaux' : (selectedProduct.unit_label ?? 'unités')
-        setError(`Stock insuffisant — vous avez déjà ${existing.quantityTiles} ${existing.quantityTiles>1?unitP:unit} dans le panier (${available} disponible${available>1?'s':''} au total).`)
+        const unitBase = isTileProd ? 'carreau' : (selectedProduct.unit_label ?? 'unité')
+        setError(`Stock insuffisant — vous avez déjà ${existing.quantityTiles} ${pluralize(unitBase, existing.quantityTiles)} dans le panier (${available} disponible${available>1?'s':''} au total).`)
         return
       }
       const updated = [...cart]
@@ -842,7 +843,7 @@ export default function VendorSaleForm({
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 5, fontFamily: FONT }}>
                         {isItemTile
                           ? `${fmtM2(item.quantityM2)} · ${item.quantityCartons} ctn${item.looseTiles>0?` +${item.looseTiles}`:''} · ${fmtNum(item.unitPricePerM2)} ${currency}/m²`
-                          : `${fmtNum(item.quantityTiles)} ${unitLbl} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
+                          : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
                         }
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: FONT }}>{fmt(item.totalPrice)}</div>
@@ -978,7 +979,7 @@ export default function VendorSaleForm({
                         <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: FONT, flexShrink: 0 }}>{fmt(item.totalPrice)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2, fontFamily: FONT }}>
-                        {isItemTile ? `${fmtM2(item.quantityM2)} · ${fmtNum(item.unitPricePerM2)} ${currency}/m²` : `${fmtNum(item.quantityTiles)} ${unitLbl} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`}
+                        {isItemTile ? `${fmtM2(item.quantityM2)} · ${fmtNum(item.unitPricePerM2)} ${currency}/m²` : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`}
                       </div>
                     </div>
                   )

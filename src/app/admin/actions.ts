@@ -148,12 +148,38 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
   if (!user || !caller?.is_platform_admin)
     return { error: 'Accès réservé aux administrateurs de la plateforme.' }
 
+  // ── Update company is_active ──────────────────────────────────────────────
   const { error } = await admin
     .from('companies')
     .update({ is_active: isActive })
     .eq('id', companyId)
 
   if (error) return { error: error.message }
+
+  // ── Propagate to all company users — DB flag + Supabase Auth ban ──────────
+  // This ensures suspended-company users can no longer access the platform:
+  // their is_active flag is cleared AND their Auth sessions are invalidated.
+  const { data: companyUsers } = await admin
+    .from('users')
+    .select('id')
+    .eq('company_id', companyId)
+
+  if (companyUsers && companyUsers.length > 0) {
+    // Update is_active for all users in this company
+    await admin
+      .from('users')
+      .update({ is_active: isActive })
+      .eq('company_id', companyId)
+
+    // Ban / unban each user in Supabase Auth to invalidate JWT refresh tokens
+    await Promise.all(
+      companyUsers.map(u =>
+        admin.auth.admin.updateUserById(u.id, {
+          ban_duration: isActive ? 'none' : '876000h',
+        })
+      )
+    )
+  }
 
   await admin.from('audit_logs').insert({
     user_id:            user.id,
@@ -162,6 +188,7 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
     entity_type:        'companies',
     entity_id:          companyId,
     company_id:         caller.company_id,
+    data_after:         { affectedUsers: companyUsers?.length ?? 0 },
   })
 
   revalidatePath('/admin')

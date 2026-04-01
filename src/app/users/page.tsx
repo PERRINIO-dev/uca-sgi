@@ -11,11 +11,12 @@ export default async function UsersPage() {
 
   const { data: profile } = await supabase
     .from('users')
-    .select('id, full_name, role, is_platform_admin')
+    .select('id, full_name, role, is_active, is_platform_admin')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/login')
+  if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
   if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
 

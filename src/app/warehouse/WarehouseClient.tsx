@@ -11,6 +11,7 @@ import {
   LOW_STOCK_UNITS,   CRITICAL_STOCK_UNITS,
 } from '@/lib/constants'
 import { fmtCurrency } from '@/lib/format'
+import { pluralize }   from '@/lib/pluralize'
 
 const C = {
   ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
@@ -82,6 +83,8 @@ export default function WarehouseClient({
 
   // Stock request form state
   const [reqProduct,        setReqProduct]        = useState('')
+  const [reqProductSearch,  setReqProductSearch]  = useState('')
+  const [reqProductOpen,    setReqProductOpen]    = useState(false)
   const [reqType,           setReqType]           = useState<'stock_in' | 'correction'>('stock_in')
   const [reqCorrectionSign, setReqCorrectionSign] = useState<'negative' | 'positive'>('negative')
   const [reqCartons,        setReqCartons]        = useState('')
@@ -159,7 +162,7 @@ export default function WarehouseClient({
         qtyText    = `<strong>${fullCartons}</strong> carton${fullCartons !== 1 ? 's' : ''}${loosePart}`
         detailText = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} carreaux`
       } else {
-        qtyText    = `<strong>${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</strong> ${unitLbl}`
+        qtyText    = `<strong>${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)}</strong> ${pluralize(unitLbl, item.quantity_tiles)}`
         detailText = '—'
       }
       return `
@@ -312,6 +315,7 @@ export default function WarehouseClient({
     if (result.error) { setReqError(result.error); return }
 
     setReqSuccess(true)
+    setReqProduct(''); setReqProductSearch('')
     setReqCartons(''); setReqLoose(''); setReqQty(''); setReqJustif('')
     setTimeout(() => setReqSuccess(false), 4000)
   }
@@ -584,7 +588,7 @@ export default function WarehouseClient({
                                 </>
                               )
                             } else {
-                              detail = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                              detail = `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
                             }
                             return (
                               <tr key={item.id}>
@@ -599,7 +603,7 @@ export default function WarehouseClient({
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                  {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : unitLbl}
+                                  {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : pluralize(unitLbl, item.quantity_tiles)}
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, fontWeight: 700,
@@ -717,7 +721,7 @@ export default function WarehouseClient({
                                       </>
                                     )
                                   } else {
-                                    detail = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                                    detail = `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
                                   }
                                   return (
                                     <tr key={item.id}>
@@ -732,7 +736,7 @@ export default function WarehouseClient({
                                       </td>
                                       <td style={{ padding: '8px 12px 8px 0',
                                         fontSize: 13, color: C.ink, fontFamily: FONT }}>
-                                        {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : unitLbl}
+                                        {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : pluralize(unitLbl, item.quantity_tiles)}
                                       </td>
                                       <td style={{ padding: '8px 0',
                                         fontSize: 13, fontWeight: 700, color: C.ink,
@@ -841,7 +845,7 @@ export default function WarehouseClient({
                         color: stockColor, fontFamily: FONT }}>
                         {isTile
                           ? `${fmtM2(availM2)} disponible`
-                          : `${fmtNum(available)} ${unitLabel} disponible${available !== 1 ? 's' : ''}`}
+                          : `${fmtNum(available)} ${pluralize(unitLabel, available)} disponible${available !== 1 ? 's' : ''}`}
                       </span>
                       {isTile && (
                         <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
@@ -867,9 +871,9 @@ export default function WarehouseClient({
                           ['Total m²',         fmtM2(totalM2)],
                         ]
                       : [
-                          ['Disponible', fmtNum(available) + ' ' + unitLabel],
-                          ['Réservé',    fmtNum(reserved)  + ' ' + unitLabel],
-                          ['Total',      fmtNum(parseInt(item.total_tiles)) + ' ' + unitLabel],
+                          ['Disponible', fmtNum(available) + ' ' + pluralize(unitLabel, available)],
+                          ['Réservé',    fmtNum(reserved)  + ' ' + pluralize(unitLabel, reserved)],
+                          ['Total',      fmtNum(parseInt(item.total_tiles)) + ' ' + pluralize(unitLabel, parseInt(item.total_tiles))],
                         ]
                     ).map(([lbl, val]) => (
                       <div key={lbl} style={{ textAlign: 'center',
@@ -948,16 +952,71 @@ export default function WarehouseClient({
                     color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
                     Produit concerné
                   </label>
-                  <select value={reqProduct}
-                    onChange={e => setReqProduct(e.target.value)}
-                    style={inputStyle}>
-                    <option value="">— Choisir un produit —</option>
-                    {products.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.reference_code})
-                      </option>
-                    ))}
-                  </select>
+                  {/* Searchable product combobox */}
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      placeholder="Rechercher un produit…"
+                      value={reqProductSearch}
+                      onFocus={() => setReqProductOpen(true)}
+                      onBlur={() => setTimeout(() => setReqProductOpen(false), 150)}
+                      onChange={e => {
+                        setReqProductSearch(e.target.value)
+                        setReqProductOpen(true)
+                        if (!e.target.value) setReqProduct('')
+                      }}
+                      style={{ ...inputStyle, paddingRight: 28 }}
+                    />
+                    {reqProduct && !reqProductOpen && (
+                      <button
+                        onClick={() => { setReqProduct(''); setReqProductSearch('') }}
+                        style={{ position: 'absolute', right: 8, top: '50%',
+                          transform: 'translateY(-50%)', background: 'none',
+                          border: 'none', cursor: 'pointer', color: C.muted,
+                          padding: 2, lineHeight: 1 }}>
+                        ✕
+                      </button>
+                    )}
+                    {reqProductOpen && (() => {
+                      const q = reqProductSearch.toLowerCase().trim()
+                      const filtered = products.filter(p =>
+                        !q ||
+                        p.name.toLowerCase().includes(q) ||
+                        p.reference_code.toLowerCase().includes(q)
+                      )
+                      return (
+                        <div style={{ position: 'absolute', zIndex: 50, top: '100%',
+                          left: 0, right: 0, marginTop: 2,
+                          background: C.surface, border: `1px solid ${C.border}`,
+                          borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                          maxHeight: 220, overflowY: 'auto' }}>
+                          {filtered.length === 0 ? (
+                            <div style={{ padding: '10px 14px', fontSize: 12,
+                              color: C.muted, fontFamily: FONT }}>
+                              Aucun résultat
+                            </div>
+                          ) : filtered.map(p => (
+                            <div key={p.id}
+                              onMouseDown={() => {
+                                setReqProduct(p.id)
+                                setReqProductSearch(`${p.name} (${p.reference_code})`)
+                                setReqProductOpen(false)
+                              }}
+                              style={{ padding: '9px 14px', cursor: 'pointer',
+                                fontSize: 13, fontFamily: FONT,
+                                background: reqProduct === p.id ? C.blueL : 'transparent',
+                                color: reqProduct === p.id ? C.blue : C.ink,
+                                borderBottom: `1px solid ${C.border}` }}>
+                              <span style={{ fontWeight: 600 }}>{p.name}</span>
+                              <span style={{ fontSize: 11, color: C.muted, marginLeft: 6 }}>
+                                {p.reference_code}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </div>
                 </div>
 
                 {/* Quantity — adapts to product type */}
@@ -1047,7 +1106,7 @@ export default function WarehouseClient({
                           {reqQty && parseInt(reqQty) > 0 && (
                             <div style={{ marginTop: 6, fontSize: 12,
                               color: C.blue, fontWeight: 600, fontFamily: FONT }}>
-                              = {fmtNum(parseInt(reqQty))} {unitLbl}
+                              = {fmtNum(parseInt(reqQty))} {pluralize(unitLbl, parseInt(reqQty))}
                             </div>
                           )}
                         </>
@@ -1176,7 +1235,7 @@ export default function WarehouseClient({
                       <span style={{ fontSize: 13, fontWeight: 700,
                         color: isNeg ? C.red : C.green, fontFamily: FONT }}>
                         {isNeg ? '' : '+'}
-                        {fmtNum(Math.abs(req.quantity_tiles_delta))} {unitLblReq}
+                        {fmtNum(Math.abs(req.quantity_tiles_delta))} {pluralize(unitLblReq, Math.abs(req.quantity_tiles_delta))}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: C.muted,

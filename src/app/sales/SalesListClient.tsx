@@ -7,6 +7,7 @@ import PageLayout       from '@/components/PageLayout'
 import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }       from '@/lib/format'
+import { pluralize }         from '@/lib/pluralize'
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtNum = (n: number) =>
@@ -813,7 +814,8 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
       qtyCell   = `${new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(m2)} m² · ${fullCartons}${loose > 0 ? ` <span style="color:#D97706">+${loose}</span>` : ''} ctn`
       priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} ${currency}/m²`
     } else {
-      qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${unitLbl}`
+      const pLbl = pluralize(unitLbl, item.quantity_tiles)
+      qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantity_tiles)} ${pLbl}`
       priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} ${currency}/${unitLbl}`
     }
     return `
@@ -1042,7 +1044,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
                 )
                 priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/m²`
               } else {
-                qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${unitLbl}`
+                qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
                 priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/${unitLbl}`
               }
               return (
