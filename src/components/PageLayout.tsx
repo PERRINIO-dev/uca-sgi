@@ -45,7 +45,7 @@ function IconRefresh({ size = 16 }: { size?: number }) {
 function IconClose({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
-      <path d="M1 1l12 12M13 1L1 13" stroke="#64748B" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M1 1l12 12M13 1L1 13" stroke="#78716C" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -155,7 +155,7 @@ export default function PageLayout({
         <button
           onClick={() => setUpdateReady(false)}
           style={{
-            background: 'transparent', border: 'none', color: '#64748B',
+            background: 'transparent', border: 'none', color: '#78716C',
             cursor: 'pointer', padding: 4, lineHeight: 1,
             display: 'flex', alignItems: 'center',
           }}
@@ -169,24 +169,24 @@ export default function PageLayout({
     <div style={{
       display: 'flex', minHeight: '100vh',
       fontFamily: FONT,
-      background: '#F0F2F5',
+      background: '#F5F2ED',
     }}>
 
       {/* ── Mobile top bar ── */}
       {isMobile && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, height: 56,
-          background: '#FFFFFF',
+          background: '#FDFCF9',
           display: 'flex', alignItems: 'center',
           padding: '0 16px', gap: 14, zIndex: 200,
-          borderBottom: '1px solid #E5E7EB',
+          borderBottom: '1px solid #E7E5E4',
           boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
         }}>
           <button
             onClick={() => setSidebar(o => !o)}
             style={{
-              background: '#F3F4F6',
-              border: '1px solid #E5E7EB',
+              background: '#EDE9E3',
+              border: '1px solid #E7E5E4',
               borderRadius: 9,
               width: 38, height: 38,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -194,13 +194,13 @@ export default function PageLayout({
               transition: 'background 0.15s ease',
             }}
           >
-            <IconMenu size={18} color="#374151" />
+            <IconMenu size={18} color="#44403C" />
           </button>
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               fontSize: 15, fontWeight: 700,
-              color: '#111827',
+              color: '#1C1917',
               letterSpacing: '-0.01em',
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
@@ -224,7 +224,7 @@ export default function PageLayout({
             </div>
             <span style={{
               fontSize: 13, fontWeight: 800,
-              color: '#111827',
+              color: '#1C1917',
               letterSpacing: '-0.02em',
             }}>
               MERAM

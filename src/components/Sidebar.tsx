@@ -7,32 +7,32 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
-// ── Boutiques platform tokens (white premium) ─────────────────────────────────
+// ── Boutiques platform tokens (warm linen) ────────────────────────────────────
 const B = {
-  bg:          '#FFFFFF',
-  bgHover:     '#F5F7FA',
-  border:      '#E5E7EB',
-  borderStrong:'#D1D5DB',
-  text:        '#111827',
-  textSub:     '#6B7280',
-  textDim:     '#9CA3AF',
-  activeBg:    '#EFF6FF',
+  bg:          '#FDFCF9',
+  bgHover:     '#F0EDE7',
+  border:      '#E7E5E4',
+  borderStrong:'#D4D1CC',
+  text:        '#1C1917',
+  textSub:     '#78716C',
+  textDim:     '#A9A49D',
+  activeBg:    'rgba(37,99,235,0.08)',
   activeBorder:'#2563EB',
   activeText:  '#1D4ED8',
   activeIcon:  '#2563EB',
   badgeBg:     '#EF4444',
 }
 
-// ── Admin platform tokens (light — matches boutique) ──────────────────────────
+// ── Admin platform tokens (warm linen — matches boutique) ─────────────────────
 const A = {
-  bg:          '#FFFFFF',
-  bgHover:     '#F5F7FA',
-  border:      '#E5E7EB',
-  borderStrong:'#D1D5DB',
-  text:        '#111827',
-  textSub:     '#6B7280',
-  textDim:     '#9CA3AF',
-  activeBg:    '#EFF6FF',
+  bg:          '#FDFCF9',
+  bgHover:     '#F0EDE7',
+  border:      '#E7E5E4',
+  borderStrong:'#D4D1CC',
+  text:        '#1C1917',
+  textSub:     '#78716C',
+  textDim:     '#A9A49D',
+  activeBg:    'rgba(37,99,235,0.08)',
   activeBorder:'#2563EB',
   activeText:  '#1D4ED8',
   activeIcon:  '#2563EB',
@@ -356,7 +356,7 @@ export default function Sidebar({
         borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', gap: 10,
         flexShrink: 0,
-        background: '#FAFBFC',
+        background: '#F0EDE7',
       }}>
         <Avatar name={profile.full_name} dark={false} />
         <div style={{ minWidth: 0 }}>
@@ -534,19 +534,19 @@ export default function Sidebar({
         zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: FONT,
       }}>
         <div className="modal-panel" style={{
-          background: '#FFFFFF', borderRadius: 16,
+          background: '#FDFCF9', borderRadius: 16,
           width: '100%', maxWidth: 400,
           boxShadow: '0 32px 80px rgba(0,0,0,0.22)',
           overflow: 'hidden',
         }}>
           <div style={{ height: 4, background: 'linear-gradient(90deg,#EF4444,#F87171)' }} />
-          <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+          <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #E7E5E4', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
             <div style={{ width: 40, height: 40, borderRadius: 10, background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <IconLogout size={18} color="#DC2626" />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Confirmer la déconnexion</div>
-              <div style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.5 }}>Vous devrez vous reconnecter pour accéder au système.</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#1C1917', marginBottom: 4 }}>Confirmer la déconnexion</div>
+              <div style={{ fontSize: 13, color: '#78716C', lineHeight: 1.5 }}>Vous devrez vous reconnecter pour accéder au système.</div>
             </div>
             <button onClick={() => setShowLogoutModal(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 2 }}>
               <IconClose size={14} color="#9CA3AF" />
@@ -558,7 +558,7 @@ export default function Sidebar({
               <IconLogout size={15} color="white" /> Se déconnecter
             </button>
             <button className="btn-ghost" onClick={() => setShowLogoutModal(false)}
-              style={{ padding: '12px 20px', background: '#F9FAFB', color: '#6B7280', border: '1.5px solid #E5E7EB', borderRadius: 9, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              style={{ padding: '12px 20px', background: '#F0EDE7', color: '#44403C', border: '1.5px solid #E7E5E4', borderRadius: 9, fontSize: 13.5, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' }}>
               Annuler
             </button>
           </div>

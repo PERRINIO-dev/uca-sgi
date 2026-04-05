@@ -13,13 +13,13 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── Design tokens — ADMIN light platform ──────────────────────────────────────
 const C = {
-  ink:     '#0F172A',
-  slate:   '#374151',
-  muted:   '#64748B',
-  border:  '#E2E8F0',
-  bg:      '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceElev: '#F1F5F9',
+  ink:     '#1C1917',
+  slate:   '#44403C',
+  muted:   '#78716C',
+  border:  '#E7E5E4',
+  bg:      '#F5F2ED',
+  surface: '#FDFCF9',
+  surfaceElev: '#EDE9E3',
   navy:    '#1B3A6B', navyDark: '#0C1A35',
   blue:    '#2563EB', blueL:  '#EFF6FF',
   green:   '#059669', greenL: '#ECFDF5',
@@ -322,7 +322,7 @@ export default function AdminClient({
     width: '100%', padding: '9px 12px',
     border: `1.5px solid ${C.border}`, borderRadius: 8,
     fontSize: 13, fontFamily: FONT, color: C.ink,
-    background: '#FFFFFF', outline: 'none', boxSizing: 'border-box',
+    background: '#FDFCF9', outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 600,
@@ -754,7 +754,7 @@ export default function AdminClient({
         <div className="drawer-panel" style={{
           position: 'fixed', top: 0, right: 0, bottom: 0,
           width: '100%', maxWidth: 440,
-          background: '#FFFFFF', zIndex: 501,
+          background: '#FDFCF9', zIndex: 501,
           boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
           display: 'flex', flexDirection: 'column',
           fontFamily: FONT,
@@ -920,7 +920,7 @@ export default function AdminClient({
         }}
       >
         <div className="modal-panel" style={{
-          background: '#FFFFFF', borderRadius: 14,
+          background: '#FDFCF9', borderRadius: 14,
           width: '100%', maxWidth: 420,
           boxShadow: '0 24px 80px rgba(0,0,0,0.18)', overflow: 'hidden',
         }}>
@@ -1039,7 +1039,7 @@ export default function AdminClient({
         }}
       >
         <div className="modal-panel" style={{
-          background: '#FFFFFF', borderRadius: 16,
+          background: '#FDFCF9', borderRadius: 16,
           width: '100%', maxWidth: 520,
           boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
           maxHeight: '90vh', overflowY: 'auto',

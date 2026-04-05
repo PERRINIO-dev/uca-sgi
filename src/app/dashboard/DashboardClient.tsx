@@ -20,8 +20,8 @@ const fmtNum = (n: number) =>
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  ink:     '#0F172A', slate:  '#374151', muted:  '#64748B',
-  border:  '#E1E4E8', bg:     '#F0F2F5', surface: '#FFFFFF',
+  ink:     '#1C1917', slate:  '#44403C', muted:  '#78716C',
+  border:  '#E7E5E4', bg:     '#F5F2ED', surface: '#FDFCF9',
   navy:    '#1B3A6B', navyDark: '#0D1117',
   blue:    '#2563EB', blueL:  '#EFF6FF', blueGlow: 'rgba(37,99,235,0.18)',
   green:   '#10B981', greenL: '#ECFDF5', greenGlow: 'rgba(16,185,129,0.18)',

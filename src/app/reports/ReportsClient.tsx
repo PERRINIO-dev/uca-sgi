@@ -13,8 +13,8 @@ import {
 } from 'recharts'
 
 const C = {
-  ink: '#0F172A', slate: '#374151', muted: '#64748B',
-  border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
+  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
+  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
   navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
   orange: '#D97706', orangeL: '#FFFBEB',

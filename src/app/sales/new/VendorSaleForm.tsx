@@ -11,8 +11,8 @@ import { fmtCurrency }        from '@/lib/format'
 import { pluralize }          from '@/lib/pluralize'
 
 const C = {
-  ink: '#0F172A', slate: '#374151', muted: '#64748B',
-  border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
+  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
+  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
   navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
   orange: '#D97706', orangeL: '#FFFBEB',
@@ -45,7 +45,7 @@ function getTypeConfig(type: string) {
     case 'bag':      return { label: 'Sacs',      color: '#D97706', bg: '#FFFBEB' }
     case 'liter':    return { label: 'Liquides',  color: '#0891B2', bg: '#ECFEFF' }
     case 'linear_m': return { label: 'Mètres',   color: '#059669', bg: '#F0FDF4' }
-    default:         return { label: 'Produit',   color: '#475569', bg: '#F8FAFC' }
+    default:         return { label: 'Produit',   color: '#44403C', bg: '#F5F2ED' }
   }
 }
 

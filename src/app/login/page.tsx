@@ -249,7 +249,7 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '48px 40px',
-        background: '#FFFFFF',
+        background: '#FDFCF9',
         position: 'relative',
       }}>
 
@@ -311,9 +311,9 @@ export default function LoginPage() {
                 placeholder="votre@email.com"
                 style={{
                   width: '100%', padding: '12px 14px', borderRadius: 9,
-                  border: '1.5px solid #E2E8F0', fontSize: 14,
+                  border: '1.5px solid #E7E5E4', fontSize: 14,
                   boxSizing: 'border-box', outline: 'none',
-                  color: '#0D1117', background: '#FAFAFA',
+                  color: '#1C1917', background: '#F5F2ED',
                   fontFamily: FONT,
                   transition: 'border-color 0.15s, box-shadow 0.15s',
                 }}
@@ -335,9 +335,9 @@ export default function LoginPage() {
                   onChange={e => setPassword(e.target.value)}
                   style={{
                     width: '100%', padding: '12px 44px 12px 14px', borderRadius: 9,
-                    border: '1.5px solid #E2E8F0', fontSize: 14,
+                    border: '1.5px solid #E7E5E4', fontSize: 14,
                     boxSizing: 'border-box', outline: 'none',
-                    color: '#0D1117', background: '#FAFAFA',
+                    color: '#1C1917', background: '#F5F2ED',
                     fontFamily: FONT,
                     transition: 'border-color 0.15s, box-shadow 0.15s',
                   }}
