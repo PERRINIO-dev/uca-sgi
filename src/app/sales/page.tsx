@@ -127,7 +127,6 @@ export default async function SalesPage({
 
   return (
     <SalesListClient
-      key={`${currentPage}-${search}-${status}-${payment}-${dateFrom}-${dateTo}-${boutiqueId}`}
       profile={profile}
       currency={currency}
       sales={sales ?? []}

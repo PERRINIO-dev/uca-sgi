@@ -17,7 +17,7 @@ const fmtM2 = (n: number) =>
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
+  ink: '#0F172A', slate: '#374151', muted: '#64748B',
   border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
   navy: '#1B3A6B', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
@@ -42,14 +42,14 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
 }
 
 const TH_STYLE: React.CSSProperties = {
-  padding: '11px 14px', textAlign: 'left',
-  fontSize: 11, fontWeight: 600, color: C.muted,
-  textTransform: 'uppercase', letterSpacing: '0.07em',
+  padding: '12px 14px', textAlign: 'left',
+  fontSize: 12, fontWeight: 700, color: C.muted,
+  textTransform: 'uppercase', letterSpacing: '0.06em',
   borderBottom: `1.5px solid ${C.border}`,
   whiteSpace: 'nowrap', fontFamily: FONT,
 }
 const TD_STYLE: React.CSSProperties = {
-  padding: '13px 14px', fontSize: 13, color: C.ink,
+  padding: '14px 14px', fontSize: 14, color: C.ink,
   borderBottom: `1px solid ${C.border}`,
   verticalAlign: 'middle', fontFamily: FONT,
 }
@@ -192,15 +192,25 @@ export default function SalesListClient({
   const [dateTo,        setDateTo]       = useState(activeDateTo)
   const [boutiqueId,    setBoutiqueId]   = useState(activeBoutiqueId)
 
-  // Debounced text search → navigate to page 1 with new search param
-  // isFirstRender is set to false inside the effect on the first run,
-  // so the effect guard is self-contained and doesn't race with other effects.
+  // Sync filter local state when server props change (back/forward navigation)
+  // propSync prevents the sync from re-triggering a router.push()
+  const propSync      = useRef(false)
   const isFirstRender = useRef(true)
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-      return
-    }
+    propSync.current = true
+    setSearch(activeSearch)
+    setStatusFilter(activeStatus)
+    setPaymentFilter(activePayment)
+    setDateFrom(activeDateFrom)
+    setDateTo(activeDateTo)
+    setBoutiqueId(activeBoutiqueId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSearch, activeStatus, activePayment, activeDateFrom, activeDateTo, activeBoutiqueId])
+
+  // Debounced text search → navigate to page 1 with new search param
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    if (propSync.current)      { propSync.current = false; return }
     const f = { search, status: statusFilter, payment: paymentFilter, dateFrom, dateTo, boutiqueId }
     const t = setTimeout(() => {
       startNavTransition(() => router.push(buildUrl(1, f)))
@@ -267,6 +277,22 @@ export default function SalesListClient({
   return (
     <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
+      {/* ── Navigation loading bar ── */}
+      {navPending && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 9999,
+          background: 'linear-gradient(90deg, #2563EB 0%, #60A5FA 60%, #2563EB 100%)',
+          backgroundSize: '200% 100%',
+          animation: 'loadbar 1.2s linear infinite',
+        }} />
+      )}
+      <style>{`
+        @keyframes loadbar {
+          0%   { background-position: 100% 0 }
+          100% { background-position: -100% 0 }
+        }
+      `}</style>
+
       {/* ── No-boutique error banner ── */}
       {(errorCode === 'no_boutique' || noBoutiqueWarning) && (
         <div style={{
@@ -301,7 +327,7 @@ export default function SalesListClient({
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Ventes
           </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 14, color: C.slate, margin: 0, fontFamily: FONT }}>
             {totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
@@ -341,7 +367,7 @@ export default function SalesListClient({
       </div>
 
       {/* ── Filter bar ── */}
-      {sales.length > 0 && (
+      {(sales.length > 0 || hasFilters) && (
         <div style={{
           background: C.surface, borderRadius: 10,
           border: `1px solid ${C.border}`,
@@ -469,15 +495,39 @@ export default function SalesListClient({
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
         overflow: 'hidden',
       }}>
-        {sales.length === 0 ? (
+        {sales.length === 0 && hasFilters ? (
+          <div style={{ padding: '56px 24px', textAlign: 'center' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ marginBottom: 14 }}>
+              <circle cx="20" cy="20" r="19" stroke={C.border} strokeWidth="2"/>
+              <path d="M13 20h14M20 13v14" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+              Aucun résultat
+            </div>
+            <p style={{ fontSize: 14, color: C.slate, margin: '0 0 20px', fontFamily: FONT }}>
+              Aucune vente ne correspond aux filtres sélectionnés.
+            </p>
+            <button
+              className="btn-ghost"
+              onClick={clearFilters}
+              style={{
+                padding: '9px 20px', background: C.bg, color: C.slate,
+                border: `1px solid ${C.border}`, borderRadius: 8,
+                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+              }}
+            >
+              Effacer les filtres
+            </button>
+          </div>
+        ) : sales.length === 0 ? (
           <div style={{ padding: '64px 24px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
               <IconCart size={56} />
             </div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
               Aucune vente pour le moment
             </div>
-            <p style={{ fontSize: 13, color: C.slate, margin: '0 0 20px', fontFamily: FONT }}>
+            <p style={{ fontSize: 14, color: C.slate, margin: '0 0 20px', fontFamily: FONT }}>
               Les ventes apparaîtront ici une fois créées.
             </p>
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
@@ -493,43 +543,19 @@ export default function SalesListClient({
                   startFirstSaleTransition(() => router.push('/sales/new'))
                 }}
                 style={{
-                  padding: '11px 24px',
-                  border: 'none', borderRadius: 9,
+                  padding: '11px 24px', border: 'none', borderRadius: 9,
                   fontSize: 13, fontWeight: 700,
                   cursor: firstSalePending ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT,
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8,
                   opacity: firstSalePending ? 0.7 : 1,
                 }}
               >
-                {firstSalePending ? (
-                  <><span className="spinner" />Chargement…</>
-                ) : 'Créer la première vente'}
+                {firstSalePending ? <><span className="spinner" />Chargement…</> : 'Créer la première vente'}
               </button>
             )}
           </div>
-        ) : sales.length === 0 && hasFilters ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
-              Aucun résultat
-            </div>
-            <p style={{ fontSize: 13, color: C.slate, margin: '0 0 16px', fontFamily: FONT }}>
-              Aucune vente ne correspond aux filtres sélectionnés.
-            </p>
-            <button
-              className="btn-ghost"
-              onClick={clearFilters}
-              style={{
-                padding: '8px 18px', background: C.bg, color: C.slate,
-                border: `1px solid ${C.border}`, borderRadius: 7,
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-              }}
-            >
-              Effacer les filtres
-            </button>
-          </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div style={{ overflowX: 'auto', opacity: navPending ? 0.55 : 1, transition: 'opacity 0.15s ease' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead style={{ background: C.bg }}>
                 <tr>
@@ -552,21 +578,21 @@ export default function SalesListClient({
                         <td style={{ ...TD_STYLE, fontWeight: 700, color: C.blue }}>
                           {sale.sale_number}
                         </td>
-                        <td style={{ ...TD_STYLE, color: C.slate, fontSize: 12 }}>
+                        <td style={{ ...TD_STYLE, color: C.slate, fontSize: 13 }}>
                           {new Date(sale.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit', month: 'short',
                           })}
                           <br />
-                          <span style={{ color: C.muted, fontSize: 11 }}>
+                          <span style={{ color: C.muted, fontSize: 12 }}>
                             {new Date(sale.created_at).toLocaleTimeString('fr-FR', {
                               hour: '2-digit', minute: '2-digit',
                             })}
                           </span>
                         </td>
                         <td style={TD_STYLE}>{sale.customer_name || <span style={{ color: C.muted }}>—</span>}</td>
-                        <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.boutiques?.name ?? '—'}</td>
+                        <td style={{ ...TD_STYLE, fontSize: 13, color: C.slate }}>{sale.boutiques?.name ?? '—'}</td>
                         {profile.role !== 'vendor' && (
-                          <td style={{ ...TD_STYLE, fontSize: 12, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
+                          <td style={{ ...TD_STYLE, fontSize: 13, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
                         )}
                         <td style={{ ...TD_STYLE, fontWeight: 700 }}>
                           {fmt(sale.total_amount)}
