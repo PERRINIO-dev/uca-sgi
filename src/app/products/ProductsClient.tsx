@@ -1395,7 +1395,7 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
     <div style={{ padding: '10px 12px', background: bg, borderRadius: 8, marginBottom: 12,
       display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div>
-        <div style={{ fontSize: 10, fontWeight: 600, color: C.muted,
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
           textTransform: 'uppercase', fontFamily: FONT }}>
           Stock disponible
         </div>
@@ -1408,7 +1408,7 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
       </div>
       {reserved > 0 && (
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>Réservé</div>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Réservé</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: FONT }}>
             {fmtNum(reserved)} {p.unit_label ?? 'car.'}
           </div>

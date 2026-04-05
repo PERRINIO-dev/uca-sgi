@@ -65,11 +65,12 @@ export default function WarehouseClient({
   const supabase = useMemo(() => createClient(), [])
   const fmt = (n: number) => fmtCurrency(n, currency)
 
-  // ── Real-time: refresh when sales or stock_requests change ────────────────
+  // ── Real-time: refresh when orders, sales, or stock_requests change ─────────
   useEffect(() => {
     const channel = supabase
       .channel('warehouse-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' },        () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' },         () => router.refresh())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_requests' }, () => router.refresh())
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -879,7 +880,7 @@ export default function WarehouseClient({
                       <div key={lbl} style={{ textAlign: 'center',
                         padding: '8px 4px', background: C.bg,
                         borderRadius: 6 }}>
-                        <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>
+                        <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
                           {lbl}
                         </div>
                         <div style={{ fontSize: 13, fontWeight: 700,
@@ -969,7 +970,7 @@ export default function WarehouseClient({
                     />
                     {reqProduct && !reqProductOpen && (
                       <button
-                        onClick={() => { setReqProduct(''); setReqProductSearch('') }}
+                        onClick={() => { setReqProduct(''); setReqProductSearch(''); setReqError(null); setReqSuccess(false); setReqCartons(''); setReqLoose(''); setReqQty('') }}
                         style={{ position: 'absolute', right: 8, top: '50%',
                           transform: 'translateY(-50%)', background: 'none',
                           border: 'none', cursor: 'pointer', color: C.muted,
@@ -1001,6 +1002,9 @@ export default function WarehouseClient({
                                 setReqProduct(p.id)
                                 setReqProductSearch(`${p.name} (${p.reference_code})`)
                                 setReqProductOpen(false)
+                                setReqError(null)
+                                setReqSuccess(false)
+                                setReqCartons(''); setReqLoose(''); setReqQty('')
                               }}
                               style={{ padding: '9px 14px', cursor: 'pointer',
                                 fontSize: 13, fontFamily: FONT,

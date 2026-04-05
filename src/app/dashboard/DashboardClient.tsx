@@ -462,7 +462,7 @@ export default function DashboardClient({
                       {req.products?.name ?? 'Produit inconnu'}
                     </span>
                     <span style={{
-                      fontSize: 10, fontWeight: 600, flexShrink: 0, marginLeft: 8,
+                      fontSize: 11, fontWeight: 600, flexShrink: 0, marginLeft: 8,
                       color: req.request_type === 'stock_in' ? C.blue : C.orange,
                       background: req.request_type === 'stock_in' ? C.blueL : C.orangeL,
                       padding: '2px 8px', borderRadius: 100, fontFamily: FONT,
@@ -535,7 +535,7 @@ export default function DashboardClient({
         <Panel>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{
-              fontSize: 11, fontWeight: 700, color: C.muted,
+              fontSize: 12, fontWeight: 700, color: C.slate,
               textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT,
             }}>
               Alertes stock critique
@@ -603,7 +603,7 @@ export default function DashboardClient({
                       <div style={{ fontSize: 18, fontWeight: 800, color: clr, lineHeight: 1, fontFamily: FONT }}>
                         {fmtNum(avail)}
                       </div>
-                      <div style={{ fontSize: 10, color: C.muted, marginTop: 1, fontFamily: FONT }}>{unit}</div>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: FONT }}>{unit}</div>
                     </div>
                   </div>
                 )

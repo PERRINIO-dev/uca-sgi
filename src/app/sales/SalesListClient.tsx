@@ -615,7 +615,7 @@ export default function SalesListClient({
                               return (
                                 <span style={{
                                   display: 'inline-flex', alignItems: 'center', gap: 5,
-                                  fontSize: 10, fontWeight: 700,
+                                  fontSize: 11, fontWeight: 700,
                                   padding: '3px 8px', borderRadius: 100,
                                   background: pc.bg, color: pc.color,
                                   fontFamily: FONT,
@@ -1034,7 +1034,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
 
       {/* Articles */}
       <div style={{ padding: '14px 16px 0', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
         Détail des articles
       </div>
       <div style={{ overflowX: 'auto' }}>
@@ -1042,7 +1042,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
           <thead>
             <tr>
               {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
-                <th key={h} style={{ textAlign: 'left', fontSize: 10, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`, fontFamily: FONT }}>
+                <th key={h} style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`, fontFamily: FONT }}>
                   {h}
                 </th>
               ))}
@@ -1090,7 +1090,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
 
       {/* ── Historique des paiements ── */}
       <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
           Historique des paiements
         </div>
 

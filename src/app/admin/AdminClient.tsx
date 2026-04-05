@@ -951,7 +951,7 @@ export default function AdminClient({
             {/* Password input */}
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>Nouveau mot de passe *
-                <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>
+                <span style={{ fontSize: 11, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>
                   — min. 8 caractères
                 </span>
               </label>
@@ -1087,7 +1087,7 @@ export default function AdminClient({
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>
                 Identifiant unique (slug) *
-                <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— lettres minuscules, chiffres, tirets</span>
+                <span style={{ fontSize: 11, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— lettres minuscules, chiffres, tirets</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <input type="text" placeholder="ex : techbuild" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} required disabled={submitting} style={{ ...inputStyle, paddingLeft: 80 }} />
@@ -1098,7 +1098,7 @@ export default function AdminClient({
             <div style={{ marginBottom: 22 }}>
               <label style={labelStyle}>
                 Devise *
-                <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— ex : FCFA, EUR, USD, XAF</span>
+                <span style={{ fontSize: 11, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— ex : FCFA, EUR, USD, XAF</span>
               </label>
               <input type="text" placeholder="FCFA" value={form.currency} onChange={e => setForm(f => ({ ...f, currency: e.target.value.toUpperCase() }))} required disabled={submitting} style={inputStyle} maxLength={10} />
             </div>
@@ -1123,7 +1123,7 @@ export default function AdminClient({
 
             <div style={{ marginBottom: 24 }}>
               <label style={labelStyle}>Mot de passe *
-                <span style={{ fontSize: 10, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— min. 8 caractères</span>
+                <span style={{ fontSize: 11, fontWeight: 400, color: C.muted, marginLeft: 6, textTransform: 'none' }}>— min. 8 caractères</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <input type={showPwd ? 'text' : 'password'} placeholder="••••••••" value={form.ownerPassword} onChange={e => setForm(f => ({ ...f, ownerPassword: e.target.value }))} required minLength={8} disabled={submitting} style={{ ...inputStyle, paddingRight: 40 }} />

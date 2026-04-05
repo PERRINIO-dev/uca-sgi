@@ -331,7 +331,7 @@ export default function VendorSaleForm({
 
               {/* Amount block */}
               <div style={{ padding: '20px', background: C.bg, borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: FONT }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: FONT }}>
                   Montant total
                 </div>
                 <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: FONT }}>
@@ -441,7 +441,7 @@ export default function VendorSaleForm({
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             {/* Search + header */}
             <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${C.border}`, background: C.bg }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
                 Catalogue produits
               </div>
               <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -566,7 +566,7 @@ export default function VendorSaleForm({
 
                 {/* Quantity section */}
                 <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
                     Quantité
                   </div>
 
@@ -605,7 +605,7 @@ export default function VendorSaleForm({
                       {/* Tile equivalences */}
                       {computed && (
                         <div style={{ marginTop: 12, padding: 12, background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
-                          <div style={{ fontSize: 10, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                             {([
                               ['Surface', fmtM2(computed.m2), inputMode==='m2'],
@@ -613,7 +613,7 @@ export default function VendorSaleForm({
                               ['Carreaux', fmtNum(computed.tiles), inputMode==='tiles'],
                             ] as [string, string, boolean][]).map(([lbl, val, active]) => (
                               <div key={lbl} style={{ textAlign: 'center', padding: '8px 4px', background: active ? C.blueL : C.surface, borderRadius: 7, border: `1px solid ${active ? C.blue : C.border}` }}>
-                                <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{lbl}</div>
+                                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{lbl}</div>
                                 <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.blue : C.ink, fontFamily: FONT }}>{val}</div>
                               </div>
                             ))}
@@ -676,14 +676,14 @@ export default function VendorSaleForm({
                           <div style={{ marginTop: 12, padding: 12, background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
                             {(inputMode==='linear_pieces'||inputMode==='liter_containers') ? (
                               <>
-                                <div style={{ fontSize: 10, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
-                                    <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
                                     <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{inputMode==='linear_pieces'?(parseInt(inputPieces)||0):(parseInt(inputContainers)||0)}</div>
                                   </div>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueL, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
-                                    <div style={{ fontSize: 10, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
                                     <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)}</div>
                                   </div>
                                 </div>
@@ -723,7 +723,7 @@ export default function VendorSaleForm({
                 {/* Price section — shows only when quantity is valid */}
                 {computed && computed.tiles > 0 && (
                   <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
                       Prix négocié
                     </div>
                     {(() => {
@@ -738,13 +738,13 @@ export default function VendorSaleForm({
                               {computed.floorPrice > 0 && (
                                 <div style={{ flex: 1, padding: '10px 12px', background: C.redL, borderRadius: 8, border: `1px solid ${C.red}30` }}>
                                   <div style={{ fontSize: 9, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>Plancher min.</div>
-                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red, fontFamily: FONT }}>{fmtNum(computed.floorPrice)} <span style={{ fontSize: 10, fontWeight: 600 }}>{priceSuffix}</span></div>
+                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red, fontFamily: FONT }}>{fmtNum(computed.floorPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
                                 </div>
                               )}
                               {computed.refPrice > 0 && (
                                 <div style={{ flex: 1, padding: '10px 12px', background: C.bg, borderRadius: 8, border: `1px solid ${C.border}` }}>
                                   <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>Référence</div>
-                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.slate, fontFamily: FONT }}>{fmtNum(computed.refPrice)} <span style={{ fontSize: 10, fontWeight: 600 }}>{priceSuffix}</span></div>
+                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.slate, fontFamily: FONT }}>{fmtNum(computed.refPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
                                 </div>
                               )}
                             </div>
@@ -796,7 +796,7 @@ export default function VendorSaleForm({
             {/* Boutique selector */}
             {isOwnerOrAdmin && allBoutiques.length > 0 && (
               <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: '12px 14px' }}>
-                <label style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8, fontFamily: FONT }}>Boutique</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8, fontFamily: FONT }}>Boutique</label>
                 <select value={selectedBoutique?.id??''} onChange={e => setBoutique(allBoutiques.find(b=>b.id===e.target.value)??null)}
                   style={{ width: '100%', padding: '8px 10px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, background: C.surface, fontFamily: FONT, outline: 'none' }}>
                   {allBoutiques.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -891,7 +891,7 @@ export default function VendorSaleForm({
 
             {/* Client info */}
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
                 Informations client
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
@@ -920,7 +920,7 @@ export default function VendorSaleForm({
 
             {/* Payment */}
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
                 Paiement
               </div>
 

@@ -399,7 +399,7 @@ export default function UsersClient({
                               {emp.full_name}
                             </div>
                             {isMe && (
-                              <div style={{ fontSize: 10, color: C.blue, fontWeight: 600, marginTop: 1 }}>
+                              <div style={{ fontSize: 11, color: C.blue, fontWeight: 600, marginTop: 1 }}>
                                 Votre compte
                               </div>
                             )}
