@@ -16,7 +16,7 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const C = {
-  ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
+  ink: '#0F172A', slate: '#374151', muted: '#64748B',
   border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
   navy: '#1B3A6B', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
@@ -307,7 +307,7 @@ export default function UsersClient({
               border: `1px solid ${C.border}`,
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               padding: '14px 18px', borderLeft: `3px solid ${cfg.accent}` }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: C.muted,
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
                 textTransform: 'uppercase', letterSpacing: '0.07em',
                 marginBottom: 6, fontFamily: FONT }}>
                 {cfg.label}
@@ -365,7 +365,7 @@ export default function UsersClient({
                 <tr style={{ background: C.bg }}>
                   {['Nom', 'Email', 'Rôle', 'Boutique', 'Créé le', 'Statut', 'Actions'].map(h => (
                     <th key={h} style={{ padding: '11px 16px', textAlign: 'left',
-                      fontSize: 10.5, fontWeight: 700, color: C.muted,
+                      fontSize: 12, fontWeight: 700, color: C.slate,
                       textTransform: 'uppercase', letterSpacing: '0.07em',
                       fontFamily: FONT, borderBottom: `1.5px solid ${C.border}`,
                       whiteSpace: 'nowrap' }}>

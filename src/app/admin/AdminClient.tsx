@@ -14,8 +14,8 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 // ── Design tokens — ADMIN light platform ──────────────────────────────────────
 const C = {
   ink:     '#0F172A',
-  slate:   '#475569',
-  muted:   '#94A3B8',
+  slate:   '#374151',
+  muted:   '#64748B',
   border:  '#E2E8F0',
   bg:      '#F8FAFC',
   surface: '#FFFFFF',
@@ -496,7 +496,7 @@ export default function AdminClient({
                 </div>
                 <div>
                   <div className="num" style={{ fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>{value}</div>
-                  <div style={{ fontSize: 11.5, color: C.muted, marginTop: 2 }}>{label}</div>
+                  <div style={{ fontSize: 13, color: C.slate, marginTop: 2 }}>{label}</div>
                 </div>
               </div>
             </div>
@@ -549,7 +549,7 @@ export default function AdminClient({
                       {['Entreprise', 'Propriétaire', 'Utilisateurs', 'Produits', 'Créée le', 'Statut', ''].map(h => (
                         <th key={h} style={{
                           padding: '10px 16px', textAlign: 'left',
-                          fontSize: 10.5, fontWeight: 700, color: C.muted,
+                          fontSize: 12, fontWeight: 700, color: C.slate,
                           letterSpacing: '0.10em', textTransform: 'uppercase',
                           borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
                         }}>
@@ -572,7 +572,7 @@ export default function AdminClient({
                             <div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{company.name}</div>
                               <div style={{
-                                fontSize: 10.5, color: C.slate, marginTop: 2,
+                                fontSize: 12, color: C.slate, marginTop: 2,
                                 fontFamily: 'monospace', background: C.bg,
                                 border: `1px solid ${C.border}`,
                                 padding: '1px 6px', borderRadius: 4, display: 'inline-block',
@@ -838,7 +838,7 @@ export default function AdminClient({
             {/* ── Owner section ── */}
             <div style={{ marginBottom: 24 }}>
               <div style={{
-                fontSize: 10.5, fontWeight: 700, color: C.muted,
+                fontSize: 12, fontWeight: 700, color: C.slate,
                 letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
               }}>
                 Propriétaire
@@ -855,7 +855,7 @@ export default function AdminClient({
                       <UserInitials name={owner.full_name} size={34} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink }}>{owner.full_name}</div>
-                        <div style={{ fontSize: 11.5, color: C.muted, marginTop: 1 }}>{owner.email}</div>
+                        <div style={{ fontSize: 12, color: C.slate, marginTop: 1 }}>{owner.email}</div>
                       </div>
                       <Badge color={owner.is_active ? C.green : C.red} bg={owner.is_active ? C.greenL : C.redL}>
                         {owner.is_active ? 'Actif' : 'Inactif'}

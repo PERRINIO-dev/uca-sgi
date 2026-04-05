@@ -14,7 +14,7 @@ import { fmtCurrency } from '@/lib/format'
 import { pluralize }   from '@/lib/pluralize'
 
 const C = {
-  ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
+  ink: '#0F172A', slate: '#374151', muted: '#64748B',
   border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
   navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',

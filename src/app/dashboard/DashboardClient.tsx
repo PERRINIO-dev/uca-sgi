@@ -20,7 +20,7 @@ const fmtNum = (n: number) =>
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const C = {
-  ink:     '#0F172A', slate:  '#475569', muted:  '#94A3B8',
+  ink:     '#0F172A', slate:  '#374151', muted:  '#64748B',
   border:  '#E1E4E8', bg:     '#F0F2F5', surface: '#FFFFFF',
   navy:    '#1B3A6B', navyDark: '#0D1117',
   blue:    '#2563EB', blueL:  '#EFF6FF', blueGlow: 'rgba(37,99,235,0.18)',
@@ -90,7 +90,7 @@ function Panel({ children, style = {}, tourId }: { children: React.ReactNode; st
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      fontSize: 11, fontWeight: 700, color: C.muted,
+      fontSize: 12, fontWeight: 700, color: C.slate,
       textTransform: 'uppercase', letterSpacing: '0.08em',
       marginBottom: 14, fontFamily: FONT,
     }}>
@@ -297,7 +297,7 @@ export default function DashboardClient({
             <div style={{ padding: '16px 20px 18px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start',
                 justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ fontSize: 10.5, fontWeight: 700, color: C.muted,
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
                   textTransform: 'uppercase', letterSpacing: '0.10em', fontFamily: FONT }}>
                   {label}
                 </div>
@@ -321,7 +321,7 @@ export default function DashboardClient({
                 {value}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{sub}</span>
+                <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>{sub}</span>
                 {trend !== null && trend !== undefined && (
                   <span style={{
                     fontSize: 11, fontWeight: 700, padding: '2px 8px',

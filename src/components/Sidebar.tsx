@@ -302,6 +302,22 @@ export default function Sidebar({
 
   return (
     <>
+    {/* ── Global navigation loading bar ── */}
+    {isPending && (
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 9999,
+        background: 'linear-gradient(90deg, #2563EB 0%, #60A5FA 60%, #2563EB 100%)',
+        backgroundSize: '200% 100%',
+        animation: 'sidebarLoadbar 1.2s linear infinite',
+        pointerEvents: 'none',
+      }} />
+    )}
+    <style>{`
+      @keyframes sidebarLoadbar {
+        0%   { background-position: 100% 0 }
+        100% { background-position: -100% 0 }
+      }
+    `}</style>
     <aside style={{
       width: 240,
       background: T.bg,

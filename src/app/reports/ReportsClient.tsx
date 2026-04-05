@@ -13,7 +13,7 @@ import {
 } from 'recharts'
 
 const C = {
-  ink: '#0F172A', slate: '#475569', muted: '#94A3B8',
+  ink: '#0F172A', slate: '#374151', muted: '#64748B',
   border: '#E2E8F0', bg: '#F8FAFC', surface: '#FFFFFF',
   navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
   green: '#059669', greenL: '#ECFDF5',
@@ -297,7 +297,7 @@ export default function ReportsClient({
   // ── Table heading style ────────────────────────────────────────────────
   const TH: React.CSSProperties = {
     padding: '13px 14px', textAlign: 'left',
-    fontSize: 11, fontWeight: 700, color: C.muted,
+    fontSize: 12, fontWeight: 700, color: C.slate,
     textTransform: 'uppercase', letterSpacing: '0.06em',
     fontFamily: FONT, background: C.bg,
   }
@@ -421,7 +421,7 @@ export default function ReportsClient({
                 padding: '22px 24px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
                   marginBottom: 8, fontFamily: FONT }}>
                   Chiffre d'affaires — {filterDays} derniers jours
@@ -489,7 +489,7 @@ export default function ReportsClient({
                   border: `1px solid ${C.border}`, padding: '14px 16px',
                   borderLeft: `3px solid ${accent}`,
                 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: C.muted,
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
                     textTransform: 'uppercase', letterSpacing: '0.07em',
                     marginBottom: 6, fontFamily: FONT }}>
                     {label}
@@ -508,7 +508,7 @@ export default function ReportsClient({
           {/* Daily CA chart */}
           <div style={{ background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`, padding: '20px 24px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
               textTransform: 'uppercase', letterSpacing: '0.08em',
               marginBottom: 16, fontFamily: FONT }}>
               Chiffre d'affaires journalier
@@ -552,7 +552,7 @@ export default function ReportsClient({
           {/* Boutique bar chart */}
           <div style={{ background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`, padding: '20px 24px' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
               textTransform: 'uppercase', letterSpacing: '0.08em',
               marginBottom: 16, fontFamily: FONT }}>
               CA par boutique
@@ -842,7 +842,7 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
   return (
     <div style={{ background: C.bg, borderRadius: 8,
       padding: '14px 16px', border: `1px solid ${C.border}` }}>
-      <div style={{ fontSize: 10, fontWeight: 700, color: C.muted,
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
         textTransform: 'uppercase', letterSpacing: '0.07em',
         marginBottom: 10, fontFamily: FONT2 }}>
         Détail de la vente
@@ -853,8 +853,8 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
           <thead>
             <tr>
               {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
-                <th key={h} style={{ textAlign: 'left', fontSize: 10,
-                  fontWeight: 700, color: C.muted,
+                <th key={h} style={{ textAlign: 'left', fontSize: 12,
+                  fontWeight: 700, color: C.slate,
                   textTransform: 'uppercase', letterSpacing: '0.05em',
                   padding: '0 10px 8px 0', fontFamily: FONT2 }}>
                   {h}
