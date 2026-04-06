@@ -340,7 +340,7 @@ export default function WarehouseClient({
     <PageLayout profile={profile} activeRoute="/warehouse" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
         {/* Header */}
-        <div style={{ marginBottom: 28 }}>
+        <div className="fade-in-up" style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
             margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
             Entrepôt

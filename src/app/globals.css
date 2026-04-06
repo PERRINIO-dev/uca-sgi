@@ -36,12 +36,20 @@
   0%   { background-position: -200% 0 }
   100% { background-position: 200% 0 }
 }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px) }
+  to   { opacity: 1; transform: translateY(0) }
+}
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.97) }
+  to   { opacity: 1; transform: scale(1) }
+}
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box }
 body {
-  background: #F0F2F5;
-  color: #0D1117;
+  background: #F5F2ED;
+  color: #1C1917;
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -153,8 +161,8 @@ button:focus-visible {
 }
 /* ── Ghost (light bg, border) ───────────────────────────────── */
 .btn-ghost:hover:not(:disabled) {
-  background: #F1F5F9 !important;
-  border-color: #CBD5E1 !important;
+  background: #EDE9E3 !important;
+  border-color: #D4D1CC !important;
 }
 /* ── Ghost danger (outline red on hover) ────────────────────── */
 .btn-ghost-danger:hover:not(:disabled) {
@@ -170,8 +178,8 @@ button:focus-visible {
 }
 /* ── Icon-only ghost ────────────────────────────────────────── */
 .btn-icon:hover:not(:disabled) {
-  background: #F1F5F9 !important;
-  border-color: #CBD5E1 !important;
+  background: #EDE9E3 !important;
+  border-color: #D4D1CC !important;
 }
 /* ── Dark ghost (admin platform) ────────────────────────────── */
 .btn-dark-ghost:hover:not(:disabled) {
@@ -190,7 +198,7 @@ button:focus-visible {
    ═══════════════════════════════════════════════════════════════════════════ */
 .trow:hover > td,
 .trow:hover > th {
-  background-color: #F8FAFC !important;
+  background-color: #F5F2ED !important;
   transition: background-color 0.1s ease;
 }
 .trow-click {
@@ -198,7 +206,7 @@ button:focus-visible {
 }
 .trow-click:hover > td,
 .trow-click:hover > th {
-  background-color: #EFF6FF !important;
+  background-color: #EEF3FF !important;
   transition: background-color 0.1s ease;
 }
 /* Dark table rows (admin) */
@@ -215,13 +223,13 @@ button:focus-visible {
    SIDEBAR NAV ITEMS — light sidebar (both boutiques and admin platform)
    ═══════════════════════════════════════════════════════════════════════════ */
 .nav-item-light:not(.nav-active):hover {
-  background: #F1F5F9 !important;
-  color: #111827 !important;
+  background: #EDE9E3 !important;
+  color: #1C1917 !important;
 }
 .nav-item-light:not(.nav-active):hover svg path,
 .nav-item-light:not(.nav-active):hover svg rect,
 .nav-item-light:not(.nav-active):hover svg circle {
-  stroke: #374151 !important;
+  stroke: #44403C !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -327,11 +335,11 @@ button:focus-visible {
    SECTION LABEL
    ═══════════════════════════════════════════════════════════════════════════ */
 .section-label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.10em;
-  color: #94A3B8;
+  color: #A9A49D;
 }
 
 /* ── Number rendering ───────────────────────────────────────────────────── */
@@ -346,6 +354,14 @@ button:focus-visible {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ── Page content fade-in ───────────────────────────────────────────────── */
+.fade-in-up {
+  animation: fadeInUp 0.36s ease forwards;
+}
+.fade-in-scale {
+  animation: fadeInScale 0.28s ease forwards;
 }
 
 /* ── Drawer slide-in ────────────────────────────────────────────────────── */

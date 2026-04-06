@@ -258,7 +258,7 @@ export default function UsersClient({
     <PageLayout profile={profile} activeRoute="/users" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
+      <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,

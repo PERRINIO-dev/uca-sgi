@@ -462,7 +462,7 @@ export default function ProductsClient({
     <PageLayout profile={profile} activeRoute="/products" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
+      <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
@@ -681,7 +681,7 @@ export default function ProductsClient({
                   <Field label="Code référence">
                     <input value={form.referenceCode} readOnly
                       placeholder="Généré automatiquement"
-                      style={{ ...inputStyle, background: '#F1F5F9', cursor: 'default', color: C.slate }} />
+                      style={{ ...inputStyle, background: '#EDE9E3', cursor: 'default', color: C.slate }} />
                   </Field>
                   <Field label="Catégorie *">
                     <CategoryCombobox
@@ -1557,7 +1557,7 @@ function Modal({ title, children, onClose }: {
       }}>
         <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
         <div style={{ padding: '20px 24px 16px',
-          borderBottom: `1px solid #F1F5F9`,
+          borderBottom: `1px solid #E7E5E4`,
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink,

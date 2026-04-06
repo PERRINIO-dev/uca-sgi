@@ -185,23 +185,24 @@ function MeramLogo({ dark = false }: { dark?: boolean }) {
         width: 32, height: 32, borderRadius: 9,
         background: 'linear-gradient(145deg,#1D4ED8 0%,#3B82F6 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        flexShrink: 0, boxShadow: '0 2px 8px rgba(37,99,235,0.38)',
+        flexShrink: 0, boxShadow: '0 3px 12px rgba(37,99,235,0.40)',
       }}>
-        <svg width="17" height="14" viewBox="0 0 18 15" fill="none">
-          <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+        <svg width="17" height="14" viewBox="0 0 20 17" fill="none">
+          <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
         </svg>
       </div>
       <div>
         <div style={{
           fontSize: 16, fontWeight: 800,
-          color: dark ? '#FFFFFF' : '#111827',
+          color: dark ? '#FFFFFF' : '#1C1917',
           letterSpacing: '-0.03em', lineHeight: 1, fontFamily: FONT,
         }}>
           MERAM
         </div>
         <div style={{
           fontSize: 8.5,
-          color: dark ? 'rgba(255,255,255,0.28)' : '#9CA3AF',
+          color: dark ? 'rgba(255,255,255,0.32)' : '#A9A49D',
           letterSpacing: '0.16em', textTransform: 'uppercase',
           fontWeight: 600, marginTop: 3,
         }}>
@@ -352,11 +353,11 @@ export default function Sidebar({
 
       {/* ── User profile ── */}
       <div style={{
-        padding: '12px 16px',
+        padding: '11px 16px',
         borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', gap: 10,
         flexShrink: 0,
-        background: '#F0EDE7',
+        background: 'rgba(28,25,23,0.035)',
       }}>
         <Avatar name={profile.full_name} dark={false} />
         <div style={{ minWidth: 0 }}>
@@ -380,10 +381,10 @@ export default function Sidebar({
 
         {visibleItems.length > 0 && (
           <div style={{
-            padding: '4px 10px 8px',
-            fontSize: 9.5, fontWeight: 700,
+            padding: '4px 12px 8px',
+            fontSize: 10.5, fontWeight: 700,
             color: T.textDim,
-            letterSpacing: '0.13em', textTransform: 'uppercase',
+            letterSpacing: '0.12em', textTransform: 'uppercase',
           }}>
             Navigation
           </div>
@@ -439,8 +440,8 @@ export default function Sidebar({
         {isAdmin && (
           <>
             <div style={{
-              padding: '14px 10px 8px', fontSize: 9.5, fontWeight: 700,
-              color: T.textDim, letterSpacing: '0.13em', textTransform: 'uppercase',
+              padding: '14px 12px 8px', fontSize: 10.5, fontWeight: 700,
+              color: T.textDim, letterSpacing: '0.12em', textTransform: 'uppercase',
             }}>
               Plateforme
             </div>

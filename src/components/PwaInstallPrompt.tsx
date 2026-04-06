@@ -43,43 +43,41 @@ export default function PwaInstallPrompt() {
       bottom:     0,
       left:       0,
       right:      0,
-      background: '#0C1A35',
+      background: '#111827',
       color:      '#fff',
       padding:    '14px 20px',
       display:    'flex',
       alignItems: 'center',
       gap:        12,
       zIndex:     9999,
-      boxShadow:  '0 -4px 24px rgba(0,0,0,0.25)',
+      boxShadow:  '0 -4px 24px rgba(0,0,0,0.30)',
       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      borderTop:  '1px solid rgba(255,255,255,0.07)',
     }}>
       {/* App logo chip */}
       <div style={{
-        width:          44,
-        height:         44,
+        width:          42,
+        height:         42,
         borderRadius:   10,
-        background:     '#1B3A6B',
+        background:     'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'center',
         flexShrink:     0,
-        flexDirection:  'column',
-        gap:            2,
+        boxShadow:      '0 3px 12px rgba(37,99,235,0.40)',
       }}>
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.9"/>
-          <rect x="11" y="2" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.6"/>
-          <rect x="2" y="11" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.6"/>
-          <rect x="11" y="11" width="7" height="7" rx="1.5" fill="white" fillOpacity="0.9"/>
+        <svg width="20" height="17" viewBox="0 0 20 17" fill="none">
+          <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
         </svg>
       </div>
 
       {/* Text */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3 }}>
-          Installer SGI
+        <div style={{ fontSize: 13, fontWeight: 700, lineHeight: 1.3, letterSpacing: '-0.01em' }}>
+          Installer MERAM
         </div>
-        <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>
+        <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>
           Accès rapide depuis votre écran d'accueil
         </div>
       </div>
@@ -89,14 +87,15 @@ export default function PwaInstallPrompt() {
         onClick={handleDismiss}
         style={{
           background:   'transparent',
-          border:       '1px solid #334155',
-          color:        '#94A3B8',
+          border:       '1px solid rgba(255,255,255,0.15)',
+          color:        '#9CA3AF',
           borderRadius: 8,
           padding:      '7px 14px',
           fontSize:     12,
           cursor:       'pointer',
           flexShrink:   0,
           fontFamily:   'inherit',
+          transition:   'border-color 0.15s ease, color 0.15s ease',
         }}
       >
         Plus tard
@@ -106,16 +105,17 @@ export default function PwaInstallPrompt() {
       <button
         onClick={handleInstall}
         style={{
-          background:   '#2563EB',
+          background:   'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)',
           border:       'none',
           color:        '#fff',
           borderRadius: 8,
           padding:      '7px 16px',
           fontSize:     12,
-          fontWeight:   600,
+          fontWeight:   700,
           cursor:       'pointer',
           flexShrink:   0,
           fontFamily:   'inherit',
+          boxShadow:    '0 2px 10px rgba(37,99,235,0.35)',
         }}
       >
         Installer

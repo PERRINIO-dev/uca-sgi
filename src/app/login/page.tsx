@@ -7,10 +7,10 @@ import { useRouter } from 'next/navigation'
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
 const FEATURES = [
-  { icon: '▸', text: 'Suivi des ventes en temps réel' },
-  { icon: '▸', text: 'Gestion multi-boutiques centralisée' },
-  { icon: '▸', text: 'Rapports et analytiques avancés' },
-  { icon: '▸', text: 'Contrôle des stocks entrepôt' },
+  { text: 'Suivi des ventes en temps réel' },
+  { text: 'Gestion multi-boutiques centralisée' },
+  { text: 'Rapports et analytiques avancés' },
+  { text: 'Contrôle des stocks entrepôt' },
 ]
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -162,10 +162,11 @@ export default function LoginPage() {
             background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: '0 4px 20px rgba(37,99,235,0.50)',
+            boxShadow: '0 6px 24px rgba(37,99,235,0.55)',
           }}>
-            <svg width="24" height="20" viewBox="0 0 18 15" fill="none">
-              <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="24" height="20" viewBox="0 0 20 17" fill="none">
+              <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
             </svg>
           </div>
           <div>
@@ -177,7 +178,7 @@ export default function LoginPage() {
               MERAM
             </div>
             <div style={{
-              fontSize: 10, color: 'rgba(255,255,255,0.28)',
+              fontSize: 10, color: 'rgba(255,255,255,0.35)',
               letterSpacing: '0.18em', marginTop: 4,
               textTransform: 'uppercase', fontWeight: 600,
             }}>
@@ -204,25 +205,25 @@ export default function LoginPage() {
             </span>
           </h2>
           <p style={{
-            fontSize: 14.5, color: 'rgba(255,255,255,0.42)',
-            margin: '0 0 40px', lineHeight: 1.75,
+            fontSize: 14.5, color: 'rgba(255,255,255,0.52)',
+            margin: '0 0 36px', lineHeight: 1.75,
           }}>
             Plateforme centralisée de gestion commerciale — ventes, stocks, entrepôt et rapports réunis en un seul endroit.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {FEATURES.map(feat => (
               <div key={feat.text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{
                   width: 22, height: 22, borderRadius: 6,
-                  background: 'rgba(37,99,235,0.18)',
-                  border: '1px solid rgba(59,130,246,0.22)',
+                  background: 'rgba(37,99,235,0.22)',
+                  border: '1px solid rgba(59,130,246,0.28)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   flexShrink: 0,
                 }}>
                   <IconCheck />
                 </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.58)', lineHeight: 1.4 }}>
+                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', lineHeight: 1.4 }}>
                   {feat.text}
                 </span>
               </div>
@@ -259,7 +260,7 @@ export default function LoginPage() {
           background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 50%, #60A5FA 100%)',
         }} />
 
-        <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ width: '100%', maxWidth: 380, animation: 'fadeInUp 0.38s ease forwards' }}>
 
           {/* Form header */}
           <div style={{ marginBottom: 36 }}>
@@ -271,12 +272,13 @@ export default function LoginPage() {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 boxShadow: '0 3px 12px rgba(37,99,235,0.35)',
               }}>
-                <svg width="18" height="15" viewBox="0 0 18 15" fill="none">
-                  <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg width="18" height="15" viewBox="0 0 20 17" fill="none">
+                  <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
                 </svg>
               </div>
               <div style={{
-                fontSize: 20, fontWeight: 900, color: '#0D1117',
+                fontSize: 20, fontWeight: 900, color: '#1C1917',
                 letterSpacing: '-0.03em',
               }}>
                 MERAM
@@ -284,12 +286,12 @@ export default function LoginPage() {
             </div>
 
             <h1 style={{
-              fontSize: 26, fontWeight: 800, color: '#0D1117',
+              fontSize: 26, fontWeight: 800, color: '#1C1917',
               margin: '0 0 8px', letterSpacing: '-0.03em',
             }}>
               Connexion
             </h1>
-            <p style={{ fontSize: 14, color: '#64748B', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 14, color: '#78716C', margin: 0, lineHeight: 1.6 }}>
               Entrez vos identifiants pour accéder à votre espace.
             </p>
           </div>
@@ -416,17 +418,16 @@ export default function LoginPage() {
 
           <p style={{
             textAlign: 'center', fontSize: 12.5,
-            color: '#94A3B8', marginTop: 28, lineHeight: 1.65,
+            color: '#A9A49D', marginTop: 28, lineHeight: 1.65,
           }}>
-            Mot de passe oublié ?
-            <br />
-            <span style={{ color: '#CBD5E1' }}>Contactez votre administrateur.</span>
+            Mot de passe oublié ?{' '}
+            <span style={{ color: '#78716C', fontWeight: 500 }}>Contactez votre administrateur.</span>
           </p>
 
           {/* Footer */}
           <div style={{
             marginTop: 40, paddingTop: 20,
-            borderTop: '1px solid #F1F5F9',
+            borderTop: '1px solid #E7E5E4',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
             <div style={{
@@ -434,12 +435,12 @@ export default function LoginPage() {
               background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="11" height="9" viewBox="0 0 18 15" fill="none">
-                <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg width="11" height="9" viewBox="0 0 20 17" fill="none">
+                <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             <span style={{
-              fontSize: 11.5, color: '#CBD5E1',
+              fontSize: 11.5, color: '#A9A49D',
               letterSpacing: '0.02em', fontWeight: 500,
             }}>
               Développé par Majestor Kepseu

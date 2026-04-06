@@ -175,60 +175,72 @@ export default function PageLayout({
       {/* ── Mobile top bar ── */}
       {isMobile && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: 56,
+          position: 'fixed', top: 0, left: 0, right: 0,
           background: '#FDFCF9',
-          display: 'flex', alignItems: 'center',
-          padding: '0 16px', gap: 14, zIndex: 200,
+          display: 'flex', flexDirection: 'column',
+          zIndex: 200,
           borderBottom: '1px solid #E7E5E4',
-          boxShadow: '0 1px 6px rgba(0,0,0,0.06)',
+          boxShadow: '0 1px 8px rgba(0,0,0,0.07)',
         }}>
-          <button
-            onClick={() => setSidebar(o => !o)}
-            style={{
-              background: '#EDE9E3',
-              border: '1px solid #E7E5E4',
-              borderRadius: 9,
-              width: 38, height: 38,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0,
-              transition: 'background 0.15s ease',
-            }}
-          >
-            <IconMenu size={18} color="#44403C" />
-          </button>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              fontSize: 15, fontWeight: 700,
-              color: '#1C1917',
-              letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>
-              {pageTitle}
-            </div>
-          </div>
-
-          {/* MERAM mini wordmark */}
+          {/* Accent stripe (matches sidebar) */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+            height: 3,
+            background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 60%, #60A5FA 100%)',
+            flexShrink: 0,
+          }} />
+
+          <div style={{
+            display: 'flex', alignItems: 'center',
+            padding: '0 14px', gap: 12, height: 52,
           }}>
-            <div style={{
-              width: 26, height: 26, borderRadius: 7,
-              background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(37,99,235,0.4)',
-            }}>
-              <svg width="13" height="11" viewBox="0 0 18 15" fill="none">
-                <path d="M1 14V2L9 9.5L17 2V14" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <button
+              onClick={() => setSidebar(o => !o)}
+              style={{
+                background: '#EDE9E3',
+                border: '1px solid #E7E5E4',
+                borderRadius: 9,
+                width: 36, height: 36,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+                transition: 'background 0.15s ease',
+              }}
+            >
+              <IconMenu size={17} color="#44403C" />
+            </button>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: 15, fontWeight: 700,
+                color: '#1C1917',
+                letterSpacing: '-0.01em',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {pageTitle}
+              </div>
             </div>
-            <span style={{
-              fontSize: 13, fontWeight: 800,
-              color: '#1C1917',
-              letterSpacing: '-0.02em',
+
+            {/* MERAM mini wordmark */}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
             }}>
-              MERAM
-            </span>
+              <div style={{
+                width: 26, height: 26, borderRadius: 7,
+                background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 8px rgba(37,99,235,0.38)',
+              }}>
+                <svg width="13" height="11" viewBox="0 0 20 17" fill="none">
+                  <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span style={{
+                fontSize: 13, fontWeight: 800,
+                color: '#1C1917',
+                letterSpacing: '-0.02em',
+              }}>
+                MERAM
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -258,7 +270,7 @@ export default function PageLayout({
       <main style={{
         marginLeft: isMobile ? 0 : 240,
         flex: 1,
-        padding: isMobile ? '68px 16px 32px' : '32px 40px',
+        padding: isMobile ? '71px 16px 40px' : '32px 40px',
         minWidth: 0,
       }}>
         {children}

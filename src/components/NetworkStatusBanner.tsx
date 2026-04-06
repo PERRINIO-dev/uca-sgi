@@ -52,16 +52,17 @@ export default function NetworkStatusBanner() {
         zIndex:         10000,
         background:     offline ? '#DC2626' : '#059669',
         color:          '#fff',
-        padding:        '10px 20px',
+        padding:        '9px 20px',
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'center',
-        gap:            10,
+        gap:            8,
         fontFamily:     FONT,
         fontSize:       13,
         fontWeight:     600,
-        boxShadow:      '0 2px 12px rgba(0,0,0,0.18)',
-        transition:     'background 0.3s ease',
+        boxShadow:      '0 3px 14px rgba(0,0,0,0.22)',
+        letterSpacing:  '-0.01em',
+        animation:      'slideDown 0.22s ease forwards',
       }}
     >
       {offline ? (

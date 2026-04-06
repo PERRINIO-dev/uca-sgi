@@ -318,7 +318,7 @@ export default function SalesListClient({
       )}
 
       {/* ── Page header ── */}
-      <div style={{
+      <div className="fade-in-up" style={{
         display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 24,
         flexWrap: 'wrap', gap: 12,
@@ -661,7 +661,7 @@ export default function SalesListClient({
 
                       {isOpen && (
                         <tr>
-                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F8FAFC', borderBottom: `1px solid ${C.border}` }}>
+                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F5F2ED', borderBottom: `1px solid ${C.border}` }}>
                             <SaleDetail sale={sale} profile={profile} ownerName={ownerName} companyName={companyName} currency={currency} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>

@@ -310,7 +310,7 @@ export default function ReportsClient({
     <PageLayout profile={profile} activeRoute="/reports" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
+      <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
@@ -951,7 +951,7 @@ const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }
   USER_CREATED:              { label: 'Utilisateur créé',        color: C.blue,   bg: C.blueL },
   USER_ACTIVATED:            { label: 'Utilisateur activé',      color: C.green,  bg: C.greenL },
   USER_DEACTIVATED:          { label: 'Utilisateur désactivé',   color: C.red,    bg: C.redL },
-  USER_UPDATED:              { label: 'Utilisateur modifié',     color: C.slate,  bg: '#F1F5F9' },
+  USER_UPDATED:              { label: 'Utilisateur modifié',     color: C.slate,  bg: C.bg },
   PASSWORD_RESET:            { label: 'Mot de passe réinitialisé', color: C.orange, bg: C.orangeL },
   BOUTIQUE_ACTIVATED:        { label: 'Boutique activée',        color: C.green,  bg: C.greenL },
   BOUTIQUE_DEACTIVATED:      { label: 'Boutique désactivée',     color: C.red,    bg: C.redL },

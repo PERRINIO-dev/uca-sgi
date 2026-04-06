@@ -58,6 +58,15 @@ function IconBasket() {
     </svg>
   )
 }
+// Icon for "Créances" (receivables) — clock with currency symbol
+function IconCreances() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+      <circle cx="10" cy="10" r="7.5" stroke="#fff" strokeWidth="1.5"/>
+      <path d="M10 6.5v4l2.5 2.5" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
 function IconMargin() {
   return (
     <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -206,7 +215,7 @@ export default function DashboardClient({
       value:  fmt(allTimeCreances),
       color:  allTimeCreances > 0 ? C.orange : C.green,
       glow:   allTimeCreances > 0 ? C.orangeGlow : C.greenGlow,
-      Icon:   IconBasket,
+      Icon:   IconCreances,
       trend:  null,
     },
     {
@@ -246,7 +255,7 @@ export default function DashboardClient({
     <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
-      <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div className="fade-in-up" style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{
             fontSize: 24, fontWeight: 800, color: C.ink,

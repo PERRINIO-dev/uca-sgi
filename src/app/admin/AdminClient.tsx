@@ -434,7 +434,7 @@ export default function AdminClient({
         </div>
 
         {/* ── Header ── */}
-        <div style={{
+        <div className="fade-in-up" style={{
           display: 'flex', alignItems: 'flex-start',
           justifyContent: 'space-between', gap: 16,
           marginBottom: 28, flexWrap: 'wrap',

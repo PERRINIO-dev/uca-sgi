@@ -108,7 +108,7 @@ function Dots({ count, current, size = 'sm' }: { count: number; current: number;
         <div key={i} style={{
           height: h, borderRadius: h / 2,
           width:      i === current ? w : h,
-          background: i === current ? '#2563EB' : i < current ? '#BFDBFE' : '#E2E8F0',
+          background: i === current ? '#2563EB' : i < current ? '#BFDBFE' : '#D4D1CC',
           transition: 'all .3s',
         }} />
       ))}
@@ -222,7 +222,7 @@ export default function OnboardingTour() {
             <h2 style={{ fontSize: 22, fontWeight: 800, color: '#0F172A', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
               {step.title}
             </h2>
-            <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.65, margin: '0 0 24px' }}>
+            <p style={{ fontSize: 14, color: '#78716C', lineHeight: 1.65, margin: '0 0 24px' }}>
               {step.desc}
             </p>
 
@@ -233,7 +233,7 @@ export default function OnboardingTour() {
             {/* Buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {!isFirst && !isLast && (
-                <button onClick={prev} style={{ padding: '11px 18px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
+                <button onClick={prev} style={{ padding: '11px 18px', background: '#F0EDE7', color: '#44403C', border: '1px solid #E7E5E4', borderRadius: 10, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
                   Précédent
                 </button>
               )}
@@ -300,7 +300,7 @@ export default function OnboardingTour() {
         {step.placement && <Arrow p={step.placement} flipped={flipped} />}
 
         {/* Progress bar */}
-        <div style={{ height: 3, borderRadius: '14px 14px 0 0', background: '#F1F5F9', overflow: 'hidden' }}>
+        <div style={{ height: 3, borderRadius: '14px 14px 0 0', background: '#E7E5E4', overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${(idx + 1) / STEPS.length * 100}%`, background: 'linear-gradient(90deg,#1B3A6B,#2563EB)', transition: 'width .3s' }} />
         </div>
 
@@ -320,7 +320,7 @@ export default function OnboardingTour() {
           <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', margin: '0 0 6px', letterSpacing: '-0.01em' }}>
             {step.title}
           </h3>
-          <p style={{ fontSize: 12.5, color: '#475569', lineHeight: 1.6, margin: '0 0 12px' }}>
+          <p style={{ fontSize: 12.5, color: '#78716C', lineHeight: 1.6, margin: '0 0 12px' }}>
             {step.desc}
           </p>
 
@@ -331,7 +331,7 @@ export default function OnboardingTour() {
           {/* Nav buttons */}
           <div style={{ display: 'flex', gap: 7 }}>
             {idx > 0 && (
-              <button onClick={prev} style={{ padding: '8px 14px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
+              <button onClick={prev} style={{ padding: '8px 14px', background: '#F0EDE7', color: '#44403C', border: '1px solid #E7E5E4', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
                 Précédent
               </button>
             )}

@@ -74,18 +74,20 @@ export default function PushSubscription() {
       top:        16,
       right:      16,
       zIndex:     9998,
-      background: '#FFFFFF',
-      border:     '1px solid #E2E8F0',
-      borderRadius: 12,
-      boxShadow:  '0 8px 32px rgba(0,0,0,0.12)',
+      background: '#FDFCF9',
+      border:     '1px solid #E7E5E4',
+      borderRadius: 14,
+      boxShadow:  '0 8px 32px rgba(0,0,0,0.11), 0 2px 8px rgba(0,0,0,0.06)',
       padding:    '16px 18px',
       maxWidth:   300,
       fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      animation:  'slideInRight 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards',
     }}>
       {/* Bell icon */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
         <div style={{
           width: 38, height: 38, borderRadius: 9, background: '#EFF6FF',
+          border: '1px solid #BFDBFE',
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
         }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -94,10 +96,10 @@ export default function PushSubscription() {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0F172A', marginBottom: 3 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#1C1917', marginBottom: 3 }}>
             Activer les notifications
           </div>
-          <div style={{ fontSize: 12, color: '#475569', lineHeight: 1.5 }}>
+          <div style={{ fontSize: 12, color: '#78716C', lineHeight: 1.5 }}>
             Recevez des alertes pour les nouvelles commandes, stocks bas et demandes en attente.
           </div>
         </div>
@@ -106,8 +108,8 @@ export default function PushSubscription() {
         <button
           onClick={handleDismiss}
           style={{
-            flex: 1, padding: '8px', borderRadius: 7, border: '1px solid #E2E8F0',
-            background: '#F8FAFC', color: '#475569', fontSize: 12,
+            flex: 1, padding: '8px', borderRadius: 7, border: '1px solid #E7E5E4',
+            background: '#F0EDE7', color: '#78716C', fontSize: 12,
             fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
           }}
         >
@@ -117,7 +119,8 @@ export default function PushSubscription() {
           onClick={handleEnable}
           style={{
             flex: 1, padding: '8px', borderRadius: 7, border: 'none',
-            background: '#2563EB', color: '#fff', fontSize: 12,
+            background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)',
+            color: '#fff', fontSize: 12,
             fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
           }}
         >

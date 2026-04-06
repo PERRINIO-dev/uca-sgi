@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react'
 
+const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+
 export default function Error({
   error,
   reset,
@@ -10,22 +12,23 @@ export default function Error({
   reset: () => void
 }) {
   useEffect(() => {
-    console.error('[SGI] Erreur applicative :', error)
+    console.error('[MERAM] Erreur applicative :', error)
   }, [error])
 
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', background: '#F1F5F9',
-      fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+      justifyContent: 'center', background: '#F5F2ED',
+      fontFamily: FONT,
       padding: '24px',
     }}>
       <div style={{ textAlign: 'center', maxWidth: 460 }}>
+        {/* Error icon */}
         <div style={{
           width: 72, height: 72, borderRadius: '50%',
-          background: '#FEF2F2', border: '1px solid #FECACA',
+          background: '#FEF2F2', border: '1.5px solid #FECACA',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 20px', fontSize: 32,
+          margin: '0 auto 20px',
         }}>
           <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
             <path d="M16 4L28 26H4L16 4Z" stroke="#DC2626" strokeWidth="2" strokeLinejoin="round"/>
@@ -33,26 +36,31 @@ export default function Error({
             <circle cx="16" cy="23" r="1.5" fill="#DC2626"/>
           </svg>
         </div>
+
         <h1 style={{
-          fontSize: 20, fontWeight: 700, color: '#0F172A',
-          margin: '0 0 8px', letterSpacing: '-0.02em',
+          fontSize: 20, fontWeight: 800, color: '#1C1917',
+          margin: '0 0 8px', letterSpacing: '-0.02em', fontFamily: FONT,
         }}>
           Une erreur s'est produite
         </h1>
         <p style={{
-          fontSize: 14, color: '#64748B', margin: '0 0 28px', lineHeight: 1.6,
+          fontSize: 14, color: '#78716C', margin: '0 0 28px', lineHeight: 1.65, fontFamily: FONT,
         }}>
           Le système a rencontré un problème inattendu.<br />
           Réessayez ou contactez l'administrateur si le problème persiste.
         </p>
+
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
             onClick={reset}
             style={{
-              padding: '11px 24px', background: '#1B3A6B', color: 'white',
-              border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              cursor: 'pointer',
-              fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif",
+              padding: '11px 24px',
+              background: 'linear-gradient(135deg, #1D4ED8 0%, #3B82F6 100%)',
+              color: 'white',
+              border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: FONT,
+              boxShadow: '0 4px 16px rgba(37,99,235,0.30)',
+              letterSpacing: '-0.01em',
             }}
           >
             Réessayer
@@ -61,9 +69,10 @@ export default function Error({
             href="/dashboard"
             style={{
               display: 'inline-block', padding: '11px 24px',
-              background: 'white', color: '#64748B',
-              border: '1px solid #E2E8F0', borderRadius: 8,
+              background: '#FDFCF9', color: '#44403C',
+              border: '1.5px solid #E7E5E4', borderRadius: 9,
               fontSize: 13, fontWeight: 500, textDecoration: 'none',
+              fontFamily: FONT,
             }}
           >
             Tableau de bord
