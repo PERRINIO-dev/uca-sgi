@@ -9,7 +9,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import PageLayout       from '@/components/PageLayout'
-import OnboardingTour   from '@/components/OnboardingTour'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { CRITICAL_STOCK_CARTONS, CRITICAL_STOCK_UNITS } from '@/lib/constants'
 import { fmtCurrency } from '@/lib/format'
@@ -22,13 +21,12 @@ const fmtNum = (n: number) =>
 const C = {
   ink:     '#1C1917', slate:  '#44403C', muted:  '#78716C',
   border:  '#E7E5E4', bg:     '#F5F2ED', surface: '#FDFCF9',
-  navy:    '#1B3A6B', navyDark: '#0D1117',
-  blue:    '#2563EB', blueL:  '#EFF6FF', blueGlow: 'rgba(37,99,235,0.18)',
-  green:   '#10B981', greenL: '#ECFDF5', greenGlow: 'rgba(16,185,129,0.18)',
-  orange:  '#F59E0B', orangeL: '#FFFBEB', orangeGlow: 'rgba(245,158,11,0.18)',
-  red:     '#EF4444', redL:   '#FEF2F2', redGlow: 'rgba(239,68,68,0.18)',
-  gold:    '#D97706', goldL:  '#FFFBEB',
-  purple:  '#8B5CF6', purpleL: '#F5F3FF', purpleGlow: 'rgba(139,92,246,0.18)',
+  blue:    '#2563EB', blueL:  '#EFF6FF',
+  green:   '#059669', greenL: '#ECFDF5',
+  orange:  '#D97706', orangeL: '#FFFBEB',
+  red:     '#DC2626', redL:   '#FEF2F2',
+  gold:    '#B45309', goldL:  '#FFFBEB',
+  purple:  '#8B5CF6', purpleL: '#F5F3FF',
 }
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 
@@ -204,7 +202,6 @@ export default function DashboardClient({
       sub:    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
       value:  fmt(mtdRevenue),
       color:  C.blue,
-      glow:   C.blueGlow,
       Icon:   IconRevenue,
       trend:  mtdTrend,
     },
@@ -213,7 +210,6 @@ export default function DashboardClient({
       sub:    `Ce mois : ${fmt(mtdCreances)}`,
       value:  fmt(allTimeCreances),
       color:  allTimeCreances > 0 ? C.orange : C.green,
-      glow:   allTimeCreances > 0 ? C.orangeGlow : C.greenGlow,
       Icon:   IconCreances,
       trend:  null,
     },
@@ -222,7 +218,6 @@ export default function DashboardClient({
       sub:    'Confirmées · en préparation · prêtes',
       value:  String(activeOrdersCount),
       color:  C.purple,
-      glow:   C.purpleGlow,
       Icon:   IconCount,
       trend:  null,
     },
@@ -231,7 +226,6 @@ export default function DashboardClient({
       sub:    `${todayCount} vente${todayCount !== 1 ? 's' : ''} aujourd'hui`,
       value:  fmt(mtdAvgBasket),
       color:  C.green,
-      glow:   C.greenGlow,
       Icon:   IconBasket,
       trend:  null,
     },
@@ -242,15 +236,12 @@ export default function DashboardClient({
         : 'Aucune vente ce mois',
       value:  fmt(mtdMargin),
       color:  mtdMargin >= 0 ? C.green : C.red,
-      glow:   mtdMargin >= 0 ? C.greenGlow : C.redGlow,
       Icon:   IconMargin,
       trend:  null,
     }] : []),
   ]
 
   return (
-    <>
-    <OnboardingTour />
     <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
@@ -289,7 +280,7 @@ export default function DashboardClient({
         gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
         gap: 14, marginBottom: 24,
       }}>
-        {kpis.map(({ label, sub, value, color, glow, Icon, trend }) => (
+        {kpis.map(({ label, sub, value, color, Icon, trend }) => (
           <div key={label} className="kpi-card" style={{
             background: C.surface, borderRadius: 14,
             border: `1px solid ${C.border}`,
@@ -373,6 +364,7 @@ export default function DashboardClient({
                   formatter={(v) => [fmt(Number(v)), 'CA']}
                   contentStyle={{
                     fontSize: 12.5, borderRadius: 10,
+                    background: C.surface,
                     border: `1px solid ${C.border}`,
                     boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
                     fontFamily: FONT, padding: '8px 14px',
@@ -408,6 +400,7 @@ export default function DashboardClient({
                   formatter={(v) => [fmt(Number(v)), 'CA']}
                   contentStyle={{
                     fontSize: 12.5, borderRadius: 10,
+                    background: C.surface,
                     border: `1px solid ${C.border}`,
                     boxShadow: '0 8px 24px rgba(0,0,0,0.10)',
                     fontFamily: FONT, padding: '8px 14px',
@@ -706,6 +699,5 @@ export default function DashboardClient({
         </ModalOverlay>
       )}
     </PageLayout>
-    </>
   )
 }
