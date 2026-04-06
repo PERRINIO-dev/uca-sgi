@@ -42,14 +42,15 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; 
 }
 
 const TH_STYLE: React.CSSProperties = {
-  padding: '12px 14px', textAlign: 'left',
-  fontSize: 12, fontWeight: 700, color: C.muted,
-  textTransform: 'uppercase', letterSpacing: '0.06em',
+  padding: '13px 16px', textAlign: 'left',
+  fontSize: 11, fontWeight: 700, color: C.muted,
+  textTransform: 'uppercase', letterSpacing: '0.10em',
   borderBottom: `1.5px solid ${C.border}`,
   whiteSpace: 'nowrap', fontFamily: FONT,
+  background: C.bg,
 }
 const TD_STYLE: React.CSSProperties = {
-  padding: '14px 14px', fontSize: 14, color: C.ink,
+  padding: '15px 16px', fontSize: 13.5, color: C.ink,
   borderBottom: `1px solid ${C.border}`,
   verticalAlign: 'middle', fontFamily: FONT,
 }
@@ -378,7 +379,7 @@ export default function SalesListClient({
           <IconFilter />
           {/* Search */}
           <div style={{ position: 'relative', flex: '1 1 180px', minWidth: 140 }}>
-            <span style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
               <IconSearch />
             </span>
             <input
@@ -386,9 +387,9 @@ export default function SalesListClient({
               onChange={e => setSearch(e.target.value)}
               placeholder="N°, client ou téléphone…"
               style={{
-                width: '100%', paddingLeft: 28, paddingRight: 8,
-                height: 32, border: `1px solid ${C.border}`,
-                borderRadius: 6, fontSize: 12, fontFamily: FONT,
+                width: '100%', paddingLeft: 30, paddingRight: 8,
+                height: 36, border: `1px solid ${C.border}`,
+                borderRadius: 8, fontSize: 12.5, fontFamily: FONT,
                 color: C.ink, background: C.bg, outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -490,9 +491,9 @@ export default function SalesListClient({
 
       {/* ── Sales table ── */}
       <div style={{
-        background: C.surface, borderRadius: 12,
+        background: C.surface, borderRadius: 14,
         border: `1px solid ${C.border}`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.05)',
         overflow: 'hidden',
       }}>
         {sales.length === 0 && hasFilters ? (
@@ -575,8 +576,18 @@ export default function SalesListClient({
                         onClick={() => setExpanded(isOpen ? null : sale.id)}
                         style={{ background: isOpen ? C.bg : C.surface }}
                       >
-                        <td style={{ ...TD_STYLE, fontWeight: 700, color: C.blue }}>
-                          {sale.sale_number}
+                        <td style={TD_STYLE}>
+                          <span className="tag-mono" style={{
+                            display: 'inline-block',
+                            background: C.blueL,
+                            color: C.blue,
+                            border: `1px solid #BFDBFE`,
+                            borderRadius: 6,
+                            padding: '3px 9px',
+                            fontSize: 12, fontWeight: 700,
+                          }}>
+                            {sale.sale_number}
+                          </span>
                         </td>
                         <td style={{ ...TD_STYLE, color: C.slate, fontSize: 13 }}>
                           {new Date(sale.created_at).toLocaleDateString('fr-FR', {
@@ -594,8 +605,8 @@ export default function SalesListClient({
                         {profile.role !== 'vendor' && (
                           <td style={{ ...TD_STYLE, fontSize: 13, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
                         )}
-                        <td style={{ ...TD_STYLE, fontWeight: 700 }}>
-                          {fmt(sale.total_amount)}
+                        <td style={{ ...TD_STYLE, fontWeight: 800 }}>
+                          <span className="num">{fmt(sale.total_amount)}</span>
                         </td>
                         <td style={TD_STYLE}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -688,24 +699,26 @@ export default function SalesListClient({
                     disabled={currentPage === 1}
                     onClick={() => goToPage(currentPage - 1)}
                     style={{
-                      padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      padding: '7px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
                       border: `1px solid ${C.border}`, cursor: currentPage === 1 ? 'default' : 'pointer',
                       background: currentPage === 1 ? C.bg : C.surface, color: currentPage === 1 ? C.muted : C.ink,
-                      fontFamily: FONT,
+                      fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
-                    ← Précédent
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 2L3 6.5 8 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Précédent
                   </button>
                   <button
                     className="btn-ghost"
                     disabled={currentPage === totalPages}
                     onClick={() => goToPage(currentPage + 1)}
                     style={{
-                      padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      padding: '7px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
                       border: `1px solid ${C.border}`, cursor: currentPage === totalPages ? 'default' : 'pointer',
                       background: currentPage === totalPages ? C.bg : C.surface, color: currentPage === totalPages ? C.muted : C.ink,
-                      fontFamily: FONT,
+                      fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
-                    Suivant →
+                    Suivant
+                    <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M5 2l5 4.5L5 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   </button>
                 </div>
               </div>

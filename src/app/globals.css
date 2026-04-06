@@ -376,6 +376,49 @@ button:focus-visible {
   input, select, textarea { font-size: 16px !important; }
 }
 
+/* ── Skeleton loader ────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, #EDE9E3 25%, #E7E4DF 50%, #EDE9E3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+
+/* ── Tag / monospace badge ──────────────────────────────────────────────── */
+.tag-mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing: 0.02em;
+}
+
+/* ── Premium card ────────────────────────────────────────────────────────── */
+.card-premium {
+  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
+}
+.card-premium:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05) !important;
+  transform: translateY(-2px);
+}
+
+/* ── KPI card ────────────────────────────────────────────────────────────── */
+.kpi-card {
+  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
+}
+.kpi-card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05) !important;
+  transform: translateY(-3px);
+}
+
+/* ── Table row highlight ─────────────────────────────────────────────────── */
+.trow-open > td {
+  background-color: #EEF3FF !important;
+}
+
+/* ── Segment tabs (pill control) ─────────────────────────────────────────── */
+.seg-btn {
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    PRINT — clean receipts and prep sheets
    ═══════════════════════════════════════════════════════════════════════════ */

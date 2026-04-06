@@ -353,9 +353,9 @@ export default function WarehouseClient({
         </div>
 
         {/* Tabs — pill/segment control */}
-        <div style={{ display: 'flex', gap: 2, marginBottom: 24,
+        <div style={{ display: 'flex', gap: 3, marginBottom: 24,
           background: C.bg, padding: 4, borderRadius: 100,
-          width: 'fit-content' }}>
+          width: 'fit-content', border: `1px solid ${C.border}` }}>
           {([
             ['orders',   'Commandes',  orders.length],
             ['stock',    'Stock',       null],
@@ -363,22 +363,23 @@ export default function WarehouseClient({
               r => r.status === 'pending').length],
           ] as [Tab, string, number | null][]).map(([id, label, count]) => (
             <button key={id} onClick={() => setTab(id)}
+              className="seg-btn"
               style={{
-                padding: '8px 18px', borderRadius: 100,
+                padding: '8px 20px', borderRadius: 100,
                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                background: activeTab === id ? C.blue : 'transparent',
-                color: activeTab === id ? C.surface : C.slate,
+                background: activeTab === id ? C.surface : 'transparent',
+                color: activeTab === id ? C.ink : C.muted,
                 border: 'none', display: 'flex',
                 alignItems: 'center', gap: 6,
                 fontFamily: FONT,
-                transition: 'all 0.15s ease',
+                boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
               }}>
               {label}
               {count !== null && count > 0 && (
                 <span style={{
-                  background: activeTab === id
-                    ? 'rgba(255,255,255,0.25)' : C.blue,
-                  color: C.surface, fontSize: 10, fontWeight: 700,
+                  background: activeTab === id ? C.blue : C.border,
+                  color: activeTab === id ? C.surface : C.muted,
+                  fontSize: 10, fontWeight: 700,
                   padding: '1px 6px', borderRadius: 100,
                 }}>
                   {count}
@@ -392,11 +393,26 @@ export default function WarehouseClient({
         {activeTab === 'orders' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {orders.length === 0 && (
-              <div style={{ background: C.surface, borderRadius: 12,
+              <div style={{ background: C.surface, borderRadius: 14,
                 border: `1px solid ${C.border}`,
-                padding: '48px', textAlign: 'center',
-                color: C.muted, fontSize: 14, fontFamily: FONT }}>
-                Aucune commande en attente
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                padding: '52px 32px', textAlign: 'center' }}>
+                <div style={{
+                  width: 52, height: 52, borderRadius: '50%',
+                  background: C.greenL, border: `1.5px solid #A7F3D0`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M5 13l4 4 10-10" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+                  Tout est à jour
+                </div>
+                <div style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
+                  Aucune commande active en attente de traitement.
+                </div>
               </div>
             )}
 
@@ -423,35 +439,38 @@ export default function WarehouseClient({
                     )}>
 
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', gap: 10,
-                        alignItems: 'center', marginBottom: 4 }}>
-                        <span style={{ fontSize: 14, fontWeight: 700,
-                          color: C.ink, fontFamily: FONT }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 6, flexWrap: 'wrap' }}>
+                        <span className="tag-mono" style={{
+                          display: 'inline-block',
+                          background: cfg.bg, color: cfg.color,
+                          border: `1px solid ${cfg.dot}44`,
+                          borderRadius: 6, padding: '3px 10px',
+                          fontSize: 12.5, fontWeight: 800, fontFamily: FONT,
+                        }}>
                           {order.order_number}
                         </span>
                         {/* Status pill with dot */}
                         <span style={{ display: 'inline-flex', alignItems: 'center',
                           gap: 5, fontSize: 11, fontWeight: 600,
                           padding: '3px 10px', borderRadius: 100,
-                          background: cfg.bg, color: cfg.color, fontFamily: FONT }}>
+                          background: C.bg, color: C.muted,
+                          border: `1px solid ${C.border}`,
+                          fontFamily: FONT }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%',
                             background: cfg.dot, flexShrink: 0 }} />
                           {cfg.label}
                         </span>
                       </div>
-                      <div style={{ fontSize: 13, color: C.ink, fontFamily: FONT }}>
+                      <div style={{ fontSize: 13.5, color: C.ink, fontFamily: FONT, marginBottom: 3 }}>
                         <strong>{sale?.customer_name ?? 'Client anonyme'}</strong>
-                        {sale?.customer_phone &&
-                          ` · ${sale.customer_phone}`}
-                        {' — '}{sale?.boutiques?.name}
+                        {sale?.customer_phone && <span style={{ color: C.muted, fontWeight: 400 }}> · {sale.customer_phone}</span>}
+                        {' '}
+                        <span style={{ color: C.muted, fontWeight: 400 }}>— {sale?.boutiques?.name}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: C.muted,
-                        marginTop: 2, fontFamily: FONT }}>
-                        {sale?.users?.full_name} ·{' '}
-                        {new Date(order.created_at).toLocaleDateString(
-                          'fr-FR', { day: '2-digit', month: 'short',
-                            hour: '2-digit', minute: '2-digit' }
-                        )}
+                      <div style={{ fontSize: 11.5, color: C.muted, fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5.5 3v3l2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
+                        {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
+                        {' · '}{sale?.users?.full_name}
                       </div>
                     </div>
 

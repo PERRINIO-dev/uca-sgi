@@ -87,8 +87,8 @@ function IconCheck() {
 function Panel({ children, style = {}, tourId }: { children: React.ReactNode; style?: React.CSSProperties; tourId?: string }) {
   return (
     <div
-      className="card-hover"
-      style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', padding: '20px 22px', ...style }}
+      className="card-premium"
+      style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.05)', padding: '20px 22px', ...style }}
       {...(tourId ? { 'data-tour': tourId } : {})}
     >
       {children}
@@ -96,14 +96,13 @@ function Panel({ children, style = {}, tourId }: { children: React.ReactNode; st
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SectionTitle({ children, accent = C.blue }: { children: React.ReactNode; accent?: string }) {
   return (
-    <div style={{
-      fontSize: 12, fontWeight: 700, color: C.slate,
-      textTransform: 'uppercase', letterSpacing: '0.08em',
-      marginBottom: 14, fontFamily: FONT,
-    }}>
-      {children}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16, fontFamily: FONT }}>
+      <div style={{ width: 3, height: 14, borderRadius: 2, background: accent, flexShrink: 0 }} />
+      <span style={{ fontSize: 11.5, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.10em' }}>
+        {children}
+      </span>
     </div>
   )
 }
@@ -287,61 +286,59 @@ export default function DashboardClient({
       {/* ── KPI cards ── */}
       <div data-tour="tour-kpis" style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
         gap: 14, marginBottom: 24,
       }}>
         {kpis.map(({ label, sub, value, color, glow, Icon, trend }) => (
           <div key={label} className="kpi-card" style={{
-            background: C.surface, borderRadius: 16,
+            background: C.surface, borderRadius: 14,
             border: `1px solid ${C.border}`,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            overflow: 'hidden',
-            position: 'relative',
+            borderLeft: `4px solid ${color}`,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04)',
+            padding: '18px 20px 20px',
+            display: 'flex', flexDirection: 'column', gap: 14,
           }}>
-            {/* Gradient top bar */}
-            <div style={{
-              height: 3,
-              background: `linear-gradient(90deg, ${color} 0%, ${color}88 100%)`,
-            }} />
-            <div style={{ padding: '16px 20px 18px' }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start',
-                justifyContent: 'space-between', marginBottom: 14 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
-                  textTransform: 'uppercase', letterSpacing: '0.10em', fontFamily: FONT }}>
-                  {label}
-                </div>
-                <div style={{
-                  width: 38, height: 38, borderRadius: 10,
-                  background: `linear-gradient(135deg, ${color}22 0%, ${color}40 100%)`,
-                  border: `1px solid ${color}30`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  <div style={{ color }}>
-                    <Icon />
-                  </div>
-                </div>
+            {/* Label + icon row */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div style={{
+                fontSize: 11, fontWeight: 700, color: C.muted,
+                textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: FONT,
+                lineHeight: 1.4, paddingTop: 2,
+              }}>
+                {label}
               </div>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: color,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+                boxShadow: `0 4px 12px ${color}55`,
+              }}>
+                <Icon />
+              </div>
+            </div>
+            {/* Value + sub */}
+            <div>
               <div className="num" style={{
-                fontSize: 26, fontWeight: 800, color: C.ink,
-                letterSpacing: '-0.03em', lineHeight: 1.1, fontFamily: FONT,
-                marginBottom: 8,
+                fontSize: 30, fontWeight: 800, color: C.ink,
+                letterSpacing: '-0.04em', lineHeight: 1, fontFamily: FONT,
               }}>
                 {value}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>{sub}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 12.5, color: C.muted, fontFamily: FONT }}>{sub}</span>
                 {trend !== null && trend !== undefined && (
                   <span style={{
-                    fontSize: 11, fontWeight: 700, padding: '2px 8px',
+                    fontSize: 11, fontWeight: 700, padding: '3px 8px',
                     borderRadius: 100, fontFamily: FONT,
                     background: trend >= 0 ? C.greenL : C.redL,
                     color: trend >= 0 ? C.green : C.red,
                     display: 'inline-flex', alignItems: 'center', gap: 3,
+                    border: `1px solid ${trend >= 0 ? '#A7F3D0' : '#FECACA'}`,
                   }}>
                     {trend >= 0
-                      ? <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                      : <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      ? <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     }
                     {trend >= 0 ? '+' : ''}{trend.toFixed(0)} %
                   </span>
@@ -369,7 +366,7 @@ export default function DashboardClient({
                     <stop offset="100%" stopColor={C.blue} stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={false} />
+                <CartesianGrid strokeDasharray="4 4" stroke="#EDE9E3" vertical={false} />
                 <XAxis dataKey="day" tick={{ fontSize: 11, fill: C.muted, fontFamily: FONT }} axisLine={false} tickLine={false} dy={6} />
                 <YAxis tick={{ fontSize: 10, fill: C.muted, fontFamily: FONT }} axisLine={false} tickLine={false} tickFormatter={v => (v / 1000) + 'k'} width={36} />
                 <Tooltip
@@ -404,7 +401,7 @@ export default function DashboardClient({
           {boutiqueStats.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={boutiqueStats} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={true} horizontal={false} />
+                <CartesianGrid strokeDasharray="4 4" stroke="#EDE9E3" vertical={true} horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted, fontFamily: FONT }} tickFormatter={v => (v / 1000) + 'k'} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 12.5, fill: C.ink, fontWeight: 600, fontFamily: FONT }} axisLine={false} tickLine={false} width={85} />
                 <Tooltip
@@ -458,78 +455,85 @@ export default function DashboardClient({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {pendingRequests.map((req: any) => (
                 <div key={req.id} style={{
-                  padding: '12px 14px',
-                  background: C.bg,
-                  borderRadius: 8,
+                  borderRadius: 10,
                   border: `1px solid ${C.border}`,
+                  background: C.surface,
+                  overflow: 'hidden',
                 }}>
-                  <div style={{
-                    display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'flex-start', marginBottom: 4,
-                  }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, fontFamily: FONT }}>
-                      {req.products?.name ?? 'Produit inconnu'}
-                    </span>
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, flexShrink: 0, marginLeft: 8,
-                      color: req.request_type === 'stock_in' ? C.blue : C.orange,
-                      background: req.request_type === 'stock_in' ? C.blueL : C.orangeL,
-                      padding: '2px 8px', borderRadius: 100, fontFamily: FONT,
-                    }}>
-                      {req.request_type === 'stock_in' ? 'Entrée stock' : 'Correction'}
-                    </span>
+                  {/* Card header */}
+                  <div style={{ padding: '11px 14px', background: C.bg, borderBottom: `1px solid ${C.border}` }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {req.products?.name ?? 'Produit inconnu'}
+                      </span>
+                      <span style={{
+                        fontSize: 10.5, fontWeight: 700, flexShrink: 0,
+                        color: req.request_type === 'stock_in' ? C.blue : C.orange,
+                        background: req.request_type === 'stock_in' ? C.blueL : C.orangeL,
+                        padding: '2px 8px', borderRadius: 100, fontFamily: FONT,
+                        border: `1px solid ${req.request_type === 'stock_in' ? '#BFDBFE' : '#FDE68A'}`,
+                      }}>
+                        {req.request_type === 'stock_in' ? 'Entrée stock' : 'Correction'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
+                      <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{req.users?.full_name}</span>
+                      <span style={{ color: C.border, fontSize: 14 }}>·</span>
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, fontFamily: FONT,
+                        color: req.quantity_tiles_delta > 0 ? C.green : C.red,
+                      }}>
+                        {req.quantity_tiles_delta > 0 ? '+' : ''}
+                        {fmtNum(req.quantity_tiles_delta)}{' '}
+                        {(req.products?.product_type ?? 'tile') === 'tile' ? 'carreaux' : (req.products?.unit_label ?? 'unités')}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ fontSize: 12, color: C.slate, marginBottom: 6, fontFamily: FONT }}>
-                    {req.users?.full_name} ·{' '}
-                    <span style={{
-                      fontWeight: 700,
-                      color: req.quantity_tiles_delta > 0 ? C.green : C.red,
-                    }}>
-                      {req.quantity_tiles_delta > 0 ? '+' : ''}
-                      {fmtNum(req.quantity_tiles_delta)}{' '}
-                      {(req.products?.product_type ?? 'tile') === 'tile'
-                        ? 'carreaux'
-                        : (req.products?.unit_label ?? 'unités')}
-                    </span>
-                  </div>
+                  {/* Justification */}
                   {req.justification && (
-                    <div style={{
-                      fontSize: 11, color: C.muted,
-                      marginBottom: 10, fontStyle: 'italic',
-                      borderLeft: `2px solid ${C.border}`, paddingLeft: 8,
-                      fontFamily: FONT,
-                    }}>
-                      "{req.justification}"
+                    <div style={{ padding: '8px 14px', borderBottom: `1px solid ${C.border}`, background: C.surface }}>
+                      <span style={{ fontSize: 11.5, color: C.muted, fontStyle: 'italic', fontFamily: FONT }}>
+                        « {req.justification} »
+                      </span>
                     </div>
                   )}
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  {/* Actions */}
+                  <div style={{ display: 'flex' }}>
                     <button
-                      className="btn-green"
                       onClick={() => handleApprove(req.id)}
                       disabled={loading === req.id}
                       style={{
-                        flex: 1, padding: '8px 12px', background: C.green,
-                        color: 'white', border: 'none', borderRadius: 7,
-                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        flex: 1, padding: '10px 12px', background: 'transparent',
+                        color: C.green, border: 'none', borderRight: `1px solid ${C.border}`,
+                        fontSize: 12.5, fontWeight: 700, cursor: 'pointer',
                         fontFamily: FONT,
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        transition: 'background 0.12s ease',
                       }}
+                      onMouseEnter={e => (e.currentTarget.style.background = C.greenL)}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       {loading === req.id
-                        ? <><span className="spinner" style={{ width: 12, height: 12 }} />En cours…</>
-                        : 'Approuver'}
+                        ? <><span className="spinner" style={{ width: 12, height: 12, borderTopColor: C.green }} />En cours…</>
+                        : <>
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6.5l3 3 6-6" stroke={C.green} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                            Approuver
+                          </>
+                      }
                     </button>
                     <button
-                      className="btn-ghost-danger"
                       onClick={() => setRejectId(req.id)}
                       disabled={loading === req.id}
                       style={{
-                        flex: 1, padding: '8px 12px',
-                        background: 'transparent',
-                        color: C.red, border: `1.5px solid ${C.red}`,
-                        borderRadius: 7, fontSize: 12, fontWeight: 600,
-                        cursor: 'pointer', fontFamily: FONT,
+                        flex: 1, padding: '10px 12px', background: 'transparent',
+                        color: C.red, border: 'none',
+                        fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: FONT,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                        transition: 'background 0.12s ease',
                       }}
+                      onMouseEnter={e => (e.currentTarget.style.background = C.redL)}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       Rejeter
                     </button>
@@ -576,43 +580,39 @@ export default function DashboardClient({
               </span>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {(stockAlerts.length > 6 ? stockAlerts.slice(0, 6) : stockAlerts).map((item: any) => {
                 const isTile = (item.product_type ?? 'tile') === 'tile'
                 const avail  = isTile ? Number(item.available_full_cartons) : Number(item.available_tiles)
                 const isCrit = isTile ? avail < CRITICAL_STOCK_CARTONS : avail < CRITICAL_STOCK_UNITS
-                const bg     = isCrit ? C.redL    : C.orangeL
-                const clr    = isCrit ? C.red     : C.orange
+                const clr    = isCrit ? C.red : C.orange
                 const bdr    = isCrit ? '#FECACA' : '#FDE68A'
                 const unit   = isTile ? 'cartons' : 'unités'
                 return (
                   <div key={item.product_id} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '10px 12px',
-                    background: bg, borderRadius: 8,
+                    padding: '10px 14px',
+                    background: C.surface, borderRadius: 8,
                     border: `1px solid ${bdr}`,
+                    borderLeft: `3px solid ${clr}`,
                   }}>
-                    <div style={{
-                      width: 7, height: 7, borderRadius: '50%',
-                      background: clr, flexShrink: 0,
-                    }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontSize: 12, fontWeight: 600, color: C.ink,
+                        fontSize: 12.5, fontWeight: 600, color: C.ink,
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                         fontFamily: FONT,
                       }}>
                         {item.product_name}
                       </div>
-                      <div style={{ fontSize: 11, color: C.slate, fontFamily: FONT }}>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: FONT }}>
                         {item.reference_code}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: clr, lineHeight: 1, fontFamily: FONT }}>
+                      <div className="num" style={{ fontSize: 20, fontWeight: 800, color: clr, lineHeight: 1, fontFamily: FONT }}>
                         {fmtNum(avail)}
                       </div>
-                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: FONT }}>{unit}</div>
+                      <div style={{ fontSize: 10.5, color: C.muted, marginTop: 2, fontFamily: FONT }}>{unit}</div>
                     </div>
                   </div>
                 )

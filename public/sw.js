@@ -1,5 +1,5 @@
-// UCA SGI — Service Worker v4
-const CACHE_NAME   = 'uca-sgi-v4'
+// UCA SGI — Service Worker v5
+const CACHE_NAME   = 'uca-sgi-v5'
 const OFFLINE_URL  = '/offline.html'
 
 // Pages to pre-cache so they're available instantly
@@ -114,10 +114,10 @@ self.addEventListener('push', event => {
   try {
     payload = event.data.json()
   } catch {
-    payload = { title: 'UCA SGI', body: event.data.text() }
+    payload = { title: 'MERAM SGI', body: event.data.text() }
   }
 
-  const { title, body, url = '/', tag = 'uca-sgi' } = payload
+  const { title, body, url = '/', tag = 'meram-sgi' } = payload
 
   event.waitUntil(
     Promise.all([
