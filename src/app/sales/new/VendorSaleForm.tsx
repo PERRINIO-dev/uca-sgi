@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo, useTransition }  from 'react'
+import React, { useState, useMemo, useTransition, useEffect, useRef }  from 'react'
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
@@ -90,6 +90,15 @@ export default function VendorSaleForm({
   const [inputQty,        setInputQty]        = useState('')
   const [inputPieces,     setInputPieces]     = useState('')
   const [inputContainers, setInputContainers] = useState('')
+
+  // Scroll to top whenever the form step changes — fires after React renders the new step
+  const topRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    topRef.current?.scrollIntoView({ behavior: 'instant' as ScrollBehavior, block: 'start' })
+    window.scrollTo(0, 0)
+    document.documentElement.scrollTop = 0
+    document.body.scrollTop = 0
+  }, [formStep])
 
   const resetInputs = () => {
     setInputM2(''); setInputTiles(''); setCartons(''); setLoose('')
@@ -395,7 +404,7 @@ export default function VendorSaleForm({
     <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom: 20 }}>
+      <div ref={topRef} style={{ marginBottom: 20 }}>
         <button disabled={navPending}
           onClick={() => startNavTransition(() => router.push('/sales'))}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: navPending ? C.muted : C.slate, fontSize: 12, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '0 0 12px', fontFamily: FONT }}>
@@ -863,7 +872,7 @@ export default function VendorSaleForm({
 
             {/* Continue button */}
             <button className="btn-meram"
-              onClick={() => { setError(null); setFormStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              onClick={() => { setError(null); setFormStep(2) }}
               disabled={cart.length === 0}
               style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
               Continuer — Infos client
@@ -883,7 +892,7 @@ export default function VendorSaleForm({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* Back */}
-            <button onClick={() => { setError(null); setFormStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+            <button onClick={() => { setError(null); setFormStep(1) }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: FONT, alignSelf: 'flex-start' }}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M7 3L3 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Retour au panier
