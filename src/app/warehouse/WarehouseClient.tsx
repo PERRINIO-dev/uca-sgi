@@ -120,6 +120,7 @@ export default function WarehouseClient({
     setLoadingOrd(orderId)
     await updateOrderStatus(orderId, newStatus)
     setLoadingOrd(null)
+    router.refresh()
   }
 
   const handleConfirmDelivery = async () => {
@@ -128,6 +129,7 @@ export default function WarehouseClient({
     await updateOrderStatus(confirmDelivery, 'delivered')
     setConfirm(null)
     setLoadingOrd(null)
+    router.refresh()
   }
 
   // ── HTML escaping helper (prevents XSS in printed windows) ───────────────
@@ -319,6 +321,7 @@ export default function WarehouseClient({
     setReqProduct(''); setReqProductSearch('')
     setReqCartons(''); setReqLoose(''); setReqQty(''); setReqJustif('')
     setTimeout(() => setReqSuccess(false), 4000)
+    router.refresh()
   }
 
   const inputStyle: React.CSSProperties = {

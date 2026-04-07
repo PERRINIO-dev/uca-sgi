@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter }                    from 'next/navigation'
-import useSWR                           from 'swr'
+import useSWR, { useSWRConfig }         from 'swr'
 import { createClient }   from '@/lib/supabase/client'
 import { approveStockRequest, rejectStockRequest } from './actions'
 import {
@@ -158,8 +158,9 @@ export default function DashboardClient({
   dailyChart:        any[]
   badgeCounts?:      BadgeCounts
 }) {
-  const router   = useRouter()
-  const supabase = useMemo(() => createClient(), [])
+  const router        = useRouter()
+  const supabase      = useMemo(() => createClient(), [])
+  const { mutate }    = useSWRConfig()
 
   // ── SWR: client-side cache — server props are fallback (instant on return visits) ──
   const { data } = useSWR('/api/dashboard', fetcher, {
@@ -201,6 +202,8 @@ export default function DashboardClient({
     setLoading(id)
     await approveStockRequest(id)
     setLoading(null)
+    mutate('/api/dashboard')
+    router.refresh()
   }
 
   const handleReject = async () => {
@@ -210,6 +213,8 @@ export default function DashboardClient({
     setRejectId(null)
     setRejectMsg('')
     setLoading(null)
+    mutate('/api/dashboard')
+    router.refresh()
   }
 
   const kpis = [
