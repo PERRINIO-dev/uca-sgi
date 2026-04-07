@@ -6,11 +6,25 @@ import NetworkStatusBanner  from '@/components/NetworkStatusBanner'
 export const metadata: Metadata = {
   title:       'MERAM',
   description: 'Manage · Sell · Optimize — Plateforme de gestion commerciale',
-  appleWebApp: {
-    capable:         true,
-    statusBarStyle:  'black-translucent',
-    title:           'MERAM',
+  // Explicit icon declarations ensure every browser and device gets the right asset.
+  // Next.js also auto-discovers icon.tsx and apple-icon.tsx, but explicit entries
+  // prevent any ambiguity and ensure the <link> tags appear correctly in <head>.
+  icons: {
+    icon: [
+      { url: '/icon', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/icon',
   },
+  appleWebApp: {
+    capable:        true,
+    statusBarStyle: 'black-translucent',
+    title:          'MERAM',
+    startupImage:   '/apple-icon',
+  },
+  manifest: '/manifest.webmanifest',
 }
 
 export const viewport: Viewport = {

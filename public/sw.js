@@ -1,5 +1,5 @@
-// UCA SGI — Service Worker v5
-const CACHE_NAME   = 'uca-sgi-v5'
+// MERAM SGI — Service Worker v6
+const CACHE_NAME   = 'meram-sgi-v6'
 const OFFLINE_URL  = '/offline.html'
 
 // Pages to pre-cache so they're available instantly
