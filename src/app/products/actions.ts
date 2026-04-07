@@ -233,11 +233,16 @@ export async function createProduct(payload: CreateProductPayload) {
   if (!user || !profile) return { error: 'Non authentifié.' }
   if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
 
+  // ── Reference code validation ─────────────────────────────────────────────
+  const refCode = payload.referenceCode.trim().toUpperCase()
+  if (!refCode) return { error: 'Le code référence est requis.' }
+  if (refCode.length > 50) return { error: 'Le code référence ne peut pas dépasser 50 caractères.' }
+
   // ── Reference code uniqueness ──────────────────────────────────────────────
   const { data: existing } = await supabase
     .from('products')
     .select('id')
-    .eq('reference_code', payload.referenceCode.trim().toUpperCase())
+    .eq('reference_code', refCode)
     .maybeSingle()
 
   if (existing) return { error: 'Ce code référence existe déjà.' }
@@ -263,7 +268,7 @@ export async function createProduct(payload: CreateProductPayload) {
     const { data: product, error: prodError } = await supabase
       .from('products')
       .insert({
-        reference_code:         payload.referenceCode.trim().toUpperCase(),
+        reference_code:         refCode,
         name:                   payload.name.trim(),
         category:               category.name,
         category_id:            category.id,
@@ -342,7 +347,7 @@ export async function createProduct(payload: CreateProductPayload) {
     : 0
 
   const insertData: Record<string, unknown> = {
-    reference_code:           payload.referenceCode.trim().toUpperCase(),
+    reference_code:           refCode,
     name:                     p.name.trim(),
     category:                 category.name,
     category_id:              category.id,

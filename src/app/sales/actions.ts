@@ -71,6 +71,14 @@ export async function createSale(payload: CreateSalePayload) {
     const dbProd = dbProdMap.get(item.product_id)
     if (!dbProd) return { error: 'Produit introuvable.' }
 
+    if (!Number.isFinite(item.quantity_tiles) || item.quantity_tiles <= 0) {
+      return { error: 'Les quantités doivent être des nombres positifs.' }
+    }
+
+    if (!Number.isFinite(item.unit_price_per_m2) || item.unit_price_per_m2 < 0) {
+      return { error: 'Le prix unitaire doit être un nombre positif.' }
+    }
+
     const isTile = (dbProd.product_type ?? 'tile') === 'tile'
 
     // Floor price validation — branch by product type

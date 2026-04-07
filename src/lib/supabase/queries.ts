@@ -103,19 +103,6 @@ export async function getDashboardStats() {
   }
 }
 
-export async function getRecentActivity(limit = 20) {
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('audit_logs')
-    .select(`
-      id, created_at, action_type,
-      entity_type, entity_id,
-      users!audit_logs_user_id_fkey(full_name, role)
-    `)
-    .order('created_at', { ascending: false })
-    .limit(limit)
-  return data ?? []
-}
 
 export async function getSalesByPeriod(days: number) {
   const supabase = await createClient()

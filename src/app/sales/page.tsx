@@ -16,7 +16,7 @@ export default async function SalesPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
-  const currentPage = Math.max(1, parseInt(params.page ?? '1'))
+  const currentPage = Math.min(10_000, Math.max(1, parseInt(params.page ?? '1')))
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')

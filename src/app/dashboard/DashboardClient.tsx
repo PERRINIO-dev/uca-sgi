@@ -180,10 +180,11 @@ export default function DashboardClient({
 
   // ── Real-time: revalidate SWR cache when sales or stock_requests change ───
   useEffect(() => {
+    const refresh = () => { mutate('/api/dashboard'); router.refresh() }
     const channel = supabase
       .channel('dashboard-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => router.refresh())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_requests' }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, refresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_requests' }, refresh)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -200,8 +201,9 @@ export default function DashboardClient({
 
   const handleApprove = async (id: string) => {
     setLoading(id)
-    await approveStockRequest(id)
+    const result = await approveStockRequest(id)
     setLoading(null)
+    if (result?.error) { alert(result.error); return }
     mutate('/api/dashboard')
     router.refresh()
   }
@@ -209,10 +211,11 @@ export default function DashboardClient({
   const handleReject = async () => {
     if (!rejectId || !rejectMsg.trim()) return
     setLoading(rejectId)
-    await rejectStockRequest(rejectId, rejectMsg)
+    const result = await rejectStockRequest(rejectId, rejectMsg)
+    setLoading(null)
+    if (result?.error) { alert(result.error); return }
     setRejectId(null)
     setRejectMsg('')
-    setLoading(null)
     mutate('/api/dashboard')
     router.refresh()
   }

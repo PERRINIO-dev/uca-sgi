@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const sp          = request.nextUrl.searchParams
-  const currentPage = Math.max(1, parseInt(sp.get('page') ?? '1'))
+  const currentPage = Math.min(10_000, Math.max(1, parseInt(sp.get('page') ?? '1')))
   const offset      = (currentPage - 1) * PAGE_SIZE
   const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
 
