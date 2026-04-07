@@ -199,13 +199,14 @@ export default function SalesListClient({
 
   // ── Real-time: revalidate SWR cache when sales change ─────────────────────
   useEffect(() => {
+    const refresh = () => { mutate(swrKey); router.refresh() }
     const channel = supabase
       .channel('sales-rt')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => router.refresh())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, refresh)
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [swrKey])
 
   const [noBoutiqueWarning, setNoBoutiqueWarning] = useState(false)
 

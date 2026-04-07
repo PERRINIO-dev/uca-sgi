@@ -193,6 +193,21 @@ export async function submitStockRequest(payload: {
     return { error: 'La quantité doit être différente de zéro.' }
   }
 
+  if (!payload.justification.trim()) {
+    return { error: 'La justification est requise.' }
+  }
+
+  // Verify the product belongs to this company — defense-in-depth
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .select('id, name')
+    .eq('id', payload.productId)
+    .single()
+
+  if (productError || !product) {
+    return { error: 'Produit introuvable.' }
+  }
+
   const { data, error } = await supabase
     .from('stock_requests')
     .insert({
@@ -200,7 +215,7 @@ export async function submitStockRequest(payload: {
       product_id:           payload.productId,
       request_type:         payload.requestType,
       quantity_tiles_delta: payload.quantityTilesDelta,
-      justification:        payload.justification,
+      justification:        payload.justification.trim(),
       stock_before_tiles:   payload.stockBeforeTiles,
       status:               'pending',
       company_id:           profile.company_id,
@@ -209,9 +224,6 @@ export async function submitStockRequest(payload: {
     .single()
 
   if (error) return { error: error.message }
-
-  const { data: product } = await supabase
-    .from('products').select('name').eq('id', payload.productId).single()
 
   await getAdmin().from('audit_logs').insert({
     user_id:            user.id,

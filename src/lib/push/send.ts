@@ -56,7 +56,7 @@ async function dispatch(
       .delete()
       .in('endpoint', staleEndpoints)
       .then(() => {})
-      .catch(() => {})
+      .catch((err: unknown) => console.error('[Push] Failed to delete stale subscriptions:', err))
   }
 }
 

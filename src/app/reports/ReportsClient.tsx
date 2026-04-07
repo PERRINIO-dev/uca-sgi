@@ -57,10 +57,11 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function ReportsClient({
-  profile, currency, sales, boutiques, vendors, auditLogs, badgeCounts,
+  profile, currency, companyName = 'meram', sales, boutiques, vendors, auditLogs, badgeCounts,
 }: {
   profile:      any
   currency:     string
+  companyName?: string
   sales:        any[]
   boutiques:    any[]
   vendors:      any[]
@@ -289,7 +290,8 @@ export default function ReportsClient({
     const url  = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href     = url
-    link.download = `uca-ventes-${new Date().toISOString().slice(0, 10)}.csv`
+    const slug = companyName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    link.download = `${slug}-ventes-${new Date().toISOString().slice(0, 10)}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }

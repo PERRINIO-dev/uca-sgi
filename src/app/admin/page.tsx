@@ -52,7 +52,8 @@ export default async function AdminPage() {
       .select('company_id')
       .eq('is_active', true),
 
-    // Platform-level audit events only
+    // All audit events across the platform — no action_type filter
+    // so the admin sees everything: company ops, user management, sales, stock, etc.
     admin
       .from('audit_logs')
       .select(`
@@ -60,16 +61,8 @@ export default async function AdminPage() {
         company_id, user_role_snapshot, data_after,
         users!audit_logs_user_id_fkey ( full_name )
       `)
-      .in('action_type', [
-        'COMPANY_CREATED',
-        'COMPANY_ACTIVATED',
-        'COMPANY_DEACTIVATED',
-        'PLATFORM_USER_SUSPENDED',
-        'PLATFORM_USER_REACTIVATED',
-        'PLATFORM_USER_PASSWORD_RESET',
-      ])
       .order('created_at', { ascending: false })
-      .limit(200),
+      .limit(500),
 
     getBadgeCounts(profile.role, supabase),
   ])
