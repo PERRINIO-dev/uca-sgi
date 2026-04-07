@@ -462,7 +462,7 @@ export default function ProductsClient({
     <PageLayout profile={profile} activeRoute="/products" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between',
+      <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter }                    from 'next/navigation'
+import useSWR                           from 'swr'
 import { createClient }   from '@/lib/supabase/client'
 import { approveStockRequest, rejectStockRequest } from './actions'
 import {
@@ -12,6 +13,8 @@ import PageLayout       from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { CRITICAL_STOCK_CARTONS, CRITICAL_STOCK_UNITS } from '@/lib/constants'
 import { fmtCurrency } from '@/lib/format'
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtNum = (n: number) =>
@@ -123,7 +126,6 @@ function ModalOverlay({ children }: { children: React.ReactNode }) {
 export default function DashboardClient({
   profile,
   currency,
-  todayRevenue,
   todayCount,
   mtdRevenue,
   mtdCreances,
@@ -141,7 +143,6 @@ export default function DashboardClient({
 }: {
   profile:           any
   currency:          string
-  todayRevenue:      number
   todayCount:        number
   mtdRevenue:        number
   mtdCreances:       number
@@ -159,9 +160,24 @@ export default function DashboardClient({
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const fmt = (n: number) => fmtCurrency(n, currency)
 
-  // ── Real-time: refresh when sales or stock_requests change ────────────────
+  // ── SWR: client-side cache — server props are fallback (instant on return visits) ──
+  const { data } = useSWR('/api/dashboard', fetcher, {
+    fallbackData: {
+      currency, todayCount,
+      mtdRevenue, mtdCreances, mtdAvgBasket, mtdTrend,
+      mtdMargin, mtdMarginPct, allTimeCreances,
+      activeOrdersCount, pendingRequests, stockAlerts,
+      boutiqueStats, dailyChart, badgeCounts,
+    },
+    revalidateOnFocus: false,
+    dedupingInterval:  60_000,  // don't re-fetch more than once per minute
+  })
+
+  const d = data as any
+  const fmt = (n: number) => fmtCurrency(Number(n), d.currency ?? currency)
+
+  // ── Real-time: revalidate SWR cache when sales or stock_requests change ───
   useEffect(() => {
     const channel = supabase
       .channel('dashboard-rt')
@@ -200,52 +216,52 @@ export default function DashboardClient({
     {
       label:  "CA du mois",
       sub:    new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-      value:  fmt(mtdRevenue),
+      value:  fmt(d.mtdRevenue),
       color:  C.blue,
       Icon:   IconRevenue,
-      trend:  mtdTrend,
+      trend:  d.mtdTrend,
     },
     {
       label:  'Créances clients',
-      sub:    `Ce mois : ${fmt(mtdCreances)}`,
-      value:  fmt(allTimeCreances),
-      color:  allTimeCreances > 0 ? C.orange : C.green,
+      sub:    `Ce mois : ${fmt(d.mtdCreances)}`,
+      value:  fmt(d.allTimeCreances),
+      color:  d.allTimeCreances > 0 ? C.orange : C.green,
       Icon:   IconCreances,
       trend:  null,
     },
     {
       label:  'Commandes actives',
       sub:    'Confirmées · en préparation · prêtes',
-      value:  String(activeOrdersCount),
+      value:  String(d.activeOrdersCount),
       color:  C.purple,
       Icon:   IconCount,
       trend:  null,
     },
     {
       label:  'Panier moyen (mois)',
-      sub:    `${todayCount} vente${todayCount !== 1 ? 's' : ''} aujourd'hui`,
-      value:  fmt(mtdAvgBasket),
+      sub:    `${d.todayCount} vente${d.todayCount !== 1 ? 's' : ''} aujourd'hui`,
+      value:  fmt(d.mtdAvgBasket),
       color:  C.green,
       Icon:   IconBasket,
       trend:  null,
     },
     ...(profile.role === 'owner' ? [{
       label:  'Marge brute (mois)',
-      sub:    mtdMarginPct !== null
-        ? `${mtdMarginPct >= 0 ? '+' : ''}${mtdMarginPct.toFixed(1)} % du CA`
+      sub:    d.mtdMarginPct !== null
+        ? `${d.mtdMarginPct >= 0 ? '+' : ''}${d.mtdMarginPct.toFixed(1)} % du CA`
         : 'Aucune vente ce mois',
-      value:  fmt(mtdMargin),
-      color:  mtdMargin >= 0 ? C.green : C.red,
+      value:  fmt(d.mtdMargin),
+      color:  d.mtdMargin >= 0 ? C.green : C.red,
       Icon:   IconMargin,
       trend:  null,
     }] : []),
   ]
 
   return (
-    <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={badgeCounts}>
+    <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={d.badgeCounts}>
 
       {/* ── Page header ── */}
-      <div className="fade-in-up" style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{
             fontSize: 24, fontWeight: 800, color: C.ink,
@@ -259,7 +275,7 @@ export default function DashboardClient({
             })}
           </p>
         </div>
-        {pendingRequests.length > 0 && (
+        {d.pendingRequests.length > 0 && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: C.goldL, color: C.gold,
@@ -269,7 +285,7 @@ export default function DashboardClient({
             boxShadow: '0 1px 4px rgba(217,119,6,0.15)',
           }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
-            {pendingRequests.length} approbation{pendingRequests.length > 1 ? 's' : ''} en attente
+            {d.pendingRequests.length} approbation{d.pendingRequests.length > 1 ? 's' : ''} en attente
           </span>
         )}
       </div>
@@ -348,9 +364,9 @@ export default function DashboardClient({
       }}>
         <Panel tourId="tour-chart">
           <SectionTitle>Ventes des 30 derniers jours</SectionTitle>
-          {dailyChart.length > 0 ? (
+          {d.dailyChart.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={dailyChart} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
+              <AreaChart data={d.dailyChart} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%"   stopColor={C.blue} stopOpacity={0.22} />
@@ -390,9 +406,9 @@ export default function DashboardClient({
 
         <Panel>
           <SectionTitle>CA par boutique (mois en cours)</SectionTitle>
-          {boutiqueStats.length > 0 ? (
+          {d.boutiqueStats.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={boutiqueStats} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
+              <BarChart data={d.boutiqueStats} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="4 4" stroke="#EDE9E3" vertical={true} horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted, fontFamily: FONT }} tickFormatter={v => (v / 1000) + 'k'} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="name" tick={{ fontSize: 12.5, fill: C.ink, fontWeight: 600, fontFamily: FONT }} axisLine={false} tickLine={false} width={85} />
@@ -428,7 +444,7 @@ export default function DashboardClient({
         {/* Pending approvals */}
         <Panel>
           <SectionTitle>Approbations en attente</SectionTitle>
-          {pendingRequests.length === 0 ? (
+          {d.pendingRequests.length === 0 ? (
             <div style={{
               padding: '28px 0', textAlign: 'center',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
@@ -446,7 +462,7 @@ export default function DashboardClient({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {pendingRequests.map((req: any) => (
+              {d.pendingRequests.map((req: any) => (
                 <div key={req.id} style={{
                   borderRadius: 10,
                   border: `1px solid ${C.border}`,
@@ -546,17 +562,17 @@ export default function DashboardClient({
             }}>
               Alertes stock critique
             </div>
-            {stockAlerts.length > 0 && (
+            {d.stockAlerts.length > 0 && (
               <span style={{
                 fontSize: 11, fontWeight: 600, color: C.orange,
                 background: C.orangeL, border: '1px solid #FDE68A',
                 borderRadius: 100, padding: '2px 10px', fontFamily: FONT,
               }}>
-                {stockAlerts.length} produit{stockAlerts.length > 1 ? 's' : ''}
+                {d.stockAlerts.length} produit{d.stockAlerts.length > 1 ? 's' : ''}
               </span>
             )}
           </div>
-          {stockAlerts.length === 0 ? (
+          {d.stockAlerts.length === 0 ? (
             <div style={{
               padding: '28px 0', textAlign: 'center',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
@@ -574,7 +590,7 @@ export default function DashboardClient({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-              {(stockAlerts.length > 6 ? stockAlerts.slice(0, 6) : stockAlerts).map((item: any) => {
+              {(d.stockAlerts.length > 6 ? d.stockAlerts.slice(0, 6) : d.stockAlerts).map((item: any) => {
                 const isTile = (item.product_type ?? 'tile') === 'tile'
                 const avail  = isTile ? Number(item.available_full_cartons) : Number(item.available_tiles)
                 const isCrit = isTile ? avail < CRITICAL_STOCK_CARTONS : avail < CRITICAL_STOCK_UNITS
@@ -610,12 +626,12 @@ export default function DashboardClient({
                   </div>
                 )
               })}
-              {stockAlerts.length > 6 && (
+              {d.stockAlerts.length > 6 && (
                 <div style={{
                   textAlign: 'center', fontSize: 12, color: C.muted,
                   padding: '8px 0 2px', fontFamily: FONT,
                 }}>
-                  + {stockAlerts.length - 6} autre{stockAlerts.length - 6 > 1 ? 's' : ''} produit{stockAlerts.length - 6 > 1 ? 's' : ''} en alerte — consultez le <a href="/products" style={{ color: C.blue, textDecoration: 'none' }}>catalogue</a>
+                  + {d.stockAlerts.length - 6} autre{d.stockAlerts.length - 6 > 1 ? 's' : ''} produit{d.stockAlerts.length - 6 > 1 ? 's' : ''} en alerte — consultez le <a href="/products" style={{ color: C.blue, textDecoration: 'none' }}>catalogue</a>
                 </div>
               )}
             </div>

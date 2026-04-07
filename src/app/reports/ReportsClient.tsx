@@ -310,7 +310,7 @@ export default function ReportsClient({
     <PageLayout profile={profile} activeRoute="/reports" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div className="fade-in-up" style={{ display: 'flex', justifyContent: 'space-between',
+      <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,

@@ -2,12 +2,15 @@
 
 import React, { useState, useMemo, useEffect, useRef, useTransition, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
+import useSWR           from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
 import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }       from '@/lib/format'
 import { pluralize }         from '@/lib/pluralize'
+
+const fetcher = (url: string) => fetch(url).then(r => r.json())
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 const fmtNum = (n: number) =>
@@ -160,14 +163,40 @@ export default function SalesListClient({
 }) {
   const router   = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const fmt = (n: number) => fmtCurrency(n, currency)
   const [navPending,       startNavTransition]       = useTransition()
   const [firstSalePending, startFirstSaleTransition] = useTransition()
+
+  // ── SWR cache key — includes all active filters so each combo is cached ───
+  const swrKey = useMemo(() => {
+    const params = new URLSearchParams()
+    if (currentPage > 1)   params.set('page', String(currentPage))
+    if (activeSearch)       params.set('search', activeSearch)
+    if (activeStatus)       params.set('status', activeStatus)
+    if (activePayment)      params.set('payment', activePayment)
+    if (activeDateFrom)     params.set('dateFrom', activeDateFrom)
+    if (activeDateTo)       params.set('dateTo', activeDateTo)
+    if (activeBoutiqueId)   params.set('boutique_id', activeBoutiqueId)
+    const qs = params.toString()
+    return `/api/sales${qs ? '?' + qs : ''}`
+  }, [currentPage, activeSearch, activeStatus, activePayment, activeDateFrom, activeDateTo, activeBoutiqueId])
+
+  const { data } = useSWR(swrKey, fetcher, {
+    fallbackData: {
+      sales, currency, badgeCounts, hasBoutiques, ownerName,
+      companyName, currentPage, totalPages, totalCount,
+      boutiquesList,
+    },
+    revalidateOnFocus: false,
+    dedupingInterval:  30_000,
+  })
+
+  const d   = data as any
+  const fmt = (n: number) => fmtCurrency(n, d.currency ?? currency)
 
   // ── Prefetch new-sale page so the click feels instant ─────────────────────
   useEffect(() => { router.prefetch('/sales/new') }, [router])
 
-  // ── Real-time: refresh when sales change ──────────────────────────────────
+  // ── Real-time: revalidate SWR cache when sales change ─────────────────────
   useEffect(() => {
     const channel = supabase
       .channel('sales-rt')
@@ -276,7 +305,7 @@ export default function SalesListClient({
   }
 
   return (
-    <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
+    <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={d.badgeCounts}>
 
       {/* ── Navigation loading bar ── */}
       {navPending && (
@@ -319,7 +348,7 @@ export default function SalesListClient({
       )}
 
       {/* ── Page header ── */}
-      <div className="fade-in-up" style={{
+      <div style={{
         display: 'flex', justifyContent: 'space-between',
         alignItems: 'flex-start', marginBottom: 24,
         flexWrap: 'wrap', gap: 12,
@@ -329,11 +358,11 @@ export default function SalesListClient({
             Ventes
           </h1>
           <p style={{ fontSize: 14, color: C.slate, margin: 0, fontFamily: FONT }}>
-            {totalCount === 0 && !hasFilters
+            {d.totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
-              ? `${totalCount} résultat${totalCount !== 1 ? 's' : ''}`
-              : `${totalCount} vente${totalCount !== 1 ? 's' : ''} · cliquer une ligne pour le détail`}
+              ? `${d.totalCount} résultat${d.totalCount !== 1 ? 's' : ''}`
+              : `${d.totalCount} vente${d.totalCount !== 1 ? 's' : ''} · cliquer une ligne pour le détail`}
           </p>
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
@@ -341,7 +370,7 @@ export default function SalesListClient({
             className="btn-meram"
             disabled={navPending}
             onClick={() => {
-              if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+              if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
                 setNoBoutiqueWarning(true)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
                 return
@@ -368,7 +397,7 @@ export default function SalesListClient({
       </div>
 
       {/* ── Filter bar ── */}
-      {(sales.length > 0 || hasFilters) && (
+      {(d.sales.length > 0 || hasFilters) && (
         <div style={{
           background: C.surface, borderRadius: 10,
           border: `1px solid ${C.border}`,
@@ -454,7 +483,7 @@ export default function SalesListClient({
             }}
           />
           {/* Boutique (only for admin/owner who can see all boutiques) */}
-          {['owner', 'admin'].includes(profile.role) && boutiquesList.length > 1 && (
+          {['owner', 'admin'].includes(profile.role) && d.boutiquesList.length > 1 && (
             <select
               value={boutiqueId}
               onChange={e => handleBoutiqueChange(e.target.value)}
@@ -466,7 +495,7 @@ export default function SalesListClient({
               }}
             >
               <option value="">Toutes les boutiques</option>
-              {boutiquesList.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+              {d.boutiquesList.map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
           )}
           {/* Clear */}
@@ -496,7 +525,7 @@ export default function SalesListClient({
         boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.05)',
         overflow: 'hidden',
       }}>
-        {sales.length === 0 && hasFilters ? (
+        {d.sales.length === 0 && hasFilters ? (
           <div style={{ padding: '56px 24px', textAlign: 'center' }}>
             <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ marginBottom: 14 }}>
               <circle cx="20" cy="20" r="19" stroke={C.border} strokeWidth="2"/>
@@ -520,7 +549,7 @@ export default function SalesListClient({
               Effacer les filtres
             </button>
           </div>
-        ) : sales.length === 0 ? (
+        ) : d.sales.length === 0 ? (
           <div style={{ padding: '64px 24px', textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
               <IconCart size={56} />
@@ -536,7 +565,7 @@ export default function SalesListClient({
                 className="btn-meram"
                 disabled={firstSalePending}
                 onClick={() => {
-                  if (!hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+                  if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
                     setNoBoutiqueWarning(true)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
                     return
@@ -566,7 +595,7 @@ export default function SalesListClient({
                 </tr>
               </thead>
               <tbody>
-                {sales.map((sale: any) => {
+                {d.sales.map((sale: any) => {
                   const cfg    = STATUS_CONFIG[sale.status] ?? STATUS_CONFIG.draft
                   const isOpen = expanded === sale.id
                   return (
@@ -673,7 +702,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F5F2ED', borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} profile={profile} ownerName={ownerName} companyName={companyName} currency={currency} onPaymentAdded={() => router.refresh()} />
+                            <SaleDetail sale={sale} profile={profile} ownerName={d.ownerName} companyName={d.companyName} currency={d.currency} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
                       )}
@@ -683,7 +712,7 @@ export default function SalesListClient({
               </tbody>
             </table>
             {/* ── Pagination ── */}
-            {totalPages > 1 && (
+            {d.totalPages > 1 && (
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '14px 16px',
@@ -691,7 +720,7 @@ export default function SalesListClient({
                 flexWrap: 'wrap', gap: 10,
               }}>
                 <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
-                  Page {currentPage} sur {totalPages} · {totalCount} vente{totalCount !== 1 ? 's' : ''} au total
+                  Page {currentPage} sur {d.totalPages} · {d.totalCount} vente{d.totalCount !== 1 ? 's' : ''} au total
                 </span>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <button
@@ -709,12 +738,12 @@ export default function SalesListClient({
                   </button>
                   <button
                     className="btn-ghost"
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === d.totalPages}
                     onClick={() => goToPage(currentPage + 1)}
                     style={{
                       padding: '7px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
-                      border: `1px solid ${C.border}`, cursor: currentPage === totalPages ? 'default' : 'pointer',
-                      background: currentPage === totalPages ? C.bg : C.surface, color: currentPage === totalPages ? C.muted : C.ink,
+                      border: `1px solid ${C.border}`, cursor: currentPage === d.totalPages ? 'default' : 'pointer',
+                      background: currentPage === d.totalPages ? C.bg : C.surface, color: currentPage === d.totalPages ? C.muted : C.ink,
                       fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
                     }}>
                     Suivant

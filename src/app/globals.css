@@ -357,12 +357,7 @@ button:focus-visible {
 }
 
 /* ── Page content fade-in ───────────────────────────────────────────────── */
-.fade-in-up {
-  animation: fadeInUp 0.36s ease forwards;
-}
-.fade-in-scale {
-  animation: fadeInScale 0.28s ease forwards;
-}
+/* removed — static render is faster-feeling than animated entry */
 
 /* ── Drawer slide-in ────────────────────────────────────────────────────── */
 .drawer-panel {
@@ -378,9 +373,7 @@ button:focus-visible {
 
 /* ── Skeleton loader ────────────────────────────────────────────────────── */
 .skeleton {
-  background: linear-gradient(90deg, #EDE9E3 25%, #E7E4DF 50%, #EDE9E3 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s ease infinite;
+  background: #EDE9E3;
   border-radius: 6px;
 }
 
