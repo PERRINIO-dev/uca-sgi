@@ -398,6 +398,7 @@ export default function Sidebar({
               key={href}
               className={`nav-item nav-item-light${active ? ' nav-active' : ''}`}
               {...(NAV_TOUR_IDS[href] ? { 'data-tour': NAV_TOUR_IDS[href] } : {})}
+              onMouseEnter={() => router.prefetch(href)}
               onClick={() => {
                 onClose?.()
                 startTransition(() => router.push(href))

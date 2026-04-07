@@ -112,10 +112,11 @@ export default function LoginPage() {
 
   return (
     <main style={{
-      minHeight: '100vh',
+      minHeight: '100svh',
       display: 'flex',
       fontFamily: FONT,
       background: '#0D1117',
+      overflowY: 'auto',
     }}>
       {/* ── Left branding panel ── */}
       <div style={{
@@ -335,6 +336,7 @@ export default function LoginPage() {
                 <input
                   type={showPwd ? 'text' : 'password'} required value={password}
                   onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
                   style={{
                     width: '100%', padding: '12px 44px 12px 14px', borderRadius: 9,
                     border: '1.5px solid #E7E5E4', fontSize: 14,
@@ -454,7 +456,13 @@ export default function LoginPage() {
         .mobile-logo { display: none !important; }
         @media (max-width: 720px) {
           main > div:first-child { display: none !important; }
-          main > div:last-child { padding: 40px 24px !important; }
+          main > div:last-child {
+            padding: 40px 24px !important;
+            min-height: 100svh !important;
+            align-items: flex-start !important;
+            padding-top: 52px !important;
+            padding-bottom: 40px !important;
+          }
           .mobile-logo { display: flex !important; }
         }
       `}</style>
