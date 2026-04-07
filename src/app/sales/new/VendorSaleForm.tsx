@@ -863,7 +863,7 @@ export default function VendorSaleForm({
 
             {/* Continue button */}
             <button className="btn-meram"
-              onClick={() => { setError(null); setFormStep(2) }}
+              onClick={() => { setError(null); setFormStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               disabled={cart.length === 0}
               style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
               Continuer — Infos client
@@ -883,7 +883,7 @@ export default function VendorSaleForm({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
             {/* Back */}
-            <button onClick={() => { setError(null); setFormStep(1) }}
+            <button onClick={() => { setError(null); setFormStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: FONT, alignSelf: 'flex-start' }}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M7 3L3 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Retour au panier

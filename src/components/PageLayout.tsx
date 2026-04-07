@@ -91,26 +91,31 @@ export default function PageLayout({
       })
       .catch(err => console.error('[SW]', err))
 
+    // Deduplicate refreshes — both PUSH_RECEIVED and visibilitychange can fire
+    // within milliseconds of each other (e.g. user taps a notification: SW fires
+    // PUSH_RECEIVED AND the tab visibility changes at the same time).
+    // A single pending timer ensures only one refresh fires regardless of how
+    // many triggers arrive within the debounce window.
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleRefresh = () => {
+      if (refreshTimer) clearTimeout(refreshTimer)
+      refreshTimer = setTimeout(() => { router.refresh() }, 600)
+    }
+
     const handleSwMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'PUSH_RECEIVED') {
-        router.refresh()
-      }
+      if (event.data?.type === 'PUSH_RECEIVED') scheduleRefresh()
     }
     navigator.serviceWorker.addEventListener('message', handleSwMessage)
 
-    let visibilityTimer: ReturnType<typeof setTimeout> | null = null
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        if (visibilityTimer) clearTimeout(visibilityTimer)
-        visibilityTimer = setTimeout(() => { router.refresh() }, 600)
-      }
+      if (document.visibilityState === 'visible') scheduleRefresh()
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
     return () => {
       navigator.serviceWorker.removeEventListener('message', handleSwMessage)
       document.removeEventListener('visibilitychange', handleVisibility)
-      if (visibilityTimer) clearTimeout(visibilityTimer)
+      if (refreshTimer) clearTimeout(refreshTimer)
     }
   }, [router])
 
