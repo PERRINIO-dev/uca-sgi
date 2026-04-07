@@ -38,38 +38,16 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string }> = 
 }
 
 // ── Audit action display ──────────────────────────────────────────────────────
+// Only platform-level actions — the admin journal is intentionally scoped
+// to events the platform operator performs directly. Tenant operational data
+// (sales, payments, stock) is visible only to each tenant in their own Reports page.
 const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
-  // Platform-level
   COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenL },
   COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueL },
   COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeL },
   PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redL },
   PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenL },
-  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé (admin)',  color: C.blue,   bg: C.blueL },
-  // User management
-  USER_CREATED:                 { label: 'Employé créé',              color: C.green,  bg: C.greenL },
-  USER_UPDATED:                 { label: 'Employé modifié',           color: C.blue,   bg: C.blueL },
-  USER_ACTIVATED:               { label: 'Employé réactivé',          color: C.green,  bg: C.greenL },
-  USER_DEACTIVATED:             { label: 'Employé désactivé',         color: C.orange, bg: C.orangeL },
-  PASSWORD_RESET:               { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueL },
-  BOUTIQUE_CREATED:             { label: 'Boutique créée',            color: C.green,  bg: C.greenL },
-  BOUTIQUE_ACTIVATED:           { label: 'Boutique réactivée',        color: C.green,  bg: C.greenL },
-  BOUTIQUE_DEACTIVATED:         { label: 'Boutique désactivée',       color: C.orange, bg: C.orangeL },
-  // Products
-  PRODUCT_CREATED:              { label: 'Produit créé',              color: C.green,  bg: C.greenL },
-  PRODUCT_UPDATED:              { label: 'Produit modifié',           color: C.blue,   bg: C.blueL },
-  // Sales
-  SALE_CREATED:                 { label: 'Vente créée',               color: C.green,  bg: C.greenL },
-  SALE_CANCELLED:               { label: 'Vente annulée',             color: C.red,    bg: C.redL },
-  PAYMENT_RECORDED:             { label: 'Paiement enregistré',       color: C.blue,   bg: C.blueL },
-  FLOOR_PRICE_VIOLATION_ATTEMPT:{ label: 'Tentative prix plancher',   color: C.red,    bg: C.redL },
-  // Stock & warehouse
-  STOCK_REQUEST_SUBMITTED:      { label: 'Demande de stock',          color: C.amber,  bg: C.amberL },
-  STOCK_REQUEST_APPROVED:       { label: 'Demande approuvée',         color: C.green,  bg: C.greenL },
-  STOCK_REQUEST_REJECTED:       { label: 'Demande refusée',           color: C.red,    bg: C.redL },
-  ORDER_PREPARING:              { label: 'Commande en préparation',   color: C.amber,  bg: C.amberL },
-  ORDER_READY:                  { label: 'Commande prête',            color: C.blue,   bg: C.blueL },
-  ORDER_DELIVERED:              { label: 'Commande livrée',           color: C.green,  bg: C.greenL },
+  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueL },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -424,41 +402,13 @@ export default function AdminClient({
     switch (entry.action_type) {
       case 'COMPANY_CREATED':
         return d.name ? `${d.name} · ${d.ownerEmail ?? ''}` : '—'
+      case 'COMPANY_ACTIVATED':
+      case 'COMPANY_DEACTIVATED':
+        return d.affectedUsers != null ? `${d.affectedUsers} utilisateur(s) affecté(s)` : '—'
       case 'PLATFORM_USER_SUSPENDED':
       case 'PLATFORM_USER_REACTIVATED':
       case 'PLATFORM_USER_PASSWORD_RESET':
         return d.target_email ?? '—'
-      case 'USER_CREATED':
-        return d.email ? `${d.fullName ?? ''} · ${d.email} (${d.role ?? ''})` : '—'
-      case 'USER_UPDATED':
-        return d.full_name ? `${d.full_name} → ${d.role ?? ''}` : '—'
-      case 'USER_ACTIVATED':
-      case 'USER_DEACTIVATED':
-      case 'PASSWORD_RESET':
-        return entry.entity_id ? `ID: ${entry.entity_id.slice(0, 8)}…` : '—'
-      case 'BOUTIQUE_CREATED':
-      case 'BOUTIQUE_ACTIVATED':
-      case 'BOUTIQUE_DEACTIVATED':
-        return d.name ?? '—'
-      case 'PRODUCT_CREATED':
-      case 'PRODUCT_UPDATED':
-        return d.name ? `${d.referenceCode ?? ''} · ${d.name}` : '—'
-      case 'SALE_CREATED':
-        return d.sale_number ? `${d.sale_number} · ${d.item_count ?? '?'} article(s)` : '—'
-      case 'SALE_CANCELLED':
-        return d.sale_number ? `${d.sale_number}${d.customer_name ? ' · ' + d.customer_name : ''}` : '—'
-      case 'PAYMENT_RECORDED':
-        return d.amount != null ? `${new Intl.NumberFormat('fr-FR').format(Number(d.amount))} FCFA${d.notes ? ' · ' + d.notes : ''}` : '—'
-      case 'FLOOR_PRICE_VIOLATION_ATTEMPT':
-        return d.attempted_price != null ? `Tentative: ${d.attempted_price} / Plancher: ${d.floor_price}` : '—'
-      case 'STOCK_REQUEST_SUBMITTED':
-      case 'STOCK_REQUEST_APPROVED':
-      case 'STOCK_REQUEST_REJECTED':
-        return d.product_name ? `${d.product_name} · Δ${d.quantity_delta ?? '?'}` : '—'
-      case 'ORDER_PREPARING':
-      case 'ORDER_READY':
-      case 'ORDER_DELIVERED':
-        return d.order_number ? `${d.order_number}` : '—'
       default:
         return '—'
     }
