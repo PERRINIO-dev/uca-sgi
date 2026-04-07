@@ -5,7 +5,6 @@ import { useRouter }           from 'next/navigation'
 import { useIsMobile }         from '@/hooks/useIsMobile'
 import Sidebar                 from '@/components/Sidebar'
 import PushSubscription        from '@/components/PushSubscription'
-import OnboardingTour          from '@/components/OnboardingTour'
 import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 
 const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
@@ -121,7 +120,6 @@ export default function PageLayout({
 
   return (
     <>
-    <OnboardingTour />
     <PushSubscription />
 
     {/* ── SW update toast ── */}
