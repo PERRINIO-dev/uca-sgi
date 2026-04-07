@@ -238,6 +238,7 @@ export default function PageLayout({
               }}>
                 <svg width="13" height="11" viewBox="0 0 20 17" fill="none">
                   <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 15h16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
                 </svg>
               </div>
               <span style={{

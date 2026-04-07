@@ -167,7 +167,7 @@ export default function LoginPage() {
           }}>
             <svg width="24" height="20" viewBox="0 0 20 17" fill="none">
               <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
+              <path d="M2 15h16" stroke="white" strokeWidth="2.3" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
@@ -275,7 +275,7 @@ export default function LoginPage() {
               }}>
                 <svg width="18" height="15" viewBox="0 0 20 17" fill="none">
                   <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
+                  <path d="M2 15h16" stroke="white" strokeWidth="2.3" strokeLinecap="round"/>
                 </svg>
               </div>
               <div style={{
@@ -439,6 +439,7 @@ export default function LoginPage() {
             }}>
               <svg width="11" height="9" viewBox="0 0 20 17" fill="none">
                 <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 15h16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
               </svg>
             </div>
             <span style={{

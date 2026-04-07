@@ -189,7 +189,7 @@ function MeramLogo({ dark = false }: { dark?: boolean }) {
       }}>
         <svg width="17" height="14" viewBox="0 0 20 17" fill="none">
           <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M2 15h16" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeOpacity="0.55"/>
+          <path d="M2 15h16" stroke="white" strokeWidth="2.3" strokeLinecap="round"/>
         </svg>
       </div>
       <div>

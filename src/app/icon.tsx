@@ -19,22 +19,8 @@ export default function Icon() {
       */}
       <svg width="340" height="300" viewBox="0 0 20 17" fill="none">
         {/* Left arm: bottom-left → top-left → center-valley */}
-        <path
-          d="M2 15V2L10 9L18 2V15"
-          stroke="white"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        {/* Base line */}
-        <path
-          d="M2 15h16"
-          stroke="white"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          fill="none"
-        />
+        <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2 15h16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
       </svg>
     </div>,
     { width: 512, height: 512 },

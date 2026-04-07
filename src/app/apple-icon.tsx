@@ -12,21 +12,8 @@ export default function AppleIcon() {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <svg width="120" height="102" viewBox="0 0 20 17" fill="none">
-        <path
-          d="M2 15V2L10 9L18 2V15"
-          stroke="white"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M2 15h16"
-          stroke="white"
-          strokeWidth="2.8"
-          strokeLinecap="round"
-          fill="none"
-        />
+        <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2 15h16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
       </svg>
     </div>,
     { width: 180, height: 180 },
