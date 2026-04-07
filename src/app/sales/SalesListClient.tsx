@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect, useRef, useTransition, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
-import useSWR           from 'swr'
+import useSWR, { useSWRConfig } from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
 import { cancelSale, addPayment } from './actions'
@@ -161,8 +161,9 @@ export default function SalesListClient({
   activeDateTo?:    string
   activeBoutiqueId?: string
 }) {
-  const router   = useRouter()
-  const supabase = useMemo(() => createClient(), [])
+  const router        = useRouter()
+  const supabase      = useMemo(() => createClient(), [])
+  const { mutate }    = useSWRConfig()
   const [navPending,       startNavTransition]       = useTransition()
   const [firstSalePending, startFirstSaleTransition] = useTransition()
 
@@ -302,6 +303,9 @@ export default function SalesListClient({
     if (result.error) { setCancelError(result.error); return }
     setCancelId(null)
     setCancelNum('')
+    // Invalidate SWR cache so the list immediately reflects the cancelled status
+    mutate(swrKey)
+    router.refresh()
   }
 
   return (
