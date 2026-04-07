@@ -47,7 +47,7 @@ export default function PushSubscription() {
 
     // Not yet decided — show the banner after a short delay
     // (only if not already dismissed this session)
-    if (sessionStorage.getItem('uca-push-session-dismissed')) return
+    if (sessionStorage.getItem('meram-push-session-dismissed')) return
     const t = setTimeout(() => setShowBanner(true), 2500)
     return () => clearTimeout(t)
   }, [])
@@ -62,7 +62,7 @@ export default function PushSubscription() {
 
   const handleDismiss = () => {
     // Only dismiss for this session — banner reappears on next login
-    sessionStorage.setItem('uca-push-session-dismissed', '1')
+    sessionStorage.setItem('meram-push-session-dismissed', '1')
     setShowBanner(false)
   }
 
