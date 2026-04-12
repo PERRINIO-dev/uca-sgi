@@ -12,6 +12,7 @@ const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Tableau de bord',
   '/sales':     'Ventes',
+  '/quotes':    'Devis',
   '/warehouse': 'Entrepôt',
   '/products':  'Catalogue',
   '/users':     'Utilisateurs',

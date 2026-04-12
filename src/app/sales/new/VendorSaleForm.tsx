@@ -4,6 +4,7 @@ import React, { useState, useMemo, useTransition, useEffect, useRef }  from 'rea
 import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
+import { createQuote }        from '@/app/quotes/actions'
 import PageLayout             from '@/components/PageLayout'
 import { useIsMobile }        from '@/hooks/useIsMobile'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
@@ -82,9 +83,10 @@ export default function VendorSaleForm({
   const [notes,            setNotes]        = useState('')
   const [amountPaid,       setAmountPaid]   = useState('')
   const [loading,          setLoading]      = useState(false)
+  const [quoteLoading,     setQuoteLoading] = useState(false)
   const [error,            setError]        = useState<string | null>(null)
   const [successData,      setSuccess]      = useState<any>(null)
-  const [step,             setStep]         = useState<'form' | 'success'>('form')
+  const [step,             setStep]         = useState<'form' | 'success' | 'quote-success'>('form')
   const [formStep,         setFormStep]     = useState<1 | 2>(1)
 
   const [inputQty,        setInputQty]        = useState('')
@@ -297,6 +299,37 @@ export default function VendorSaleForm({
     setSuccess(result); setStep('success')
   }
 
+  const handleSaveQuote = async () => {
+    if (cart.length === 0) return
+    setQuoteLoading(true); setError(null)
+    const result = await createQuote({
+      boutique_id:    selectedBoutique?.id ?? boutique?.id,
+      vendor_id:      profile.id,
+      customer_name:  customerName.trim() || null,
+      customer_phone: customerPhone.trim() || null,
+      customer_cni:   customerCNI.trim() || null,
+      total_amount:   cartTotal,
+      notes:          notes || null,
+      items: cart.map(item => {
+        const isItemTile = (item.product.product_type ?? 'tile') === 'tile'
+        return {
+          product_id:               item.product.product_id,
+          quantity_tiles:           item.quantityTiles,
+          unit_price_per_m2:        item.unitPricePerM2,
+          total_price:              item.totalPrice,
+          floor_price_snapshot:     isItemTile ? parseFloat(item.product.floor_price_per_m2??0) : parseFloat(item.product.floor_price_per_unit??0),
+          reference_price_snapshot: isItemTile ? parseFloat(item.product.reference_price_per_m2??0) : parseFloat(item.product.reference_price_per_unit??0),
+          purchase_price_snapshot:  0,
+          tile_area_m2_snapshot:    isItemTile ? parseFloat(item.product.tile_area_m2) : null,
+          tiles_per_carton_snapshot:isItemTile ? parseInt(item.product.tiles_per_carton) : null,
+        }
+      }),
+    })
+    setQuoteLoading(false)
+    if (result.error) { setError(result.error); return }
+    setSuccess(result); setStep('quote-success')
+  }
+
   const handleLogout = async () => { await supabase.auth.signOut(); router.push('/login') }
 
   const inputStyle = (hasError = false): React.CSSProperties => ({
@@ -410,6 +443,60 @@ export default function VendorSaleForm({
                   onClick={() => startNavTransition(() => router.push('/sales'))}
                   style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.slate, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                   {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes ventes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </PageLayout>
+    )
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // QUOTE SAVED
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (step === 'quote-success') {
+    return (
+      <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
+        <div style={{ maxWidth: 520, margin: '0 auto', padding: isMobile ? '8px 0 40px' : '24px 0 60px' }}>
+          <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+            <div style={{ height: 4, background: 'linear-gradient(90deg,#B45309,#F59E0B)' }} />
+            <div style={{ padding: '36px 36px 28px', textAlign: 'center' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldL, border: '4px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <path d="M6 4h14l4 4v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="#B45309" strokeWidth="1.8" strokeLinejoin="round"/>
+                  <path d="M20 4v5h4" stroke="#B45309" strokeWidth="1.8" strokeLinejoin="round"/>
+                  <path d="M9 13h10M9 17h10M9 21h6" stroke="#B45309" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+                Devis enregistré
+              </h2>
+              <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: FONT }}>
+                Le devis peut être confirmé en vente depuis la liste des devis.
+              </p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 100, background: C.goldL, border: `1px solid ${C.gold}50`, marginBottom: 24 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold }} />
+                <span style={{ fontSize: 18, fontWeight: 900, color: C.gold, letterSpacing: '0.02em', fontFamily: 'ui-monospace, monospace' }}>
+                  {successData?.quoteNumber}
+                </span>
+              </div>
+              <div style={{ padding: '16px', background: C.bg, borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: FONT }}>Montant estimatif</div>
+                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: FONT }}>{fmt(successData?.serverTotal ?? cartTotal)}</div>
+              </div>
+            </div>
+            <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  Nouvelle vente
+                </button>
+                <button disabled={navPending}
+                  onClick={() => startNavTransition(() => router.push('/quotes'))}
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.slate, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                  {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes devis'}
                 </button>
               </div>
             </div>
@@ -984,6 +1071,25 @@ export default function VendorSaleForm({
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
+            </button>
+
+            {/* Save as quote */}
+            <button
+              onClick={handleSaveQuote}
+              disabled={cart.length === 0 || quoteLoading}
+              style={{ width: '100%', padding: '11px', borderRadius: 10, cursor: cart.length===0||quoteLoading?'not-allowed':'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: cart.length===0 ? 0.45 : 1, background: 'transparent', border: `1.5px solid ${C.gold}80`, color: C.gold, transition: 'border-color 0.15s ease' }}>
+              {quoteLoading ? (
+                <><span className="spinner-blue" style={{ borderTopColor: C.gold }} />Enregistrement…</>
+              ) : (
+                <>
+                  <svg width="13" height="14" viewBox="0 0 13 16" fill="none">
+                    <path d="M2 1h7l3 3v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M9 1v4h3" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M4 8h5M4 11h5M4 14h3" stroke={C.gold} strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  Sauvegarder comme devis
+                </>
+              )}
             </button>
           </div>
         </div>

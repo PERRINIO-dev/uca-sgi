@@ -96,6 +96,15 @@ function IconReports({ size = 18, color = 'currentColor' }: { size?: number; col
     </svg>
   )
 }
+function IconQuote({ size = 18, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M4 2h9l4 4v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M13 2v5h4" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M7 10h6M7 13h6M7 16h4" stroke={color} strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  )
+}
 function IconBell({ size = 16, color = 'currentColor', filled = false }: { size?: number; color?: string; filled?: boolean }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={filled ? color : 'none'} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -136,6 +145,7 @@ type NavIcon = React.FC<{ size?: number; color?: string }>
 const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconDashboard, 'Tableau de bord', '/dashboard',  ['owner', 'admin']],
   [IconSales,     'Ventes',          '/sales',      ['owner', 'admin', 'vendor']],
+  [IconQuote,     'Devis',           '/quotes',     ['owner', 'admin', 'vendor']],
   [IconWarehouse, 'Entrepôt',        '/warehouse',  ['owner', 'admin', 'warehouse']],
   [IconCatalog,   'Catalogue',       '/products',   ['owner', 'admin']],
   [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
