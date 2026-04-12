@@ -162,9 +162,11 @@ export async function createQuote(payload: CreateQuotePayload) {
 }
 
 export async function convertQuote(
-  quoteId:    string,
-  amountPaid: number,
-  notes:      string | null,
+  quoteId:       string,
+  amountPaid:    number,
+  notes:         string | null,
+  customerPhone: string | null = null,
+  customerCni:   string | null = null,
 ) {
   const supabase = await createClient()
 
@@ -215,6 +217,14 @@ export async function convertQuote(
     if (available < item.quantity_tiles) {
       return { error: `Stock insuffisant pour la conversion. Disponible : ${available} unité(s).` }
     }
+  }
+
+  // Patch phone/CNI if they were missing at quote creation (collected at conversion)
+  if (customerPhone || customerCni) {
+    const patch: Record<string, string> = {}
+    if (customerPhone) patch.customer_phone = customerPhone
+    if (customerCni)   patch.customer_cni   = customerCni
+    await adminSupabase.from('sales').update(patch).eq('id', quoteId)
   }
 
   // Atomically generate VNT number and set status=confirmed

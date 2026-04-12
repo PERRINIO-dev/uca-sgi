@@ -301,11 +301,12 @@ export default function VendorSaleForm({
 
   const handleSaveQuote = async () => {
     if (cart.length === 0) return
+    if (!customerName.trim()) { setError('Le nom du client est obligatoire pour enregistrer un devis.'); return }
     setQuoteLoading(true); setError(null)
     const result = await createQuote({
       boutique_id:    selectedBoutique?.id ?? boutique?.id,
       vendor_id:      profile.id,
-      customer_name:  customerName.trim() || null,
+      customer_name:  customerName.trim(),
       customer_phone: customerPhone.trim() || null,
       customer_cni:   customerCNI.trim() || null,
       total_amount:   cartTotal,
@@ -534,7 +535,7 @@ export default function VendorSaleForm({
 
           {/* Step progress */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 100, padding: '4px 6px' }}>
-            {([{ n: 1, label: 'Sélection' }, { n: 2, label: 'Client' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
+            {([{ n: 1, label: 'Sélection' }, { n: 2, label: 'Client & finalisation' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
               <React.Fragment key={n}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.blue : 'transparent', transition: 'background 0.2s ease' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#fff' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
@@ -1067,30 +1068,12 @@ export default function VendorSaleForm({
               onClick={() => { setError(null); setFormStep(2) }}
               disabled={cart.length === 0}
               style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
-              Continuer — Infos client
+              Continuer
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
 
-            {/* Save as quote */}
-            <button
-              onClick={handleSaveQuote}
-              disabled={cart.length === 0 || quoteLoading}
-              style={{ width: '100%', padding: '11px', borderRadius: 10, cursor: cart.length===0||quoteLoading?'not-allowed':'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: cart.length===0 ? 0.45 : 1, background: 'transparent', border: `1.5px solid ${C.gold}80`, color: C.gold, transition: 'border-color 0.15s ease' }}>
-              {quoteLoading ? (
-                <><span className="spinner-blue" style={{ borderTopColor: C.gold }} />Enregistrement…</>
-              ) : (
-                <>
-                  <svg width="13" height="14" viewBox="0 0 13 16" fill="none">
-                    <path d="M2 1h7l3 3v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
-                    <path d="M9 1v4h3" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
-                    <path d="M4 8h5M4 11h5M4 14h3" stroke={C.gold} strokeWidth="1.2" strokeLinecap="round"/>
-                  </svg>
-                  Sauvegarder comme devis
-                </>
-              )}
-            </button>
           </div>
         </div>
       )}
@@ -1111,8 +1094,13 @@ export default function VendorSaleForm({
 
             {/* Client info */}
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
-                Informations client
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
+                  Informations client
+                </div>
+                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                  <span style={{ color: C.red }}>*</span> requis pour la vente &nbsp;·&nbsp; téléphone et CNI optionnels pour un devis
+                </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 <div>
@@ -1120,11 +1108,15 @@ export default function VendorSaleForm({
                   <input type="text" value={customerName} onChange={e => setName(e.target.value)} placeholder="ex : Michel Abanda" style={inputStyle(!customerName.trim() && !!error)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>N° CNI <span style={{ color: C.red }}>*</span></label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    N° CNI <span style={{ color: C.red }}>*</span> <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel pour devis)</span>
+                  </label>
                   <input type="text" value={customerCNI} onChange={e => setCNI(e.target.value)} placeholder="ex : 1 23 04 5678 912 34" style={inputStyle(!customerCNI.trim() && !!error)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Téléphone principal <span style={{ color: C.red }}>*</span></label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    Téléphone principal <span style={{ color: C.red }}>*</span> <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel pour devis)</span>
+                  </label>
                   <input type="tel" value={customerPhone} onChange={e => setPhone(e.target.value)} placeholder="ex : 6 99 11 22 33" style={inputStyle(!customerPhone.trim() && !!error)} />
                 </div>
                 <div>
@@ -1231,15 +1223,44 @@ export default function VendorSaleForm({
               </div>
             )}
 
-            {/* Confirm */}
-            <button className="btn-meram" onClick={handleConfirm} disabled={loading}
-              style={{ width: '100%', padding: '16px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
+            {/* Confirm sale */}
+            <button className="btn-meram" onClick={handleConfirm} disabled={loading || quoteLoading}
+              style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
               {loading ? (
                 <><span className="spinner" />Enregistrement…</>
               ) : (
-                <><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer · {fmt(cartTotal)}</>
+                <><svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer la vente · {fmt(cartTotal)}</>
               )}
             </button>
+
+            {/* Divider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ flex: 1, height: 1, background: C.border }} />
+              <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT, whiteSpace: 'nowrap' }}>ou</span>
+              <div style={{ flex: 1, height: 1, background: C.border }} />
+            </div>
+
+            {/* Save as quote */}
+            <button
+              onClick={handleSaveQuote}
+              disabled={loading || quoteLoading}
+              style={{ width: '100%', padding: '12px', borderRadius: 10, cursor: quoteLoading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: loading ? 0.5 : 1, background: C.surface, border: `1.5px solid ${C.gold}`, color: C.gold }}>
+              {quoteLoading ? (
+                <><span className="spinner-blue" style={{ borderTopColor: C.gold, borderRightColor: `${C.gold}40` }} />Enregistrement du devis…</>
+              ) : (
+                <>
+                  <svg width="13" height="14" viewBox="0 0 13 16" fill="none">
+                    <path d="M2 1h7l3 3v10a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1Z" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M9 1v4h3" stroke={C.gold} strokeWidth="1.4" strokeLinejoin="round"/>
+                    <path d="M4 8h5M4 11h5M4 14h3" stroke={C.gold} strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                  Enregistrer comme devis
+                </>
+              )}
+            </button>
+            <p style={{ fontSize: 11, color: C.muted, textAlign: 'center', margin: 0, fontFamily: FONT }}>
+              Le devis n'engage pas le stock — il peut être converti en vente plus tard.
+            </p>
           </div>
         </div>
       )}

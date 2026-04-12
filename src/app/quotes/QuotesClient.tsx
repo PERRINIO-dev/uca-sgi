@@ -117,6 +117,8 @@ export default function QuotesClient({
   const [convertId,      setConvertId]      = useState<string | null>(null)
   const [convertAmount,  setConvertAmount]  = useState('')
   const [convertNotes,   setConvertNotes]   = useState('')
+  const [convertPhone,   setConvertPhone]   = useState('')
+  const [convertCNI,     setConvertCNI]     = useState('')
   const [convertLoading, setConvertLoading] = useState(false)
   const [convertSuccess, setConvertSuccess] = useState<string | null>(null) // VNT number after success
 
@@ -146,9 +148,15 @@ export default function QuotesClient({
   // ── Convert handler ──────────────────────────────────────────────────────────
   const handleConvert = async () => {
     if (!convertId) return
+    const q = quotes.find(q => q.id === convertId)
+    // Phone and CNI required to confirm — collect them if not already on the quote
+    const phone = convertPhone.trim() || q?.customer_phone
+    const cni   = convertCNI.trim()   || q?.customer_cni
+    if (!phone) { setActionError('Le numéro de téléphone est requis pour confirmer la vente.'); return }
+    if (!cni)   { setActionError('Le numéro CNI est requis pour confirmer la vente.'); return }
     setConvertLoading(true)
     setActionError(null)
-    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null)
+    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null, phone, cni)
     setConvertLoading(false)
     if (result.error) { setActionError(result.error); return }
     setConvertSuccess(result.saleNumber ?? null)
@@ -156,6 +164,7 @@ export default function QuotesClient({
 
   const closeConvertModal = () => {
     setConvertId(null); setConvertAmount(''); setConvertNotes('')
+    setConvertPhone(''); setConvertCNI('')
     setConvertSuccess(null); setActionError(null)
   }
 
@@ -700,10 +709,41 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                   </button>
                 </div>
 
-                <div style={{ padding: '20px 24px' }}>
+                <div style={{ padding: '20px 24px', maxHeight: '70vh', overflowY: 'auto' }}>
                   <div style={{ padding: '12px 14px', background: C.blueL, borderRadius: 10, border: `1px solid ${C.blue}30`, fontSize: 12, color: C.blue, marginBottom: 16, fontFamily: FONT }}>
                     La vente sera enregistrée et la commande envoyée à l'entrepôt. Le stock sera réservé.
                   </div>
+
+                  {/* Complete missing client info if needed */}
+                  {(!convertingQuote?.customer_phone || !convertingQuote?.customer_cni) && (
+                    <div style={{ marginBottom: 16, padding: '14px', background: C.orangeL, borderRadius: 10, border: `1px solid ${C.orange}40` }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.orange, marginBottom: 10, fontFamily: FONT }}>
+                        Informations manquantes pour finaliser la vente
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {!convertingQuote?.customer_phone && (
+                          <div>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: FONT }}>
+                              Téléphone <span style={{ color: C.red }}>*</span>
+                            </label>
+                            <input type="tel" value={convertPhone} onChange={e => setConvertPhone(e.target.value)}
+                              placeholder="ex : 6 99 11 22 33"
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }} />
+                          </div>
+                        )}
+                        {!convertingQuote?.customer_cni && (
+                          <div>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: FONT }}>
+                              N° CNI <span style={{ color: C.red }}>*</span>
+                            </label>
+                            <input type="text" value={convertCNI} onChange={e => setConvertCNI(e.target.value)}
+                              placeholder="ex : 1 23 04 5678 912 34"
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Payment amount */}
                   <div style={{ marginBottom: 14 }}>
