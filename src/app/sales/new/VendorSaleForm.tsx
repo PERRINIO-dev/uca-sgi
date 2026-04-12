@@ -25,7 +25,7 @@ const fmtNum = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2  = (n: number) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' m²'
 
-type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles' | 'qty' | 'linear_pieces' | 'liter_containers'
+type InputMode = 'm2' | 'cartons' | 'tiles' | 'cartons_tiles' | 'qty' | 'linear_pieces' | 'liter_containers' | 'bag_weight' | 'unit_packages'
 
 interface CartItem {
   product:         any
@@ -90,6 +90,8 @@ export default function VendorSaleForm({
   const [inputQty,        setInputQty]        = useState('')
   const [inputPieces,     setInputPieces]     = useState('')
   const [inputContainers, setInputContainers] = useState('')
+  const [inputWeight,     setInputWeight]     = useState('')  // bag_weight: total kg
+  const [inputPackages,   setInputPackages]   = useState('')  // unit_packages: nb of lots
 
   // Scroll to top whenever the form step changes — fires after React renders the new step
   const topRef = useRef<HTMLDivElement>(null)
@@ -103,6 +105,7 @@ export default function VendorSaleForm({
   const resetInputs = () => {
     setInputM2(''); setInputTiles(''); setCartons(''); setLoose('')
     setInputQty(''); setInputPieces(''); setInputContainers('')
+    setInputWeight(''); setInputPackages('')
     setUnitPrice('')
   }
 
@@ -150,6 +153,13 @@ export default function VendorSaleForm({
         qty = (parseInt(inputPieces) || 0) * parseFloat(selectedProduct.piece_length_m)
       } else if (inputMode === 'liter_containers' && selectedProduct.container_volume_l) {
         qty = (parseInt(inputContainers) || 0) * parseFloat(selectedProduct.container_volume_l)
+      } else if (inputMode === 'bag_weight' && selectedProduct.bag_weight_kg) {
+        const kg = parseFloat(inputWeight) || 0
+        if (kg <= 0) return null
+        // Always round up — a half-bag is a full bag
+        qty = Math.ceil(kg / parseFloat(selectedProduct.bag_weight_kg))
+      } else if (inputMode === 'unit_packages' && selectedProduct.pieces_per_package) {
+        qty = (parseInt(inputPackages) || 0) * parseInt(selectedProduct.pieces_per_package)
       } else {
         qty = parseFloat(inputQty) || 0
       }
@@ -161,7 +171,7 @@ export default function VendorSaleForm({
       const stockInsufficient = qty > availableTiles
       return { isTile: false as const, tiles: qty, m2: 0, fullCartons: 0, loose: 0, price, total, floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles }
     }
-  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, inputQty, inputPieces, inputContainers, unitPrice])
+  }, [selectedProduct, inputMode, inputM2, inputTiles, inputCartons, inputLooseTiles, inputQty, inputPieces, inputContainers, inputWeight, inputPackages, unitPrice])
 
   const cartTotal = cart.reduce((sum, i) => sum + i.totalPrice, 0)
 
@@ -179,8 +189,20 @@ export default function VendorSaleForm({
         qtyCell   = `${new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(m2)} m² · ${full}${loose>0?` <span style="color:#D97706">+${loose}</span>`:''} ctn`
         priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/m²`
       } else {
+        const itemTypePrint = item.product?.product_type ?? 'unit'
+        const bagKgPrint    = itemTypePrint === 'bag' && item.product?.bag_weight_kg
+          ? Math.round(item.quantityTiles * parseFloat(item.product.bag_weight_kg)) : null
+        const pkgCntPrint   = itemTypePrint === 'unit' && item.product?.pieces_per_package && item.quantityTiles > 0
+          ? Math.floor(item.quantityTiles / parseInt(item.product.pieces_per_package)) : null
         const pLbl = pluralize(unitLbl, item.quantityTiles)
-        qtyCell   = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${pLbl}`
+        if (bagKgPrint) {
+          qtyCell = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} sac${item.quantityTiles>1?'s':''} <span style="color:#64748B;font-size:11px">(${new Intl.NumberFormat('fr-FR').format(bagKgPrint)} kg)</span>`
+        } else if (pkgCntPrint && pkgCntPrint > 0) {
+          const pkgLblPrint = escHtml(item.product?.package_label ?? 'lot')
+          qtyCell = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${pLbl} <span style="color:#64748B;font-size:11px">(${pkgCntPrint} ${pkgLblPrint}${pkgCntPrint>1?'s':''})</span>`
+        } else {
+          qtyCell = `${new Intl.NumberFormat('fr-FR').format(item.quantityTiles)} ${pLbl}`
+        }
         priceCell = `${new Intl.NumberFormat('fr-FR').format(item.unitPricePerM2)} ${currency}/${unitLbl}`
       }
       return `<tr><td>${escHtml(item.product?.product_name??item.product?.name)}</td><td style="color:#64748B;font-size:11px">${escHtml(item.product?.reference_code)}</td><td style="text-align:center">${qtyCell}</td><td style="text-align:right">${priceCell}</td><td style="text-align:right;font-weight:700">${new Intl.NumberFormat('fr-FR').format(Math.round(item.totalPrice))} ${currency}</td></tr>`
@@ -496,7 +518,11 @@ export default function VendorSaleForm({
                 const cfg         = getTypeConfig(prodType)
                 const availDisplay = prodIsTile
                   ? fmtM2(availCount * parseFloat(prod.tile_area_m2))
-                  : `${fmtNum(availCount)} ${prod.unit_label ?? 'u.'}`
+                  : prodType === 'bag' && prod.bag_weight_kg
+                    ? `${fmtNum(availCount)} sacs (${fmtNum(Math.round(availCount * parseFloat(prod.bag_weight_kg)))} kg)`
+                    : prodType === 'unit' && prod.pieces_per_package
+                    ? `${fmtNum(availCount)} ${prod.unit_label ?? 'u.'} (${Math.floor(availCount / parseInt(prod.pieces_per_package))} ${prod.package_label ?? 'lots'})`
+                    : `${fmtNum(availCount)} ${prod.unit_label ?? 'u.'}`
                 const isLow      = prodIsTile ? availCount * parseFloat(prod.tile_area_m2) < 10 : availCount < 5
                 const isCritical = prodIsTile ? availCount * parseFloat(prod.tile_area_m2) < 3  : availCount < 2
                 const stockColor = isCritical ? C.red : isLow ? C.orange : C.green
@@ -643,19 +669,29 @@ export default function VendorSaleForm({
                   ) : (() => {
                     const prodType     = selectedProduct.product_type ?? 'unit'
                     const unitLbl      = selectedProduct.unit_label    ?? 'unité'
-                    const pkgLbl       = selectedProduct.package_label ?? (prodType==='liter'?'bidon':'barre')
-                    const hasPieceConv = prodType==='linear_m' && selectedProduct.piece_length_m
-                    const hasContConv  = prodType==='liter'    && selectedProduct.container_volume_l
-                    const hasBagWeight = prodType==='bag'      && selectedProduct.bag_weight_kg
+                    const pkgLbl       = selectedProduct.package_label ?? (prodType==='liter'?'bidon':prodType==='bag'?'palette':'barre')
+                    const hasPieceConv = prodType === 'linear_m' && selectedProduct.piece_length_m
+                    const hasContConv  = prodType === 'liter'    && selectedProduct.container_volume_l
+                    const hasBagWeight = prodType === 'bag'      && selectedProduct.bag_weight_kg
+                    const hasUnitPkg   = prodType === 'unit'     && selectedProduct.pieces_per_package
+                    const showModeTabs = hasPieceConv || hasContConv || hasBagWeight || hasUnitPkg
+
+                    // Build mode tab pairs for each type
+                    const modeTabs: [InputMode, string][] = hasPieceConv
+                      ? [['qty', `En ${unitLbl}`], ['linear_pieces', `En ${pkgLbl}`]]
+                      : hasContConv
+                      ? [['qty', `En ${unitLbl}`], ['liter_containers', `En ${pkgLbl}`]]
+                      : hasBagWeight
+                      ? [['qty', 'En sacs'], ['bag_weight', 'En kg']]
+                      : hasUnitPkg
+                      ? [['qty', `En ${unitLbl}`], ['unit_packages', `En ${pkgLbl}`]]
+                      : []
 
                     return (
                       <>
-                        {(hasPieceConv || hasContConv) && (
+                        {showModeTabs && (
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
-                            {([
-                              ['qty', `En ${unitLbl}`],
-                              [hasPieceConv ? 'linear_pieces' : 'liter_containers', `En ${pkgLbl}`],
-                            ] as [InputMode, string][]).map(([mode, label]) => (
+                            {modeTabs.map(([mode, label]) => (
                               <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
                                 style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: FONT }}>
                                 {label}
@@ -673,6 +709,22 @@ export default function VendorSaleForm({
                           <div>
                             <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Nombre de {pkgLbl}s</label>
                             <input type="number" min="1" step="1" value={inputContainers} onChange={e => setInputContainers(e.target.value)} placeholder={`ex : 2 ${pkgLbl}s`} style={inputStyle(computed?.stockInsufficient??false)} />
+                          </div>
+                        ) : inputMode === 'bag_weight' ? (
+                          <div>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                              Poids total commandé (kg)
+                            </label>
+                            <input type="number" min="0.1" step="0.1" value={inputWeight} onChange={e => setInputWeight(e.target.value)}
+                              placeholder={`ex : 350 kg`} style={inputStyle(computed?.stockInsufficient??false)} />
+                          </div>
+                        ) : inputMode === 'unit_packages' ? (
+                          <div>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                              Nombre de {pkgLbl}s ({selectedProduct.pieces_per_package} {unitLbl}/{pkgLbl})
+                            </label>
+                            <input type="number" min="1" step="1" value={inputPackages} onChange={e => setInputPackages(e.target.value)}
+                              placeholder={`ex : 2 ${pkgLbl}s`} style={inputStyle(computed?.stockInsufficient??false)} />
                           </div>
                         ) : (
                           <div>
@@ -698,6 +750,44 @@ export default function VendorSaleForm({
                                 </div>
                                 <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
                               </>
+                            ) : inputMode === 'bag_weight' ? (
+                              <>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Poids demandé</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{parseFloat(inputWeight)||0} kg</div>
+                                  </div>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.orangeL, borderRadius: 7, border: `1px solid ${C.orange}33` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Sacs à livrer</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: FONT }}>{computed.tiles} sac{computed.tiles > 1 ? 's' : ''}</div>
+                                  </div>
+                                </div>
+                                {hasBagWeight && (
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 11, color: C.blue, fontFamily: FONT, textAlign: 'center' }}>
+                                    {computed.tiles} sac{computed.tiles>1?'s':''} × {selectedProduct.bag_weight_kg} kg = {fmtNum(Math.round(computed.tiles * parseFloat(selectedProduct.bag_weight_kg)))} kg livré
+                                    {computed.tiles * parseFloat(selectedProduct.bag_weight_kg) > parseFloat(inputWeight) && (
+                                      <span style={{ color: C.orange }}> (arrondi au sac supérieur)</span>
+                                    )}
+                                  </div>
+                                )}
+                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} sacs</div>
+                              </>
+                            ) : inputMode === 'unit_packages' ? (
+                              <>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{parseInt(inputPackages)||0}</div>
+                                  </div>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueL, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{computed.tiles}</div>
+                                  </div>
+                                </div>
+                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
+                              </>
                             ) : (
                               <>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -715,6 +805,9 @@ export default function VendorSaleForm({
                                   const vol=parseFloat(selectedProduct.container_volume_l), fc=Math.floor(computed.tiles/vol), rl=Math.round((computed.tiles%vol)*10)/10
                                   return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {fc} {pkgLbl}{fc!==1?'s':''}{rl>0?` + ${rl} L`:' complets'}</div>
                                 })()}
+                                {hasUnitPkg && computed.tiles > 0 && (
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {Math.floor(computed.tiles/parseInt(selectedProduct.pieces_per_package))} {pkgLbl}{computed.tiles%parseInt(selectedProduct.pieces_per_package)>0?` + ${computed.tiles%parseInt(selectedProduct.pieces_per_package)} ${unitLbl}`:' complet(s)'}</div>
+                                )}
                               </>
                             )}
                             {computed.stockInsufficient && (
@@ -838,8 +931,23 @@ export default function VendorSaleForm({
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: FONT }}>Aucun produit ajouté</div>
                   </div>
                 ) : cart.map((item, idx) => {
-                  const isItemTile = (item.product?.product_type ?? 'tile') === 'tile'
+                  const isItemTile  = (item.product?.product_type ?? 'tile') === 'tile'
+                  const itemType   = item.product?.product_type ?? 'unit'
                   const unitLbl    = item.product?.unit_label ?? 'unité'
+                  const bagKg      = itemType === 'bag' && item.product?.bag_weight_kg
+                    ? Math.round(item.quantityTiles * parseFloat(item.product.bag_weight_kg)) : null
+                  const pkgCount   = itemType === 'unit' && item.product?.pieces_per_package && item.quantityTiles > 0
+                    ? Math.floor(item.quantityTiles / parseInt(item.product.pieces_per_package)) : null
+                  const qtyDisplay = isItemTile
+                    ? `${fmtM2(item.quantityM2)} · ${item.quantityCartons} ctn${item.looseTiles>0?` +${item.looseTiles}`:''}`
+                    : bagKg
+                    ? `${fmtNum(item.quantityTiles)} sac${item.quantityTiles>1?'s':''} (${fmtNum(bagKg)} kg)`
+                    : pkgCount && pkgCount > 0
+                    ? `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} (${pkgCount} ${item.product?.package_label ?? 'lot'}${pkgCount>1?'s':''})`
+                    : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)}`
+                  const priceDisplay = isItemTile
+                    ? `${fmtNum(item.unitPricePerM2)} ${currency}/m²`
+                    : `${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
                   return (
                     <div key={idx} style={{ padding: '10px 10px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', marginBottom: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
@@ -850,10 +958,7 @@ export default function VendorSaleForm({
                         </button>
                       </div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 5, fontFamily: FONT }}>
-                        {isItemTile
-                          ? `${fmtM2(item.quantityM2)} · ${item.quantityCartons} ctn${item.looseTiles>0?` +${item.looseTiles}`:''} · ${fmtNum(item.unitPricePerM2)} ${currency}/m²`
-                          : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
-                        }
+                        {qtyDisplay} · {priceDisplay}
                       </div>
                       <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: FONT }}>{fmt(item.totalPrice)}</div>
                     </div>
@@ -979,8 +1084,21 @@ export default function VendorSaleForm({
               </div>
               <div style={{ padding: '8px', maxHeight: 260, overflowY: 'auto' }}>
                 {cart.map((item, idx) => {
-                  const isItemTile = (item.product?.product_type ?? 'tile') === 'tile'
-                  const unitLbl    = item.product?.unit_label ?? 'unité'
+                  const isItemTile  = (item.product?.product_type ?? 'tile') === 'tile'
+                  const itemType2   = item.product?.product_type ?? 'unit'
+                  const unitLbl2    = item.product?.unit_label ?? 'unité'
+                  const bagKg2      = itemType2 === 'bag' && item.product?.bag_weight_kg
+                    ? Math.round(item.quantityTiles * parseFloat(item.product.bag_weight_kg)) : null
+                  const pkgCount2   = itemType2 === 'unit' && item.product?.pieces_per_package && item.quantityTiles > 0
+                    ? Math.floor(item.quantityTiles / parseInt(item.product.pieces_per_package)) : null
+                  const qtyDisp2 = isItemTile
+                    ? `${fmtM2(item.quantityM2)}`
+                    : bagKg2
+                    ? `${fmtNum(item.quantityTiles)} sac${item.quantityTiles>1?'s':''} (${fmtNum(bagKg2)} kg)`
+                    : pkgCount2 && pkgCount2 > 0
+                    ? `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl2, item.quantityTiles)} (${pkgCount2} ${item.product?.package_label ?? 'lot'}${pkgCount2>1?'s':''})`
+                    : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl2, item.quantityTiles)}`
+                  const priceDisp2 = isItemTile ? `${fmtNum(item.unitPricePerM2)} ${currency}/m²` : `${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl2}`
                   return (
                     <div key={idx} style={{ padding: '10px', borderRadius: 8, marginBottom: 5 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
@@ -988,7 +1106,7 @@ export default function VendorSaleForm({
                         <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: FONT, flexShrink: 0 }}>{fmt(item.totalPrice)}</span>
                       </div>
                       <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2, fontFamily: FONT }}>
-                        {isItemTile ? `${fmtM2(item.quantityM2)} · ${fmtNum(item.unitPricePerM2)} ${currency}/m²` : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} · ${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`}
+                        {qtyDisp2} · {priceDisp2}
                       </div>
                     </div>
                   )

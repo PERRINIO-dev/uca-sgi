@@ -305,6 +305,7 @@ export default function ProductsClient({
       }
       if (productType === 'linear_m' && !form.pieceLengthM)   { setError('La longueur par barre est requise.'); return }
       if (productType === 'liter'    && !form.containerVolumeL) { setError('Le volume par contenant est requis.'); return }
+      if (productType === 'bag'      && !form.bagWeightKg)      { setError('Le poids par sac est requis pour permettre la vente au kg.'); return }
       setModalStep(3)
     } else if (modalStep === 3) {
       const isTileType = productType === 'tile'

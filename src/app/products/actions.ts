@@ -342,6 +342,12 @@ export async function createProduct(payload: CreateProductPayload) {
   if (payload.productType === 'liter' && !(payload as CreateLiterPayload).containerVolumeL)
     return { error: 'Le volume par contenant est obligatoire.' }
 
+  if (payload.productType === 'bag') {
+    const bagWeight = (payload as CreateBagPayload).bagWeightKg
+    if (!bagWeight || bagWeight <= 0)
+      return { error: 'Le poids par sac est obligatoire pour permettre la vente au kg.' }
+  }
+
   const safePurchasePrice = profile.role === 'owner'
     ? (isNaN(p.purchasePrice) ? 0 : p.purchasePrice)
     : 0

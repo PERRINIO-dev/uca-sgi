@@ -868,11 +868,18 @@ export default function WarehouseClient({
                         color: stockColor, fontFamily: FONT }}>
                         {isTile
                           ? `${fmtM2(availM2)} disponible`
+                          : prod?.product_type === 'bag' && prod?.bag_weight_kg
+                          ? `${fmtNum(available)} sac${available !== 1 ? 's' : ''} · ${fmtNum(Math.round(available * parseFloat(prod.bag_weight_kg)))} kg`
                           : `${fmtNum(available)} ${pluralize(unitLabel, available)} disponible${available !== 1 ? 's' : ''}`}
                       </span>
                       {isTile && (
                         <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
                           {fmtNum(available)} carreaux
+                        </span>
+                      )}
+                      {!isTile && prod?.product_type === 'unit' && prod?.pieces_per_package && available > 0 && (
+                        <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                          {Math.floor(available / parseInt(prod.pieces_per_package))} {prod.package_label ?? 'lot'}s
                         </span>
                       )}
                     </div>
@@ -892,6 +899,13 @@ export default function WarehouseClient({
                           ['Carreaux libres',  fmtNum(item.loose_tiles)],
                           ['Réservés',         fmtNum(reserved) + ' car.'],
                           ['Total m²',         fmtM2(totalM2)],
+                        ]
+                      : prod?.product_type === 'bag' && prod?.bag_weight_kg
+                      ? [
+                          ['Disponible', fmtNum(available) + ' sac' + (available !== 1 ? 's' : '')],
+                          ['Poids dispo', fmtNum(Math.round(available * parseFloat(prod.bag_weight_kg))) + ' kg'],
+                          ['Réservé',    fmtNum(reserved) + ' sac' + (reserved !== 1 ? 's' : '')],
+                          ['Total sacs',  fmtNum(parseInt(item.total_tiles)) + ' sacs'],
                         ]
                       : [
                           ['Disponible', fmtNum(available) + ' ' + pluralize(unitLabel, available)],
