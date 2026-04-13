@@ -1,235 +1,251 @@
 @import "tailwindcss";
 
-/* ── Keyframe animations ─────────────────────────────────────────────────── */
-@keyframes modalBackdrop {
-  from { opacity: 0 }
-  to   { opacity: 1 }
-}
-@keyframes modalPanel {
-  from { opacity: 0; transform: translateY(20px) scale(0.96) }
-  to   { opacity: 1; transform: translateY(0)    scale(1) }
-}
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-10px) }
-  to   { opacity: 1; transform: translateY(0) }
-}
-@keyframes spin {
-  to { transform: rotate(360deg) }
-}
-@keyframes fadeIn {
-  from { opacity: 0 }
-  to   { opacity: 1 }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(10px) }
-  to   { opacity: 1; transform: translateY(0) }
-}
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(16px) }
-  to   { opacity: 1; transform: translateX(0) }
-}
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.3) }
-  50%       { box-shadow: 0 0 0 6px rgba(37,99,235,0) }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% 0 }
-  100% { background-position: 200% 0 }
-}
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(14px) }
-  to   { opacity: 1; transform: translateY(0) }
-}
-@keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.97) }
-  to   { opacity: 1; transform: scale(1) }
+/* ═══════════════════════════════════════════════════════════════════════════
+   MEREM — Minerals Design System
+   CSS Custom Properties (mirror of tokens.ts — kept in sync manually)
+   Used by CSS-class-based rules that cannot reference TypeScript tokens.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* Backgrounds */
+  --bg:          #1C1917;
+  --bg-deep:     #131110;
+  --surface:     #242120;
+  --surface-el:  #2E2B28;
+  --surface-hov: #353230;
+  --surface-sub: #1F1D1B;
+
+  /* Borders */
+  --border:      #3C3835;
+  --border-sub:  #2A2826;
+
+  /* Text */
+  --ink:         #FAFAF9;
+  --text:        #E7E5E4;
+  --muted:       #A9A49D;
+  --dim:         #78716C;
+
+  /* Amber accent */
+  --amber:       #F59E0B;
+  --amber-hov:   #D97706;
+  --amber-dim:   #92400E;
+  --amber-glow:  rgba(245,158,11,0.18);
+
+  /* Status */
+  --green:       #86EFAC;  --green-bg:    #052E16;  --green-bd:    #14532D;
+  --orange:      #FED7AA;  --orange-bg:   #431407;  --orange-bd:   #7C2D12;
+  --red:         #FCA5A5;  --red-bg:      #2D0A0A;  --red-bd:      #7F1D1D;
+  --blue:        #93C5FD;  --blue-bg:     #0C1A3B;  --blue-bd:     #1E3A5F;
+  --gold:        #FDE68A;  --gold-bg:     #451A03;  --gold-bd:     #92400E;
 }
 
-/* ── Base ────────────────────────────────────────────────────────────────── */
+/* ── Keyframe animations ──────────────────────────────────────────────────── */
+@keyframes modalBackdrop  { from { opacity: 0 }                          to { opacity: 1 } }
+@keyframes modalPanel     { from { opacity: 0; transform: translateY(20px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+@keyframes slideDown      { from { opacity: 0; transform: translateY(-8px) }  to { opacity: 1; transform: translateY(0) } }
+@keyframes slideUp        { from { opacity: 0; transform: translateY(8px) }   to { opacity: 1; transform: translateY(0) } }
+@keyframes slideInRight   { from { opacity: 0; transform: translateX(16px) }  to { opacity: 1; transform: translateX(0) } }
+@keyframes fadeIn         { from { opacity: 0 }                          to { opacity: 1 } }
+@keyframes fadeInUp       { from { opacity: 0; transform: translateY(12px) }  to { opacity: 1; transform: translateY(0) } }
+@keyframes fadeInScale    { from { opacity: 0; transform: scale(0.97) }  to { opacity: 1; transform: scale(1) } }
+@keyframes spin           { to { transform: rotate(360deg) } }
+@keyframes shimmer        { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes pulseAmber     { 0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.35) } 50% { box-shadow: 0 0 0 6px rgba(245,158,11,0) } }
+@keyframes skeletonPulse  { 0%, 100% { opacity: 1 } 50% { opacity: 0.5 } }
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box }
+
 body {
-  background: #F5F2ED;
-  color: #1C1917;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-size: 14px;
-  line-height: 1.5;
+  background:               var(--bg);
+  color:                    var(--text);
+  font-family:              var(--font-plex), 'IBM Plex Sans', system-ui, sans-serif;
+  -webkit-font-smoothing:   antialiased;
+  -moz-osx-font-smoothing:  grayscale;
+  font-size:                14px;
+  line-height:              1.5;
 }
 
 /* ── Input / select / textarea ───────────────────────────────────────────── */
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: none !important;
-  border-color: #2563EB !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
-}
 input, select, textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-
-/* ── Dark input (admin platform) ────────────────────────────────────────── */
-input.dark-input,
-select.dark-input,
-textarea.dark-input {
-  background: #0D1117 !important;
-  border-color: #30363D !important;
-  color: #E6EDF3 !important;
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline:      none !important;
+  border-color: var(--amber) !important;
+  box-shadow:   0 0 0 3px rgba(245,158,11,0.18) !important;
 }
-input.dark-input:focus-visible,
-select.dark-input:focus-visible,
-textarea.dark-input:focus-visible {
-  border-color: #58A6FF !important;
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15) !important;
+
+/* ── iOS: prevent auto-zoom on input focus ─────────────────────────────── */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: 16px !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BUTTON SYSTEM
+   Global transitions and states applied to all button elements.
+   Specific color themes are applied via modifier classes (.btn-amber, etc.)
    ═══════════════════════════════════════════════════════════════════════════ */
-
 button {
   transition:
-    background 0.14s ease,
-    background-color 0.14s ease,
-    box-shadow  0.14s ease,
-    border-color 0.14s ease,
-    color       0.14s ease,
-    opacity     0.14s ease,
-    transform   0.10s ease !important;
+    background        0.12s ease,
+    background-color  0.12s ease,
+    box-shadow        0.14s ease,
+    border-color      0.14s ease,
+    color             0.12s ease,
+    opacity           0.12s ease,
+    transform         0.10s ease !important;
 }
 button:not(:disabled):active {
-  transform: translateY(1px) !important;
-  opacity: 0.88 !important;
+  transform: translateY(1px) scale(0.98) !important;
+  opacity:   0.90 !important;
 }
-button:disabled { cursor: not-allowed !important; opacity: 0.48 !important; }
-
+button:disabled {
+  cursor:  not-allowed !important;
+  opacity: 0.38 !important;
+}
 button:focus-visible {
-  outline: 2px solid #2563EB !important;
+  outline:        2px solid var(--amber) !important;
   outline-offset: 2px !important;
 }
 
-/* ── Primary (blue) ─────────────────────────────────────────── */
-.btn-primary:hover:not(:disabled) {
-  background: #1D4ED8 !important;
-  box-shadow: 0 4px 18px rgba(37,99,235,0.35) !important;
-  transform: translateY(-1px) !important;
-}
-/* ── MERAM gradient blue ─────────────────────────────────────── */
-.btn-meram {
-  background: linear-gradient(135deg, #1D4ED8 0%, #2563EB 60%, #3B82F6 100%) !important;
+/* ── Amber — primary CTA ────────────────────────────────────────────── */
+/* The dominant action on any screen. Used once per view hierarchy. */
+.btn-amber {
+  background: linear-gradient(135deg, #B45309 0%, #D97706 50%, #F59E0B 100%) !important;
   border: none !important;
-  color: white !important;
+  color: #1C1917 !important;
+  font-weight: 700 !important;
   position: relative;
   overflow: hidden;
 }
-.btn-meram::after {
+.btn-amber::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 100%);
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.18s ease;
 }
-.btn-meram:hover:not(:disabled)::after { opacity: 1; }
-.btn-meram:hover:not(:disabled) {
-  box-shadow: 0 6px 24px rgba(37,99,235,0.40) !important;
-  transform: translateY(-1px) !important;
+.btn-amber:hover:not(:disabled)::after  { opacity: 1; }
+.btn-amber:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(245,158,11,0.40) !important;
+  transform:  translateY(-1px) !important;
 }
-/* ── Navy (dark blue) ───────────────────────────────────────── */
-.btn-navy:hover:not(:disabled) {
-  background: #122A52 !important;
-  box-shadow: 0 4px 16px rgba(15,34,64,0.30) !important;
-  transform: translateY(-1px) !important;
+
+/* ── Surface button — default secondary action ──────────────────────── */
+/* A raised button on the dark surface: visible but not loud. */
+.btn-surface {
+  background:   var(--surface-el) !important;
+  border:       1px solid var(--border) !important;
+  color:        var(--text) !important;
 }
-/* ── Green (confirm / success) ──────────────────────────────── */
+.btn-surface:hover:not(:disabled) {
+  background:   var(--surface-hov) !important;
+  border-color: var(--muted) !important;
+  color:        var(--ink) !important;
+}
+
+/* ── Ghost — tertiary / contextual action ────────────────────────────── */
+.btn-ghost {
+  background:   transparent !important;
+  border:       1px solid var(--border) !important;
+  color:        var(--muted) !important;
+}
+.btn-ghost:hover:not(:disabled) {
+  background:   var(--surface-hov) !important;
+  border-color: var(--border) !important;
+  color:        var(--text) !important;
+}
+
+/* ── Ghost danger — destructive action (confirm before proceeding) ───── */
+.btn-ghost-danger {
+  background:   transparent !important;
+  border:       1px solid var(--border) !important;
+  color:        var(--muted) !important;
+}
+.btn-ghost-danger:hover:not(:disabled) {
+  background:   var(--red-bg) !important;
+  border-color: var(--red-bd) !important;
+  color:        var(--red) !important;
+}
+
+/* ── Green — confirm / complete ─────────────────────────────────────── */
+.btn-green {
+  background: #065F46 !important;
+  border: none !important;
+  color: var(--green) !important;
+}
 .btn-green:hover:not(:disabled) {
   background: #047857 !important;
-  box-shadow: 0 4px 16px rgba(5,150,105,0.30) !important;
-  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(6,95,70,0.40) !important;
+  transform:  translateY(-1px) !important;
 }
-/* ── Orange (warn / preparing) ──────────────────────────────── */
-.btn-orange:hover:not(:disabled) {
-  background: #B45309 !important;
-  box-shadow: 0 4px 14px rgba(217,119,6,0.28) !important;
+
+/* ── Red / danger — irreversible destructive action ─────────────────── */
+.btn-red {
+  background: #7F1D1D !important;
+  border: none !important;
+  color: var(--red) !important;
 }
-/* ── Red / Danger ───────────────────────────────────────────── */
 .btn-red:hover:not(:disabled) {
-  background: #B91C1C !important;
-  box-shadow: 0 4px 16px rgba(220,38,38,0.30) !important;
-  transform: translateY(-1px) !important;
+  background: #991B1B !important;
+  box-shadow: 0 4px 16px rgba(127,29,29,0.45) !important;
+  transform:  translateY(-1px) !important;
 }
-/* ── Ghost (light bg, border) ───────────────────────────────── */
-.btn-ghost:hover:not(:disabled) {
-  background: #EDE9E3 !important;
-  border-color: #D4D1CC !important;
+
+/* ── Icon-only ghost ─────────────────────────────────────────────────── */
+.btn-icon {
+  background:   transparent !important;
+  border:       1px solid transparent !important;
+  color:        var(--muted) !important;
 }
-/* ── Ghost danger (outline red on hover) ────────────────────── */
-.btn-ghost-danger:hover:not(:disabled) {
-  background: #FEF2F2 !important;
-  color: #DC2626 !important;
-  border-color: #FECACA !important;
-}
-/* ── Outline navy (ghost with navy tint on hover) ───────────── */
-.btn-outline-navy:hover:not(:disabled) {
-  background: #EFF6FF !important;
-  border-color: #2563EB !important;
-  color: #1D4ED8 !important;
-}
-/* ── Icon-only ghost ────────────────────────────────────────── */
 .btn-icon:hover:not(:disabled) {
-  background: #EDE9E3 !important;
-  border-color: #D4D1CC !important;
+  background:   var(--surface-hov) !important;
+  border-color: var(--border) !important;
+  color:        var(--text) !important;
 }
-/* ── Dark ghost (admin platform) ────────────────────────────── */
-.btn-dark-ghost:hover:not(:disabled) {
-  background: rgba(255,255,255,0.06) !important;
-  border-color: #30363D !important;
-}
-/* ── Dark danger (admin) ─────────────────────────────────────── */
-.btn-dark-danger:hover:not(:disabled) {
-  background: rgba(248,81,73,0.15) !important;
-  border-color: #F85149 !important;
-  color: #F85149 !important;
-}
+
+/* Backwards-compat aliases — kept while pages are being migrated */
+.btn-meram    { }  /* migrated → .btn-amber */
+.btn-primary  { }  /* migrated → .btn-amber */
+.btn-navy     { }  /* migrated → .btn-surface */
+.btn-orange   { }  /* migrated → .btn-surface (warning context) */
+.btn-outline-navy  { }  /* migrated → .btn-ghost */
+.btn-dark-ghost    { }  /* migrated → .btn-ghost */
+.btn-dark-danger   { }  /* migrated → .btn-ghost-danger */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    TABLE ROWS
    ═══════════════════════════════════════════════════════════════════════════ */
 .trow:hover > td,
 .trow:hover > th {
-  background-color: #F5F2ED !important;
+  background-color: var(--surface-hov) !important;
   transition: background-color 0.1s ease;
 }
-.trow-click {
-  cursor: pointer;
-}
+.trow-click { cursor: pointer; }
 .trow-click:hover > td,
 .trow-click:hover > th {
-  background-color: #EEF3FF !important;
+  background-color: var(--surface-hov) !important;
   transition: background-color 0.1s ease;
 }
-/* Dark table rows (admin) */
-.trow-dark:hover > td,
-.trow-dark:hover > th {
-  background-color: #1C2128 !important;
-}
-.trow-dark-click:hover > td,
-.trow-dark-click:hover > th {
-  background-color: rgba(88,166,255,0.06) !important;
+.trow-open > td {
+  background-color: var(--surface-el) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SIDEBAR NAV ITEMS — light sidebar (both boutiques and admin platform)
+   SIDEBAR NAV ITEMS
    ═══════════════════════════════════════════════════════════════════════════ */
+/* Active: amber left border + amber-washed background */
 .nav-item-light:not(.nav-active):hover {
-  background: #EDE9E3 !important;
-  color: #1C1917 !important;
+  background: var(--surface-hov) !important;
+  color:      var(--text) !important;
 }
 .nav-item-light:not(.nav-active):hover svg path,
 .nav-item-light:not(.nav-active):hover svg rect,
 .nav-item-light:not(.nav-active):hover svg circle {
-  stroke: #44403C !important;
+  stroke: var(--muted) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -239,90 +255,113 @@ button:focus-visible {
   transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
 }
 .card-hover:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.10) !important;
-  transform: translateY(-2px);
-  border-color: #CBD5E1 !important;
+  box-shadow:   0 8px 28px rgba(0,0,0,0.60) !important;
+  transform:    translateY(-2px);
+  border-color: var(--border) !important;
 }
-/* KPI card hover */
+
 .kpi-card {
   transition: box-shadow 0.2s ease, transform 0.2s ease !important;
 }
 .kpi-card:hover {
-  box-shadow: 0 8px 28px rgba(0,0,0,0.10) !important;
-  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.60), 0 2px 8px rgba(245,158,11,0.08) !important;
+  transform:  translateY(-2px);
 }
-/* Dark card hover (admin) */
-.card-hover-dark {
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+
+.card-premium {
+  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
 }
-.card-hover-dark:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
-  transform: translateY(-2px);
-  border-color: #30363D !important;
+.card-premium:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.65) !important;
+  transform:  translateY(-2px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SPINNERS
    ═══════════════════════════════════════════════════════════════════════════ */
 .spinner {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.28);
-  border-top-color: white;
+  width:  15px;  height: 15px;
+  border: 2px solid rgba(28,25,23,0.25);
+  border-top-color: #1C1917;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
   display: inline-block;
   flex-shrink: 0;
 }
+/* On amber button — dark spinner for contrast */
+.btn-amber .spinner,
 .spinner-dark {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(15,23,42,0.14);
-  border-top-color: #0F172A;
+  width:  15px;  height: 15px;
+  border: 2px solid rgba(28,25,23,0.25);
+  border-top-color: #1C1917;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
   display: inline-block;
   flex-shrink: 0;
 }
-.spinner-blue {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(37,99,235,0.20);
-  border-top-color: #2563EB;
+/* On dark surface — warm light spinner */
+.spinner-light {
+  width:  15px;  height: 15px;
+  border: 2px solid rgba(250,250,249,0.20);
+  border-top-color: #FAFAF9;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
   display: inline-block;
   flex-shrink: 0;
 }
+/* Amber spinner — loading for neutral contexts */
+.spinner-amber {
+  width:  15px;  height: 15px;
+  border: 2px solid rgba(245,158,11,0.20);
+  border-top-color: #F59E0B;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+/* Backwards compat */
+.spinner-blue { @extend .spinner-amber; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SCROLLBAR
    ═══════════════════════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar          { width: 5px; height: 5px }
 ::-webkit-scrollbar-track    { background: transparent }
-::-webkit-scrollbar-thumb    { background: #CBD5E1; border-radius: 10px }
-::-webkit-scrollbar-thumb:hover { background: #94A3B8 }
-
-/* Dark scrollbar */
-.dark-scroll::-webkit-scrollbar-thumb    { background: #30363D }
-.dark-scroll::-webkit-scrollbar-thumb:hover { background: #484F58 }
+::-webkit-scrollbar-thumb    { background: #3C3835; border-radius: 10px }
+::-webkit-scrollbar-thumb:hover { background: #57534E }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BADGE / STATUS PILL
    ═══════════════════════════════════════════════════════════════════════════ */
 .status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 100px;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  white-space: nowrap;
+  display:        inline-flex;
+  align-items:    center;
+  gap:            5px;
+  padding:        3px 10px;
+  border-radius:  9999px;
+  font-size:      11px;
+  font-weight:    600;
+  letter-spacing: 0.02em;
+  white-space:    nowrap;
 }
 .status-dot {
-  width: 5px;
-  height: 5px;
+  width:        5px;
+  height:       5px;
   border-radius: 50%;
-  flex-shrink: 0;
+  flex-shrink:  0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION LABEL
+   The all-caps category label used above grouped content.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.section-label {
+  font-family:    var(--font-plex), 'IBM Plex Sans', system-ui, sans-serif;
+  font-size:      11px;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color:          var(--dim);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -332,88 +371,75 @@ button:focus-visible {
 .modal-panel   { animation: modalPanel    0.24s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SECTION LABEL
+   DRAWER SLIDE-IN
    ═══════════════════════════════════════════════════════════════════════════ */
-.section-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.10em;
-  color: #A9A49D;
-}
-
-/* ── Number rendering ───────────────────────────────────────────────────── */
-.num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-}
-
-/* ── Premium gradient text ──────────────────────────────────────────────── */
-.text-gradient {
-  background: linear-gradient(135deg, #1D4ED8, #3B82F6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ── Page content fade-in ───────────────────────────────────────────────── */
-/* removed — static render is faster-feeling than animated entry */
-
-/* ── Drawer slide-in ────────────────────────────────────────────────────── */
-.drawer-panel {
-  animation: slideInRight 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
+.drawer-panel { animation: slideInRight 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   iOS: prevent auto-zoom on input focus
+   SKELETON LOADER
    ═══════════════════════════════════════════════════════════════════════════ */
-@supports (-webkit-touch-callout: none) {
-  input, select, textarea { font-size: 16px !important; }
-}
-
-/* ── Skeleton loader ────────────────────────────────────────────────────── */
 .skeleton {
-  background: #EDE9E3;
+  background:    var(--surface-el);
+  border-radius: 6px;
+  animation:     skeletonPulse 1.6s ease-in-out infinite;
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface)    0%,
+    var(--surface-el) 50%,
+    var(--surface)    100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
   border-radius: 6px;
 }
 
-/* ── Tag / monospace badge ──────────────────────────────────────────────── */
-.tag-mono {
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY UTILITIES
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Tabular numbers — always use for financial and data figures */
+.num {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
-  letter-spacing: 0.02em;
+  font-family: var(--font-plex), 'IBM Plex Sans', system-ui, sans-serif;
 }
 
-/* ── Premium card ────────────────────────────────────────────────────────── */
-.card-premium {
-  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
-}
-.card-premium:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05) !important;
-  transform: translateY(-2px);
-}
-
-/* ── KPI card ────────────────────────────────────────────────────────────── */
-.kpi-card {
-  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
-}
-.kpi-card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.05) !important;
-  transform: translateY(-3px);
+/* Monospace reference codes (sale numbers, IDs) */
+.mono {
+  font-family:          var(--font-plex-mono), 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  letter-spacing:       0.02em;
 }
 
-/* ── Table row highlight ─────────────────────────────────────────────────── */
-.trow-open > td {
-  background-color: #EEF3FF !important;
+/* Amber gradient text for hero display */
+.text-amber {
+  background:              linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip:         text;
 }
 
-/* ── Segment tabs (pill control) ─────────────────────────────────────────── */
+/* Display font utility */
+.font-display { font-family: var(--font-sora), 'Sora', system-ui, sans-serif !important; }
+.font-body    { font-family: var(--font-plex), 'IBM Plex Sans', system-ui, sans-serif !important; }
+.font-mono    { font-family: var(--font-plex-mono), 'IBM Plex Mono', monospace !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SEGMENT TABS (pill control)
+   ═══════════════════════════════════════════════════════════════════════════ */
 .seg-btn {
-  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease !important;
+  transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   PRINT — clean receipts and prep sheets
+   TABLE ROW HIGHLIGHT (open state)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.trow-open > td { background-color: var(--surface-el) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PRINT — clean receipts and warehouse sheets
    ═══════════════════════════════════════════════════════════════════════════ */
 @media print {
   .no-print { display: none !important; }

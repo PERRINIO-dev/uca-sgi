@@ -11,43 +11,27 @@ import {
 } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
-// ── Design tokens — ADMIN light platform ──────────────────────────────────────
-const C = {
-  ink:     '#1C1917',
-  slate:   '#44403C',
-  muted:   '#78716C',
-  border:  '#E7E5E4',
-  bg:      '#F5F2ED',
-  surface: '#FDFCF9',
-  surfaceElev: '#EDE9E3',
-  navy:    '#1B3A6B', navyDark: '#0C1A35',
-  blue:    '#2563EB', blueL:  '#EFF6FF',
-  green:   '#059669', greenL: '#ECFDF5',
-  orange:  '#D97706', orangeL:'#FFFBEB',
-  red:     '#DC2626', redL:   '#FEF2F2',
-  amber:   '#B45309', amberL: '#FEF3C7', amberM: '#E5E7EB',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 // ── Role display ──────────────────────────────────────────────────────────────
-const ROLE_META: Record<string, { label: string; color: string; bg: string }> = {
-  owner:     { label: 'Propriétaire', color: C.amber,  bg: C.amberL },
-  admin:     { label: 'Admin',        color: C.blue,   bg: C.blueL },
-  vendor:    { label: 'Vendeur',      color: C.green,  bg: C.greenL },
-  warehouse: { label: 'Magasinier',   color: C.slate,  bg: C.bg },
+const ROLE_META: Record<string, { label: string; color: string; bg: string; bd: string }> = {
+  owner:     { label: 'Propriétaire', color: C.amber,  bg: C.amberDim,  bd: C.amberDim },
+  admin:     { label: 'Admin',        color: C.blue,   bg: C.blueBg,    bd: C.blueBd   },
+  vendor:    { label: 'Vendeur',      color: C.green,  bg: C.greenBg,   bd: C.greenBd  },
+  warehouse: { label: 'Magasinier',   color: C.muted,  bg: C.surfaceEl, bd: C.border   },
 }
 
 // ── Audit action display ──────────────────────────────────────────────────────
 // Only platform-level actions — the admin journal is intentionally scoped
 // to events the platform operator performs directly. Tenant operational data
 // (sales, payments, stock) is visible only to each tenant in their own Reports page.
-const ACTION_META: Record<string, { label: string; color: string; bg: string }> = {
-  COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenL },
-  COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueL },
-  COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeL },
-  PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redL },
-  PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenL },
-  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueL },
+const ACTION_META: Record<string, { label: string; color: string; bg: string; bd: string }> = {
+  COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
+  PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -324,12 +308,12 @@ export default function AdminClient({
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '9px 12px',
     border: `1.5px solid ${C.border}`, borderRadius: 8,
-    fontSize: 13, fontFamily: FONT, color: C.ink,
+    fontSize: 13, fontFamily: F.body, color: C.ink,
     background: '#FDFCF9', outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: 11, fontWeight: 600,
-    color: C.slate, letterSpacing: '0.05em',
+    color: C.muted, letterSpacing: '0.05em',
     textTransform: 'uppercase', marginBottom: 5,
   }
 
@@ -431,13 +415,13 @@ export default function AdminClient({
         router.push('/login')
       }}
     >
-      <div style={{ maxWidth: 1100, margin: '0 auto', fontFamily: FONT }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', fontFamily: F.body }}>
 
         {/* ── Banner ── */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '11px 16px', borderRadius: 10, marginBottom: 28,
-          background: C.blueL,
+          background: C.blueBg,
           border: `1px solid #BFDBFE`,
         }}>
           <IconShield size={15} color={C.blue} />
@@ -456,7 +440,7 @@ export default function AdminClient({
             <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>
               Gestion de la plateforme
             </h1>
-            <p style={{ margin: '5px 0 0', fontSize: 13, color: C.slate }}>
+            <p style={{ margin: '5px 0 0', fontSize: 13, color: C.muted }}>
               Gérez les entreprises clientes et consultez l'historique des actions.
             </p>
           </div>
@@ -467,7 +451,7 @@ export default function AdminClient({
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '10px 18px',
               borderRadius: 9, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', flexShrink: 0, fontFamily: FONT,
+              cursor: 'pointer', flexShrink: 0, fontFamily: F.body,
             }}
           >
             <IconPlus size={14} color="#fff" />
@@ -479,7 +463,7 @@ export default function AdminClient({
         {successMsg && (
           <div style={{
             padding: '12px 16px', borderRadius: 9, marginBottom: 20,
-            background: C.greenL, border: `1px solid #BBF7D0`,
+            background: C.greenBg, border: `1px solid #BBF7D0`,
             fontSize: 13, fontWeight: 500, color: C.green,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
@@ -494,9 +478,9 @@ export default function AdminClient({
         {/* ── KPI cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {[
-            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber, bg: C.amberL },
-            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.blue,  bg: C.blueL },
-            { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenL },
+            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber, bg: C.goldBg },
+            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.blue,  bg: C.blueBg },
+            { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenBg },
           ].map(({ label, value, Icon, accent, bg }) => (
             <div key={label} className="card-hover" style={{
               background: C.surface, borderRadius: 14, overflow: 'hidden',
@@ -509,7 +493,7 @@ export default function AdminClient({
                 </div>
                 <div>
                   <div className="num" style={{ fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>{value}</div>
-                  <div style={{ fontSize: 13, color: C.slate, marginTop: 2 }}>{label}</div>
+                  <div style={{ fontSize: 13, color: C.muted, marginTop: 2 }}>{label}</div>
                 </div>
               </div>
             </div>
@@ -530,14 +514,14 @@ export default function AdminClient({
                 padding: '8px 16px', borderRadius: 7,
                 background: activeTab === id ? C.surface : 'transparent',
                 border: activeTab === id ? `1px solid ${C.border}` : '1px solid transparent',
-                color: activeTab === id ? C.ink : C.slate,
+                color: activeTab === id ? C.ink : C.muted,
                 fontSize: 13, fontWeight: activeTab === id ? 600 : 400,
-                cursor: 'pointer', fontFamily: FONT,
+                cursor: 'pointer', fontFamily: F.body,
                 boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                 transition: 'all 0.15s',
               }}
             >
-              <Icon size={14} color={activeTab === id ? C.blue : C.slate} />
+              <Icon size={14} color={activeTab === id ? C.blue : C.muted} />
               {label}
             </button>
           ))}
@@ -562,7 +546,7 @@ export default function AdminClient({
                       {['Entreprise', 'Propriétaire', 'Utilisateurs', 'Produits', 'Créée le', 'Statut', ''].map(h => (
                         <th key={h} style={{
                           padding: '10px 16px', textAlign: 'left',
-                          fontSize: 12, fontWeight: 700, color: C.slate,
+                          fontSize: 12, fontWeight: 700, color: C.muted,
                           letterSpacing: '0.10em', textTransform: 'uppercase',
                           borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
                         }}>
@@ -585,7 +569,7 @@ export default function AdminClient({
                             <div>
                               <div style={{ fontSize: 14, fontWeight: 700, color: C.ink }}>{company.name}</div>
                               <div style={{
-                                fontSize: 12, color: C.slate, marginTop: 2,
+                                fontSize: 12, color: C.muted, marginTop: 2,
                                 fontFamily: 'monospace', background: C.bg,
                                 border: `1px solid ${C.border}`,
                                 padding: '1px 6px', borderRadius: 4, display: 'inline-block',
@@ -624,13 +608,13 @@ export default function AdminClient({
                         </td>
 
                         {/* Created */}
-                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap', fontSize: 13, color: C.slate }}>
+                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap', fontSize: 13, color: C.muted }}>
                           {fmtDate(company.created_at)}
                         </td>
 
                         {/* Status */}
                         <td style={{ padding: '14px 16px' }}>
-                          <Badge color={company.is_active ? C.green : C.red} bg={company.is_active ? C.greenL : C.redL}>
+                          <Badge color={company.is_active ? C.green : C.red} bg={company.is_active ? C.greenBg : C.redBg}>
                             {company.is_active ? 'Actif' : 'Suspendu'}
                           </Badge>
                         </td>
@@ -643,9 +627,9 @@ export default function AdminClient({
                               display: 'inline-flex', alignItems: 'center', gap: 5,
                               padding: '6px 12px',
                               border: `1px solid ${C.border}`, borderRadius: 7,
-                              background: C.surface, color: C.slate,
+                              background: C.surface, color: C.muted,
                               fontSize: 12, fontWeight: 500,
-                              cursor: 'pointer', fontFamily: FONT,
+                              cursor: 'pointer', fontFamily: F.body,
                             }}
                           >
                             Détails <IconChevronRight size={12} color={C.muted} />
@@ -679,7 +663,7 @@ export default function AdminClient({
                 style={{
                   padding: '6px 10px', borderRadius: 7,
                   border: `1px solid ${C.border}`, background: '#FFFFFF',
-                  fontSize: 12.5, color: C.ink, fontFamily: FONT,
+                  fontSize: 12.5, color: C.ink, fontFamily: F.body,
                   cursor: 'pointer', outline: 'none',
                 }}
               >
@@ -713,12 +697,12 @@ export default function AdminClient({
                   </thead>
                   <tbody>
                     {filteredAudit.map((entry, i) => {
-                      const meta    = ACTION_META[entry.action_type] ?? { label: entry.action_type, color: C.slate, bg: C.bg }
+                      const meta    = ACTION_META[entry.action_type] ?? { label: entry.action_type, color: C.muted, bg: C.bg }
                       const company = getAffectedCompanyName(entry)
                       const detail  = getAuditDetail(entry)
                       return (
                         <tr key={entry.id} className="trow" style={{ borderBottom: i < filteredAudit.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-                          <td style={{ padding: '12px 16px', fontSize: 12.5, color: C.slate, whiteSpace: 'nowrap' }}>
+                          <td style={{ padding: '12px 16px', fontSize: 12.5, color: C.muted, whiteSpace: 'nowrap' }}>
                             {fmtDateTime(entry.created_at)}
                           </td>
                           <td style={{ padding: '12px 16px' }}>
@@ -727,7 +711,7 @@ export default function AdminClient({
                           <td style={{ padding: '12px 16px', fontSize: 13, color: C.ink, fontWeight: 500 }}>
                             {company}
                           </td>
-                          <td style={{ padding: '12px 16px', fontSize: 12.5, color: C.slate, maxWidth: 240 }}>
+                          <td style={{ padding: '12px 16px', fontSize: 12.5, color: C.muted, maxWidth: 240 }}>
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                               {detail}
                             </span>
@@ -770,7 +754,7 @@ export default function AdminClient({
           background: '#FDFCF9', zIndex: 501,
           boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
           display: 'flex', flexDirection: 'column',
-          fontFamily: FONT,
+          fontFamily: F.body,
         }}>
           <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
 
@@ -810,7 +794,7 @@ export default function AdminClient({
             {drawerError && (
               <div style={{
                 padding: '10px 14px', borderRadius: 8, marginBottom: 16,
-                background: C.redL, border: `1px solid #FECACA`,
+                background: C.redBg, border: `1px solid #FECACA`,
                 fontSize: 12.5, color: C.red,
               }}>
                 {drawerError}
@@ -826,7 +810,7 @@ export default function AdminClient({
             }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 5 }}>Statut</div>
-                <Badge color={drawerCompany.is_active ? C.green : C.red} bg={drawerCompany.is_active ? C.greenL : C.redL}>
+                <Badge color={drawerCompany.is_active ? C.green : C.red} bg={drawerCompany.is_active ? C.greenBg : C.redBg}>
                   {drawerCompany.is_active ? 'Actif' : 'Suspendu'}
                 </Badge>
               </div>
@@ -837,11 +821,11 @@ export default function AdminClient({
                     padding: '7px 14px',
                     border: `1px solid ${drawerCompany.is_active ? '#FECACA' : C.orange}`,
                     borderRadius: 8,
-                    background: drawerCompany.is_active ? C.redL : C.orangeL,
+                    background: drawerCompany.is_active ? C.redBg : C.orangeBg,
                     color: drawerCompany.is_active ? C.red : C.orange,
                     fontSize: 12.5, fontWeight: 600,
                     cursor: toggling === drawerCompany.id ? 'wait' : 'pointer',
-                    fontFamily: FONT, opacity: toggling === drawerCompany.id ? 0.6 : 1,
+                    fontFamily: F.body, opacity: toggling === drawerCompany.id ? 0.6 : 1,
                   }}
                 >
                   {toggling === drawerCompany.id ? '…' : drawerCompany.is_active ? 'Suspendre l\'entreprise' : 'Réactiver l\'entreprise'}
@@ -851,7 +835,7 @@ export default function AdminClient({
             {/* ── Owner section ── */}
             <div style={{ marginBottom: 24 }}>
               <div style={{
-                fontSize: 12, fontWeight: 700, color: C.slate,
+                fontSize: 12, fontWeight: 700, color: C.muted,
                 letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
               }}>
                 Propriétaire
@@ -868,9 +852,9 @@ export default function AdminClient({
                       <UserInitials name={owner.full_name} size={34} />
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 13.5, fontWeight: 600, color: C.ink }}>{owner.full_name}</div>
-                        <div style={{ fontSize: 12, color: C.slate, marginTop: 1 }}>{owner.email}</div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 1 }}>{owner.email}</div>
                       </div>
-                      <Badge color={owner.is_active ? C.green : C.red} bg={owner.is_active ? C.greenL : C.redL}>
+                      <Badge color={owner.is_active ? C.green : C.red} bg={owner.is_active ? C.greenBg : C.redBg}>
                         {owner.is_active ? 'Actif' : 'Inactif'}
                       </Badge>
                     </div>
@@ -881,9 +865,9 @@ export default function AdminClient({
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           padding: '7px 12px',
                           border: `1px solid ${C.border}`, borderRadius: 7,
-                          background: C.blueL, color: C.blue,
+                          background: C.blueBg, color: C.blue,
                           fontSize: 12, fontWeight: 600,
-                          cursor: 'pointer', fontFamily: FONT,
+                          cursor: 'pointer', fontFamily: F.body,
                         }}
                       >
                         <IconKey size={12} color={C.blue} />
@@ -896,11 +880,11 @@ export default function AdminClient({
                           flex: 1, padding: '7px 12px',
                           border: `1px solid ${owner.is_active ? '#FECACA' : C.orange}`,
                           borderRadius: 7,
-                          background: owner.is_active ? C.redL : C.orangeL,
+                          background: owner.is_active ? C.redBg : C.orangeBg,
                           color: owner.is_active ? C.red : C.orange,
                           fontSize: 12, fontWeight: 600,
                           cursor: togglingUser === owner.id ? 'wait' : 'pointer',
-                          fontFamily: FONT, opacity: togglingUser === owner.id ? 0.6 : 1,
+                          fontFamily: F.body, opacity: togglingUser === owner.id ? 0.6 : 1,
                         }}
                       >
                         {togglingUser === owner.id ? '…' : owner.is_active ? 'Suspendre' : 'Réactiver'}
@@ -929,7 +913,7 @@ export default function AdminClient({
           position: 'fixed', inset: 0,
           background: 'rgba(15,23,42,0.6)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 600, padding: 20, backdropFilter: 'blur(3px)', fontFamily: FONT,
+          zIndex: 600, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
         }}
       >
         <div className="modal-panel" style={{
@@ -945,7 +929,7 @@ export default function AdminClient({
           }}>
             <div style={{
               width: 36, height: 36, borderRadius: 9,
-              background: C.blueL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              background: C.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
               <IconKey size={16} color={C.blue} />
             </div>
@@ -957,7 +941,7 @@ export default function AdminClient({
 
           {/* Body */}
           <div style={{ padding: '20px 22px' }}>
-            <p style={{ margin: '0 0 16px', fontSize: 13, color: C.slate, lineHeight: 1.6 }}>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
               Définissez un nouveau mot de passe temporaire. Communiquez-le au client via un canal sécurisé et invitez-le à le modifier dès sa prochaine connexion.
             </p>
 
@@ -996,7 +980,7 @@ export default function AdminClient({
             {resetError && (
               <div style={{
                 padding: '10px 14px', borderRadius: 8, marginBottom: 14,
-                background: C.redL, border: `1px solid #FECACA`,
+                background: C.redBg, border: `1px solid #FECACA`,
                 fontSize: 13, color: C.red,
               }}>
                 {resetError}
@@ -1014,7 +998,7 @@ export default function AdminClient({
                   border: 'none', borderRadius: 9,
                   fontSize: 13.5, fontWeight: 700,
                   cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT,
+                  fontFamily: F.body,
                 }}
               >
                 {resetLoading ? 'En cours…' : 'Confirmer'}
@@ -1024,10 +1008,10 @@ export default function AdminClient({
                 onClick={() => { setResetTarget(null); setResetError(null); setResetPwd('') }}
                 disabled={resetLoading}
                 style={{
-                  padding: '11px 18px', background: C.bg, color: C.slate,
+                  padding: '11px 18px', background: C.bg, color: C.muted,
                   border: `1px solid ${C.border}`, borderRadius: 9,
                   fontSize: 13, fontWeight: 500,
-                  cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: FONT,
+                  cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: F.body,
                 }}
               >
                 Annuler
@@ -1048,7 +1032,7 @@ export default function AdminClient({
           position: 'fixed', inset: 0,
           background: 'rgba(15,23,42,0.55)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 700, padding: 20, backdropFilter: 'blur(3px)', fontFamily: FONT,
+          zIndex: 700, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
         }}
       >
         <div className="modal-panel" style={{
@@ -1065,7 +1049,7 @@ export default function AdminClient({
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: C.blueL, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 36, height: 36, borderRadius: 9, background: C.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <IconBuilding size={16} color={C.blue} />
               </div>
               <div>
@@ -1147,17 +1131,17 @@ export default function AdminClient({
             </div>
 
             {formError && (
-              <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 16, background: C.redL, border: `1px solid #FECACA`, fontSize: 13, color: C.red, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ padding: '10px 14px', borderRadius: 8, marginBottom: 16, background: C.redBg, border: `1px solid #FECACA`, fontSize: 13, color: C.red, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
                 <span style={{ flexShrink: 0, marginTop: 1 }}>⚠</span>
                 {formError}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="submit" className="btn-meram" disabled={submitting} style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', fontFamily: FONT }}>
+              <button type="submit" className="btn-meram" disabled={submitting} style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body }}>
                 {submitting ? 'Création en cours…' : 'Créer l\'entreprise'}
               </button>
-              <button type="button" className="btn-ghost" onClick={() => !submitting && setShowModal(false)} disabled={submitting} style={{ padding: '11px 18px', background: C.bg, color: C.slate, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: FONT }}>
+              <button type="button" className="btn-ghost" onClick={() => !submitting && setShowModal(false)} disabled={submitting} style={{ padding: '11px 18px', background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: F.body }}>
                 Annuler
               </button>
             </div>

@@ -12,16 +12,7 @@ import {
   Tooltip, ResponsiveContainer,
 } from 'recharts'
 
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
@@ -39,21 +30,21 @@ const STATUS_LABELS: Record<string, string> = {
   draft:      'Brouillon',
 }
 
-const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
-  delivered:  { bg: C.greenL,  color: C.green },
-  cancelled:  { bg: C.redL,    color: C.red },
-  confirmed:  { bg: C.blueL,   color: C.blue },
-  preparing:  { bg: C.orangeL, color: C.orange },
-  ready:      { bg: C.greenL,  color: C.green },
+const STATUS_STYLE: Record<string, { bg: string; color: string; bd: string }> = {
+  delivered:  { bg: C.greenBg,  color: C.green,  bd: C.greenBd  },
+  cancelled:  { bg: C.redBg,    color: C.red,    bd: C.redBd    },
+  confirmed:  { bg: C.blueBg,   color: C.blue,   bd: C.blueBd   },
+  preparing:  { bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  ready:      { bg: C.greenBg,  color: C.green,  bd: C.greenBd  },
 }
 
 type Tab = 'overview' | 'sales' | 'products' | 'vendors' | 'audit'
 
 const inputStyle: React.CSSProperties = {
-  padding: '8px 12px', borderRadius: 8,
-  border: `1.5px solid ${C.border}`, fontSize: 13,
-  color: C.ink, outline: 'none',
-  background: C.surface, fontFamily: FONT,
+  padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md,
+  border: `1.5px solid ${C.border}`, fontSize: F.sm,
+  color: C.text, outline: 'none',
+  background: C.bg, fontFamily: F.body,
 }
 
 export default function ReportsClient({
@@ -299,12 +290,12 @@ export default function ReportsClient({
   // ── Table heading style ────────────────────────────────────────────────
   const TH: React.CSSProperties = {
     padding: '13px 14px', textAlign: 'left',
-    fontSize: 12, fontWeight: 700, color: C.slate,
+    fontSize: 12, fontWeight: 700, color: C.muted,
     textTransform: 'uppercase', letterSpacing: '0.06em',
-    fontFamily: FONT, background: C.bg,
+    fontFamily: F.body, background: C.bg,
   }
   const TD: React.CSSProperties = {
-    padding: '12px 14px', fontFamily: FONT,
+    padding: '12px 14px', fontFamily: F.body,
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -316,10 +307,10 @@ export default function ReportsClient({
         alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
             Rapports
           </h1>
-          <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
             {filtered.length} vente{filtered.length !== 1 ? 's' : ''} sur les{' '}
             {filterDays} derniers jours
           </p>
@@ -330,7 +321,7 @@ export default function ReportsClient({
           style={{ padding: '10px 18px',
             border: 'none', borderRadius: 9,
             fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <path d="M6.5 1v7.5M3.5 6l3 3 3-3M1.5 10v1.5h10V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -349,9 +340,9 @@ export default function ReportsClient({
               style={{ padding: '7px 14px', borderRadius: 100,
                 fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 background: filterDays === val ? C.blue : C.bg,
-                color:      filterDays === val ? C.surface : C.slate,
+                color:      filterDays === val ? C.surface : C.muted,
                 border: `1.5px solid ${filterDays === val ? C.blue : C.border}`,
-                fontFamily: FONT }}>
+                fontFamily: F.body }}>
               {label}
             </button>
           ))}
@@ -398,8 +389,8 @@ export default function ReportsClient({
             style={{ padding: '8px 18px', borderRadius: 100,
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
               background: activeTab === id ? C.blue : 'transparent',
-              color:      activeTab === id ? C.surface : C.slate,
-              border: 'none', fontFamily: FONT,
+              color:      activeTab === id ? C.surface : C.muted,
+              border: 'none', fontFamily: F.body,
               transition: 'all 0.15s ease' }}>
             {label}
           </button>
@@ -423,13 +414,13 @@ export default function ReportsClient({
                 padding: '22px 24px',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
-                  marginBottom: 8, fontFamily: FONT }}>
+                  marginBottom: 8, fontFamily: F.body }}>
                   Chiffre d'affaires — {filterDays} derniers jours
                 </div>
                 <div style={{ fontSize: 36, fontWeight: 900, color: C.ink,
-                  letterSpacing: '-0.03em', lineHeight: 1, fontFamily: FONT,
+                  letterSpacing: '-0.03em', lineHeight: 1, fontFamily: F.body,
                   marginBottom: 14 }}>
                   {fmt(kpis.totalCA)}
                 </div>
@@ -437,10 +428,10 @@ export default function ReportsClient({
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between',
                     alignItems: 'center', marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                    <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                       Encaissé : <strong style={{ color: C.green }}>{fmt(kpis.totalEncaisse)}</strong>
                     </span>
-                    <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                    <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                       Créances : <strong style={{
                         color: kpis.totalEnAttente > 0 ? C.orange : C.muted
                       }}>{fmt(kpis.totalEnAttente)}</strong>
@@ -454,7 +445,7 @@ export default function ReportsClient({
                       transition: 'width 0.6s ease',
                     }} />
                   </div>
-                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4, fontFamily: FONT }}>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 4, fontFamily: F.body }}>
                     {encRate.toFixed(0)} % encaissé
                   </div>
                 </div>
@@ -477,7 +468,7 @@ export default function ReportsClient({
                 `dont ${kpis.delivered} livrée${kpis.delivered !== 1 ? 's' : ''}`],
               ['Panier moyen',
                 fmt(kpis.avgBasket),
-                C.ink, C.slate,
+                C.ink, C.muted,
                 'Par transaction'],
               ['Taux annulation',
                 kpis.cancelRate.toFixed(1) + ' %',
@@ -491,16 +482,16 @@ export default function ReportsClient({
                   border: `1px solid ${C.border}`, padding: '14px 16px',
                   borderLeft: `3px solid ${accent}`,
                 }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
                     textTransform: 'uppercase', letterSpacing: '0.07em',
-                    marginBottom: 6, fontFamily: FONT }}>
+                    marginBottom: 6, fontFamily: F.body }}>
                     {label}
                   </div>
                   <div style={{ fontSize: 20, fontWeight: 900, color,
-                    letterSpacing: '-0.02em', fontFamily: FONT, marginBottom: 3 }}>
+                    letterSpacing: '-0.02em', fontFamily: F.body, marginBottom: 3 }}>
                     {value}
                   </div>
-                  <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                  <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                     {hint}
                   </div>
                 </div>
@@ -510,15 +501,15 @@ export default function ReportsClient({
           {/* Daily CA chart */}
           <div style={{ background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`, padding: '20px 24px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
               textTransform: 'uppercase', letterSpacing: '0.08em',
-              marginBottom: 16, fontFamily: FONT }}>
+              marginBottom: 16, fontFamily: F.body }}>
               Chiffre d'affaires journalier
             </div>
             {dailyData.length === 0 ? (
               <div style={{ height: 180, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                color: C.muted, fontSize: 13, fontFamily: FONT }}>
+                color: C.muted, fontSize: 13, fontFamily: F.body }}>
                 Aucune donnée sur la période
               </div>
             ) : (
@@ -541,7 +532,7 @@ export default function ReportsClient({
                   <Tooltip
                     formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
-                      fontFamily: FONT, fontSize: 12 }} />
+                      fontFamily: F.body, fontSize: 12 }} />
                   <Area type="monotone" dataKey="ca"
                     stroke={C.blue} strokeWidth={2} fill="url(#caGrad)" />
                 </AreaChart>
@@ -554,15 +545,15 @@ export default function ReportsClient({
           {/* Boutique bar chart */}
           <div style={{ background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`, padding: '20px 24px' }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
               textTransform: 'uppercase', letterSpacing: '0.08em',
-              marginBottom: 16, fontFamily: FONT }}>
+              marginBottom: 16, fontFamily: F.body }}>
               CA par boutique
             </div>
             {boutiqueData.length === 0 ? (
               <div style={{ height: 140, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
-                color: C.muted, fontSize: 13, fontFamily: FONT }}>
+                color: C.muted, fontSize: 13, fontFamily: F.body }}>
                 Aucune donnée
               </div>
             ) : (
@@ -580,7 +571,7 @@ export default function ReportsClient({
                   <Tooltip
                     formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
-                      fontFamily: FONT, fontSize: 12 }} />
+                      fontFamily: F.body, fontSize: 12 }} />
                   <Bar dataKey="ca" fill={C.blue} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -597,7 +588,7 @@ export default function ReportsClient({
           border: `1px solid ${C.border}`, overflow: 'hidden' }}>
           {filtered.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center',
-              color: C.muted, fontSize: 14, fontFamily: FONT }}>
+              color: C.muted, fontSize: 14, fontFamily: F.body }}>
               Aucune vente sur la période sélectionnée.
             </div>
           ) : (
@@ -651,7 +642,7 @@ export default function ReportsClient({
                             <span style={{ display: 'inline-flex', alignItems: 'center',
                               gap: 5, fontSize: 11, fontWeight: 600,
                               padding: '3px 10px', borderRadius: 100,
-                              background: ss.bg, color: ss.color, fontFamily: FONT }}>
+                              background: ss.bg, color: ss.color, fontFamily: F.body }}>
                               <span style={{ width: 5, height: 5, borderRadius: '50%',
                                 background: ss.color, flexShrink: 0 }} />
                               {STATUS_LABELS[s.status] ?? s.status}
@@ -678,14 +669,14 @@ export default function ReportsClient({
                   })}
                 </tbody>
                 <tfoot>
-                  <tr style={{ background: C.navyDark }}>
+                  <tr style={{ background: C.amberDim }}>
                     <td colSpan={5} style={{ padding: '13px 14px',
                       fontSize: 12, fontWeight: 700,
-                      color: 'rgba(255,255,255,0.55)', fontFamily: FONT }}>
+                      color: 'rgba(255,255,255,0.55)', fontFamily: F.body }}>
                       Total ({filtered.filter(s => s.status !== 'cancelled').length} ventes)
                     </td>
                     <td style={{ padding: '13px 14px', fontSize: 15,
-                      fontWeight: 900, color: C.surface, fontFamily: FONT }}>
+                      fontWeight: 900, color: C.surface, fontFamily: F.body }}>
                       {fmt(kpis.totalCA)}
                     </td>
                     <td colSpan={2} />
@@ -703,7 +694,7 @@ export default function ReportsClient({
           border: `1px solid ${C.border}`, overflow: 'hidden' }}>
           {productData.length === 0 ? (
             <div style={{ padding: 48, textAlign: 'center',
-              color: C.muted, fontSize: 14, fontFamily: FONT }}>
+              color: C.muted, fontSize: 14, fontFamily: F.body }}>
               Aucune donnée produit sur la période.
             </div>
           ) : (
@@ -774,7 +765,7 @@ export default function ReportsClient({
           {vendorData.length === 0 ? (
             <div style={{ background: C.surface, borderRadius: 12,
               border: `1px solid ${C.border}`, padding: 48,
-              textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: FONT }}>
+              textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: F.body }}>
               Aucune donnée vendeur sur la période.
             </div>
           ) : vendorData.map((v, idx) => {
@@ -791,15 +782,15 @@ export default function ReportsClient({
                   alignItems: 'center', marginBottom: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ fontSize: 20, fontWeight: 900, minWidth: 32,
-                      color: accent, fontFamily: FONT }}>
+                      color: accent, fontFamily: F.body }}>
                       #{idx + 1}
                     </span>
                     <div>
                       <div style={{ fontSize: 15, fontWeight: 700,
-                        color: C.ink, fontFamily: FONT }}>
+                        color: C.ink, fontFamily: F.body }}>
                         {v.name}
                       </div>
-                      <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                      <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                         {v.ventes} vente{v.ventes !== 1 ? 's' : ''} ·{' '}
                         panier moy. {fmt(v.avgBasket)}
                       </div>
@@ -807,10 +798,10 @@ export default function ReportsClient({
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 18, fontWeight: 900, color: C.ink,
-                      letterSpacing: '-0.02em', fontFamily: FONT }}>
+                      letterSpacing: '-0.02em', fontFamily: F.body }}>
                       {fmt(v.ca)}
                     </div>
-                    <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                    <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                       {share.toFixed(1)} % du CA total
                     </div>
                   </div>
@@ -840,13 +831,13 @@ export default function ReportsClient({
 
 function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
   const fmt = (n: number) => fmtCurrency(n, currency)
-  const FONT2 = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+  // font alias removed — use F.body directly
   return (
     <div style={{ background: C.bg, borderRadius: 8,
       padding: '14px 16px', border: `1px solid ${C.border}` }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
         textTransform: 'uppercase', letterSpacing: '0.07em',
-        marginBottom: 10, fontFamily: FONT2 }}>
+        marginBottom: 10, fontFamily: F.body }}>
         Détail de la vente
       </div>
       <div style={{ overflowX: 'auto' }}>
@@ -856,9 +847,9 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
             <tr>
               {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
                 <th key={h} style={{ textAlign: 'left', fontSize: 12,
-                  fontWeight: 700, color: C.slate,
+                  fontWeight: 700, color: C.muted,
                   textTransform: 'uppercase', letterSpacing: '0.05em',
-                  padding: '0 10px 8px 0', fontFamily: FONT2 }}>
+                  padding: '0 10px 8px 0', fontFamily: F.body }}>
                   {h}
                 </th>
               ))}
@@ -893,23 +884,23 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
               return (
                 <tr key={item.id}>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
-                    fontWeight: 600, color: C.ink, fontFamily: FONT2 }}>
+                    fontWeight: 600, color: C.ink, fontFamily: F.body }}>
                     {item.products?.name ?? '—'}
                   </td>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 11,
-                    color: C.muted, fontFamily: FONT2 }}>
+                    color: C.muted, fontFamily: F.body }}>
                     {item.products?.reference_code ?? '—'}
                   </td>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
-                    color: C.ink, fontFamily: FONT2 }}>
+                    color: C.ink, fontFamily: F.body }}>
                     {qtyCell}
                   </td>
                   <td style={{ padding: '7px 10px 7px 0', fontSize: 13,
-                    color: C.muted, fontFamily: FONT2 }}>
+                    color: C.muted, fontFamily: F.body }}>
                     {new Intl.NumberFormat('fr-FR').format(item.unit_price_per_m2)} {priceLabel}
                   </td>
                   <td style={{ padding: '7px 0', fontSize: 13,
-                    fontWeight: 700, color: C.ink, fontFamily: FONT2 }}>
+                    fontWeight: 700, color: C.ink, fontFamily: F.body }}>
                     {fmt(item.total_price)}
                   </td>
                 </tr>
@@ -921,7 +912,7 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
       <div style={{ display: 'flex', justifyContent: 'space-between',
         alignItems: 'center', borderTop: `1px solid ${C.border}`,
         paddingTop: 10 }}>
-        <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT2 }}>
+        <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
           {sale.customer_phone && <span>{sale.customer_phone}</span>}
           {sale.notes && (
             <span style={{ marginLeft: sale.customer_phone ? 16 : 0 }}>
@@ -930,7 +921,7 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
           )}
           {!sale.customer_phone && !sale.notes && <span>Aucune note</span>}
         </div>
-        <div style={{ fontSize: 15, fontWeight: 900, color: C.ink, fontFamily: FONT2 }}>
+        <div style={{ fontSize: 15, fontWeight: 900, color: C.ink, fontFamily: F.body }}>
           Total : {fmt(sale.total_amount)}
         </div>
       </div>
@@ -940,26 +931,26 @@ function ReportSaleDetail({ sale, currency }: { sale: any; currency: string }) {
 
 // ── Audit Log Tab ─────────────────────────────────────────────────────────────
 const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  SALE_CREATED:              { label: 'Vente créée',             color: C.green,  bg: C.greenL },
-  SALE_CANCELLED:            { label: 'Vente annulée',           color: C.red,    bg: C.redL },
-  ORDER_PREPARING:           { label: 'Préparation commencée',   color: C.orange, bg: C.orangeL },
-  ORDER_READY:               { label: 'Commande prête',          color: C.green,  bg: C.greenL },
-  ORDER_DELIVERED:           { label: 'Livraison confirmée',     color: C.blue,   bg: C.blueL },
-  STOCK_REQUEST_SUBMITTED:   { label: 'Demande stock soumise',   color: C.gold,   bg: C.goldL },
-  STOCK_REQUEST_APPROVED:    { label: 'Demande stock approuvée', color: C.green,  bg: C.greenL },
-  STOCK_REQUEST_REJECTED:    { label: 'Demande stock rejetée',   color: C.red,    bg: C.redL },
-  PRODUCT_CREATED:           { label: 'Produit créé',            color: C.blue,   bg: C.blueL },
-  PRODUCT_UPDATED:           { label: 'Produit modifié',         color: C.blue,   bg: C.blueL },
-  USER_CREATED:              { label: 'Utilisateur créé',        color: C.blue,   bg: C.blueL },
-  USER_ACTIVATED:            { label: 'Utilisateur activé',      color: C.green,  bg: C.greenL },
-  USER_DEACTIVATED:          { label: 'Utilisateur désactivé',   color: C.red,    bg: C.redL },
-  USER_UPDATED:              { label: 'Utilisateur modifié',     color: C.slate,  bg: C.bg },
-  PASSWORD_RESET:            { label: 'Mot de passe réinitialisé', color: C.orange, bg: C.orangeL },
-  BOUTIQUE_ACTIVATED:        { label: 'Boutique activée',        color: C.green,  bg: C.greenL },
-  BOUTIQUE_DEACTIVATED:      { label: 'Boutique désactivée',     color: C.red,    bg: C.redL },
-  FLOOR_PRICE_VIOLATION_ATTEMPT: { label: 'Tentative prix plancher', color: C.red, bg: C.redL },
-  BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.blue,   bg: C.blueL },
-  PAYMENT_RECORDED:              { label: 'Paiement enregistré',     color: C.green,  bg: C.greenL },
+  SALE_CREATED:              { label: 'Vente créée',             color: C.green,  bg: C.greenBg },
+  SALE_CANCELLED:            { label: 'Vente annulée',           color: C.red,    bg: C.redBg },
+  ORDER_PREPARING:           { label: 'Préparation commencée',   color: C.orange, bg: C.orangeBg },
+  ORDER_READY:               { label: 'Commande prête',          color: C.green,  bg: C.greenBg },
+  ORDER_DELIVERED:           { label: 'Livraison confirmée',     color: C.blue,   bg: C.blueBg },
+  STOCK_REQUEST_SUBMITTED:   { label: 'Demande stock soumise',   color: C.gold,   bg: C.goldBg },
+  STOCK_REQUEST_APPROVED:    { label: 'Demande stock approuvée', color: C.green,  bg: C.greenBg },
+  STOCK_REQUEST_REJECTED:    { label: 'Demande stock rejetée',   color: C.red,    bg: C.redBg },
+  PRODUCT_CREATED:           { label: 'Produit créé',            color: C.blue,   bg: C.blueBg },
+  PRODUCT_UPDATED:           { label: 'Produit modifié',         color: C.blue,   bg: C.blueBg },
+  USER_CREATED:              { label: 'Utilisateur créé',        color: C.blue,   bg: C.blueBg },
+  USER_ACTIVATED:            { label: 'Utilisateur activé',      color: C.green,  bg: C.greenBg },
+  USER_DEACTIVATED:          { label: 'Utilisateur désactivé',   color: C.red,    bg: C.redBg },
+  USER_UPDATED:              { label: 'Utilisateur modifié',     color: C.muted,  bg: C.bg },
+  PASSWORD_RESET:            { label: 'Mot de passe réinitialisé', color: C.orange, bg: C.orangeBg },
+  BOUTIQUE_ACTIVATED:        { label: 'Boutique activée',        color: C.green,  bg: C.greenBg },
+  BOUTIQUE_DEACTIVATED:      { label: 'Boutique désactivée',     color: C.red,    bg: C.redBg },
+  FLOOR_PRICE_VIOLATION_ATTEMPT: { label: 'Tentative prix plancher', color: C.red, bg: C.redBg },
+  BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.blue,   bg: C.blueBg },
+  PAYMENT_RECORDED:              { label: 'Paiement enregistré',     color: C.green,  bg: C.greenBg },
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -1098,7 +1089,7 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
 
   const inputS: React.CSSProperties = {
     height: 32, padding: '0 10px', border: `1px solid ${C.border}`,
-    borderRadius: 6, fontSize: 12, fontFamily: FONT,
+    borderRadius: 6, fontSize: 12, fontFamily: F.body,
     color: C.ink, background: C.bg, outline: 'none',
   }
 
@@ -1138,7 +1129,7 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
           onChange={e => setDateTo(e.target.value)}
           style={{ ...inputS, flex: '0 0 auto' }}
         />
-        <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT, marginLeft: 4 }}>
+        <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body, marginLeft: 4 }}>
           {filtered.length} entrée{filtered.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -1151,7 +1142,7 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
         overflow: 'hidden',
       }}>
         {filtered.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', fontSize: 14, color: C.muted, fontFamily: FONT }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', fontSize: 14, color: C.muted, fontFamily: F.body }}>
             Aucune entrée trouvée.
           </div>
         ) : (
@@ -1165,7 +1156,7 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
                       fontSize: 11, fontWeight: 600, color: C.muted,
                       textTransform: 'uppercase', letterSpacing: '0.07em',
                       borderBottom: `1.5px solid ${C.border}`,
-                      whiteSpace: 'nowrap', fontFamily: FONT,
+                      whiteSpace: 'nowrap', fontFamily: F.body,
                     }}>
                       {h}
                     </th>
@@ -1174,11 +1165,11 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
               </thead>
               <tbody>
                 {filtered.map((log: any) => {
-                  const cfg = ACTION_CONFIG[log.action_type] ?? { label: log.action_type, color: C.slate, bg: C.bg }
+                  const cfg = ACTION_CONFIG[log.action_type] ?? { label: log.action_type, color: C.muted, bg: C.bg }
                   const ts = new Date(log.created_at)
                   return (
                     <tr key={log.id} style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.slate, whiteSpace: 'nowrap', fontFamily: FONT, verticalAlign: 'middle' }}>
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.muted, whiteSpace: 'nowrap', fontFamily: F.body, verticalAlign: 'middle' }}>
                         {ts.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                         <br />
                         <span style={{ fontSize: 11, color: C.muted }}>
@@ -1189,18 +1180,18 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
                         <span style={{
                           display: 'inline-block', fontSize: 11, fontWeight: 600,
                           padding: '3px 10px', borderRadius: 100,
-                          background: cfg.bg, color: cfg.color, fontFamily: FONT,
+                          background: cfg.bg, color: cfg.color, fontFamily: F.body,
                         }}>
                           {cfg.label}
                         </span>
                       </td>
-                      <td style={{ padding: '11px 14px', fontSize: 13, color: C.ink, fontWeight: 600, fontFamily: FONT, verticalAlign: 'middle' }}>
+                      <td style={{ padding: '11px 14px', fontSize: 13, color: C.ink, fontWeight: 600, fontFamily: F.body, verticalAlign: 'middle' }}>
                         {log.users?.full_name ?? '—'}
                       </td>
-                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.muted, fontFamily: FONT, verticalAlign: 'middle' }}>
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.muted, fontFamily: F.body, verticalAlign: 'middle' }}>
                         {ROLE_LABELS[log.user_role_snapshot] ?? log.user_role_snapshot ?? '—'}
                       </td>
-                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.slate, fontFamily: FONT, verticalAlign: 'middle', maxWidth: 260 }}>
+                      <td style={{ padding: '11px 14px', fontSize: 12, color: C.muted, fontFamily: F.body, verticalAlign: 'middle', maxWidth: 260 }}>
                         {formatAuditDetails(log.action_type, log.data_after as Record<string, unknown> | null, currency)}
                       </td>
                     </tr>

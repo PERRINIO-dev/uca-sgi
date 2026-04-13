@@ -3,68 +3,49 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SH, SP, TR } from '@/lib/design-system'
 
 const FEATURES = [
-  { text: 'Suivi des ventes en temps réel' },
-  { text: 'Gestion multi-boutiques centralisée' },
-  { text: 'Rapports et analytiques avancés' },
-  { text: 'Contrôle des stocks entrepôt' },
+  'Suivi des ventes en temps réel',
+  'Gestion multi-boutiques centralisée',
+  'Rapports et analytiques avancés',
+  'Contrôle des stocks entrepôt',
 ]
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
+// ── Icons ──────────────────────────────────────────────────────────────────────
 function IconEye({ show }: { show: boolean }) {
   return show ? (
-    <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-      <path d="M2 2l13 13M7.07 7.1A2 2 0 009.9 9.93M4.5 4.55C3.17 5.5 2.1 6.87 1.5 8.5c1.2 3.1 4.2 5 7 5 1.3 0 2.56-.4 3.62-1.08M7 3.07A8.1 8.1 0 018.5 3c2.8 0 5.8 1.9 7 5a9.2 9.2 0 01-1.96 3.02"
-        stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 2l12 12M6.6 6.63A2 2 0 009.37 9.4M4.2 4.26C3.06 5.1 2.1 6.36 1.5 8c1.1 2.9 3.9 4.75 6.5 4.75 1.22 0 2.38-.37 3.36-1.02M6.5 2.8A7.7 7.7 0 018 2.5c2.6 0 5.4 1.85 6.5 4.75a8.6 8.6 0 01-1.82 2.82"
+        stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ) : (
-    <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
-      <ellipse cx="8.5" cy="8.5" rx="2.3" ry="2.3" stroke="currentColor" strokeWidth="1.4"/>
-      <path d="M1.5 8.5C2.7 5.4 5.7 3.5 8.5 3.5s5.8 1.9 7 5c-1.2 3.1-4.2 5-7 5s-5.8-1.9-7-5Z"
-        stroke="currentColor" strokeWidth="1.4"/>
-    </svg>
-  )
-}
-
-function IconWarning() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-      <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke="#D97706" strokeWidth="1.4" strokeLinejoin="round"/>
-      <path d="M8 6v3.5" stroke="#D97706" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="8" cy="11.5" r="0.75" fill="#D97706"/>
-    </svg>
-  )
-}
-
-function IconError() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-      <circle cx="8" cy="8" r="6.5" stroke="#DC2626" strokeWidth="1.4"/>
-      <path d="M8 5v3.5" stroke="#DC2626" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="8" cy="11" r="0.75" fill="#DC2626"/>
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <ellipse cx="8" cy="8" rx="2.2" ry="2.2" stroke="currentColor" strokeWidth="1.3"/>
+      <path d="M1.5 8C2.6 5.1 5.4 3.25 8 3.25s5.4 1.85 6.5 4.75C13.4 10.9 10.6 12.75 8 12.75S2.6 10.9 1.5 8Z"
+        stroke="currentColor" strokeWidth="1.3"/>
     </svg>
   )
 }
 
 function IconCheck() {
   return (
-    <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-      <path d="M1 4L3.5 6.5L9 1" stroke="#3B82F6" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="9" height="7" viewBox="0 0 9 7" fill="none" aria-hidden="true">
+      <path d="M1 3.5L3.2 5.8L8 1" stroke={C.amber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
 export default function LoginPage() {
-  const [email,    setEmail]    = useState('')
-  const [password, setPassword] = useState('')
-  const [showPwd,  setShowPwd]  = useState(false)
-  const [error,    setError]    = useState<string | null>(null)
-  const [loading,  setLoading]  = useState(false)
+  const [email,       setEmail]       = useState('')
+  const [password,    setPassword]    = useState('')
+  const [showPwd,     setShowPwd]     = useState(false)
+  const [error,       setError]       = useState<string | null>(null)
+  const [loading,     setLoading]     = useState(false)
   const [deactivated, setDeactivated] = useState(false)
+  const [shake,       setShake]       = useState(false)
+
   const router   = useRouter()
   const supabase = createClient()
 
@@ -73,16 +54,22 @@ export default function LoginPage() {
     if (params.get('raison') === 'desactive') setDeactivated(true)
   }, [])
 
+  const triggerShake = () => {
+    setShake(true)
+    setTimeout(() => setShake(false), 520)
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
+    if (authError) {
       setError('Identifiants incorrects. Vérifiez votre e-mail et mot de passe.')
       setLoading(false)
+      triggerShake()
       return
     }
 
@@ -97,6 +84,7 @@ export default function LoginPage() {
       await supabase.auth.signOut()
       setError('Ce compte a été désactivé. Contactez votre administrateur.')
       setLoading(false)
+      triggerShake()
       return
     }
 
@@ -112,359 +100,529 @@ export default function LoginPage() {
 
   return (
     <main style={{
-      minHeight: '100svh',
-      display: 'flex',
-      fontFamily: FONT,
-      background: '#0D1117',
-      overflowY: 'auto',
+      minHeight:  '100dvh',
+      display:    'flex',
+      fontFamily: F.body,
+      background: C.bg,
     }}>
-      {/* ── Left branding panel ── */}
+
+      {/* ════════════════════════════════════════════════════════════════════
+          LEFT — Brand panel
+      ════════════════════════════════════════════════════════════════════ */}
       <div style={{
-        flex: '0 0 460px',
-        background: 'linear-gradient(160deg, #0D1117 0%, #0F1923 40%, #0D1F3C 100%)',
-        display: 'flex',
-        flexDirection: 'column',
+        flex:           '0 0 460px',
+        background:     `linear-gradient(165deg, ${C.bgDeep} 0%, ${C.bg} 45%, #1E1912 100%)`,
+        display:        'flex',
+        flexDirection:  'column',
         justifyContent: 'space-between',
-        padding: '52px 52px 44px',
-        position: 'relative',
-        overflow: 'hidden',
-        borderRight: '1px solid rgba(255,255,255,0.04)',
+        padding:        '52px 48px 44px',
+        position:       'relative',
+        overflow:       'hidden',
+        borderRight:    `1px solid ${C.border}`,
       }}>
 
-        {/* Decorative glow blobs */}
+        {/* Dot grid */}
         <div style={{
-          position: 'absolute',
-          width: 360, height: 360,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%)',
-          top: -80, right: -80,
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute',
-          width: 280, height: 280,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%)',
-          bottom: 80, left: -60,
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute',
-          width: 1, height: '100%',
-          background: 'linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.12) 50%, transparent 100%)',
-          right: 0, top: 0,
-          pointerEvents: 'none',
+          position:        'absolute', inset: 0,
+          backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.028) 1px, transparent 1px)`,
+          backgroundSize:  '26px 26px',
+          pointerEvents:   'none',
         }} />
 
-        {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+        {/* Amber glow — lower left */}
+        <div style={{
+          position:     'absolute',
+          width: 340, height: 340, borderRadius: '50%',
+          background:   'radial-gradient(circle, rgba(245,158,11,0.07) 0%, transparent 68%)',
+          bottom: -80, left: -60,
+          pointerEvents:'none',
+        }} />
+
+        {/* Warm glow — top right */}
+        <div style={{
+          position:     'absolute',
+          width: 300, height: 300, borderRadius: '50%',
+          background:   'radial-gradient(circle, rgba(245,158,11,0.045) 0%, transparent 68%)',
+          top: -60, right: -40,
+          pointerEvents:'none',
+        }} />
+
+        {/* ── Logo ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: SP[3], position: 'relative' }}>
           <div style={{
-            width: 46, height: 46, borderRadius: 12,
-            background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0,
-            boxShadow: '0 6px 24px rgba(37,99,235,0.55)',
+            width: 44, height: 44, borderRadius: R.xl,
+            background:  `linear-gradient(145deg, ${C.amberActive} 0%, ${C.amber} 100%)`,
+            display:     'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink:  0,
+            boxShadow:   SH.amber,
           }}>
-            <svg width="24" height="20" viewBox="0 0 20 17" fill="none">
-              <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 15h16" stroke="white" strokeWidth="2.3" strokeLinecap="round"/>
+            <svg width="22" height="18" viewBox="0 0 20 17" fill="none" aria-hidden="true">
+              <path d="M2 15V2L10 9L18 2V15" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 15h16" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
             <div style={{
-              fontSize: 26, fontWeight: 900, color: 'white',
-              letterSpacing: '-0.04em', lineHeight: 1,
-              fontFamily: FONT,
+              fontSize:      F['2xl'],
+              fontWeight:    F.xbold,
+              fontFamily:    F.display,
+              color:         C.ink,
+              letterSpacing: F.lsTighter,
+              lineHeight:    F.lhNone,
             }}>
               MERAM
             </div>
             <div style={{
-              fontSize: 10, color: 'rgba(255,255,255,0.35)',
-              letterSpacing: '0.18em', marginTop: 4,
-              textTransform: 'uppercase', fontWeight: 600,
+              fontSize:      '10px',
+              color:         C.dim,
+              letterSpacing: F.lsWidest,
+              marginTop:     SP[1],
+              textTransform: 'uppercase',
+              fontWeight:    F.semibold,
             }}>
               Manage · Sell · Optimize
             </div>
           </div>
         </div>
 
-        {/* Main tagline */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '48px 0', position: 'relative' }}>
+        {/* ── Tagline ── */}
+        <div style={{
+          flex: 1,
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          padding: `${SP[12]} 0`,
+          position: 'relative',
+        }}>
           <h2 style={{
-            fontSize: 32, fontWeight: 800, color: 'white',
-            margin: '0 0 16px', letterSpacing: '-0.03em', lineHeight: 1.25,
-            fontFamily: FONT,
+            fontSize:      F['4xl'],
+            fontWeight:    F.xbold,
+            fontFamily:    F.display,
+            color:         C.ink,
+            margin:        `0 0 ${SP[4]}`,
+            letterSpacing: F.lsTighter,
+            lineHeight:    F.lhTight,
           }}>
             Pilotez votre<br />
             <span style={{
-              background: 'linear-gradient(135deg, #60A5FA 0%, #93C5FD 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              background:              `linear-gradient(135deg, ${C.amberHov} 0%, ${C.amber} 55%, #FCD34D 100%)`,
+              WebkitBackgroundClip:    'text',
+              WebkitTextFillColor:     'transparent',
+              backgroundClip:         'text',
             }}>
-              activité en temps réel.
+              activité.
             </span>
           </h2>
+
           <p style={{
-            fontSize: 14.5, color: 'rgba(255,255,255,0.52)',
-            margin: '0 0 36px', lineHeight: 1.75,
+            fontSize:   F.base,
+            color:      `rgba(250,250,249,0.48)`,
+            margin:     `0 0 ${SP[9]}`,
+            lineHeight: F.lhRelaxed,
+            maxWidth:   340,
           }}>
-            Plateforme centralisée de gestion commerciale — ventes, stocks, entrepôt et rapports réunis en un seul endroit.
+            Plateforme centralisée de gestion commerciale — ventes, stocks,
+            entrepôt et rapports réunis en un seul endroit.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {FEATURES.map(feat => (
-              <div key={feat.text} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: SP[3] }}>
+            {FEATURES.map((feat, i) => (
+              <div key={feat} style={{
+                display:        'flex', alignItems: 'center', gap: SP[3],
+                animation:      'fadeInUp 0.45s ease both',
+                animationDelay: `${0.12 + i * 0.08}s`,
+              }}>
                 <div style={{
-                  width: 22, height: 22, borderRadius: 6,
-                  background: 'rgba(37,99,235,0.22)',
-                  border: '1px solid rgba(59,130,246,0.28)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
+                  width: 20, height: 20, borderRadius: R.xs,
+                  background:  C.amberDim,
+                  border:      `1px solid rgba(245,158,11,0.30)`,
+                  display:     'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink:  0,
                 }}>
                   <IconCheck />
                 </div>
-                <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.72)', lineHeight: 1.4 }}>
-                  {feat.text}
+                <span style={{
+                  fontSize:   F.base,
+                  color:      `rgba(250,250,249,0.68)`,
+                  lineHeight: F.lhSnug,
+                }}>
+                  {feat}
                 </span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+        {/* ── Panel footer ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], position: 'relative' }}>
           <div style={{
-            width: 4, height: 4, borderRadius: '50%',
-            background: 'rgba(59,130,246,0.5)',
+            width: 3, height: 3, borderRadius: R.full,
+            background: `rgba(245,158,11,0.45)`,
           }} />
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)' }}>
+          <span style={{ fontSize: F.xs, color: C.dim }}>
             © {new Date().getFullYear()} MERAM · Tous droits réservés
           </span>
         </div>
       </div>
 
-      {/* ── Right form panel ── */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '48px 40px',
-        background: '#FDFCF9',
-        position: 'relative',
-      }}>
-
-        {/* Subtle top accent */}
+      {/* ════════════════════════════════════════════════════════════════════
+          RIGHT — Form panel
+      ════════════════════════════════════════════════════════════════════ */}
+      <div
+        className="login-right-panel"
+        style={{
+          flex:            1,
+          display:         'flex',
+          alignItems:      'center',
+          justifyContent:  'center',
+          padding:         `${SP[12]} ${SP[10]}`,
+          background:      C.surface,
+          position:        'relative',
+          overflowY:       'auto',
+        }}
+      >
+        {/* Amber top stripe */}
         <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: 'linear-gradient(90deg, #1D4ED8 0%, #3B82F6 50%, #60A5FA 100%)',
+          position:   'absolute', top: 0, left: 0, right: 0, height: 3,
+          background: C.amber,
         }} />
 
-        <div style={{ width: '100%', maxWidth: 380, animation: 'fadeInUp 0.38s ease forwards' }}>
+        {/* SR live region */}
+        <div role="status" aria-live="polite" aria-atomic="true"
+          style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap' }}>
+          {error ?? ''}
+        </div>
+
+        {/* Form container */}
+        <div
+          className="login-form-container"
+          style={{ width: '100%', maxWidth: 360, animation: 'fadeInUp 0.38s ease both' }}
+        >
+
+          {/* Mobile-only logo */}
+          <div className="mobile-logo" style={{ display: 'flex', alignItems: 'center', gap: SP[2], marginBottom: SP[7] }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: R.lg,
+              background:  `linear-gradient(145deg, ${C.amberActive}, ${C.amber})`,
+              display:     'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow:   SH.amberSm,
+            }}>
+              <svg width="17" height="14" viewBox="0 0 20 17" fill="none" aria-hidden="true">
+                <path d="M2 15V2L10 9L18 2V15" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 15h16" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <div style={{
+              fontSize:      F.xl,
+              fontWeight:    F.xbold,
+              fontFamily:    F.display,
+              color:         C.ink,
+              letterSpacing: F.lsTighter,
+            }}>
+              MERAM
+            </div>
+          </div>
 
           {/* Form header */}
-          <div style={{ marginBottom: 36 }}>
-            {/* Mobile-only logo */}
-            <div className="mobile-logo" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-              <div style={{
-                width: 34, height: 34, borderRadius: 9,
-                background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 3px 12px rgba(37,99,235,0.35)',
-              }}>
-                <svg width="18" height="15" viewBox="0 0 20 17" fill="none">
-                  <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 15h16" stroke="white" strokeWidth="2.3" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div style={{
-                fontSize: 20, fontWeight: 900, color: '#1C1917',
-                letterSpacing: '-0.03em',
-              }}>
-                MERAM
-              </div>
-            </div>
-
+          <div style={{ marginBottom: SP[8] }}>
             <h1 style={{
-              fontSize: 26, fontWeight: 800, color: '#1C1917',
-              margin: '0 0 8px', letterSpacing: '-0.03em',
+              fontSize:      F['2xl'],
+              fontWeight:    F.xbold,
+              fontFamily:    F.display,
+              color:         C.ink,
+              margin:        `0 0 ${SP[2]}`,
+              letterSpacing: F.lsTighter,
+              lineHeight:    F.lhTight,
             }}>
               Connexion
             </h1>
-            <p style={{ fontSize: 14, color: '#78716C', margin: 0, lineHeight: 1.6 }}>
+            <p style={{
+              fontSize:   F.base,
+              color:      C.muted,
+              margin:     0,
+              lineHeight: F.lhRelaxed,
+            }}>
               Entrez vos identifiants pour accéder à votre espace.
             </p>
           </div>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* ── Form ── */}
+          <form
+            onSubmit={handleLogin}
+            noValidate
+            className={shake ? 'login-shake' : ''}
+            style={{ display: 'flex', flexDirection: 'column', gap: SP[5] }}
+          >
 
             {/* Email */}
             <div>
-              <label style={{
-                display: 'block', fontSize: 11.5, fontWeight: 700,
-                color: '#374151', marginBottom: 7,
-                textTransform: 'uppercase', letterSpacing: '0.07em',
+              <label htmlFor="login-email" style={{
+                display:        'block',
+                fontSize:       F.xs,
+                fontWeight:     F.bold,
+                color:          C.dim,
+                marginBottom:   SP[1.5],
+                textTransform:  'uppercase',
+                letterSpacing:  F.lsWider,
+                fontFamily:     F.body,
               }}>
                 Adresse e-mail
               </label>
               <input
-                type="email" required value={email}
+                id="login-email"
+                type="email"
+                required
+                value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="votre@email.com"
+                autoComplete="email"
+                inputMode="email"
+                aria-describedby={error ? 'login-error' : undefined}
+                className="login-input"
                 style={{
-                  width: '100%', padding: '12px 14px', borderRadius: 9,
-                  border: '1.5px solid #E7E5E4', fontSize: 14,
-                  boxSizing: 'border-box', outline: 'none',
-                  color: '#1C1917', background: '#F5F2ED',
-                  fontFamily: FONT,
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                  width:        '100%',
+                  height:       '42px',
+                  padding:      `0 ${SP[3]}`,
+                  borderRadius: R.md,
+                  border:       `1.5px solid ${C.border}`,
+                  fontSize:     F.base,
+                  boxSizing:    'border-box',
+                  outline:      'none',
+                  color:        C.ink,
+                  background:   C.bg,
+                  fontFamily:   F.body,
+                  transition:   `border-color ${TR.fast}, box-shadow ${TR.fast}`,
                 }}
               />
             </div>
 
             {/* Password */}
             <div>
-              <label style={{
-                display: 'block', fontSize: 11.5, fontWeight: 700,
-                color: '#374151', marginBottom: 7,
-                textTransform: 'uppercase', letterSpacing: '0.07em',
+              <label htmlFor="login-password" style={{
+                display:        'block',
+                fontSize:       F.xs,
+                fontWeight:     F.bold,
+                color:          C.dim,
+                marginBottom:   SP[1.5],
+                textTransform:  'uppercase',
+                letterSpacing:  F.lsWider,
+                fontFamily:     F.body,
               }}>
                 Mot de passe
               </label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type={showPwd ? 'text' : 'password'} required value={password}
+                  id="login-password"
+                  type={showPwd ? 'text' : 'password'}
+                  required
+                  value={password}
                   onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
+                  autoComplete="current-password"
+                  aria-describedby={error ? 'login-error' : undefined}
+                  className="login-input"
                   style={{
-                    width: '100%', padding: '12px 44px 12px 14px', borderRadius: 9,
-                    border: '1.5px solid #E7E5E4', fontSize: 14,
-                    boxSizing: 'border-box', outline: 'none',
-                    color: '#1C1917', background: '#F5F2ED',
-                    fontFamily: FONT,
-                    transition: 'border-color 0.15s, box-shadow 0.15s',
+                    width:        '100%',
+                    height:       '42px',
+                    padding:      `0 ${SP[12]} 0 ${SP[3]}`,
+                    borderRadius: R.md,
+                    border:       `1.5px solid ${C.border}`,
+                    fontSize:     F.base,
+                    boxSizing:    'border-box',
+                    outline:      'none',
+                    color:        C.ink,
+                    background:   C.bg,
+                    fontFamily:   F.body,
+                    transition:   `border-color ${TR.fast}, box-shadow ${TR.fast}`,
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd(v => !v)}
+                  className="pwd-toggle"
+                  aria-label={showPwd ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  aria-pressed={showPwd}
                   style={{
-                    position: 'absolute', right: 13, top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none', border: 'none',
-                    cursor: 'pointer', padding: 2, color: '#94A3B8',
-                    display: 'flex', alignItems: 'center',
-                    transition: 'color 0.15s ease',
+                    position:      'absolute', right: 0, top: 0, bottom: 0,
+                    width:         '44px',
+                    background:    'none', border: 'none',
+                    cursor:        'pointer',
+                    color:         C.dim,
+                    display:       'flex', alignItems: 'center', justifyContent: 'center',
+                    borderRadius:  `0 ${R.md} ${R.md} 0`,
+                    transition:    `color ${TR.fast}`,
                   }}
-                  aria-label={showPwd ? 'Masquer' : 'Afficher'}
                 >
                   <IconEye show={showPwd} />
                 </button>
               </div>
             </div>
 
-            {/* Alerts */}
+            {/* Deactivated warning */}
             {deactivated && (
               <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                padding: '12px 14px', background: '#FFFBEB',
-                border: '1px solid #FDE68A', borderRadius: 9,
+                display:     'flex', alignItems: 'flex-start', gap: SP[2],
+                padding:     `${SP[3]} ${SP[3]}`,
+                background:  C.orangeBg,
+                border:      `1px solid ${C.orangeBd}`,
+                borderRadius: R.md,
+                animation:   'slideDown 0.2s ease both',
               }}>
-                <IconWarning />
-                <p style={{ color: '#92400E', fontSize: 13, margin: 0, lineHeight: 1.55 }}>
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+                  style={{ flexShrink: 0, marginTop: 1 }}>
+                  <path d="M8 1.5L14.5 13H1.5L8 1.5Z" stroke={C.orange} strokeWidth="1.3" strokeLinejoin="round"/>
+                  <path d="M8 6v3.5" stroke={C.orange} strokeWidth="1.4" strokeLinecap="round"/>
+                  <circle cx="8" cy="11.5" r="0.75" fill={C.orange}/>
+                </svg>
+                <p style={{ color: C.orange, fontSize: F.sm, margin: 0, lineHeight: F.lhRelaxed }}>
                   Ce compte a été désactivé. Contactez un administrateur.
                 </p>
               </div>
             )}
 
+            {/* Error */}
             {error && (
-              <div style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                padding: '12px 14px', background: '#FEF2F2',
-                border: '1px solid #FECACA', borderRadius: 9,
-                animation: 'slideDown 0.2s ease forwards',
+              <div id="login-error" role="alert" style={{
+                display:     'flex', alignItems: 'flex-start', gap: SP[2],
+                padding:     `${SP[3]} ${SP[3]}`,
+                background:  C.redBg,
+                border:      `1px solid ${C.redBd}`,
+                borderRadius: R.md,
+                animation:   'slideDown 0.2s ease both',
               }}>
-                <IconError />
-                <p style={{ color: '#B91C1C', fontSize: 13, margin: 0, lineHeight: 1.55 }}>
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"
+                  style={{ flexShrink: 0, marginTop: 1 }}>
+                  <circle cx="8" cy="8" r="6.5" stroke={C.red} strokeWidth="1.3"/>
+                  <path d="M8 5v3.5" stroke={C.red} strokeWidth="1.4" strokeLinecap="round"/>
+                  <circle cx="8" cy="11" r="0.75" fill={C.red}/>
+                </svg>
+                <p style={{ color: C.red, fontSize: F.sm, margin: 0, lineHeight: F.lhRelaxed }}>
                   {error}
                 </p>
               </div>
             )}
 
-            {/* Submit button */}
+            {/* Submit */}
             <button
-              className="btn-meram"
+              className="btn-amber"
               type="submit"
               disabled={loading}
               style={{
-                padding: '14px', borderRadius: 9, border: 'none',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                color: 'white', fontSize: 14.5, fontWeight: 700,
-                letterSpacing: '-0.01em', marginTop: 4,
-                fontFamily: FONT,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-                opacity: loading ? 0.75 : 1,
+                padding:      `0 ${SP[6]}`,
+                height:       '48px',
+                borderRadius: R.md,
+                border:       'none',
+                cursor:       loading ? 'not-allowed' : 'pointer',
+                fontSize:     F.base,
+                fontWeight:   F.bold,
+                fontFamily:   F.body,
+                letterSpacing:'-0.01em',
+                marginTop:    SP[1],
+                display:      'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
+                width:        '100%',
               }}
             >
-              {loading
-                ? <><span className="spinner" />Connexion en cours…</>
-                : <>Se connecter
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 8h10M8 3l5 5-5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </>
-              }
+              {loading ? (
+                <><span className="spinner" />Connexion en cours…</>
+              ) : (
+                <>
+                  Se connecter
+                  <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <path d="M3 8h10M8 3l5 5-5 5" stroke={C.bg} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </>
+              )}
             </button>
           </form>
 
+          {/* Forgot password */}
           <p style={{
-            textAlign: 'center', fontSize: 12.5,
-            color: '#A9A49D', marginTop: 28, lineHeight: 1.65,
+            textAlign:  'center',
+            fontSize:   F.sm,
+            color:      C.dim,
+            marginTop:  SP[6],
+            lineHeight: F.lhRelaxed,
           }}>
             Mot de passe oublié ?{' '}
-            <span style={{ color: '#78716C', fontWeight: 500 }}>Contactez votre administrateur.</span>
+            <span style={{ color: C.muted, fontWeight: F.medium }}>
+              Contactez votre administrateur.
+            </span>
           </p>
 
           {/* Footer */}
           <div style={{
-            marginTop: 40, paddingTop: 20,
-            borderTop: '1px solid #E7E5E4',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            marginTop:     SP[10],
+            paddingTop:    SP[5],
+            borderTop:     `1px solid ${C.borderSub}`,
+            display:       'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
           }}>
             <div style={{
-              width: 20, height: 20, borderRadius: 5,
-              background: 'linear-gradient(145deg, #1D4ED8, #3B82F6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: 18, height: 18, borderRadius: R.xs,
+              background:  `linear-gradient(145deg, ${C.amberActive}, ${C.amber})`,
+              display:     'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg width="11" height="9" viewBox="0 0 20 17" fill="none">
-                <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 15h16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              <svg width="10" height="8" viewBox="0 0 20 17" fill="none" aria-hidden="true">
+                <path d="M2 15V2L10 9L18 2V15" stroke={C.bg} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M2 15h16" stroke={C.bg} strokeWidth="2.5" strokeLinecap="round"/>
               </svg>
             </div>
-            <span style={{
-              fontSize: 11.5, color: '#A9A49D',
-              letterSpacing: '0.02em', fontWeight: 500,
-            }}>
+            <span style={{ fontSize: F.xs, color: C.dim, letterSpacing: F.lsWide, fontWeight: F.medium }}>
               Développé par Majestor Kepseu
             </span>
           </div>
         </div>
       </div>
 
-      {/* Responsive: hide left panel on small screens */}
+      {/* ── Styles ── */}
       <style>{`
+        /* Placeholder color — can't be set via inline style */
+        .login-input::placeholder { color: ${C.dim}; opacity: 1; }
+
+        /* Eye toggle hover */
+        .pwd-toggle:hover { color: ${C.muted} !important; }
+
+        /* Shake animation — applied to the form on auth failure */
+        @keyframes loginShake {
+          0%,100% { transform: translateX(0); }
+          15%     { transform: translateX(-5px); }
+          30%     { transform: translateX(5px); }
+          45%     { transform: translateX(-4px); }
+          60%     { transform: translateX(4px); }
+          75%     { transform: translateX(-2px); }
+          90%     { transform: translateX(2px); }
+        }
+        .login-shake { animation: loginShake 0.52s cubic-bezier(0.36,0.07,0.19,0.97) both; }
+
+        /* Mobile: hide branding panel, show compact logo */
         .mobile-logo { display: none !important; }
+
         @media (max-width: 720px) {
           main > div:first-child { display: none !important; }
-          main > div:last-child {
-            padding: 40px 24px !important;
-            min-height: 100svh !important;
-            align-items: flex-start !important;
-            padding-top: 52px !important;
-            padding-bottom: 40px !important;
+
+          .login-right-panel {
+            padding:    0 !important;
+            align-items: stretch !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            min-height: 100dvh !important;
           }
+
+          .login-form-container {
+            padding:        max(52px, env(safe-area-inset-top, 52px)) 24px
+                            max(36px, env(safe-area-inset-bottom, 36px)) 24px !important;
+            min-height:     100dvh !important;
+            display:        flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            animation:      none !important;
+          }
+
           .mobile-logo { display: flex !important; }
+        }
+
+        @media (max-width: 720px) and (max-height: 580px) {
+          .login-form-container {
+            justify-content: flex-start !important;
+            padding-top: max(28px, env(safe-area-inset-top, 28px)) !important;
+          }
         }
       `}</style>
     </main>

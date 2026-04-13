@@ -8,37 +8,26 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }      from '@/lib/format'
 import { pluralize }        from '@/lib/pluralize'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C', dim: '#A9A49D',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-  purple: '#7C3AED', purpleL: '#F5F3FF',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fmtNum = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2  = (n: number) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' m²'
 
-const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; dot: string }> = {
-  draft:     { label: 'En attente', bg: C.goldL,  color: C.gold,  dot: C.gold },
-  cancelled: { label: 'Annulé',     bg: C.redL,   color: C.red,   dot: C.red  },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; dot: string; bd: string }> = {
+  draft:     { label: 'En attente', bg: C.goldBg,  color: C.gold,  dot: C.gold,  bd: C.goldBd  },
+  cancelled: { label: 'Annulé',     bg: C.redBg,   color: C.red,   dot: C.red,   bd: C.redBd   },
 }
 
 const TH: React.CSSProperties = {
-  padding: '13px 16px', textAlign: 'left', fontSize: 11,
-  fontWeight: 700, color: C.muted, textTransform: 'uppercase',
-  letterSpacing: '0.10em', borderBottom: `1.5px solid ${C.border}`,
-  whiteSpace: 'nowrap', fontFamily: FONT, background: C.bg,
+  padding: `${SP[3]} ${SP[4]}`, textAlign: 'left', fontSize: 11,
+  fontWeight: F.bold, color: C.dim, textTransform: 'uppercase',
+  letterSpacing: F.lsWider, borderBottom: `1.5px solid ${C.border}`,
+  whiteSpace: 'nowrap', fontFamily: F.body, background: C.surfaceSub,
 }
 const TD: React.CSSProperties = {
-  padding: '14px 16px', fontSize: 13.5, color: C.ink,
-  borderBottom: `1px solid ${C.border}`, verticalAlign: 'middle', fontFamily: FONT,
+  padding: `${SP[3]} ${SP[4]}`, fontSize: 13, color: C.text,
+  borderBottom: `1px solid ${C.borderSub}`, verticalAlign: 'middle', fontFamily: F.body,
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
@@ -358,10 +347,10 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
       <div className="fade-in-up" style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
               Devis
             </h1>
-            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
               {totalCount} devis au total · Confirmez pour créer une vente
             </p>
           </div>
@@ -373,7 +362,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
               padding: '10px 18px', borderRadius: 10, border: 'none',
               background: 'linear-gradient(135deg,#2563EB,#1D4ED8)',
               color: '#fff', fontSize: 13, fontWeight: 700, cursor: navPending ? 'not-allowed' : 'pointer',
-              fontFamily: FONT, boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
+              fontFamily: F.body, boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
             }}
           >
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -402,7 +391,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
               paddingTop: 9, paddingBottom: 9, borderRadius: 9,
               border: `1.5px solid ${C.border}`, fontSize: 13,
               color: C.ink, outline: 'none', boxSizing: 'border-box',
-              background: C.surface, fontFamily: FONT,
+              background: C.surface, fontFamily: F.body,
             }}
           />
         </div>
@@ -415,9 +404,9 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
             <button key={s} onClick={() => applyFilters({ status: s })}
               style={{
                 padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: FONT,
+                cursor: 'pointer', fontFamily: F.body,
                 border: `1.5px solid ${active ? C.blue : C.border}`,
-                background: active ? C.blueL : C.surface,
+                background: active ? C.blueBg : C.surface,
                 color: active ? C.blue : C.muted,
               }}>
               {labels[s]}
@@ -428,7 +417,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ── Error banner ── */}
       {actionError && (
-        <div style={{ padding: '12px 16px', background: C.redL, border: `1px solid ${C.red}`, borderRadius: 10, color: C.red, fontSize: 13, fontWeight: 600, marginBottom: 16, fontFamily: FONT, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '12px 16px', background: C.redBg, border: `1px solid ${C.red}`, borderRadius: 10, color: C.red, fontSize: 13, fontWeight: 600, marginBottom: 16, fontFamily: F.body, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {actionError}
           <button onClick={() => setActionError(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.red }}><IconX size={12} color={C.red} /></button>
         </div>
@@ -438,8 +427,8 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
       {quotes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '80px 20px', background: C.surface, borderRadius: 16, border: `1px solid ${C.border}` }}>
           <div style={{ display: 'inline-flex', marginBottom: 16 }}><IconEmpty size={48} /></div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>Aucun devis</div>
-          <div style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: F.body }}>Aucun devis</div>
+          <div style={{ fontSize: 13, color: C.muted, fontFamily: F.body }}>
             {activeSearch || activeStatus ? 'Aucun résultat pour ces filtres.' : 'Les devis sauvegardés apparaîtront ici.'}
           </div>
         </div>
@@ -474,28 +463,28 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                           </span>
                         </td>
                         <td style={TD}>
-                          <div style={{ fontSize: 13, color: C.ink, fontFamily: FONT }}>
+                          <div style={{ fontSize: 13, color: C.ink, fontFamily: F.body }}>
                             {new Date(quote.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </div>
-                          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                             {new Date(quote.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </td>
                         <td style={TD}>
-                          <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body }}>
                             {quote.customer_name || <span style={{ color: C.muted }}>—</span>}
                           </div>
                           {quote.customer_phone && (
-                            <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{quote.customer_phone}</div>
+                            <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{quote.customer_phone}</div>
                           )}
                         </td>
                         <td style={TD}>
-                          <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                          <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                             {itemCount} article{itemCount !== 1 ? 's' : ''}
                           </span>
                         </td>
                         <td style={{ ...TD, textAlign: 'right' }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: C.ink, fontFamily: FONT }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: C.ink, fontFamily: F.body }}>
                             {fmt(Number(quote.total_amount))}
                           </span>
                         </td>
@@ -504,7 +493,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                             display: 'inline-flex', alignItems: 'center', gap: 5,
                             padding: '4px 10px', borderRadius: 100,
                             background: cfg.bg, border: `1px solid ${cfg.color}30`,
-                            fontSize: 11, fontWeight: 700, color: cfg.color, fontFamily: FONT,
+                            fontSize: 11, fontWeight: 700, color: cfg.color, fontFamily: F.body,
                           }}>
                             <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
                             {cfg.label}
@@ -519,11 +508,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                               style={{
                                 padding: '6px 10px', borderRadius: 7, cursor: 'pointer',
                                 border: `1.5px solid ${C.border}`, background: C.surface,
-                                color: C.slate, fontSize: 12, fontWeight: 600,
-                                fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 5,
+                                color: C.muted, fontSize: 12, fontWeight: 600,
+                                fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 5,
                               }}
                             >
-                              <IconPrint size={13} color={C.slate} />
+                              <IconPrint size={13} color={C.muted} />
                               Devis
                             </button>
 
@@ -537,7 +526,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                                     padding: '6px 12px', borderRadius: 7, cursor: 'pointer',
                                     border: 'none', background: C.green,
                                     color: '#fff', fontSize: 12, fontWeight: 700,
-                                    fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 5,
+                                    fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 5,
                                   }}
                                 >
                                   <IconCheck size={12} color="white" />
@@ -552,7 +541,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                                     padding: '6px 8px', borderRadius: 7, cursor: 'pointer',
                                     border: `1.5px solid ${C.border}`, background: C.surface,
                                     color: C.red, fontSize: 12, fontWeight: 600,
-                                    fontFamily: FONT, display: 'flex', alignItems: 'center',
+                                    fontFamily: F.body, display: 'flex', alignItems: 'center',
                                   }}
                                 >
                                   <IconX size={11} color={C.red} />
@@ -568,7 +557,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                         <tr>
                           <td colSpan={7} style={{ padding: 0, background: C.bg }}>
                             <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.border}` }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 10, fontFamily: FONT }}>
+                              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 10, fontFamily: F.body }}>
                                 Articles du devis
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -596,16 +585,16 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                                   return (
                                     <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
                                       <div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>{prod?.name}</div>
-                                        <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{prod?.reference_code} · {qtyDisp}</div>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body }}>{prod?.name}</div>
+                                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{prod?.reference_code} · {qtyDisp}</div>
                                       </div>
-                                      <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmt(Math.round(item.total_price))}</div>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: F.body }}>{fmt(Math.round(item.total_price))}</div>
                                     </div>
                                   )
                                 })}
                               </div>
                               {quote.notes && (
-                                <div style={{ marginTop: 10, padding: '8px 12px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                                <div style={{ marginTop: 10, padding: '8px 12px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, color: C.muted, fontFamily: F.body }}>
                                   <strong>Notes :</strong> {quote.notes}
                                 </div>
                               )}
@@ -623,7 +612,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
           {/* Pagination */}
           {totalPages > 1 && (
             <div style={{ padding: '14px 20px', borderTop: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', background: C.bg }}>
-              <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
+              <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                 Page {currentPage} / {totalPages} · {totalCount} devis
               </span>
               <div style={{ display: 'flex', gap: 6 }}>
@@ -643,8 +632,8 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                     style={{
                       padding: '7px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                       border: `1.5px solid ${C.border}`, background: C.surface,
-                      color: btn.disabled ? C.dim : C.slate,
-                      cursor: btn.disabled ? 'not-allowed' : 'pointer', fontFamily: FONT,
+                      color: btn.disabled ? C.dim : C.muted,
+                      cursor: btn.disabled ? 'not-allowed' : 'pointer', fontFamily: F.body,
                     }}>
                     {btn.label}
                   </button>
@@ -657,7 +646,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CONVERT MODAL ═══════════════════════════════ */}
       {convertId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: FONT }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}>
           <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 480, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
 
             {convertSuccess ? (
@@ -665,7 +654,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
               <>
                 <div style={{ height: 4, background: 'linear-gradient(90deg,#059669,#34D399)' }} />
                 <div style={{ padding: '32px 28px', textAlign: 'center' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: C.greenL, border: '4px solid #D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: C.greenBg, border: '4px solid #D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                     <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
                       <path d="M5 13l6 6 10-11" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
@@ -680,11 +669,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                   </div>
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={() => { closeConvertModal(); push('/sales') }}
-                      style={{ flex: 1, padding: '12px', borderRadius: 9, border: 'none', background: C.green, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                      style={{ flex: 1, padding: '12px', borderRadius: 9, border: 'none', background: C.green, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                       Voir dans les ventes
                     </button>
                     <button onClick={closeConvertModal}
-                      style={{ padding: '12px 18px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: C.slate, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
+                      style={{ padding: '12px 18px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: C.muted, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: F.body }}>
                       Fermer
                     </button>
                   </div>
@@ -695,7 +684,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
               <>
                 <div style={{ height: 4, background: 'linear-gradient(90deg,#059669,#34D399)' }} />
                 <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: C.greenL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: C.greenBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <IconCheck size={18} color={C.green} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -710,35 +699,35 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                 </div>
 
                 <div style={{ padding: '20px 24px', maxHeight: '70vh', overflowY: 'auto' }}>
-                  <div style={{ padding: '12px 14px', background: C.blueL, borderRadius: 10, border: `1px solid ${C.blue}30`, fontSize: 12, color: C.blue, marginBottom: 16, fontFamily: FONT }}>
+                  <div style={{ padding: '12px 14px', background: C.blueBg, borderRadius: 10, border: `1px solid ${C.blue}30`, fontSize: 12, color: C.blue, marginBottom: 16, fontFamily: F.body }}>
                     La vente sera enregistrée et la commande envoyée à l'entrepôt. Le stock sera réservé.
                   </div>
 
                   {/* Complete missing client info if needed */}
                   {(!convertingQuote?.customer_phone || !convertingQuote?.customer_cni) && (
-                    <div style={{ marginBottom: 16, padding: '14px', background: C.orangeL, borderRadius: 10, border: `1px solid ${C.orange}40` }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: C.orange, marginBottom: 10, fontFamily: FONT }}>
+                    <div style={{ marginBottom: 16, padding: '14px', background: C.orangeBg, borderRadius: 10, border: `1px solid ${C.orange}40` }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: C.orange, marginBottom: 10, fontFamily: F.body }}>
                         Informations manquantes pour finaliser la vente
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {!convertingQuote?.customer_phone && (
                           <div>
-                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: FONT }}>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: F.body }}>
                               Téléphone <span style={{ color: C.red }}>*</span>
                             </label>
                             <input type="tel" value={convertPhone} onChange={e => setConvertPhone(e.target.value)}
                               placeholder="ex : 6 99 11 22 33"
-                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }} />
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }} />
                           </div>
                         )}
                         {!convertingQuote?.customer_cni && (
                           <div>
-                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: FONT }}>
+                            <label style={{ fontSize: 11, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: F.body }}>
                               N° CNI <span style={{ color: C.red }}>*</span>
                             </label>
                             <input type="text" value={convertCNI} onChange={e => setConvertCNI(e.target.value)}
                               placeholder="ex : 1 23 04 5678 912 34"
-                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }} />
+                              style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }} />
                           </div>
                         )}
                       </div>
@@ -747,16 +736,16 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
                   {/* Payment amount */}
                   <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                       Montant encaissé <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
                     </label>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                       <button type="button" onClick={() => setConvertAmount(String(convertingQuote?.total_amount ?? ''))}
-                        style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.border}`, background: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.greenL : C.bg, color: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.slate, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                        style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.border}`, background: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.greenBg : C.bg, color: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                         Paiement complet
                       </button>
                       <button type="button" onClick={() => setConvertAmount('')}
-                        style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${convertAmount === '' ? C.blue : C.border}`, background: convertAmount === '' ? C.blueL : C.bg, color: convertAmount === '' ? C.blue : C.slate, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                        style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${convertAmount === '' ? C.blue : C.border}`, background: convertAmount === '' ? C.blueBg : C.bg, color: convertAmount === '' ? C.blue : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                         Sans paiement
                       </button>
                     </div>
@@ -765,13 +754,13 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                       value={convertAmount}
                       onChange={e => setConvertAmount(e.target.value)}
                       placeholder={`max. ${fmt(Number(convertingQuote?.total_amount))}`}
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }}
                     />
                   </div>
 
                   {/* Notes */}
                   <div style={{ marginBottom: 16 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                       Notes de paiement <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
                     </label>
                     <input
@@ -779,23 +768,23 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                       value={convertNotes}
                       onChange={e => setConvertNotes(e.target.value)}
                       placeholder="ex : Virement, chèque…"
-                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }}
+                      style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }}
                     />
                   </div>
 
                   {actionError && (
-                    <div style={{ padding: '10px 12px', background: C.redL, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 14, fontFamily: FONT }}>
+                    <div style={{ padding: '10px 12px', background: C.redBg, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 14, fontFamily: F.body }}>
                       {actionError}
                     </div>
                   )}
 
                   <div style={{ display: 'flex', gap: 10 }}>
                     <button onClick={handleConvert} disabled={convertLoading}
-                      style={{ flex: 1, padding: '13px', background: C.green, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: convertLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: convertLoading ? 0.7 : 1, fontFamily: FONT }}>
+                      style={{ flex: 1, padding: '13px', background: C.green, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: convertLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: convertLoading ? 0.7 : 1, fontFamily: F.body }}>
                       {convertLoading ? <><span className="spinner" />Confirmation…</> : <><IconCheck size={14} color="white" />Confirmer la vente</>}
                     </button>
                     <button onClick={closeConvertModal} disabled={convertLoading}
-                      style={{ padding: '13px 20px', background: C.bg, color: C.slate, border: `1.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
+                      style={{ padding: '13px 20px', background: C.bg, color: C.muted, border: `1.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: F.body }}>
                       Annuler
                     </button>
                   </div>
@@ -808,11 +797,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CANCEL MODAL ════════════════════════════════ */}
       {cancelId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: FONT }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}>
           <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 420, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
             <div style={{ height: 4, background: 'linear-gradient(90deg,#EF4444,#F87171)' }} />
             <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: C.redL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: C.redBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <IconX size={16} color={C.red} />
               </div>
               <div style={{ flex: 1 }}>
@@ -825,11 +814,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
             </div>
             <div style={{ padding: '20px 24px 24px', display: 'flex', gap: 10 }}>
               <button onClick={handleCancel} disabled={cancelLoading}
-                style={{ flex: 1, padding: '12px', background: C.red, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: cancelLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cancelLoading ? 0.7 : 1, fontFamily: FONT }}>
+                style={{ flex: 1, padding: '12px', background: C.red, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: cancelLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cancelLoading ? 0.7 : 1, fontFamily: F.body }}>
                 {cancelLoading ? <><span className="spinner" />Annulation…</> : 'Annuler le devis'}
               </button>
               <button onClick={() => setCancelId(null)} disabled={cancelLoading}
-                style={{ padding: '12px 20px', background: C.bg, color: C.slate, border: `1.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: FONT }}>
+                style={{ padding: '12px 20px', background: C.bg, color: C.muted, border: `1.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: F.body }}>
                 Retour
               </button>
             </div>

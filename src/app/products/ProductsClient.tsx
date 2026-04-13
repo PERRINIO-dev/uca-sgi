@@ -13,16 +13,7 @@ import {
 } from '@/lib/constants'
 import { fmtCurrency } from '@/lib/format'
 
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fmtNum = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2  = (n: number) =>
@@ -455,7 +446,7 @@ export default function ProductsClient({
     width: '100%', padding: '10px 12px', borderRadius: 8,
     border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink,
     outline: 'none', boxSizing: 'border-box',
-    background: C.surface, fontFamily: FONT,
+    background: C.surface, fontFamily: F.body,
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -467,10 +458,10 @@ export default function ProductsClient({
         alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
             Catalogue produits
           </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
             {products.filter(p => p.is_active).length} produit
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''} actif
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''}
@@ -487,7 +478,7 @@ export default function ProductsClient({
             setShowCreate(true)
           }}
           style={{ padding: '11px 20px', border: 'none', borderRadius: 9,
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
             display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
           Nouveau produit
@@ -520,7 +511,7 @@ export default function ProductsClient({
       {filtered.length === 0 ? (
         <div style={{ background: C.surface, borderRadius: 12,
           border: `1px solid ${C.border}`, padding: '48px',
-          textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: FONT }}>
+          textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: F.body }}>
           Aucun produit trouvé.
         </div>
       ) : (
@@ -545,19 +536,19 @@ export default function ProductsClient({
       {confirmDeactivate && (
         <Modal title="Désactiver ce produit ?" onClose={() => setConfirmDeactivate(null)}>
           <div style={{ padding: '4px 0 8px' }}>
-            <p style={{ fontSize: 14, color: C.slate, margin: '0 0 12px', lineHeight: 1.6, fontFamily: FONT }}>
+            <p style={{ fontSize: 14, color: C.muted, margin: '0 0 12px', lineHeight: 1.6, fontFamily: F.body }}>
               Le produit <strong style={{ color: C.ink }}>{confirmDeactivate.name}</strong> sera
               immédiatement retiré du formulaire de vente. Les ventes existantes ne sont pas affectées.
             </p>
-            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
               Vous pourrez le réactiver à tout moment depuis cette page.
             </p>
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
             <button onClick={() => setConfirmDeactivate(null)}
               style={{ padding: '9px 18px', borderRadius: 8, border: `1.5px solid ${C.border}`,
-                background: C.surface, color: C.slate, fontSize: 13, fontWeight: 500,
-                cursor: 'pointer', fontFamily: FONT }}>
+                background: C.surface, color: C.muted, fontSize: 13, fontWeight: 500,
+                cursor: 'pointer', fontFamily: F.body }}>
               Annuler
             </button>
             <button
@@ -567,7 +558,7 @@ export default function ProductsClient({
                 background: toggleLoadingId === confirmDeactivate?.id ? C.muted : C.red,
                 color: 'white', fontSize: 13, fontWeight: 600,
                 cursor: toggleLoadingId === confirmDeactivate?.id ? 'not-allowed' : 'pointer',
-                fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               {toggleLoadingId === confirmDeactivate?.id
                 ? <><span className="spinner" />Désactivation…</>
                 : 'Désactiver'}
@@ -604,7 +595,7 @@ export default function ProductsClient({
                     </div>
                     <span style={{
                       fontSize: 10, fontWeight: modalStep === n ? 700 : 400,
-                      color: modalStep === n ? C.blue : C.muted, fontFamily: FONT,
+                      color: modalStep === n ? C.blue : C.muted, fontFamily: F.body,
                       whiteSpace: 'nowrap',
                     }}>
                       {label}
@@ -621,7 +612,7 @@ export default function ProductsClient({
             {/* ── STEP 1 — Comment vendez-vous ce produit ? ── */}
             {modalStep === 1 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <p style={{ fontSize: 13, color: C.muted, margin: '0 0 4px', fontFamily: FONT, lineHeight: 1.6 }}>
+                <p style={{ fontSize: 13, color: C.muted, margin: '0 0 4px', fontFamily: F.body, lineHeight: 1.6 }}>
                   Choisissez comment ce produit est vendu. Le formulaire s'adaptera automatiquement.
                 </p>
                 {([
@@ -649,7 +640,7 @@ export default function ProductsClient({
                       onClick={() => { setField('productType', val); refCodeTouched.current = false }}
                       style={{
                         padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-                        textAlign: 'left', fontFamily: FONT,
+                        textAlign: 'left', fontFamily: F.body,
                         border: `2px solid ${isSelected ? color : C.border}`,
                         background: isSelected ? bg : C.surface,
                         display: 'flex', alignItems: 'center', gap: 14,
@@ -659,10 +650,10 @@ export default function ProductsClient({
                         {icon}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: isSelected ? color : C.ink, fontFamily: FONT }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: isSelected ? color : C.ink, fontFamily: F.body }}>
                           {lbl}
                         </div>
-                        <div style={{ fontSize: 12, color: C.muted, marginTop: 3, fontFamily: FONT }}>{sub}</div>
+                        <div style={{ fontSize: 12, color: C.muted, marginTop: 3, fontFamily: F.body }}>{sub}</div>
                       </div>
                       {isSelected && (
                         <div style={{ width: 20, height: 20, borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -682,7 +673,7 @@ export default function ProductsClient({
                   <Field label="Code référence">
                     <input value={form.referenceCode} readOnly
                       placeholder="Généré automatiquement"
-                      style={{ ...inputStyle, background: '#EDE9E3', cursor: 'default', color: C.slate }} />
+                      style={{ ...inputStyle, background: '#EDE9E3', cursor: 'default', color: C.muted }} />
                   </Field>
                   <Field label="Catégorie *">
                     <CategoryCombobox
@@ -732,8 +723,8 @@ export default function ProductsClient({
                       </Field>
                     </Row>
                     {tileAreaPreview && (
-                      <div style={{ padding: '10px 14px', background: C.blueL,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                      <div style={{ padding: '10px 14px', background: C.blueBg,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
                         1 carreau = <strong>{tileAreaPreview.area.toFixed(4)} m²</strong>
                         {tileAreaPreview.cartonArea > 0 && (
                           <> · 1 carton = <strong>{tileAreaPreview.cartonArea.toFixed(4)} m²</strong></>
@@ -760,8 +751,8 @@ export default function ProductsClient({
                         placeholder="ex : 6" style={inputStyle} />
                     </Field>
                     {form.pieceLengthM && (
-                      <div style={{ padding: '8px 14px', background: C.blueL,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                      <div style={{ padding: '8px 14px', background: C.blueBg,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
                         1 {form.packageLabel || 'barre'} = <strong>{form.pieceLengthM} m</strong>
                         {' · '}Le vendeur saisit en mètres ou en {form.packageLabel || 'barres'}
                       </div>
@@ -786,8 +777,8 @@ export default function ProductsClient({
                         placeholder="ex : 20" style={inputStyle} />
                     </Field>
                     {form.containerVolumeL && (
-                      <div style={{ padding: '8px 14px', background: C.blueL,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                      <div style={{ padding: '8px 14px', background: C.blueBg,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
                         1 {form.packageLabel || 'bidon'} = <strong>{form.containerVolumeL} L</strong>
                         {' · '}Le vendeur saisit en litres ou en {form.packageLabel || 'bidons'}
                       </div>
@@ -812,8 +803,8 @@ export default function ProductsClient({
                         placeholder="ex : 50" style={inputStyle} />
                     </Field>
                     {form.bagWeightKg && (
-                      <div style={{ padding: '8px 14px', background: C.blueL,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: FONT }}>
+                      <div style={{ padding: '8px 14px', background: C.blueBg,
+                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
                         1 sac = <strong>{form.bagWeightKg} kg</strong>
                         {' · '}Stock et vente comptés en nombre de sacs
                       </div>
@@ -832,8 +823,8 @@ export default function ProductsClient({
                         <input value={form.packageLabel} onChange={e => setField('packageLabel', e.target.value)} style={inputStyle} />
                       </Field>
                     </Row>
-                    <div style={{ padding: '8px 14px', background: C.greenL,
-                      borderRadius: 8, fontSize: 12, color: C.green, fontFamily: FONT }}>
+                    <div style={{ padding: '8px 14px', background: C.greenBg,
+                      borderRadius: 8, fontSize: 12, color: C.green, fontFamily: F.body }}>
                       Produit vendu à la pièce · Stock compté en {form.unitLabel || 'pièces'}
                     </div>
                   </>
@@ -844,7 +835,7 @@ export default function ProductsClient({
             {/* ── STEP 3 — Prix & stock ── */}
             {modalStep === 3 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <p style={{ fontSize: 13, color: C.slate, margin: '0 0 4px', fontFamily: FONT, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: C.muted, margin: '0 0 4px', fontFamily: F.body, lineHeight: 1.5 }}>
                   Prix par <strong>{productType === 'tile' ? 'm²' : (form.unitLabel || 'unité')}</strong>
                 </p>
                 <Row>
@@ -872,7 +863,7 @@ export default function ProductsClient({
                 <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.muted,
                     textTransform: 'uppercase', letterSpacing: '0.07em',
-                    marginBottom: 12, fontFamily: FONT }}>
+                    marginBottom: 12, fontFamily: F.body }}>
                     Stock initial (optionnel)
                   </div>
                   {productType === 'tile' ? (
@@ -890,7 +881,7 @@ export default function ProductsClient({
                         </Field>
                       </Row>
                       {(form.initialCartons || form.initialLooseTiles) && form.tilesPerCarton && (
-                        <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 6, fontFamily: FONT }}>
+                        <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 6, fontFamily: F.body }}>
                           = {fmtNum(
                             (parseInt(form.initialCartons) || 0) * parseInt(form.tilesPerCarton)
                             + (parseInt(form.initialLooseTiles) || 0)
@@ -962,24 +953,24 @@ export default function ProductsClient({
               ]
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <p style={{ fontSize: 13, color: C.slate, margin: 0, fontFamily: FONT }}>
+                  <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
                     Vérifiez les informations avant de créer le produit.
                   </p>
-                  <div style={{ background: C.blueL, borderRadius: 12,
+                  <div style={{ background: C.blueBg, borderRadius: 12,
                     border: `1.5px solid ${C.blue}33`, padding: '18px 20px' }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: C.ink,
-                      letterSpacing: '-0.02em', fontFamily: FONT, marginBottom: 4 }}>
+                      letterSpacing: '-0.02em', fontFamily: F.body, marginBottom: 4 }}>
                       {form.name || '—'}
                     </div>
-                    <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT, marginBottom: 14 }}>
+                    <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body, marginBottom: 14 }}>
                       {form.referenceCode} · {form.category} · {form.supplier}
                     </div>
                     {rows.map(([label, value]) => (
                       <div key={label} style={{ display: 'flex', justifyContent: 'space-between',
                         alignItems: 'center', padding: '8px 0',
                         borderTop: `1px solid ${C.blue}22` }}>
-                        <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>{label}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{value}</span>
+                        <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>{label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: F.body }}>{value}</span>
                       </div>
                     ))}
                   </div>
@@ -989,14 +980,14 @@ export default function ProductsClient({
 
             {/* Error / success feedback */}
             {error && (
-              <div style={{ padding: '10px 14px', background: C.redL, borderRadius: 8,
-                fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+              <div style={{ padding: '10px 14px', background: C.redBg, borderRadius: 8,
+                fontSize: 12, fontWeight: 600, color: C.red, fontFamily: F.body }}>
                 {error}
               </div>
             )}
             {success && (
-              <div style={{ padding: '10px 14px', background: C.greenL, borderRadius: 8,
-                fontSize: 12, fontWeight: 600, color: C.green, fontFamily: FONT }}>
+              <div style={{ padding: '10px 14px', background: C.greenBg, borderRadius: 8,
+                fontSize: 12, fontWeight: 600, color: C.green, fontFamily: F.body }}>
                 {success}
               </div>
             )}
@@ -1008,8 +999,8 @@ export default function ProductsClient({
                   onClick={() => { setShowCreate(false); setModalStep(1) }}
                   style={{ padding: '10px 16px', borderRadius: 8,
                     border: `1.5px solid ${C.border}`, background: C.surface,
-                    color: C.slate, fontSize: 13, fontWeight: 500,
-                    cursor: 'pointer', fontFamily: FONT }}>
+                    color: C.muted, fontSize: 13, fontWeight: 500,
+                    cursor: 'pointer', fontFamily: F.body }}>
                   Annuler
                 </button>
                 {modalStep > 1 && (
@@ -1018,7 +1009,7 @@ export default function ProductsClient({
                     style={{ padding: '10px 16px', borderRadius: 8,
                       border: `1.5px solid ${C.border}`, background: C.surface,
                       color: C.blue, fontSize: 13, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: FONT }}>
+                      cursor: 'pointer', fontFamily: F.body }}>
                     ← Retour
                   </button>
                 )}
@@ -1029,7 +1020,7 @@ export default function ProductsClient({
                   onClick={advanceModalStep}
                   style={{ padding: '10px 24px', borderRadius: 9,
                     border: 'none', fontSize: 13, fontWeight: 700,
-                    cursor: 'pointer', fontFamily: FONT,
+                    cursor: 'pointer', fontFamily: F.body,
                     display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   Suivant
                   <svg width="12" height="10" viewBox="0 0 12 10" fill="none"><path d="M1 5h10M7 1l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1043,7 +1034,7 @@ export default function ProductsClient({
                     background: loading ? C.muted : C.green,
                     color: 'white', fontSize: 13, fontWeight: 700,
                     cursor: loading ? 'not-allowed' : 'pointer',
-                    fontFamily: FONT,
+                    fontFamily: F.body,
                     display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   {loading ? <><span className="spinner" />Création…</> : 'Créer le produit'}
                 </button>
@@ -1098,7 +1089,7 @@ export default function ProductsClient({
                     </Field>
                   </Row>
                   <div style={{ padding: '10px 12px', background: C.bg,
-                    borderRadius: 8, fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                    borderRadius: 8, fontSize: 12, color: C.muted, fontFamily: F.body }}>
                     Format {editProduct.width_cm}×{editProduct.height_cm} cm ·{' '}
                     {editProduct.tiles_per_carton} car./carton ·{' '}
                     {fmtM2(parseFloat(editProduct.tile_area_m2))}/carreau
@@ -1207,10 +1198,10 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
             <ProductTypeIcon type={pt} color={tcfg.color} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {p.name}
             </div>
-            <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
               {p.reference_code}{p.category ? ` · ${p.category}` : ''}
             </div>
           </div>
@@ -1219,8 +1210,8 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
           gap: 5, fontSize: 11, fontWeight: 600,
           padding: '3px 10px', height: 'fit-content',
           borderRadius: 100, flexShrink: 0, marginLeft: 8,
-          background: p.is_active ? C.greenL : C.redL,
-          color:      p.is_active ? C.green  : C.red, fontFamily: FONT }}>
+          background: p.is_active ? C.greenBg : C.redBg,
+          color:      p.is_active ? C.green  : C.red, fontFamily: F.body }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%',
             background: p.is_active ? C.green : C.red, flexShrink: 0 }} />
           {p.is_active ? 'Actif' : 'Inactif'}
@@ -1240,21 +1231,21 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => onEdit(p)}
-          style={{ flex: 1, padding: '8px', background: C.blueL, color: C.blue,
+          style={{ flex: 1, padding: '8px', background: C.blueBg, color: C.blue,
             border: `1px solid ${C.blue}20`, borderRadius: 8,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+            fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
           Modifier
         </button>
         <button
           onClick={() => onToggle(p)}
           disabled={toggleLoadingId === p.id}
           style={{ flex: 1, padding: '8px',
-            background: p.is_active ? C.redL   : C.greenL,
+            background: p.is_active ? C.redBg   : C.greenBg,
             color:      p.is_active ? C.red    : C.green,
             border: 'none', borderRadius: 8,
             fontSize: 12, fontWeight: 700, cursor: 'pointer',
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            fontFamily: FONT }}>
+            fontFamily: F.body }}>
           {toggleLoadingId === p.id
             ? <><span className="spinner-blue" />…</>
             : p.is_active ? 'Désactiver' : 'Réactiver'}
@@ -1335,10 +1326,10 @@ function InfoCell({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ padding: '7px 8px', background: C.bg, borderRadius: 6 }}>
       <div style={{ fontSize: 9, fontWeight: 600, color: C.muted,
-        textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: FONT }}>
+        textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: F.body }}>
         {label}
       </div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginTop: 2, fontFamily: FONT }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginTop: 2, fontFamily: F.body }}>
         {value}
       </div>
     </div>
@@ -1355,7 +1346,7 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
   isCritical: boolean
   isLow:      boolean
 }) {
-  const bg    = isCritical ? C.redL    : isLow ? C.orangeL : C.greenL
+  const bg    = isCritical ? C.redBg    : isLow ? C.orangeBg : C.greenBg
   const color = isCritical ? C.red     : isLow ? C.orange  : C.green
 
   let mainLabel = ''
@@ -1396,21 +1387,21 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
     <div style={{ padding: '10px 12px', background: bg, borderRadius: 8, marginBottom: 12,
       display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
-          textTransform: 'uppercase', fontFamily: FONT }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
+          textTransform: 'uppercase', fontFamily: F.body }}>
           Stock disponible
         </div>
-        <div style={{ fontSize: 18, fontWeight: 900, color, fontFamily: FONT }}>
+        <div style={{ fontSize: 18, fontWeight: 900, color, fontFamily: F.body }}>
           {mainLabel}
         </div>
         {subLabel && (
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{subLabel}</div>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{subLabel}</div>
         )}
       </div>
       {reserved > 0 && (
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Réservé</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: FONT }}>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Réservé</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: F.body }}>
             {fmtNum(reserved)} {p.unit_label ?? 'car.'}
           </div>
         </div>
@@ -1434,7 +1425,7 @@ function NonTileInfoBadge({ p }: { p: any }) {
 
   return (
     <div style={{ padding: '10px 12px', background: C.bg,
-      borderRadius: 8, fontSize: 12, color: C.muted, fontFamily: FONT }}>
+      borderRadius: 8, fontSize: 12, color: C.muted, fontFamily: F.body }}>
       {lines.join(' · ')}
       <br />
       <span style={{ fontSize: 11 }}>Ces attributs ne peuvent pas être modifiés après création.</span>
@@ -1447,8 +1438,8 @@ function NonTileInfoBadge({ p }: { p: any }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 11.5, fontWeight: 600, color: C.slate,
-  display: 'block', marginBottom: 6, fontFamily: FONT,
+  fontSize: 11.5, fontWeight: 600, color: C.muted,
+  display: 'block', marginBottom: 6, fontFamily: F.body,
   textTransform: 'uppercase', letterSpacing: '0.05em',
 }
 
@@ -1502,10 +1493,10 @@ function CreateDrawer({ title, step, children, onClose }: {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexShrink: 0,
         }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.025em', fontFamily: FONT }}>
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.ink, letterSpacing: '-0.025em', fontFamily: F.body }}>
               {title}
             </h3>
-            <p style={{ margin: '3px 0 0', fontSize: 12, color: C.muted, fontFamily: FONT }}>
+            <p style={{ margin: '3px 0 0', fontSize: 12, color: C.muted, fontFamily: F.body }}>
               Étape {step} — {stepSubtitles[step]}
             </p>
           </div>
@@ -1562,7 +1553,7 @@ function Modal({ title, children, onClose }: {
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink,
-            letterSpacing: '-0.02em', fontFamily: FONT }}>
+            letterSpacing: '-0.02em', fontFamily: F.body }}>
             {title}
           </h3>
           <button onClick={onClose}
@@ -1678,7 +1669,7 @@ function CategoryCombobox({
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 width: '100%', padding: '9px 12px', border: 'none',
                 background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                fontSize: 13, color: C.ink, fontFamily: FONT,
+                fontSize: 13, color: C.ink, fontFamily: F.body,
               }}
               onMouseEnter={e => (e.currentTarget.style.background = C.bg)}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -1703,9 +1694,9 @@ function CategoryCombobox({
                   display: 'flex', alignItems: 'center', gap: 6,
                   width: '100%', padding: '9px 12px', border: 'none',
                   background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                  fontSize: 13, color: C.blue, fontWeight: 600, fontFamily: FONT,
+                  fontSize: 13, color: C.blue, fontWeight: 600, fontFamily: F.body,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = C.blueL)}
+                onMouseEnter={e => (e.currentTarget.style.background = C.blueBg)}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -1732,9 +1723,9 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
   return (
     <>
       {error && (
-        <div style={{ padding: '10px 12px', background: C.redL,
+        <div style={{ padding: '10px 12px', background: C.redBg,
           borderRadius: 8, fontSize: 12, fontWeight: 600, color: C.red,
-          fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 8 }}>
+          fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
             <circle cx="7" cy="7" r="6" stroke={C.red} strokeWidth="1.3"/>
             <path d="M7 4v3.5" stroke={C.red} strokeWidth="1.4" strokeLinecap="round"/>
@@ -1744,9 +1735,9 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
         </div>
       )}
       {success && (
-        <div style={{ padding: '10px 12px', background: C.greenL,
+        <div style={{ padding: '10px 12px', background: C.greenBg,
           borderRadius: 8, fontSize: 12, fontWeight: 600, color: C.green,
-          fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 8 }}>
+          fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 8 }}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
             <circle cx="7" cy="7" r="6" stroke={C.green} strokeWidth="1.3"/>
             <path d="M4 7l2 2 4-4" stroke={C.green} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1757,8 +1748,8 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
         <button onClick={onCancel}
           style={{ padding: '9px 18px', borderRadius: 8, border: `1.5px solid ${C.border}`,
-            background: C.surface, color: C.slate, fontSize: 13, fontWeight: 500,
-            cursor: 'pointer', fontFamily: FONT }}>
+            background: C.surface, color: C.muted, fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', fontFamily: F.body }}>
           Annuler
         </button>
         <button onClick={onConfirm} disabled={loading}
@@ -1766,7 +1757,7 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
             background: loading ? C.muted : C.blue,
             color: 'white', fontSize: 13, fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
         </button>
       </div>

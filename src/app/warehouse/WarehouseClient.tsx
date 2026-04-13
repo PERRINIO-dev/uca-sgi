@@ -13,16 +13,7 @@ import {
 import { fmtCurrency } from '@/lib/format'
 import { pluralize }   from '@/lib/pluralize'
 
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
@@ -32,17 +23,17 @@ const fmtM2  = (n: number) =>
   }).format(n) + ' m²'
 
 const ORDER_STATUS = {
-  confirmed:  { label: 'Nouvelle',        bg: C.blueL,    color: C.blue,   dot: C.blue },
-  preparing:  { label: 'En préparation',  bg: C.orangeL,  color: C.orange, dot: C.orange },
-  ready:      { label: 'Prête',           bg: C.greenL,   color: C.green,  dot: C.green },
-  delivered:  { label: 'Livrée',          bg: '#F0F0F0',  color: C.muted,  dot: C.muted },
-  cancelled:  { label: 'Annulée',         bg: C.redL,     color: C.red,    dot: C.red },
+  confirmed:  { label: 'Nouvelle',        bg: C.blueBg,    color: C.blue,   dot: C.blue,   bd: C.blueBd   },
+  preparing:  { label: 'En préparation',  bg: C.orangeBg,  color: C.orange, dot: C.orange, bd: C.orangeBd },
+  ready:      { label: 'Prête',           bg: C.greenBg,   color: C.green,  dot: C.green,  bd: C.greenBd  },
+  delivered:  { label: 'Livrée',          bg: C.surfaceEl, color: C.dim,    dot: C.dim,    bd: C.border   },
+  cancelled:  { label: 'Annulée',         bg: C.redBg,     color: C.red,    dot: C.red,    bd: C.redBd    },
 }
 
 const REQUEST_STATUS = {
-  pending:  { label: 'En attente', bg: C.goldL,  color: C.gold },
-  approved: { label: 'Approuvée', bg: C.greenL, color: C.green },
-  rejected: { label: 'Rejetée',   bg: C.redL,   color: C.red },
+  pending:  { label: 'En attente', bg: C.goldBg,  color: C.gold,  bd: C.goldBd  },
+  approved: { label: 'Approuvée', bg: C.greenBg, color: C.green, bd: C.greenBd },
+  rejected: { label: 'Rejetée',   bg: C.redBg,   color: C.red,   bd: C.redBd   },
 }
 
 type Tab = 'orders' | 'stock' | 'requests'
@@ -329,7 +320,7 @@ export default function WarehouseClient({
     border: `1.5px solid ${C.border}`, fontSize: 13,
     color: C.ink, outline: 'none',
     boxSizing: 'border-box',
-    background: C.surface, fontFamily: FONT,
+    background: C.surface, fontFamily: F.body,
   }
 
   const TAB_LABELS: Record<Tab, string> = {
@@ -345,10 +336,10 @@ export default function WarehouseClient({
         {/* Header */}
         <div style={{ marginBottom: 28 }}>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
             Entrepôt
           </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
             {TAB_LABELS[activeTab]} ·{' '}
             {orders.length} commande{orders.length !== 1 ? 's' : ''} active
             {orders.length !== 1 ? 's' : ''} · Entrepôt Central
@@ -374,7 +365,7 @@ export default function WarehouseClient({
                 color: activeTab === id ? C.ink : C.muted,
                 border: 'none', display: 'flex',
                 alignItems: 'center', gap: 6,
-                fontFamily: FONT,
+                fontFamily: F.body,
                 boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
               }}>
               {label}
@@ -402,7 +393,7 @@ export default function WarehouseClient({
                 padding: '52px 32px', textAlign: 'center' }}>
                 <div style={{
                   width: 52, height: 52, borderRadius: '50%',
-                  background: C.greenL, border: `1.5px solid #A7F3D0`,
+                  background: C.greenBg, border: `1.5px solid #A7F3D0`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   margin: '0 auto 16px',
                 }}>
@@ -410,10 +401,10 @@ export default function WarehouseClient({
                     <path d="M5 13l4 4 10-10" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: F.body }}>
                   Tout est à jour
                 </div>
-                <div style={{ fontSize: 13, color: C.muted, fontFamily: FONT }}>
+                <div style={{ fontSize: 13, color: C.muted, fontFamily: F.body }}>
                   Aucune commande active en attente de traitement.
                 </div>
               </div>
@@ -448,7 +439,7 @@ export default function WarehouseClient({
                           background: cfg.bg, color: cfg.color,
                           border: `1px solid ${cfg.dot}44`,
                           borderRadius: 6, padding: '3px 10px',
-                          fontSize: 12.5, fontWeight: 800, fontFamily: FONT,
+                          fontSize: 12.5, fontWeight: 800, fontFamily: F.body,
                         }}>
                           {order.order_number}
                         </span>
@@ -458,19 +449,19 @@ export default function WarehouseClient({
                           padding: '3px 10px', borderRadius: 100,
                           background: C.bg, color: C.muted,
                           border: `1px solid ${C.border}`,
-                          fontFamily: FONT }}>
+                          fontFamily: F.body }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%',
                             background: cfg.dot, flexShrink: 0 }} />
                           {cfg.label}
                         </span>
                       </div>
-                      <div style={{ fontSize: 13.5, color: C.ink, fontFamily: FONT, marginBottom: 3 }}>
+                      <div style={{ fontSize: 13.5, color: C.ink, fontFamily: F.body, marginBottom: 3 }}>
                         <strong>{sale?.customer_name ?? 'Client anonyme'}</strong>
                         {sale?.customer_phone && <span style={{ color: C.muted, fontWeight: 400 }}> · {sale.customer_phone}</span>}
                         {' '}
                         <span style={{ color: C.muted, fontWeight: 400 }}>— {sale?.boutiques?.name}</span>
                       </div>
-                      <div style={{ fontSize: 11.5, color: C.muted, fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ fontSize: 11.5, color: C.muted, fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><circle cx="5.5" cy="5.5" r="4.5" stroke="currentColor" strokeWidth="1.2"/><path d="M5.5 3v3l2 1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
                         {new Date(order.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
                         {' · '}{sale?.users?.full_name}
@@ -490,7 +481,7 @@ export default function WarehouseClient({
                             padding: '9px 16px', background: C.orange,
                             color: C.surface, border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
-                            cursor: 'pointer', fontFamily: FONT,
+                            cursor: 'pointer', fontFamily: F.body,
                             display: 'inline-flex', alignItems: 'center', gap: 6,
                           }}>
                           {loadingOrder === order.id ? (
@@ -509,7 +500,7 @@ export default function WarehouseClient({
                             padding: '9px 16px', background: C.green,
                             color: C.surface, border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
-                            cursor: 'pointer', fontFamily: FONT,
+                            cursor: 'pointer', fontFamily: F.body,
                             display: 'inline-flex', alignItems: 'center', gap: 6,
                           }}>
                           {loadingOrder === order.id ? (
@@ -527,7 +518,7 @@ export default function WarehouseClient({
                           style={{
                             padding: '9px 16px', border: 'none', borderRadius: 7,
                             fontSize: 12, fontWeight: 700,
-                            cursor: 'pointer', fontFamily: FONT,
+                            cursor: 'pointer', fontFamily: F.body,
                             display: 'inline-flex', alignItems: 'center', gap: 6,
                             opacity: loadingOrder === order.id ? 0.7 : 1,
                           }}>
@@ -543,15 +534,15 @@ export default function WarehouseClient({
                         title="Imprimer la fiche de préparation"
                         style={{
                           padding: '9px 11px', background: 'transparent',
-                          color: C.slate, border: `1px solid ${C.border}`,
+                          color: C.muted, border: `1px solid ${C.border}`,
                           borderRadius: 7, fontSize: 12,
-                          cursor: 'pointer', fontFamily: FONT,
+                          cursor: 'pointer', fontFamily: F.body,
                           display: 'flex', alignItems: 'center', gap: 5,
                         }}>
                         <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-                          <rect x="1" y="4" width="11" height="7" rx="1.5" stroke={C.slate} strokeWidth="1.2"/>
-                          <path d="M3.5 4V2.5A.5.5 0 0 1 4 2h5a.5.5 0 0 1 .5.5V4" stroke={C.slate} strokeWidth="1.2"/>
-                          <path d="M3.5 9.5h6M3.5 7.5h4" stroke={C.slate} strokeWidth="1" strokeLinecap="round"/>
+                          <rect x="1" y="4" width="11" height="7" rx="1.5" stroke={C.muted} strokeWidth="1.2"/>
+                          <path d="M3.5 4V2.5A.5.5 0 0 1 4 2h5a.5.5 0 0 1 .5.5V4" stroke={C.muted} strokeWidth="1.2"/>
+                          <path d="M3.5 9.5h6M3.5 7.5h4" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/>
                         </svg>
                         Imprimer
                       </button>
@@ -572,7 +563,7 @@ export default function WarehouseClient({
                       <div style={{ fontSize: 11, fontWeight: 600,
                         color: C.muted, textTransform: 'uppercase',
                         letterSpacing: '0.06em', marginBottom: 12,
-                        fontFamily: FONT }}>
+                        fontFamily: F.body }}>
                         Détail de la commande
                       </div>
                       <table style={{ width: '100%',
@@ -586,7 +577,7 @@ export default function WarehouseClient({
                                 letterSpacing: '0.05em',
                                 padding: '0 12px 8px 0',
                                 borderBottom: `2px solid ${C.border}`,
-                                fontFamily: FONT }}>
+                                fontFamily: F.body }}>
                                 {h}
                               </th>
                             ))}
@@ -617,20 +608,20 @@ export default function WarehouseClient({
                               <tr key={item.id}>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, fontWeight: 600,
-                                  color: C.ink, fontFamily: FONT }}>
+                                  color: C.ink, fontFamily: F.body }}>
                                   {item.products?.name}
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
-                                  fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                                  fontSize: 11, color: C.muted, fontFamily: F.body }}>
                                   {item.products?.reference_code}
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
-                                  fontSize: 13, color: C.ink, fontFamily: FONT }}>
+                                  fontSize: 13, color: C.ink, fontFamily: F.body }}>
                                   {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : pluralize(unitLbl, item.quantity_tiles)}
                                 </td>
                                 <td style={{ padding: '10px 12px 10px 0',
                                   fontSize: 13, fontWeight: 700,
-                                  color: C.ink, fontFamily: FONT }}>
+                                  color: C.ink, fontFamily: F.body }}>
                                   {detail}
                                 </td>
                               </tr>
@@ -640,9 +631,9 @@ export default function WarehouseClient({
                       </table>
                       {sale.notes && (
                         <div style={{ marginTop: 12, padding: '10px 12px',
-                          background: C.goldL, borderRadius: 7,
+                          background: C.goldBg, borderRadius: 7,
                           fontSize: 12, color: C.gold,
-                          border: `1px solid #e5d080`, fontFamily: FONT }}>
+                          border: `1px solid #e5d080`, fontFamily: F.body }}>
                           Note vendeur : {sale.notes}
                         </div>
                       )}
@@ -657,7 +648,7 @@ export default function WarehouseClient({
               <div style={{ marginTop: 8 }}>
                 <div style={{ fontSize: 11, fontWeight: 600,
                   color: C.muted, textTransform: 'uppercase',
-                  letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+                  letterSpacing: '0.08em', marginBottom: 10, fontFamily: F.body }}>
                   Récemment livrées
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -674,11 +665,11 @@ export default function WarehouseClient({
                             borderLeft: `4px solid ${C.muted}`, cursor: 'pointer' }}>
                           <div>
                             <span style={{ fontSize: 13, fontWeight: 700,
-                              color: C.ink, fontFamily: FONT }}>
+                              color: C.ink, fontFamily: F.body }}>
                               {o.order_number}
                             </span>
                             <span style={{ fontSize: 12, color: C.muted,
-                              marginLeft: 10, fontFamily: FONT }}>
+                              marginLeft: 10, fontFamily: F.body }}>
                               {o.sales?.customer_name ?? 'Client anonyme'} ·{' '}
                               {o.sales?.boutiques?.name}
                             </span>
@@ -687,7 +678,7 @@ export default function WarehouseClient({
                             <span style={{ display: 'inline-flex', alignItems: 'center',
                               gap: 5, fontSize: 11, fontWeight: 600,
                               padding: '3px 10px', borderRadius: 100,
-                              background: '#F0F0F0', color: C.muted, fontFamily: FONT }}>
+                              background: '#F0F0F0', color: C.muted, fontFamily: F.body }}>
                               <span style={{ width: 5, height: 5, borderRadius: '50%',
                                 background: C.muted, flexShrink: 0 }} />
                               Livrée
@@ -706,7 +697,7 @@ export default function WarehouseClient({
                             padding: '14px 16px', background: C.bg, overflowX: 'auto' }}>
                             <div style={{ fontSize: 11, fontWeight: 600,
                               color: C.muted, textTransform: 'uppercase',
-                              letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>
+                              letterSpacing: '0.06em', marginBottom: 10, fontFamily: F.body }}>
                               Détail livré
                             </div>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -719,7 +710,7 @@ export default function WarehouseClient({
                                       letterSpacing: '0.05em',
                                       padding: '0 12px 8px 0',
                                       borderBottom: `2px solid ${C.border}`,
-                                      fontFamily: FONT }}>
+                                      fontFamily: F.body }}>
                                       {h}
                                     </th>
                                   ))}
@@ -750,20 +741,20 @@ export default function WarehouseClient({
                                     <tr key={item.id}>
                                       <td style={{ padding: '8px 12px 8px 0',
                                         fontSize: 13, fontWeight: 600, color: C.ink,
-                                        fontFamily: FONT }}>
+                                        fontFamily: F.body }}>
                                         {item.products?.name}
                                       </td>
                                       <td style={{ padding: '8px 12px 8px 0',
-                                        fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                                        fontSize: 11, color: C.muted, fontFamily: F.body }}>
                                         {item.products?.reference_code}
                                       </td>
                                       <td style={{ padding: '8px 12px 8px 0',
-                                        fontSize: 13, color: C.ink, fontFamily: FONT }}>
+                                        fontSize: 13, color: C.ink, fontFamily: F.body }}>
                                         {fmtNum(item.quantity_tiles)} {isTile ? 'car.' : pluralize(unitLbl, item.quantity_tiles)}
                                       </td>
                                       <td style={{ padding: '8px 0',
                                         fontSize: 13, fontWeight: 700, color: C.ink,
-                                        fontFamily: FONT }}>
+                                        fontFamily: F.body }}>
                                         {detail}
                                       </td>
                                     </tr>
@@ -793,7 +784,7 @@ export default function WarehouseClient({
               width: '100%', padding: '10px 14px', borderRadius: 8,
               border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink,
               outline: 'none', boxSizing: 'border-box',
-              background: C.surface, fontFamily: FONT, marginBottom: 16,
+              background: C.surface, fontFamily: F.body, marginBottom: 16,
             }}
           />
           <div style={{ display: 'grid',
@@ -840,11 +831,11 @@ export default function WarehouseClient({
                     marginBottom: 14 }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700,
-                        color: C.ink, fontFamily: FONT }}>
+                        color: C.ink, fontFamily: F.body }}>
                         {item.product_name}
                       </div>
                       <div style={{ fontSize: 11, color: C.muted,
-                        marginTop: 2, fontFamily: FONT }}>
+                        marginTop: 2, fontFamily: F.body }}>
                         {item.reference_code}
                       </div>
                     </div>
@@ -852,8 +843,8 @@ export default function WarehouseClient({
                       gap: 5, fontSize: 11, fontWeight: 600,
                       padding: '4px 10px', height: 'fit-content',
                       borderRadius: 100,
-                      background: isCritical ? C.redL : isLow ? C.orangeL : C.greenL,
-                      color: stockColor, fontFamily: FONT }}>
+                      background: isCritical ? C.redBg : isLow ? C.orangeBg : C.greenBg,
+                      color: stockColor, fontFamily: F.body }}>
                       <span style={{ width: 5, height: 5, borderRadius: '50%',
                         background: stockColor, flexShrink: 0 }} />
                       {isCritical ? 'Critique' : isLow ? 'Stock bas' : 'OK'}
@@ -865,7 +856,7 @@ export default function WarehouseClient({
                     <div style={{ display: 'flex', justifyContent: 'space-between',
                       marginBottom: 4 }}>
                       <span style={{ fontSize: 12, fontWeight: 700,
-                        color: stockColor, fontFamily: FONT }}>
+                        color: stockColor, fontFamily: F.body }}>
                         {isTile
                           ? `${fmtM2(availM2)} disponible`
                           : prod?.product_type === 'bag' && prod?.bag_weight_kg
@@ -873,12 +864,12 @@ export default function WarehouseClient({
                           : `${fmtNum(available)} ${pluralize(unitLabel, available)} disponible${available !== 1 ? 's' : ''}`}
                       </span>
                       {isTile && (
-                        <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                        <span style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                           {fmtNum(available)} carreaux
                         </span>
                       )}
                       {!isTile && prod?.product_type === 'unit' && prod?.pieces_per_package && available > 0 && (
-                        <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                        <span style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                           {Math.floor(available / parseInt(prod.pieces_per_package))} {prod.package_label ?? 'lot'}s
                         </span>
                       )}
@@ -916,11 +907,11 @@ export default function WarehouseClient({
                       <div key={lbl} style={{ textAlign: 'center',
                         padding: '8px 4px', background: C.bg,
                         borderRadius: 6 }}>
-                        <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                           {lbl}
                         </div>
                         <div style={{ fontSize: 13, fontWeight: 700,
-                          color: C.ink, marginTop: 2, fontFamily: FONT }}>
+                          color: C.ink, marginTop: 2, fontFamily: F.body }}>
                           {val}
                         </div>
                       </div>
@@ -946,7 +937,7 @@ export default function WarehouseClient({
                 borderBottom: `1px solid ${C.border}`,
                 background: C.blue }}>
                 <div style={{ fontSize: 14, fontWeight: 700,
-                  color: C.surface, fontFamily: FONT }}>
+                  color: C.surface, fontFamily: F.body }}>
                   Nouvelle demande
                 </div>
               </div>
@@ -957,7 +948,7 @@ export default function WarehouseClient({
                 {/* Type */}
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                     Type de demande
                   </label>
                   <div style={{ display: 'flex', gap: 2,
@@ -972,9 +963,9 @@ export default function WarehouseClient({
                         style={{
                           flex: 1, padding: '8px', borderRadius: 100,
                           fontSize: 12, fontWeight: 700,
-                          cursor: 'pointer', fontFamily: FONT,
+                          cursor: 'pointer', fontFamily: F.body,
                           background: reqType === t ? C.blue : 'transparent',
-                          color: reqType === t ? C.surface : C.slate,
+                          color: reqType === t ? C.surface : C.muted,
                           border: 'none',
                         }}>
                         {l}
@@ -986,7 +977,7 @@ export default function WarehouseClient({
                 {/* Product */}
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                     Produit concerné
                   </label>
                   {/* Searchable product combobox */}
@@ -1029,7 +1020,7 @@ export default function WarehouseClient({
                           maxHeight: 220, overflowY: 'auto' }}>
                           {filtered.length === 0 ? (
                             <div style={{ padding: '10px 14px', fontSize: 12,
-                              color: C.muted, fontFamily: FONT }}>
+                              color: C.muted, fontFamily: F.body }}>
                               Aucun résultat
                             </div>
                           ) : filtered.map(p => (
@@ -1043,8 +1034,8 @@ export default function WarehouseClient({
                                 setReqCartons(''); setReqLoose(''); setReqQty('')
                               }}
                               style={{ padding: '9px 14px', cursor: 'pointer',
-                                fontSize: 13, fontFamily: FONT,
-                                background: reqProduct === p.id ? C.blueL : 'transparent',
+                                fontSize: 13, fontFamily: F.body,
+                                background: reqProduct === p.id ? C.blueBg : 'transparent',
                                 color: reqProduct === p.id ? C.blue : C.ink,
                                 borderBottom: `1px solid ${C.border}` }}>
                               <span style={{ fontWeight: 600 }}>{p.name}</span>
@@ -1075,7 +1066,7 @@ export default function WarehouseClient({
                           style={{
                             padding: '4px 10px', borderRadius: 5, border: 'none',
                             fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                            fontFamily: FONT,
+                            fontFamily: F.body,
                             background: reqCorrectionSign === sign
                               ? (sign === 'negative' ? C.red : C.green)
                               : 'transparent',
@@ -1093,7 +1084,7 @@ export default function WarehouseClient({
                       <div style={{ display: 'flex', alignItems: 'center',
                         justifyContent: 'space-between', marginBottom: 6 }}>
                         <label style={{ fontSize: 12, fontWeight: 600,
-                          color: C.ink, fontFamily: FONT }}>
+                          color: C.ink, fontFamily: F.body }}>
                           Quantité{' '}
                           {reqType === 'correction'
                             ? reqCorrectionSign === 'negative'
@@ -1130,7 +1121,7 @@ export default function WarehouseClient({
                             const m2    = total * parseFloat(selProd?.tile_area_m2 ?? '0')
                             return total > 0 ? (
                               <div style={{ marginTop: 6, fontSize: 12,
-                                color: C.blue, fontWeight: 600, fontFamily: FONT }}>
+                                color: C.blue, fontWeight: 600, fontFamily: F.body }}>
                                 = {fmtNum(total)} carreaux · {fmtM2(m2)}
                               </div>
                             ) : null
@@ -1145,7 +1136,7 @@ export default function WarehouseClient({
                             style={inputStyle} />
                           {reqQty && parseInt(reqQty) > 0 && (
                             <div style={{ marginTop: 6, fontSize: 12,
-                              color: C.blue, fontWeight: 600, fontFamily: FONT }}>
+                              color: C.blue, fontWeight: 600, fontFamily: F.body }}>
                               = {fmtNum(parseInt(reqQty))} {pluralize(unitLbl, parseInt(reqQty))}
                             </div>
                           )}
@@ -1158,7 +1149,7 @@ export default function WarehouseClient({
                 {/* Justification */}
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600,
-                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                    color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                     Justification{' '}
                     <span style={{ color: C.muted, fontWeight: 400 }}>
                       (min. 10 caractères)
@@ -1170,24 +1161,24 @@ export default function WarehouseClient({
                     style={{ ...inputStyle, resize: 'vertical' }} />
                   {reqJustif.length > 0 && reqJustif.length < 10 && (
                     <div style={{ fontSize: 11, color: C.red,
-                      marginTop: 4, fontFamily: FONT }}>
+                      marginTop: 4, fontFamily: F.body }}>
                       {reqJustif.length}/10 caractères minimum
                     </div>
                   )}
                 </div>
 
                 {reqError && (
-                  <div style={{ padding: '10px 12px', background: C.redL,
+                  <div style={{ padding: '10px 12px', background: C.redBg,
                     borderRadius: 8, fontSize: 12,
-                    fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                    fontWeight: 600, color: C.red, fontFamily: F.body }}>
                     {reqError}
                   </div>
                 )}
 
                 {reqSuccess && (
-                  <div style={{ padding: '10px 12px', background: C.greenL,
+                  <div style={{ padding: '10px 12px', background: C.greenBg,
                     borderRadius: 8, fontSize: 12,
-                    fontWeight: 600, color: C.green, fontFamily: FONT }}>
+                    fontWeight: 600, color: C.green, fontFamily: F.body }}>
                     Demande soumise — en attente d'approbation
                   </div>
                 )}
@@ -1206,7 +1197,7 @@ export default function WarehouseClient({
                   disabled={disabled}
                   style={{
                     padding: '13px', borderRadius: 8, border: 'none',
-                    cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: FONT,
+                    cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: F.body,
                     fontSize: 13, fontWeight: 700,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     opacity: disabled ? 0.45 : 1,
@@ -1226,14 +1217,14 @@ export default function WarehouseClient({
               gap: 10 }}>
               <div style={{ fontSize: 11, fontWeight: 600,
                 color: C.muted, textTransform: 'uppercase',
-                letterSpacing: '0.08em', marginBottom: 4, fontFamily: FONT }}>
+                letterSpacing: '0.08em', marginBottom: 4, fontFamily: F.body }}>
                 Mes demandes récentes
               </div>
               {myRequests.length === 0 ? (
                 <div style={{ background: C.surface, borderRadius: 12,
                   border: `1px solid ${C.border}`,
                   padding: '32px', textAlign: 'center',
-                  color: C.muted, fontSize: 13, fontFamily: FONT }}>
+                  color: C.muted, fontSize: 13, fontFamily: F.body }}>
                   Aucune demande soumise
                 </div>
               ) : myRequests.map((req: any) => {
@@ -1253,14 +1244,14 @@ export default function WarehouseClient({
                       justifyContent: 'space-between',
                       alignItems: 'flex-start', marginBottom: 4 }}>
                       <div style={{ fontSize: 13, fontWeight: 700,
-                        color: C.ink, fontFamily: FONT }}>
+                        color: C.ink, fontFamily: F.body }}>
                         {req.products?.name}
                       </div>
                       <span style={{ display: 'inline-flex', alignItems: 'center',
                         gap: 5, fontSize: 11, fontWeight: 600,
                         padding: '3px 10px', borderRadius: 100,
                         background: cfg.bg, color: cfg.color,
-                        flexShrink: 0, marginLeft: 8, fontFamily: FONT }}>
+                        flexShrink: 0, marginLeft: 8, fontFamily: F.body }}>
                         <span style={{ width: 5, height: 5, borderRadius: '50%',
                           background: cfg.color, flexShrink: 0 }} />
                         {cfg.label}
@@ -1268,21 +1259,21 @@ export default function WarehouseClient({
                     </div>
                     <div style={{ display: 'flex', gap: 10,
                       alignItems: 'center', marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                      <span style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                         {req.request_type === 'stock_in'
                           ? 'Entrée' : 'Correction'}
                       </span>
                       <span style={{ fontSize: 13, fontWeight: 700,
-                        color: isNeg ? C.red : C.green, fontFamily: FONT }}>
+                        color: isNeg ? C.red : C.green, fontFamily: F.body }}>
                         {isNeg ? '' : '+'}
                         {fmtNum(Math.abs(req.quantity_tiles_delta))} {pluralize(unitLblReq, Math.abs(req.quantity_tiles_delta))}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: C.muted,
-                      fontStyle: 'italic', marginBottom: 4, fontFamily: FONT }}>
+                      fontStyle: 'italic', marginBottom: 4, fontFamily: F.body }}>
                       "{req.justification}"
                     </div>
-                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                       {new Date(req.created_at).toLocaleDateString(
                         'fr-FR', { day: '2-digit', month: 'short',
                           hour: '2-digit', minute: '2-digit' }
@@ -1290,8 +1281,8 @@ export default function WarehouseClient({
                     </div>
                     {req.status === 'rejected' && req.review_comment && (
                       <div style={{ marginTop: 6, padding: '6px 10px',
-                        background: C.redL, borderRadius: 6,
-                        fontSize: 11, color: C.red, fontFamily: FONT }}>
+                        background: C.redBg, borderRadius: 6,
+                        fontSize: 11, color: C.red, fontFamily: F.body }}>
                         Motif : {req.review_comment}
                       </div>
                     )}
@@ -1316,13 +1307,13 @@ export default function WarehouseClient({
               borderBottom: `1px solid ${C.border}`,
               background: C.blue }}>
               <h3 style={{ margin: 0, fontSize: 16,
-                fontWeight: 700, color: C.surface, fontFamily: FONT }}>
+                fontWeight: 700, color: C.surface, fontFamily: F.body }}>
                 Confirmer la livraison
               </h3>
             </div>
             <div style={{ padding: '24px' }}>
               <p style={{ margin: '0 0 20px', fontSize: 13,
-                color: C.slate, fontFamily: FONT }}>
+                color: C.muted, fontFamily: F.body }}>
                 Cette action est irréversible. Le stock sera définitivement
                 déduit et la vente marquée comme livrée.
               </p>
@@ -1333,7 +1324,7 @@ export default function WarehouseClient({
                   disabled={!!loadingOrder}
                   style={{ flex: 1, padding: '12px',
                     border: 'none', borderRadius: 8, fontSize: 13,
-                    fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+                    fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     opacity: !!loadingOrder ? 0.7 : 1,
                   }}>
@@ -1347,10 +1338,10 @@ export default function WarehouseClient({
                   className="btn-ghost"
                   onClick={() => setConfirm(null)}
                   style={{ padding: '12px 16px', background: C.surface,
-                    color: C.slate,
+                    color: C.muted,
                     border: `1.5px solid ${C.border}`,
                     borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: FONT }}>
+                    cursor: 'pointer', fontFamily: F.body }}>
                   Annuler
                 </button>
               </div>

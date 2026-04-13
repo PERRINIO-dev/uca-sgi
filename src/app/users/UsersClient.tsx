@@ -14,24 +14,13 @@ import {
 import PageLayout from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 
-// ── Design tokens ──────────────────────────────────────────────────────────────
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-  purple: '#7C3AED', purpleL: '#F5F3FF',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const ROLE_CONFIG = {
-  owner:     { label: 'Propriétaire',   bg: C.purpleL, color: C.purple, accent: C.purple },
-  admin:     { label: 'Administrateur', bg: C.blueL,   color: C.blue,   accent: C.blue },
-  vendor:    { label: 'Vendeur',        bg: C.greenL,  color: C.green,  accent: C.green },
-  warehouse: { label: 'Entrepôt',       bg: C.orangeL, color: C.orange, accent: C.orange },
+  owner:     { label: 'Propriétaire',   bg: C.purpleBg, color: C.purple, accent: C.purple, bd: C.purpleBd },
+  admin:     { label: 'Administrateur', bg: C.blueBg,   color: C.blue,   accent: C.blue,   bd: C.blueBd   },
+  vendor:    { label: 'Vendeur',        bg: C.greenBg,  color: C.green,  accent: C.green,  bd: C.greenBd  },
+  warehouse: { label: 'Entrepôt',       bg: C.orangeBg, color: C.orange, accent: C.orange, bd: C.orangeBd },
 }
 const ROLE_OPTIONS: ['vendor' | 'warehouse' | 'admin', string][] = [
   ['vendor',    'Vendeur'],
@@ -40,10 +29,10 @@ const ROLE_OPTIONS: ['vendor' | 'warehouse' | 'admin', string][] = [
 ]
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', borderRadius: 8,
-  border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink,
+  width: '100%', padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md,
+  border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text,
   outline: 'none', boxSizing: 'border-box',
-  background: C.surface, fontFamily: FONT,
+  background: C.bg, fontFamily: F.body,
 }
 
 // ── SVG icons ──────────────────────────────────────────────────────────────────
@@ -262,10 +251,10 @@ export default function UsersClient({
         alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
             Utilisateurs
           </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
             {employees.filter(e => e.is_active).length} compte
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''} actif
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''}
@@ -278,8 +267,8 @@ export default function UsersClient({
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
               padding: '10px 16px', background: C.surface,
-              color: C.slate, border: `1.5px solid ${C.border}`, borderRadius: 9,
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
+              color: C.muted, border: `1.5px solid ${C.border}`, borderRadius: 9,
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
             }}>
             <IconStore />
             Boutiques ({boutiques.filter(b => b.is_active).length}/{boutiques.length})
@@ -288,7 +277,7 @@ export default function UsersClient({
             className="btn-meram"
             onClick={() => { setShowCreate(true); setCreateError(null); setCreateSuccess(null) }}
             style={{ padding: '10px 20px', border: 'none', borderRadius: 9,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT,
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
               display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
             Nouvel employé
@@ -307,12 +296,12 @@ export default function UsersClient({
               border: `1px solid ${C.border}`,
               boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
               padding: '14px 18px', borderLeft: `3px solid ${cfg.accent}` }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate,
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
                 textTransform: 'uppercase', letterSpacing: '0.07em',
-                marginBottom: 6, fontFamily: FONT }}>
+                marginBottom: 6, fontFamily: F.body }}>
                 {cfg.label}
               </div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: cfg.color, fontFamily: FONT }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: cfg.color, fontFamily: F.body }}>
                 {count}
               </div>
             </div>
@@ -344,7 +333,7 @@ export default function UsersClient({
           <option value="inactive">Désactivés</option>
         </select>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center',
-          fontSize: 12, color: C.muted, fontFamily: FONT }}>
+          fontSize: 12, color: C.muted, fontFamily: F.body }}>
           {filtered.length} / {employees.length}
         </div>
       </div>
@@ -355,7 +344,7 @@ export default function UsersClient({
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '56px 24px', textAlign: 'center',
-            color: C.muted, fontSize: 14, fontFamily: FONT }}>
+            color: C.muted, fontSize: 14, fontFamily: F.body }}>
             Aucun utilisateur correspond aux filtres.
           </div>
         ) : (
@@ -365,9 +354,9 @@ export default function UsersClient({
                 <tr style={{ background: C.bg }}>
                   {['Nom', 'Email', 'Rôle', 'Boutique', 'Créé le', 'Statut', 'Actions'].map(h => (
                     <th key={h} style={{ padding: '11px 16px', textAlign: 'left',
-                      fontSize: 12, fontWeight: 700, color: C.slate,
+                      fontSize: 12, fontWeight: 700, color: C.muted,
                       textTransform: 'uppercase', letterSpacing: '0.07em',
-                      fontFamily: FONT, borderBottom: `1.5px solid ${C.border}`,
+                      fontFamily: F.body, borderBottom: `1.5px solid ${C.border}`,
                       whiteSpace: 'nowrap' }}>
                       {h}
                     </th>
@@ -383,7 +372,7 @@ export default function UsersClient({
                       borderBottom: `1px solid ${C.border}`,
                       opacity: emp.is_active ? 1 : 0.55,
                     }}>
-                      <td style={{ padding: '13px 16px', fontFamily: FONT }}>
+                      <td style={{ padding: '13px 16px', fontFamily: F.body }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <div style={{
                             width: 30, height: 30, borderRadius: '50%',
@@ -406,22 +395,22 @@ export default function UsersClient({
                           </div>
                         </div>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                      <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: F.body }}>
                         {emp.email}
                       </td>
                       <td style={{ padding: '13px 16px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
                           fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 100,
-                          background: roleCfg?.bg, color: roleCfg?.color, fontFamily: FONT }}>
+                          background: roleCfg?.bg, color: roleCfg?.color, fontFamily: F.body }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%',
                             background: roleCfg?.accent, flexShrink: 0 }} />
                           {roleCfg?.label}
                         </span>
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 13, color: C.ink, fontFamily: FONT }}>
+                      <td style={{ padding: '13px 16px', fontSize: 13, color: C.ink, fontFamily: F.body }}>
                         {emp.boutiques?.name ?? <span style={{ color: C.muted }}>—</span>}
                       </td>
-                      <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                      <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: F.body }}>
                         {new Date(emp.created_at).toLocaleDateString('fr-FR', {
                           day: '2-digit', month: 'short', year: 'numeric',
                         })}
@@ -429,9 +418,9 @@ export default function UsersClient({
                       <td style={{ padding: '13px 16px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5,
                           fontSize: 11, fontWeight: 600, padding: '3px 9px', borderRadius: 100,
-                          background: emp.is_active ? C.greenL : C.redL,
+                          background: emp.is_active ? C.greenBg : C.redBg,
                           color:      emp.is_active ? C.green  : C.red,
-                          fontFamily: FONT }}>
+                          fontFamily: F.body }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%',
                             background: emp.is_active ? C.green : C.red, flexShrink: 0 }} />
                           {emp.is_active ? 'Actif' : 'Désactivé'}
@@ -447,7 +436,7 @@ export default function UsersClient({
                                 padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
                                 background: 'transparent', color: C.blue,
                                 border: `1px solid ${C.border}`,
-                                fontSize: 12, fontWeight: 600, fontFamily: FONT }}>
+                                fontSize: 12, fontWeight: 600, fontFamily: F.body }}>
                               <IconPencil /> Modifier
                             </button>
                           )}
@@ -457,10 +446,10 @@ export default function UsersClient({
                               onClick={() => handleToggle(emp.id, emp.is_active)}
                               disabled={togglingId === emp.id}
                               style={{ padding: '5px 12px', borderRadius: 6, border: 'none',
-                                background: emp.is_active ? C.redL : C.greenL,
+                                background: emp.is_active ? C.redBg : C.greenBg,
                                 color:      emp.is_active ? C.red  : C.green,
                                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                                fontFamily: FONT,
+                                fontFamily: F.body,
                                 display: 'inline-flex', alignItems: 'center', gap: 5,
                                 opacity: togglingId === emp.id ? 0.6 : 1 }}>
                               {togglingId === emp.id ? <><span className="spinner-blue" />…</> : emp.is_active ? 'Désactiver' : 'Réactiver'}
@@ -578,7 +567,7 @@ export default function UsersClient({
                 onClick={handleEdit} disabled={editLoading}
                 style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
                   fontSize: 13, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   opacity: editLoading ? 0.7 : 1 }}>
                 {editLoading ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer les modifications'}
               </button>
@@ -594,10 +583,10 @@ export default function UsersClient({
                 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%',
                   padding: '9px 12px', borderRadius: 8,
-                  background: editPwdOpen ? C.blueL : C.bg,
+                  background: editPwdOpen ? C.blueBg : C.bg,
                   border: `1px solid ${editPwdOpen ? '#BFDBFE' : C.border}`,
-                  cursor: 'pointer', color: editPwdOpen ? C.blue : C.slate,
-                  fontSize: 13, fontWeight: 600, fontFamily: FONT, textAlign: 'left' }}>
+                  cursor: 'pointer', color: editPwdOpen ? C.blue : C.muted,
+                  fontSize: 13, fontWeight: 600, fontFamily: F.body, textAlign: 'left' }}>
                 <IconKey />
                 Modifier le mot de passe
                 <IconChevron open={editPwdOpen} />
@@ -629,21 +618,21 @@ export default function UsersClient({
                       style={{ padding: '10px 14px', borderRadius: 8,
                         background: (editPwdLoading || editPwd.length < 8) ? C.muted : C.blue,
                         color: '#fff', border: 'none', cursor: 'pointer',
-                        fontSize: 12, fontWeight: 700, fontFamily: FONT,
+                        fontSize: 12, fontWeight: 700, fontFamily: F.body,
                         whiteSpace: 'nowrap', flexShrink: 0,
                         display: 'flex', alignItems: 'center', gap: 5 }}>
                       {editPwdLoading ? <><span className="spinner" />…</> : 'Appliquer'}
                     </button>
                   </div>
                   {editPwdError && (
-                    <div style={{ marginTop: 8, padding: '8px 10px', background: C.redL,
-                      borderRadius: 6, fontSize: 12, color: C.red, fontFamily: FONT }}>
+                    <div style={{ marginTop: 8, padding: '8px 10px', background: C.redBg,
+                      borderRadius: 6, fontSize: 12, color: C.red, fontFamily: F.body }}>
                       {editPwdError}
                     </div>
                   )}
                   {editPwdSuccess && (
-                    <div style={{ marginTop: 8, padding: '8px 10px', background: C.greenL,
-                      borderRadius: 6, fontSize: 12, color: C.green, fontWeight: 600, fontFamily: FONT }}>
+                    <div style={{ marginTop: 8, padding: '8px 10px', background: C.greenBg,
+                      borderRadius: 6, fontSize: 12, color: C.green, fontWeight: 600, fontFamily: F.body }}>
                       Mot de passe mis à jour.
                     </div>
                   )}
@@ -664,7 +653,7 @@ export default function UsersClient({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
             {boutiques.length === 0 ? (
-              <p style={{ fontSize: 13, color: C.muted, fontFamily: FONT, margin: 0 }}>
+              <p style={{ fontSize: 13, color: C.muted, fontFamily: F.body, margin: 0 }}>
                 Aucune boutique enregistrée.
               </p>
             ) : (
@@ -681,7 +670,7 @@ export default function UsersClient({
                       <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
                         background: b.is_active ? C.green : C.red }} />
                       <span style={{ fontSize: 12, fontWeight: 700,
-                        color: b.is_active ? C.ink : C.red, fontFamily: FONT,
+                        color: b.is_active ? C.ink : C.red, fontFamily: F.body,
                         flex: 1, minWidth: 0, overflow: 'hidden',
                         textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {b.name}
@@ -693,9 +682,9 @@ export default function UsersClient({
                       disabled={togglingBoutique === b.id}
                       style={{ padding: '5px 8px', borderRadius: 6, border: 'none',
                         fontSize: 10.5, fontWeight: 700, cursor: 'pointer',
-                        background: b.is_active ? C.redL : C.greenL,
+                        background: b.is_active ? C.redBg : C.greenBg,
                         color:      b.is_active ? C.red  : C.green,
-                        fontFamily: FONT, opacity: togglingBoutique === b.id ? 0.5 : 1 }}>
+                        fontFamily: F.body, opacity: togglingBoutique === b.id ? 0.5 : 1 }}>
                       {togglingBoutique === b.id ? '…' : b.is_active ? 'Fermer' : 'Réouvrir'}
                     </button>
                   </div>
@@ -720,7 +709,7 @@ export default function UsersClient({
                       disabled={boutiqueLoading || !newBoutiqueName.trim()}
                       style={{ padding: '10px 16px', borderRadius: 9, border: 'none',
                         fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                        fontFamily: FONT, whiteSpace: 'nowrap', flexShrink: 0,
+                        fontFamily: F.body, whiteSpace: 'nowrap', flexShrink: 0,
                         display: 'inline-flex', alignItems: 'center', gap: 7,
                         opacity: (boutiqueLoading || !newBoutiqueName.trim()) ? 0.5 : 1 }}>
                       {boutiqueLoading ? <><span className="spinner" />…</> : 'Ajouter'}
@@ -766,9 +755,9 @@ function RoleSelector({ value, onChange }: {
           style={{ flex: 1, padding: '9px 4px', borderRadius: 7,
             fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
             background: value === r ? C.blue    : C.surface,
-            color:      value === r ? C.surface : C.slate,
+            color:      value === r ? C.surface : C.muted,
             border: `1.5px solid ${value === r ? C.blue : C.border}`,
-            fontFamily: FONT, transition: 'all 0.12s' }}>
+            fontFamily: F.body, transition: 'all 0.12s' }}>
           {l}
         </button>
       ))}
@@ -812,11 +801,11 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
           justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
           <div>
             <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink,
-              letterSpacing: '-0.02em', fontFamily: FONT }}>
+              letterSpacing: '-0.02em', fontFamily: F.body }}>
               {title}
             </h3>
             {subtitle && (
-              <div style={{ marginTop: 4, fontSize: 12.5, color: C.muted, fontFamily: FONT }}>
+              <div style={{ marginTop: 4, fontSize: 12.5, color: C.muted, fontFamily: F.body }}>
                 {subtitle}
               </div>
             )}
@@ -832,7 +821,7 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
           </button>
         </div>
         {/* Body */}
-        <div style={{ padding: '22px 24px', overflowY: 'auto', flex: 1, fontFamily: FONT }}>
+        <div style={{ padding: '22px 24px', overflowY: 'auto', flex: 1, fontFamily: F.body }}>
           {children}
         </div>
       </div>
@@ -843,8 +832,8 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
 function FieldBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.slate,
-        display: 'block', marginBottom: 6, fontFamily: FONT,
+      <label style={{ fontSize: 11.5, fontWeight: 600, color: C.muted,
+        display: 'block', marginBottom: 6, fontFamily: F.body,
         textTransform: 'uppercase', letterSpacing: '0.05em' }}>
         {label}
       </label>
@@ -858,10 +847,10 @@ function Feedback({ error, success }: { error?: string | null; success?: string 
   const isError = !!error
   return (
     <div style={{ padding: '10px 12px', borderRadius: 8,
-      background: isError ? C.redL : C.greenL,
+      background: isError ? C.redBg : C.greenBg,
       border: `1px solid ${isError ? '#FECACA' : '#A7F3D0'}`,
       fontSize: 12.5, fontWeight: 500,
-      color: isError ? C.red : C.green, fontFamily: FONT,
+      color: isError ? C.red : C.green, fontFamily: F.body,
       display: 'flex', alignItems: 'center', gap: 7 }}>
       {isError ? (
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style={{ flexShrink: 0 }}>
@@ -895,7 +884,7 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
         style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
           fontSize: 13, fontWeight: 700,
           cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
-          fontFamily: FONT, display: 'flex', alignItems: 'center',
+          fontFamily: F.body, display: 'flex', alignItems: 'center',
           justifyContent: 'center', gap: 7,
           opacity: (loading || disabled) ? 0.7 : 1 }}>
         {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
@@ -903,9 +892,9 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
       <button
         className="btn-ghost"
         onClick={onCancel}
-        style={{ padding: '11px 18px', background: C.surface, color: C.slate,
+        style={{ padding: '11px 18px', background: C.surface, color: C.muted,
           border: `1.5px solid ${C.border}`, borderRadius: 8,
-          fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+          fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F.body }}>
         Annuler
       </button>
     </div>

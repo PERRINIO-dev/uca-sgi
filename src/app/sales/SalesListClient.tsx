@@ -9,6 +9,7 @@ import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }       from '@/lib/format'
 import { pluralize }         from '@/lib/pluralize'
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -18,89 +19,78 @@ const fmtNum = (n: number) =>
 const fmtM2 = (n: number) =>
   new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + ' m²'
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
-
-const PAYMENT_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
-  paid:    { label: 'Payé',    bg: '#ECFDF5', color: '#059669' },
-  partial: { label: 'Acompte', bg: '#FFFBEB', color: '#D97706' },
-  unpaid:  { label: 'Impayé',  bg: '#FEF2F2', color: '#DC2626' },
+const PAYMENT_CONFIG: Record<string, { label: string; bg: string; color: string; bd: string }> = {
+  paid:    { label: 'Payé',    bg: C.greenBg,  color: C.green,  bd: C.greenBd  },
+  partial: { label: 'Acompte', bg: C.orangeBg, color: C.orange, bd: C.orangeBd },
+  unpaid:  { label: 'Impayé',  bg: C.redBg,    color: C.red,    bd: C.redBd    },
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string; dot: string }> = {
-  draft:     { label: 'Brouillon',      bg: C.bg,      color: C.muted,   dot: C.muted },
-  confirmed: { label: 'Confirmée',      bg: C.blueL,   color: C.blue,    dot: C.blue },
-  preparing: { label: 'En préparation', bg: C.orangeL, color: C.orange,  dot: C.orange },
-  ready:     { label: 'Prête',          bg: C.greenL,  color: C.green,   dot: C.green },
-  delivered: { label: 'Livrée',         bg: '#F0F0F0', color: C.muted,   dot: C.muted },
-  cancelled: { label: 'Annulée',        bg: C.redL,    color: C.red,     dot: C.red },
+  draft:     { label: 'Brouillon',      bg: C.surfaceEl, color: C.dim,    dot: C.dim    },
+  confirmed: { label: 'Confirmée',      bg: C.blueBg,    color: C.blue,   dot: C.blue   },
+  preparing: { label: 'En préparation', bg: C.orangeBg,  color: C.orange, dot: C.orange },
+  ready:     { label: 'Prête',          bg: C.greenBg,   color: C.green,  dot: C.green  },
+  delivered: { label: 'Livrée',         bg: C.surfaceEl, color: C.dim,    dot: C.dim    },
+  cancelled: { label: 'Annulée',        bg: C.redBg,     color: C.red,    dot: C.red    },
 }
 
 const TH_STYLE: React.CSSProperties = {
-  padding: '13px 16px', textAlign: 'left',
-  fontSize: 11, fontWeight: 700, color: C.muted,
-  textTransform: 'uppercase', letterSpacing: '0.10em',
+  padding: `${SP[3]} ${SP[4]}`, textAlign: 'left',
+  fontSize: 11, fontWeight: F.bold, color: C.dim,
+  textTransform: 'uppercase', letterSpacing: F.lsWider,
   borderBottom: `1.5px solid ${C.border}`,
-  whiteSpace: 'nowrap', fontFamily: FONT,
-  background: C.bg,
+  whiteSpace: 'nowrap', fontFamily: F.body,
+  background: C.surfaceSub,
 }
 const TD_STYLE: React.CSSProperties = {
-  padding: '15px 16px', fontSize: 13.5, color: C.ink,
-  borderBottom: `1px solid ${C.border}`,
-  verticalAlign: 'middle', fontFamily: FONT,
+  padding: `${SP[4]} ${SP[4]}`, fontSize: 13, color: C.text,
+  borderBottom: `1px solid ${C.borderSub}`,
+  verticalAlign: 'middle', fontFamily: F.body,
 }
 
 function IconChevronDown({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
-      <path d="M2 4l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 4l4 4 4-4" stroke={C.dim} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
 function IconChevronUp({ size = 12 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none">
-      <path d="M2 8l4-4 4 4" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M2 8l4-4 4 4" stroke={C.amber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   )
 }
 function IconCart({ size = 36 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <circle cx="20" cy="20" r="20" fill={C.bg}/>
-      <path d="M11 13h2.5l3.5 10h9l2-6H16" stroke={C.muted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="17" cy="26.5" r="1.5" fill={C.muted}/>
-      <circle cx="24" cy="26.5" r="1.5" fill={C.muted}/>
+      <circle cx="20" cy="20" r="20" fill={C.surfaceEl}/>
+      <path d="M11 13h2.5l3.5 10h9l2-6H16" stroke={C.dim} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="17" cy="26.5" r="1.5" fill={C.dim}/>
+      <circle cx="24" cy="26.5" r="1.5" fill={C.dim}/>
     </svg>
   )
 }
 function IconSearch({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
-      <circle cx="6" cy="6" r="4.5" stroke={C.muted} strokeWidth="1.4"/>
-      <path d="M10 10l2.5 2.5" stroke={C.muted} strokeWidth="1.4" strokeLinecap="round"/>
+      <circle cx="6" cy="6" r="4.5" stroke={C.dim} strokeWidth="1.4"/>
+      <path d="M10 10l2.5 2.5" stroke={C.dim} strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   )
 }
 function IconFilter({ size = 13 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 13 13" fill="none">
-      <path d="M1.5 3h10M3 6.5h7M5 10h3" stroke={C.slate} strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M1.5 3h10M3 6.5h7M5 10h3" stroke={C.muted} strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   )
 }
 function IconX({ size = 11 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 11 11" fill="none">
-      <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke={C.slate} strokeWidth="1.6" strokeLinecap="round"/>
+      <path d="M1.5 1.5l8 8M9.5 1.5l-8 8" stroke={C.muted} strokeWidth="1.6" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -315,8 +305,8 @@ export default function SalesListClient({
       {/* ── Navigation loading bar ── */}
       {navPending && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 9999,
-          background: 'linear-gradient(90deg, #2563EB 0%, #60A5FA 60%, #2563EB 100%)',
+          position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: Z.toast,
+          background: `linear-gradient(90deg, ${C.amber} 0%, ${C.amberHov} 60%, ${C.amber} 100%)`,
           backgroundSize: '200% 100%',
           animation: 'loadbar 1.2s linear infinite',
         }} />
@@ -331,20 +321,20 @@ export default function SalesListClient({
       {/* ── No-boutique error banner ── */}
       {(errorCode === 'no_boutique' || noBoutiqueWarning) && (
         <div style={{
-          display: 'flex', alignItems: 'flex-start', gap: 12,
-          padding: '14px 18px', marginBottom: 20,
-          background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 10,
+          display: 'flex', alignItems: 'flex-start', gap: SP[3],
+          padding: `${SP[3]} ${SP[4]}`, marginBottom: SP[5],
+          background: C.orangeBg, border: `1px solid ${C.orangeBd}`, borderRadius: R.lg,
         }}>
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-            <path d="M9 1.5L16.5 15H1.5L9 1.5Z" stroke="#D97706" strokeWidth="1.5" strokeLinejoin="round"/>
-            <path d="M9 7v4" stroke="#D97706" strokeWidth="1.6" strokeLinecap="round"/>
-            <circle cx="9" cy="13" r="0.9" fill="#D97706"/>
+            <path d="M9 1.5L16.5 15H1.5L9 1.5Z" stroke={C.orange} strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 7v4" stroke={C.orange} strokeWidth="1.6" strokeLinecap="round"/>
+            <circle cx="9" cy="13" r="0.9" fill={C.orange}/>
           </svg>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#92400E', marginBottom: 3, fontFamily: FONT }}>
+            <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.orange, marginBottom: 3, fontFamily: F.body }}>
               Aucune boutique disponible
             </div>
-            <div style={{ fontSize: 13, color: '#92400E', lineHeight: 1.5, fontFamily: FONT }}>
+            <div style={{ fontSize: F.sm, color: C.orange, lineHeight: F.lhNormal, fontFamily: F.body }}>
               Vous devez créer au moins une boutique avant de pouvoir enregistrer une vente.
               Rendez-vous dans la section <strong>Utilisateurs</strong> pour ajouter une boutique.
             </div>
@@ -353,16 +343,16 @@ export default function SalesListClient({
       )}
 
       {/* ── Page header ── */}
-      <div style={{
+      <div className="fade-in-up" style={{
         display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: 24,
-        flexWrap: 'wrap', gap: 12,
+        alignItems: 'flex-start', marginBottom: SP[6],
+        flexWrap: 'wrap', gap: SP[3],
       }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+          <h1 style={{ fontSize: F['2xl'], fontWeight: F.xbold, color: C.ink, margin: `0 0 ${SP[1]}`, letterSpacing: F.lsTighter, fontFamily: F.display }}>
             Ventes
           </h1>
-          <p style={{ fontSize: 14, color: C.slate, margin: 0, fontFamily: FONT }}>
+          <p style={{ fontSize: F.sm, color: C.muted, margin: 0, fontFamily: F.body }}>
             {d.totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
@@ -372,7 +362,7 @@ export default function SalesListClient({
         </div>
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
           <button
-            className="btn-meram"
+            className="btn-amber"
             disabled={navPending}
             onClick={() => {
               if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
@@ -383,19 +373,18 @@ export default function SalesListClient({
               startNavTransition(() => router.push('/sales/new'))
             }}
             style={{
-              padding: '10px 20px',
-              border: 'none', borderRadius: 9,
-              fontSize: 13, fontWeight: 700,
+              border: 'none', borderRadius: R.md,
+              fontSize: F.sm, fontWeight: F.bold,
               cursor: navPending ? 'not-allowed' : 'pointer',
-              fontFamily: FONT,
-              display: 'flex', alignItems: 'center', gap: 8,
+              fontFamily: F.body,
+              display: 'flex', alignItems: 'center', gap: SP[2],
               opacity: navPending ? 0.7 : 1,
             }}
           >
             {navPending ? (
               <><span className="spinner" />Chargement…</>
             ) : (
-              <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
+              <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke={C.bg} strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
             )}
           </button>
         )}
@@ -404,11 +393,10 @@ export default function SalesListClient({
       {/* ── Filter bar ── */}
       {(d.sales.length > 0 || hasFilters) && (
         <div style={{
-          background: C.surface, borderRadius: 10,
-          border: `1px solid ${C.border}`,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          padding: '12px 14px', marginBottom: 14,
-          display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center',
+          background: C.surface, borderRadius: R.lg,
+          border: `1px solid ${C.border}`, boxShadow: SH.xs,
+          padding: `${SP[3]} ${SP[3]}`, marginBottom: SP[3],
+          display: 'flex', flexWrap: 'wrap', gap: SP[2], alignItems: 'center',
         }}>
           <IconFilter />
           {/* Search */}
@@ -423,8 +411,8 @@ export default function SalesListClient({
               style={{
                 width: '100%', paddingLeft: 30, paddingRight: 8,
                 height: 36, border: `1px solid ${C.border}`,
-                borderRadius: 8, fontSize: 12.5, fontFamily: FONT,
-                color: C.ink, background: C.bg, outline: 'none',
+                borderRadius: R.md, fontSize: F.sm, fontFamily: F.body,
+                color: C.text, background: C.bg, outline: 'none',
                 boxSizing: 'border-box',
               }}
             />
@@ -435,8 +423,8 @@ export default function SalesListClient({
             onChange={e => handleStatusChange(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
-              border: `1px solid ${C.border}`, borderRadius: 6,
-              fontSize: 12, fontFamily: FONT, color: statusFilter ? C.ink : C.muted,
+              border: `1px solid ${C.border}`, borderRadius: R.sm,
+              fontSize: F.sm, fontFamily: F.body, color: statusFilter ? C.text : C.dim,
               background: C.bg, cursor: 'pointer', outline: 'none', flex: '0 0 auto',
             }}
           >
@@ -451,9 +439,10 @@ export default function SalesListClient({
             onChange={e => handlePaymentChange(e.target.value)}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
-              border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orange : C.border}`, borderRadius: 6,
-              fontSize: 12, fontFamily: FONT, color: paymentFilter ? C.ink : C.muted,
-              background: paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeL : C.bg,
+              border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeBd : C.border}`,
+              borderRadius: R.sm,
+              fontSize: F.sm, fontFamily: F.body, color: paymentFilter ? C.text : C.dim,
+              background: paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeBg : C.bg,
               cursor: 'pointer', outline: 'none', flex: '0 0 auto',
             }}
           >
@@ -469,12 +458,13 @@ export default function SalesListClient({
             onChange={e => handleDateFromChange(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
-              border: `1px solid ${C.border}`, borderRadius: 6,
-              fontSize: 12, fontFamily: FONT, color: dateFrom ? C.ink : C.muted,
+              border: `1px solid ${C.border}`, borderRadius: R.sm,
+              fontSize: F.sm, fontFamily: F.body, color: dateFrom ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
+              colorScheme: 'dark',
             }}
           />
-          <span style={{ fontSize: 11, color: C.muted, flexShrink: 0 }}>→</span>
+          <span style={{ fontSize: F.xs, color: C.dim, flexShrink: 0 }}>→</span>
           {/* Date to */}
           <input
             type="date"
@@ -482,9 +472,10 @@ export default function SalesListClient({
             onChange={e => handleDateToChange(e.target.value)}
             style={{
               height: 32, padding: '0 8px',
-              border: `1px solid ${C.border}`, borderRadius: 6,
-              fontSize: 12, fontFamily: FONT, color: dateTo ? C.ink : C.muted,
+              border: `1px solid ${C.border}`, borderRadius: R.sm,
+              fontSize: F.sm, fontFamily: F.body, color: dateTo ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
+              colorScheme: 'dark',
             }}
           />
           {/* Boutique (only for admin/owner who can see all boutiques) */}
@@ -494,8 +485,8 @@ export default function SalesListClient({
               onChange={e => handleBoutiqueChange(e.target.value)}
               style={{
                 height: 32, paddingLeft: 8, paddingRight: 24,
-                border: `1px solid ${C.border}`, borderRadius: 6,
-                fontSize: 12, fontFamily: FONT, color: boutiqueId ? C.ink : C.muted,
+                border: `1px solid ${C.border}`, borderRadius: R.sm,
+                fontSize: F.sm, fontFamily: F.body, color: boutiqueId ? C.text : C.dim,
                 background: C.bg, cursor: 'pointer', outline: 'none', flex: '0 0 auto',
               }}
             >
@@ -509,11 +500,10 @@ export default function SalesListClient({
               className="btn-ghost"
               onClick={clearFilters}
               style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                height: 32, padding: '0 10px',
-                background: 'transparent', border: `1px solid ${C.border}`,
-                borderRadius: 6, fontSize: 11, fontWeight: 600,
-                color: C.slate, cursor: 'pointer', fontFamily: FONT,
+                display: 'flex', alignItems: 'center', gap: SP[1],
+                height: 32, padding: `0 ${SP[2]}`,
+                borderRadius: R.sm, fontSize: F.xs, fontWeight: F.semibold,
+                cursor: 'pointer', fontFamily: F.body,
                 flexShrink: 0,
               }}
             >
@@ -525,49 +515,40 @@ export default function SalesListClient({
 
       {/* ── Sales table ── */}
       <div style={{
-        background: C.surface, borderRadius: 14,
-        border: `1px solid ${C.border}`,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.05)',
+        background: C.surface, borderRadius: R.xl,
+        border: `1px solid ${C.border}`, boxShadow: SH.sm,
         overflow: 'hidden',
       }}>
         {d.sales.length === 0 && hasFilters ? (
-          <div style={{ padding: '56px 24px', textAlign: 'center' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ marginBottom: 14 }}>
+          <div style={{ padding: `${SP[14]} ${SP[6]}`, textAlign: 'center' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" style={{ marginBottom: SP[3] }}>
               <circle cx="20" cy="20" r="19" stroke={C.border} strokeWidth="2"/>
-              <path d="M13 20h14M20 13v14" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+              <path d="M13 20h14M20 13v14" stroke={C.dim} strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+            <div style={{ fontSize: F.lg, fontWeight: F.bold, color: C.ink, marginBottom: SP[1], fontFamily: F.display }}>
               Aucun résultat
             </div>
-            <p style={{ fontSize: 14, color: C.slate, margin: '0 0 20px', fontFamily: FONT }}>
+            <p style={{ fontSize: F.base, color: C.muted, margin: `0 0 ${SP[5]}`, fontFamily: F.body }}>
               Aucune vente ne correspond aux filtres sélectionnés.
             </p>
-            <button
-              className="btn-ghost"
-              onClick={clearFilters}
-              style={{
-                padding: '9px 20px', background: C.bg, color: C.slate,
-                border: `1px solid ${C.border}`, borderRadius: 8,
-                fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-              }}
-            >
+            <button className="btn-ghost" onClick={clearFilters} style={{ borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
               Effacer les filtres
             </button>
           </div>
         ) : d.sales.length === 0 ? (
-          <div style={{ padding: '64px 24px', textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <div style={{ padding: `${SP[16]} ${SP[6]}`, textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: SP[4] }}>
               <IconCart size={56} />
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: C.ink, marginBottom: 6, fontFamily: FONT }}>
+            <div style={{ fontSize: F.lg, fontWeight: F.bold, color: C.ink, marginBottom: SP[1], fontFamily: F.display }}>
               Aucune vente pour le moment
             </div>
-            <p style={{ fontSize: 14, color: C.slate, margin: '0 0 20px', fontFamily: FONT }}>
+            <p style={{ fontSize: F.base, color: C.muted, margin: `0 0 ${SP[5]}`, fontFamily: F.body }}>
               Les ventes apparaîtront ici une fois créées.
             </p>
             {['owner', 'admin', 'vendor'].includes(profile.role) && (
               <button
-                className="btn-meram"
+                className="btn-amber"
                 disabled={firstSalePending}
                 onClick={() => {
                   if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
@@ -578,10 +559,9 @@ export default function SalesListClient({
                   startFirstSaleTransition(() => router.push('/sales/new'))
                 }}
                 style={{
-                  padding: '11px 24px', border: 'none', borderRadius: 9,
-                  fontSize: 13, fontWeight: 700,
+                  border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold,
                   cursor: firstSalePending ? 'not-allowed' : 'pointer',
-                  fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 8,
+                  fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: SP[2],
                   opacity: firstSalePending ? 0.7 : 1,
                 }}
               >
@@ -590,9 +570,9 @@ export default function SalesListClient({
             )}
           </div>
         ) : (
-          <div style={{ overflowX: 'auto', opacity: navPending ? 0.55 : 1, transition: 'opacity 0.15s ease' }}>
+          <div style={{ overflowX: 'auto', opacity: navPending ? 0.55 : 1, transition: `opacity ${TR.fast}` }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ background: C.bg }}>
+              <thead>
                 <tr>
                   {['N° Vente', 'Date', 'Client', 'Boutique', ...(profile.role !== 'vendor' ? ['Vendeur'] : []), 'Montant', 'Statut', ''].map(h => (
                     <th key={h} style={TH_STYLE}>{h}</th>
@@ -608,48 +588,49 @@ export default function SalesListClient({
                       <tr
                         className="trow-click"
                         onClick={() => setExpanded(isOpen ? null : sale.id)}
-                        style={{ background: isOpen ? C.bg : C.surface }}
+                        style={{ background: isOpen ? C.surfaceSub : C.surface }}
                       >
                         <td style={TD_STYLE}>
-                          <span className="tag-mono" style={{
+                          <span style={{
                             display: 'inline-block',
-                            background: C.blueL,
-                            color: C.blue,
-                            border: `1px solid #BFDBFE`,
-                            borderRadius: 6,
-                            padding: '3px 9px',
-                            fontSize: 12, fontWeight: 700,
+                            background: C.amberGlow,
+                            color: C.amber,
+                            border: `1px solid rgba(245,158,11,0.3)`,
+                            borderRadius: R.sm,
+                            padding: `${SP[0.5]} ${SP[2]}`,
+                            fontSize: F.xs, fontWeight: F.bold,
+                            fontFamily: F.mono,
                           }}>
                             {sale.sale_number}
                           </span>
                         </td>
-                        <td style={{ ...TD_STYLE, color: C.slate, fontSize: 13 }}>
+                        <td style={{ ...TD_STYLE, color: C.muted, fontSize: F.sm }}>
                           {new Date(sale.created_at).toLocaleDateString('fr-FR', {
                             day: '2-digit', month: 'short',
                           })}
                           <br />
-                          <span style={{ color: C.muted, fontSize: 12 }}>
+                          <span style={{ color: C.dim, fontSize: F.xs }}>
                             {new Date(sale.created_at).toLocaleTimeString('fr-FR', {
                               hour: '2-digit', minute: '2-digit',
                             })}
                           </span>
                         </td>
-                        <td style={TD_STYLE}>{sale.customer_name || <span style={{ color: C.muted }}>—</span>}</td>
-                        <td style={{ ...TD_STYLE, fontSize: 13, color: C.slate }}>{sale.boutiques?.name ?? '—'}</td>
+                        <td style={TD_STYLE}>{sale.customer_name || <span style={{ color: C.dim }}>—</span>}</td>
+                        <td style={{ ...TD_STYLE, fontSize: F.sm, color: C.muted }}>{sale.boutiques?.name ?? '—'}</td>
                         {profile.role !== 'vendor' && (
-                          <td style={{ ...TD_STYLE, fontSize: 13, color: C.slate }}>{sale.users?.full_name ?? '—'}</td>
+                          <td style={{ ...TD_STYLE, fontSize: F.sm, color: C.muted }}>{sale.users?.full_name ?? '—'}</td>
                         )}
-                        <td style={{ ...TD_STYLE, fontWeight: 800 }}>
-                          <span className="num">{fmt(sale.total_amount)}</span>
+                        <td style={{ ...TD_STYLE, fontWeight: F.xbold, fontFamily: F.display, color: C.ink, letterSpacing: F.lsTight }}>
+                          {fmt(sale.total_amount)}
                         </td>
                         <td style={TD_STYLE}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: SP[1] }}>
                             <span style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 5,
-                              fontSize: 11, fontWeight: 600,
-                              padding: '4px 10px', borderRadius: 100,
+                              display: 'inline-flex', alignItems: 'center', gap: SP[1],
+                              fontSize: F.xs, fontWeight: F.semibold,
+                              padding: `${SP[1]} ${SP[2]}`, borderRadius: R.full,
                               background: cfg.bg, color: cfg.color,
-                              fontFamily: FONT,
+                              fontFamily: F.body,
                             }}>
                               <span style={{ width: 5, height: 5, borderRadius: '50%', background: cfg.dot, flexShrink: 0 }} />
                               {cfg.label}
@@ -659,11 +640,12 @@ export default function SalesListClient({
                               if (!pc) return null
                               return (
                                 <span style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                                  fontSize: 11, fontWeight: 700,
-                                  padding: '3px 8px', borderRadius: 100,
+                                  display: 'inline-flex', alignItems: 'center', gap: SP[1],
+                                  fontSize: F.xs, fontWeight: F.bold,
+                                  padding: `${SP[0.5]} ${SP[2]}`, borderRadius: R.full,
                                   background: pc.bg, color: pc.color,
-                                  fontFamily: FONT,
+                                  border: `1px solid ${pc.bd}`,
+                                  fontFamily: F.body,
                                 }}>
                                   <span style={{ width: 4, height: 4, borderRadius: '50%', background: pc.color, flexShrink: 0 }} />
                                   {pc.label}
@@ -685,11 +667,10 @@ export default function SalesListClient({
                               className="btn-ghost-danger"
                               onClick={() => { setCancelId(sale.id); setCancelNum(sale.sale_number); setCancelError(null) }}
                               style={{
-                                marginRight: 10, padding: '4px 10px',
-                                background: 'transparent', color: C.red,
-                                border: `1px solid ${C.red}`, borderRadius: 6,
-                                fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                                fontFamily: FONT,
+                                marginRight: SP[2], padding: `${SP[1]} ${SP[2]}`,
+                                borderRadius: R.sm,
+                                fontSize: F.xs, fontWeight: F.semibold, cursor: 'pointer',
+                                fontFamily: F.body,
                               }}
                             >
                               Annuler
@@ -697,7 +678,7 @@ export default function SalesListClient({
                           )}
                           <span
                             onClick={(e) => { e.stopPropagation(); setExpanded(isOpen ? null : sale.id) }}
-                            style={{ cursor: 'pointer', padding: '2px 4px', display: 'inline-flex' }}
+                            style={{ cursor: 'pointer', padding: `${SP[0.5]} ${SP[1]}`, display: 'inline-flex' }}
                           >
                             {isOpen ? <IconChevronUp /> : <IconChevronDown />}
                           </span>
@@ -706,7 +687,7 @@ export default function SalesListClient({
 
                       {isOpen && (
                         <tr>
-                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: '0 14px 14px', background: '#F5F2ED', borderBottom: `1px solid ${C.border}` }}>
+                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: `0 ${SP[3]} ${SP[3]}`, background: C.bg, borderBottom: `1px solid ${C.border}` }}>
                             <SaleDetail sale={sale} profile={profile} ownerName={d.ownerName} companyName={d.companyName} currency={d.currency} onPaymentAdded={() => router.refresh()} />
                           </td>
                         </tr>
@@ -720,23 +701,23 @@ export default function SalesListClient({
             {d.totalPages > 1 && (
               <div style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '14px 16px',
+                padding: `${SP[3]} ${SP[4]}`,
                 borderTop: `1px solid ${C.border}`,
-                flexWrap: 'wrap', gap: 10,
+                flexWrap: 'wrap', gap: SP[2],
               }}>
-                <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>
+                <span style={{ fontSize: F.sm, color: C.dim, fontFamily: F.body }}>
                   Page {currentPage} sur {d.totalPages} · {d.totalCount} vente{d.totalCount !== 1 ? 's' : ''} au total
                 </span>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: SP[1.5] }}>
                   <button
                     className="btn-ghost"
                     disabled={currentPage === 1}
                     onClick={() => goToPage(currentPage - 1)}
                     style={{
-                      padding: '7px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
-                      border: `1px solid ${C.border}`, cursor: currentPage === 1 ? 'default' : 'pointer',
-                      background: currentPage === 1 ? C.bg : C.surface, color: currentPage === 1 ? C.muted : C.ink,
-                      fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
+                      borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold,
+                      cursor: currentPage === 1 ? 'default' : 'pointer',
+                      fontFamily: F.body, display: 'flex', alignItems: 'center', gap: SP[1.5],
+                      opacity: currentPage === 1 ? 0.4 : 1,
                     }}>
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8 2L3 6.5 8 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     Précédent
@@ -746,10 +727,10 @@ export default function SalesListClient({
                     disabled={currentPage === d.totalPages}
                     onClick={() => goToPage(currentPage + 1)}
                     style={{
-                      padding: '7px 16px', borderRadius: 8, fontSize: 12.5, fontWeight: 600,
-                      border: `1px solid ${C.border}`, cursor: currentPage === d.totalPages ? 'default' : 'pointer',
-                      background: currentPage === d.totalPages ? C.bg : C.surface, color: currentPage === d.totalPages ? C.muted : C.ink,
-                      fontFamily: FONT, display: 'flex', alignItems: 'center', gap: 6,
+                      borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold,
+                      cursor: currentPage === d.totalPages ? 'default' : 'pointer',
+                      fontFamily: F.body, display: 'flex', alignItems: 'center', gap: SP[1.5],
+                      opacity: currentPage === d.totalPages ? 0.4 : 1,
                     }}>
                     Suivant
                     <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M5 2l5 4.5L5 11" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -765,25 +746,27 @@ export default function SalesListClient({
       {cancelId && (
         <div style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(15,23,42,0.55)',
+          background: 'rgba(0,0,0,0.72)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: 20,
-          backdropFilter: 'blur(3px)',
+          zIndex: Z.modal, padding: SP[5],
+          backdropFilter: 'blur(4px)',
         }}>
           <div style={{
-            background: C.surface, borderRadius: 14,
+            background: C.surfaceEl, borderRadius: R.xl,
+            border: `1px solid ${C.border}`,
             width: '100%', maxWidth: 420,
-            boxShadow: '0 24px 80px rgba(0,0,0,0.2)',
+            boxShadow: SH.xl,
             overflow: 'hidden',
           }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg, ${C.red}, #EF4444)` }} />
             <div style={{
-              padding: '16px 20px',
+              padding: `${SP[4]} ${SP[5]}`,
               borderBottom: `1px solid ${C.border}`,
-              display: 'flex', alignItems: 'center', gap: 10,
+              display: 'flex', alignItems: 'center', gap: SP[3],
             }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 8,
-                background: C.redL,
+                width: 32, height: 32, borderRadius: R.md,
+                background: C.redBg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
@@ -792,37 +775,37 @@ export default function SalesListClient({
                 </svg>
               </div>
               <div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, fontFamily: FONT }}>
+                <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, fontFamily: F.body }}>
                   Annuler la vente {cancelNum}
                 </div>
-                <div style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>Cette action est irréversible</div>
+                <div style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body }}>Cette action est irréversible</div>
               </div>
             </div>
-            <div style={{ padding: '20px 24px' }}>
-              <p style={{ margin: '0 0 16px', fontSize: 13, color: C.slate, fontFamily: FONT }}>
+            <div style={{ padding: `${SP[5]} ${SP[6]}` }}>
+              <p style={{ margin: `0 0 ${SP[4]}`, fontSize: F.sm, color: C.muted, fontFamily: F.body }}>
                 La vente sera marquée comme annulée. Les réservations de stock seront libérées.
               </p>
               {cancelError && (
                 <div style={{
-                  marginBottom: 14, padding: '10px 12px',
-                  background: C.redL, borderRadius: 8,
-                  fontSize: 12, color: C.red, fontWeight: 600,
-                  border: `1px solid #FECACA`, fontFamily: FONT,
+                  marginBottom: SP[3], padding: `${SP[2]} ${SP[3]}`,
+                  background: C.redBg, borderRadius: R.md,
+                  fontSize: F.sm, color: C.red, fontWeight: F.semibold,
+                  border: `1px solid ${C.redBd}`, fontFamily: F.body,
                 }}>
                   {cancelError}
                 </div>
               )}
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: SP[2] }}>
                 <button
                   className="btn-red"
                   onClick={handleCancelConfirm}
                   disabled={cancelling}
                   style={{
-                    flex: 1, padding: '11px',
-                    background: cancelling ? C.muted : C.red,
-                    color: 'white', border: 'none', borderRadius: 8,
-                    fontSize: 13, fontWeight: 600, cursor: cancelling ? 'not-allowed' : 'pointer',
-                    fontFamily: FONT, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    flex: 1, borderRadius: R.md,
+                    fontSize: F.sm, fontWeight: F.semibold,
+                    cursor: cancelling ? 'not-allowed' : 'pointer',
+                    fontFamily: F.body, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
+                    opacity: cancelling ? 0.7 : 1,
                   }}
                 >
                   {cancelling ? <><span className="spinner" />Annulation…</> : "Confirmer l'annulation"}
@@ -831,10 +814,8 @@ export default function SalesListClient({
                   className="btn-ghost"
                   onClick={() => { setCancelId(null); setCancelError(null) }}
                   style={{
-                    padding: '11px 18px', background: C.bg,
-                    color: C.slate, border: `1px solid ${C.border}`,
-                    borderRadius: 8, fontSize: 13, fontWeight: 500,
-                    cursor: 'pointer', fontFamily: FONT,
+                    borderRadius: R.md, fontSize: F.sm, fontWeight: F.medium,
+                    cursor: 'pointer', fontFamily: F.body,
                   }}
                 >
                   Retour
@@ -1077,88 +1058,92 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
     (['owner', 'admin'].includes(profile.role) || sale.vendor_id === profile.id)
 
   return (
-    <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, marginTop: 4, overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+    <div style={{
+      background: C.surfaceEl, borderRadius: R.lg,
+      border: `1px solid ${C.border}`, marginTop: SP[1],
+      overflow: 'hidden', boxShadow: SH.sm,
+    }}>
 
       {/* Articles */}
-      <div style={{ padding: '14px 16px 0', borderBottom: `1px solid ${C.border}` }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
-        Détail des articles
-      </div>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
-                <th key={h} style={{ textAlign: 'left', fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '0 12px 8px 0', borderBottom: `1px solid ${C.border}`, fontFamily: FONT }}>
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {(sale.sale_items ?? []).map((item: any) => {
-              const isTile   = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
-              const unitLbl  = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
-              let qtyDisplay: React.ReactNode
-              let priceDisplay: string
-              if (isTile) {
-                const tileArea    = parseFloat(item.tile_area_m2_snapshot)
-                const tpc         = parseInt(item.tiles_per_carton_snapshot)
-                const m2          = item.quantity_tiles * tileArea
-                const fullCartons = Math.floor(item.quantity_tiles / tpc)
-                const loose       = item.quantity_tiles % tpc
-                qtyDisplay = (
-                  <>
-                    {fmtM2(m2)}
-                    <span style={{ color: C.muted, fontSize: 11 }}>
-                      {' '}· {fullCartons} ctn{loose > 0 && <span style={{ color: C.orange }}> +{loose}</span>}
-                    </span>
-                  </>
+      <div style={{ padding: `${SP[3]} ${SP[4]} 0`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ fontSize: F.xs, fontWeight: F.bold, color: C.dim, textTransform: 'uppercase', letterSpacing: F.lsWider, marginBottom: SP[3], fontFamily: F.body }}>
+          Détail des articles
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Produit', 'Référence', 'Quantité', 'Prix unitaire', 'Sous-total'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', fontSize: F.xs, fontWeight: F.bold, color: C.dim, textTransform: 'uppercase', letterSpacing: F.lsWide, padding: `0 ${SP[3]} ${SP[2]} 0`, borderBottom: `1px solid ${C.border}`, fontFamily: F.body }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(sale.sale_items ?? []).map((item: any) => {
+                const isTile   = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+                const unitLbl  = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
+                let qtyDisplay: React.ReactNode
+                let priceDisplay: string
+                if (isTile) {
+                  const tileArea    = parseFloat(item.tile_area_m2_snapshot)
+                  const tpc         = parseInt(item.tiles_per_carton_snapshot)
+                  const m2          = item.quantity_tiles * tileArea
+                  const fullCartons = Math.floor(item.quantity_tiles / tpc)
+                  const loose       = item.quantity_tiles % tpc
+                  qtyDisplay = (
+                    <>
+                      {fmtM2(m2)}
+                      <span style={{ color: C.dim, fontSize: F.xs }}>
+                        {' '}· {fullCartons} ctn{loose > 0 && <span style={{ color: C.orange }}> +{loose}</span>}
+                      </span>
+                    </>
+                  )
+                  priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/m²`
+                } else {
+                  qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
+                  priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/${unitLbl}`
+                }
+                return (
+                  <tr key={item.id}>
+                    <td style={{ padding: `${SP[2]} ${SP[3]} ${SP[2]} 0`, fontSize: F.sm, fontWeight: F.semibold, color: C.ink, fontFamily: F.body }}>{item.products?.name ?? '—'}</td>
+                    <td style={{ padding: `${SP[2]} ${SP[3]} ${SP[2]} 0`, fontSize: F.xs, color: C.dim, fontFamily: F.mono }}>{item.products?.reference_code ?? '—'}</td>
+                    <td style={{ padding: `${SP[2]} ${SP[3]} ${SP[2]} 0`, fontSize: F.sm, color: C.muted, fontFamily: F.body }}>{qtyDisplay}</td>
+                    <td style={{ padding: `${SP[2]} ${SP[3]} ${SP[2]} 0`, fontSize: F.sm, color: C.muted, fontFamily: F.body }}>{priceDisplay}</td>
+                    <td style={{ padding: `${SP[2]} 0`, fontSize: F.sm, fontWeight: F.bold, color: C.ink, fontFamily: F.body }}>{fmt(item.total_price)}</td>
+                  </tr>
                 )
-                priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/m²`
-              } else {
-                qtyDisplay   = `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
-                priceDisplay = `${fmtNum(item.unit_price_per_m2)} ${currency}/${unitLbl}`
-              }
-              return (
-                <tr key={item.id}>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: FONT }}>{item.products?.name ?? '—'}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 11, color: C.muted, fontFamily: FONT }}>{item.products?.reference_code ?? '—'}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{qtyDisplay}</td>
-                  <td style={{ padding: '8px 12px 8px 0', fontSize: 13, color: C.slate, fontFamily: FONT }}>{priceDisplay}</td>
-                  <td style={{ padding: '8px 0', fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: FONT }}>{fmt(item.total_price)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* ── Historique des paiements ── */}
-      <div style={{ padding: '14px 16px', borderBottom: `1px solid ${C.border}` }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+      <div style={{ padding: `${SP[3]} ${SP[4]}`, borderBottom: `1px solid ${C.border}` }}>
+        <div style={{ fontSize: F.xs, fontWeight: F.bold, color: C.dim, textTransform: 'uppercase', letterSpacing: F.lsWider, marginBottom: SP[2], fontFamily: F.body }}>
           Historique des paiements
         </div>
 
         {payments === null ? (
-          <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>Chargement…</div>
+          <div style={{ fontSize: F.sm, color: C.dim, fontFamily: F.body }}>Chargement…</div>
         ) : payments.length === 0 ? (
-          <div style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>Aucun paiement enregistré</div>
+          <div style={{ fontSize: F.sm, color: C.dim, fontFamily: F.body }}>Aucun paiement enregistré</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: SP[1] }}>
             {payments.map((p: any, i: number) => (
               <div key={p.id} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '7px 10px', borderRadius: 6, flexWrap: 'wrap', gap: 6,
-                background: i === payments.length - 1 ? C.greenL : C.surface,
-                border: `1px solid ${i === payments.length - 1 ? C.green + '44' : C.border}`,
+                padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm, flexWrap: 'wrap', gap: SP[1.5],
+                background: i === payments.length - 1 ? C.greenBg : C.surfaceEl,
+                border: `1px solid ${i === payments.length - 1 ? C.greenBd : C.borderSub}`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.green, fontFamily: FONT }}>+{fmt(p.amount)}</span>
-                  {p.notes && <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>· {p.notes}</span>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: SP[2] }}>
+                  <span style={{ fontSize: F.sm, fontWeight: F.bold, color: C.green, fontFamily: F.body }}>+{fmt(p.amount)}</span>
+                  {p.notes && <span style={{ fontSize: F.xs, color: C.dim, fontFamily: F.body }}>· {p.notes}</span>}
                 </div>
-                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                <div style={{ fontSize: F.xs, color: C.dim, fontFamily: F.body }}>
                   {new Date(p.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                   {p.users?.full_name && ` · ${p.users.full_name}`}
                 </div>
@@ -1169,9 +1154,18 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
 
         {canAdd && !showAdd && (
           <button
-            className="btn-outline-navy"
             onClick={() => setShowAdd(true)}
-            style={{ marginTop: 10, padding: '7px 14px', borderRadius: 7, border: `1.5px solid ${C.blue}`, background: 'transparent', color: C.blue, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            style={{
+              marginTop: SP[2], padding: `${SP[1.5]} ${SP[3]}`,
+              borderRadius: R.sm, border: `1.5px solid ${C.amber}`,
+              background: 'transparent', color: C.amber,
+              fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer',
+              fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: SP[1.5],
+              transition: `background ${TR.fast}`,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = C.amberGlow)}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
             <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
               <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
@@ -1180,38 +1174,38 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
         )}
 
         {canAdd && showAdd && (
-          <div style={{ marginTop: 10, padding: '12px 14px', background: C.surface, borderRadius: 8, border: `1.5px solid ${C.border}` }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, marginBottom: 10, fontFamily: FONT }}>Nouveau versement</div>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: SP[2], padding: `${SP[3]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1.5px solid ${C.border}` }}>
+            <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.ink, marginBottom: SP[2], fontFamily: F.body }}>Nouveau versement</div>
+            <div style={{ display: 'flex', gap: SP[2], flexWrap: 'wrap' }}>
               <input
                 type="number" min="1" step="100"
                 value={addAmt}
                 onChange={e => setAddAmt(e.target.value)}
                 placeholder={`Montant (${currency})`}
-                style={{ flex: '1 1 140px', padding: '8px 10px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
+                style={{ flex: '1 1 140px', padding: `${SP[2]} ${SP[2]}`, borderRadius: R.sm, border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text, background: C.surfaceEl, outline: 'none', fontFamily: F.body, boxSizing: 'border-box' }}
               />
               <input
                 type="text"
                 value={addNotes}
                 onChange={e => setAddNotes(e.target.value)}
                 placeholder="Note (optionnel)"
-                style={{ flex: '2 1 180px', padding: '8px 10px', borderRadius: 6, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', fontFamily: FONT, boxSizing: 'border-box' }}
+                style={{ flex: '2 1 180px', padding: `${SP[2]} ${SP[2]}`, borderRadius: R.sm, border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text, background: C.surfaceEl, outline: 'none', fontFamily: F.body, boxSizing: 'border-box' }}
               />
             </div>
-            {addError && <div style={{ fontSize: 12, color: C.red, marginTop: 6, fontFamily: FONT }}>{addError}</div>}
-            <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+            {addError && <div style={{ fontSize: F.sm, color: C.red, marginTop: SP[1.5], fontFamily: F.body }}>{addError}</div>}
+            <div style={{ display: 'flex', gap: SP[2], marginTop: SP[2] }}>
               <button
-                className="btn-meram"
+                className="btn-amber"
                 onClick={handleAdd}
                 disabled={adding}
-                style={{ padding: '8px 16px', borderRadius: 6, border: 'none', fontSize: 12, fontWeight: 600, cursor: adding ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                style={{ borderRadius: R.sm, border: 'none', fontSize: F.sm, fontWeight: F.semibold, cursor: adding ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: SP[1.5], opacity: adding ? 0.7 : 1 }}>
                 {adding ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer'}
               </button>
               <button
                 className="btn-ghost"
                 onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddError(null) }}
                 disabled={adding}
-                style={{ padding: '8px 14px', borderRadius: 6, background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+                style={{ borderRadius: R.sm, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
                 Annuler
               </button>
             </div>
@@ -1226,50 +1220,50 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
         const balance = Math.max(0, parseFloat(sale.total_amount) - paid)
         if (!pc) return null
         return (
-          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${C.border}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, padding: '8px 12px', borderRadius: 8, background: pc.bg, border: `1px solid ${pc.color}33` }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: pc.color, fontFamily: FONT }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc.color }} />{pc.label}
-            </span>
-            <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
-              Encaissé : <strong style={{ color: C.ink }}>{fmt(paid)}</strong>
-              {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmt(balance)}</strong></>)}
-            </span>
-          </div>
+          <div style={{ padding: `${SP[2]} ${SP[4]}`, borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: SP[2], padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md, background: pc.bg, border: `1px solid ${pc.bd}` }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: SP[1.5], fontSize: F.xs, fontWeight: F.bold, color: pc.color, fontFamily: F.body }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: pc.color }} />{pc.label}
+              </span>
+              <span style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body }}>
+                Encaissé : <strong style={{ color: C.text }}>{fmt(paid)}</strong>
+                {balance > 0 && (<> &nbsp;·&nbsp; Reste : <strong style={{ color: pc.color }}>{fmt(balance)}</strong></>)}
+              </span>
+            </div>
           </div>
         )
       })()}
 
       {/* ── Footer ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', flexWrap: 'wrap', gap: 8 }}>
-        <div style={{ fontSize: 12, color: C.slate, display: 'flex', gap: 16, flexWrap: 'wrap', fontFamily: FONT }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: `${SP[3]} ${SP[4]}`, flexWrap: 'wrap', gap: SP[2] }}>
+        <div style={{ fontSize: F.sm, color: C.muted, display: 'flex', gap: SP[4], flexWrap: 'wrap', fontFamily: F.body }}>
           {sale.customer_phone && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2.5c0-.28.22-.5.5-.5h2l.75 2L4 5.5s.5 1.5 2.5 2.5l1.5-1.25 2 .75V9.5c0 .28-.22.5-.5.5C4.07 10 2 4.93 2 2.5Z" stroke={C.muted} strokeWidth="1.1"/></svg>
+            <span style={{ display: 'flex', alignItems: 'center', gap: SP[1] }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2.5c0-.28.22-.5.5-.5h2l.75 2L4 5.5s.5 1.5 2.5 2.5l1.5-1.25 2 .75V9.5c0 .28-.22.5-.5.5C4.07 10 2 4.93 2 2.5Z" stroke={C.dim} strokeWidth="1.1"/></svg>
               {sale.customer_phone}
             </span>
           )}
           {sale.customer_cni && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.5" stroke={C.muted} strokeWidth="1.1"/><path d="M3.5 5.5h2M3.5 7.5h3.5" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/><circle cx="8.5" cy="6" r="1.2" stroke={C.muted} strokeWidth="1"/></svg>
+            <span style={{ display: 'flex', alignItems: 'center', gap: SP[1] }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="2.5" width="10" height="7" rx="1.5" stroke={C.dim} strokeWidth="1.1"/><path d="M3.5 5.5h2M3.5 7.5h3.5" stroke={C.dim} strokeWidth="1" strokeLinecap="round"/><circle cx="8.5" cy="6" r="1.2" stroke={C.dim} strokeWidth="1"/></svg>
               CNI : {sale.customer_cni}
             </span>
           )}
           {sale.notes && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke={C.muted} strokeWidth="1.1"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke={C.muted} strokeWidth="1" strokeLinecap="round"/></svg>
+            <span style={{ display: 'flex', alignItems: 'center', gap: SP[1] }}>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke={C.dim} strokeWidth="1.1"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke={C.dim} strokeWidth="1" strokeLinecap="round"/></svg>
               {sale.notes}
             </span>
           )}
-          {!sale.customer_phone && !sale.notes && <span style={{ color: C.muted }}>Aucune note</span>}
+          {!sale.customer_phone && !sale.notes && <span style={{ color: C.dim }}>Aucune note</span>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: SP[2] }}>
           <button
             onClick={() => printSaleReceipt(sale, ownerName, currency, companyName)}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: 'transparent', color: C.slate, border: `1px solid ${C.border}`, borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}>
+            style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], padding: `${SP[1.5]} ${SP[3]}`, background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.xs, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
             <IconPrint /> Imprimer le reçu
           </button>
-          <div style={{ fontSize: 16, fontWeight: 900, color: C.ink, fontFamily: FONT, letterSpacing: '-0.02em' }}>{fmt(sale.total_amount)}</div>
+          <div style={{ fontSize: F.lg, fontWeight: F.xbold, color: C.ink, fontFamily: F.display, letterSpacing: F.lsTighter }}>{fmt(sale.total_amount)}</div>
         </div>
       </div>
     </div>

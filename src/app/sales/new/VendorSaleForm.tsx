@@ -11,16 +11,7 @@ import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
 import { fmtCurrency }        from '@/lib/format'
 import { pluralize }          from '@/lib/pluralize'
 
-const C = {
-  ink: '#1C1917', slate: '#44403C', muted: '#78716C',
-  border: '#E7E5E4', bg: '#F5F2ED', surface: '#FDFCF9',
-  navy: '#1B3A6B', navyDark: '#0C1A35', blue: '#2563EB', blueL: '#EFF6FF',
-  green: '#059669', greenL: '#ECFDF5',
-  orange: '#D97706', orangeL: '#FFFBEB',
-  red: '#DC2626', redL: '#FEF2F2',
-  gold: '#B45309', goldL: '#FFFBEB',
-}
-const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif"
+import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fmtNum = (n: number) => new Intl.NumberFormat('fr-FR').format(n)
 const fmtM2  = (n: number) =>
@@ -337,7 +328,7 @@ export default function VendorSaleForm({
     width: '100%', padding: '10px 12px', borderRadius: 8,
     border: `1.5px solid ${hasError ? C.red : C.border}`,
     fontSize: 13, color: C.ink, outline: 'none',
-    boxSizing: 'border-box', background: C.surface, fontFamily: FONT,
+    boxSizing: 'border-box', background: C.surface, fontFamily: F.body,
   })
 
   // ── Available product types for filter pills ──────────────────────────────
@@ -373,16 +364,16 @@ export default function VendorSaleForm({
 
             <div style={{ padding: '36px 36px 28px', textAlign: 'center' }}>
               {/* Check circle */}
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.greenL, border: `4px solid #D1FAE5`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.greenBg, border: `4px solid #D1FAE5`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                 <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
                   <path d="M6 15l7 7 11-13" stroke="#059669" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
 
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.body }}>
                 Vente enregistrée
               </h2>
-              <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: FONT }}>
+              <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: F.body }}>
                 Commande transmise à l'entrepôt automatiquement
               </p>
 
@@ -396,19 +387,19 @@ export default function VendorSaleForm({
 
               {/* Amount block */}
               <div style={{ padding: '20px', background: C.bg, borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: FONT }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: F.body }}>
                   Montant total
                 </div>
-                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: FONT }}>
+                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.body }}>
                   {fmt(total)}
                 </div>
                 {paid > 0 && (
                   <div style={{ marginTop: 10, display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                    <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                       Encaissé : <strong style={{ color: C.green }}>{fmt(paid)}</strong>
                     </span>
                     {balance > 0 && (
-                      <span style={{ fontSize: 12, color: C.slate, fontFamily: FONT }}>
+                      <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
                         Reste : <strong style={{ color: C.orange }}>{fmt(balance)}</strong>
                       </span>
                     )}
@@ -417,7 +408,7 @@ export default function VendorSaleForm({
               </div>
 
               {/* Payment status pill */}
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 100, background: isPaid ? C.greenL : isPartial ? C.orangeL : C.redL, border: `1px solid ${isPaid ? '#6EE7B7' : isPartial ? '#FCD34D' : '#FECACA'}`, fontSize: 12, fontWeight: 700, color: isPaid ? C.green : isPartial ? C.orange : C.red, fontFamily: FONT }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 14px', borderRadius: 100, background: isPaid ? C.greenBg : isPartial ? C.orangeBg : C.redBg, border: `1px solid ${isPaid ? '#6EE7B7' : isPartial ? '#FCD34D' : '#FECACA'}`, fontSize: 12, fontWeight: 700, color: isPaid ? C.green : isPartial ? C.orange : C.red, fontFamily: F.body }}>
                 <div style={{ width: 5, height: 5, borderRadius: '50%', background: isPaid ? C.green : isPartial ? C.orange : C.red }} />
                 {isPaid ? 'Soldé' : isPartial ? 'Acompte versé' : 'Impayé'}
               </div>
@@ -426,7 +417,7 @@ export default function VendorSaleForm({
             {/* Actions */}
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <button className="btn-meram" onClick={printReceipt}
-                style={{ width: '100%', padding: '13px', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: FONT }}>
+                style={{ width: '100%', padding: '13px', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.body }}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                   <rect x="1" y="5" width="13" height="8" rx="1.5" stroke="white" strokeWidth="1.3"/>
                   <path d="M4 5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v2" stroke="white" strokeWidth="1.3"/>
@@ -437,12 +428,12 @@ export default function VendorSaleForm({
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
                 <button disabled={navPending}
                   onClick={() => startNavTransition(() => router.push('/sales'))}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.slate, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                   {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes ventes'}
                 </button>
               </div>
@@ -463,40 +454,40 @@ export default function VendorSaleForm({
           <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
             <div style={{ height: 4, background: 'linear-gradient(90deg,#B45309,#F59E0B)' }} />
             <div style={{ padding: '36px 36px 28px', textAlign: 'center' }}>
-              <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldL, border: '4px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldBg, border: '4px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                   <path d="M6 4h14l4 4v16a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" stroke="#B45309" strokeWidth="1.8" strokeLinejoin="round"/>
                   <path d="M20 4v5h4" stroke="#B45309" strokeWidth="1.8" strokeLinejoin="round"/>
                   <path d="M9 13h10M9 17h10M9 21h6" stroke="#B45309" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.body }}>
                 Devis enregistré
               </h2>
-              <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: FONT }}>
+              <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: F.body }}>
                 Le devis peut être confirmé en vente depuis la liste des devis.
               </p>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 100, background: C.goldL, border: `1px solid ${C.gold}50`, marginBottom: 24 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 100, background: C.goldBg, border: `1px solid ${C.gold}50`, marginBottom: 24 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold }} />
                 <span style={{ fontSize: 18, fontWeight: 900, color: C.gold, letterSpacing: '0.02em', fontFamily: 'ui-monospace, monospace' }}>
                   {successData?.quoteNumber}
                 </span>
               </div>
               <div style={{ padding: '16px', background: C.bg, borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 16 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: FONT }}>Montant estimatif</div>
-                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: FONT }}>{fmt(successData?.serverTotal ?? cartTotal)}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: F.body }}>Montant estimatif</div>
+                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.body }}>{fmt(successData?.serverTotal ?? cartTotal)}</div>
               </div>
             </div>
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
                 <button disabled={navPending}
                   onClick={() => startNavTransition(() => router.push('/quotes'))}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.slate, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
                   {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes devis'}
                 </button>
               </div>
@@ -517,7 +508,7 @@ export default function VendorSaleForm({
       <div ref={topRef} style={{ marginBottom: 20 }}>
         <button disabled={navPending}
           onClick={() => startNavTransition(() => router.push('/sales'))}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: navPending ? C.muted : C.slate, fontSize: 12, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '0 0 12px', fontFamily: FONT }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: navPending ? C.muted : C.muted, fontSize: 12, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '0 0 12px', fontFamily: F.body }}>
           {navPending ? <><span className="spinner-blue" />Chargement…</> : (
             <><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Retour aux ventes</>
           )}
@@ -525,10 +516,10 @@ export default function VendorSaleForm({
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: FONT }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
               Nouvelle vente
             </h1>
-            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: FONT }}>
+            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
               {selectedBoutique?.name} · {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
@@ -541,7 +532,7 @@ export default function VendorSaleForm({
                   <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#fff' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
                     {formStep > n ? <svg width="9" height="8" viewBox="0 0 9 8" fill="none"><path d="M1 4l2.5 2.5L8 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> : n}
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: formStep === n ? '#fff' : C.muted, fontFamily: FONT }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: formStep === n ? '#fff' : C.muted, fontFamily: F.body }}>
                     {label}
                   </span>
                 </div>
@@ -560,7 +551,7 @@ export default function VendorSaleForm({
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
             {/* Search + header */}
             <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${C.border}`, background: C.bg }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: F.body }}>
                 Catalogue produits
               </div>
               <div style={{ position: 'relative', marginBottom: 10 }}>
@@ -569,13 +560,13 @@ export default function VendorSaleForm({
                   <path d="M11 11l3 3" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
                 <input value={productSearch} onChange={e => setProductSearch(e.target.value)} placeholder="Rechercher…"
-                  style={{ width: '100%', paddingLeft: 30, paddingRight: 12, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: FONT }} />
+                  style={{ width: '100%', paddingLeft: 30, paddingRight: 12, paddingTop: 8, paddingBottom: 8, borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }} />
               </div>
               {/* Type filter pills */}
               {availableTypes.length > 1 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button onClick={() => setTypeFilter('all')}
-                    style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${typeFilter==='all' ? C.blue : C.border}`, background: typeFilter==='all' ? C.blueL : 'transparent', color: typeFilter==='all' ? C.blue : C.muted, fontFamily: FONT }}>
+                    style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${typeFilter==='all' ? C.blue : C.border}`, background: typeFilter==='all' ? C.blueBg : 'transparent', color: typeFilter==='all' ? C.blue : C.muted, fontFamily: F.body }}>
                     Tous
                   </button>
                   {availableTypes.map(t => {
@@ -583,7 +574,7 @@ export default function VendorSaleForm({
                     const active = typeFilter === t
                     return (
                       <button key={t} onClick={() => setTypeFilter(t)}
-                        style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${active ? cfg.color : C.border}`, background: active ? cfg.bg : 'transparent', color: active ? cfg.color : C.muted, fontFamily: FONT }}>
+                        style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${active ? cfg.color : C.border}`, background: active ? cfg.bg : 'transparent', color: active ? cfg.color : C.muted, fontFamily: F.body }}>
                         {cfg.label}
                       </button>
                     )
@@ -595,7 +586,7 @@ export default function VendorSaleForm({
             {/* Product list */}
             <div style={{ maxHeight: isMobile ? 280 : 420, overflowY: 'auto', padding: '8px' }}>
               {filteredProducts.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', color: C.muted, fontSize: 13, fontFamily: FONT }}>
+                <div style={{ padding: '32px 16px', textAlign: 'center', color: C.muted, fontSize: 13, fontFamily: F.body }}>
                   Aucun produit trouvé
                 </div>
               ) : filteredProducts.map(prod => {
@@ -621,25 +612,25 @@ export default function VendorSaleForm({
                 return (
                   <button key={prod.product_id}
                     onClick={() => { setProduct(prod); setInputMode(prodIsTile ? 'm2' : 'qty'); resetInputs(); setError(null) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, cursor: 'pointer', textAlign: 'left', width: '100%', background: isSelected ? C.blueL : 'transparent', border: `1.5px solid ${isSelected ? C.blue : 'transparent'}`, fontFamily: FONT, marginBottom: 2 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, cursor: 'pointer', textAlign: 'left', width: '100%', background: isSelected ? C.blueBg : 'transparent', border: `1.5px solid ${isSelected ? C.blue : 'transparent'}`, fontFamily: F.body, marginBottom: 2 }}>
                     {/* Type icon badge */}
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: isSelected ? cfg.bg : C.bg, border: `1px solid ${isSelected ? cfg.color + '40' : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
                       <TypeIcon type={prodType} color={isSelected ? cfg.color : C.muted} size={14} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? C.blue : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: FONT }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? C.blue : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: F.body }}>
                         {prod.product_name}
                       </div>
-                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: FONT }}>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: F.body }}>
                         {subtitle}
                       </div>
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: stockColor, fontFamily: FONT }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: stockColor, fontFamily: F.body }}>
                         {availDisplay}
                       </div>
                       {(isLow || isCritical) && (
-                        <div style={{ fontSize: 9, fontWeight: 600, color: stockColor, textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: FONT }}>
+                        <div style={{ fontSize: 9, fontWeight: 600, color: stockColor, textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: F.body }}>
                           {isCritical ? 'Critique' : 'Faible'}
                         </div>
                       )}
@@ -660,8 +651,8 @@ export default function VendorSaleForm({
                   <rect x="4" y="18" width="10" height="10" rx="2" fill={C.border}/>
                   <rect x="18" y="18" width="10" height="10" rx="2" fill={C.border}/>
                 </svg>
-                <div style={{ fontSize: 13, fontWeight: 600, color: C.slate, fontFamily: FONT }}>Sélectionnez un produit</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 4, fontFamily: FONT }}>dans la liste à gauche</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: C.muted, fontFamily: F.body }}>Sélectionnez un produit</div>
+                <div style={{ fontSize: 12, color: C.muted, marginTop: 4, fontFamily: F.body }}>dans la liste à gauche</div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -676,10 +667,10 @@ export default function VendorSaleForm({
                         <TypeIcon type={prodType} color={cfg.color} size={17} />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {selectedProduct.product_name}
                         </div>
-                        <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT, marginTop: 1 }}>
+                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 1 }}>
                           {selectedProduct.reference_code} · <span style={{ color: cfg.color, fontWeight: 600 }}>{cfg.label}</span>
                         </div>
                       </div>
@@ -689,7 +680,7 @@ export default function VendorSaleForm({
 
                 {/* Quantity section */}
                 <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: F.body }}>
                     Quantité
                   </div>
 
@@ -699,7 +690,7 @@ export default function VendorSaleForm({
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                         {([['m2', 'm²'], ['cartons_tiles', 'Cartons + pièces']] as [InputMode, string][]).map(([mode, label]) => (
                           <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: FONT }}>
+                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: F.body }}>
                             {label}
                           </button>
                         ))}
@@ -707,7 +698,7 @@ export default function VendorSaleForm({
 
                       {inputMode === 'm2' && (
                         <div>
-                          <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Surface en m²</label>
+                          <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Surface en m²</label>
                           <input type="number" min="0" step="0.01" value={inputM2} onChange={e => setInputM2(e.target.value)} placeholder="ex : 12.5" style={inputStyle(computed?.stockInsufficient ?? false)} />
                         </div>
                       )}
@@ -715,11 +706,11 @@ export default function VendorSaleForm({
                       {inputMode === 'cartons_tiles' && (
                         <div style={{ display: 'flex', gap: 10 }}>
                           <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Cartons</label>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Cartons</label>
                             <input type="number" min="0" step="1" value={inputCartons} onChange={e => setCartons(e.target.value)} placeholder="ex : 3" style={inputStyle(computed?.stockInsufficient ?? false)} />
                           </div>
                           <div style={{ flex: 1 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Pièces en plus</label>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Pièces en plus</label>
                             <input type="number" min="0" max={String(parseInt(selectedProduct.tiles_per_carton)-1)} step="1" value={inputLooseTiles} onChange={e => setLoose(e.target.value)} placeholder={`0 – ${parseInt(selectedProduct.tiles_per_carton)-1}`} style={inputStyle()} />
                           </div>
                         </div>
@@ -728,26 +719,26 @@ export default function VendorSaleForm({
                       {/* Tile equivalences */}
                       {computed && (
                         <div style={{ marginTop: 12, padding: 12, background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: F.body }}>Équivalences</div>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
                             {([
                               ['Surface', fmtM2(computed.m2), inputMode==='m2'],
                               ['Cartons', `${computed.fullCartons}${computed.loose?` +${computed.loose}`:''} `, inputMode==='cartons'||inputMode==='cartons_tiles'],
                               ['Carreaux', fmtNum(computed.tiles), inputMode==='tiles'],
                             ] as [string, string, boolean][]).map(([lbl, val, active]) => (
-                              <div key={lbl} style={{ textAlign: 'center', padding: '8px 4px', background: active ? C.blueL : C.surface, borderRadius: 7, border: `1px solid ${active ? C.blue : C.border}` }}>
-                                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{lbl}</div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.blue : C.ink, fontFamily: FONT }}>{val}</div>
+                              <div key={lbl} style={{ textAlign: 'center', padding: '8px 4px', background: active ? C.blueBg : C.surface, borderRadius: 7, border: `1px solid ${active ? C.blue : C.border}` }}>
+                                <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{lbl}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.blue : C.ink, fontFamily: F.body }}>{val}</div>
                               </div>
                             ))}
                           </div>
                           {computed.loose > 0 && inputMode !== 'cartons_tiles' && (
-                            <div style={{ marginTop: 8, padding: '6px 10px', background: C.orangeL, borderRadius: 6, fontSize: 11, color: C.orange, fontFamily: FONT }}>
+                            <div style={{ marginTop: 8, padding: '6px 10px', background: C.orangeBg, borderRadius: 6, fontSize: 11, color: C.orange, fontFamily: F.body }}>
                               Carton incomplet — {computed.loose} pièce{computed.loose>1?'s':''} ouvertes
                             </div>
                           )}
                           {computed.stockInsufficient && (
-                            <div style={{ marginTop: 8, padding: '8px 10px', background: C.redL, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                            <div style={{ marginTop: 8, padding: '8px 10px', background: C.redBg, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.red, fontFamily: F.body }}>
                               Stock insuffisant — dispo : {fmtM2(parseInt(selectedProduct.available_tiles)*parseFloat(selectedProduct.tile_area_m2))}
                             </div>
                           )}
@@ -781,7 +772,7 @@ export default function VendorSaleForm({
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                             {modeTabs.map(([mode, label]) => (
                               <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: FONT }}>
+                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: F.body }}>
                                 {label}
                               </button>
                             ))}
@@ -790,17 +781,17 @@ export default function VendorSaleForm({
 
                         {inputMode === 'linear_pieces' ? (
                           <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Nombre de {pkgLbl}s</label>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Nombre de {pkgLbl}s</label>
                             <input type="number" min="1" step="1" value={inputPieces} onChange={e => setInputPieces(e.target.value)} placeholder={`ex : 3 ${pkgLbl}s`} style={inputStyle(computed?.stockInsufficient??false)} />
                           </div>
                         ) : inputMode === 'liter_containers' ? (
                           <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Nombre de {pkgLbl}s</label>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Nombre de {pkgLbl}s</label>
                             <input type="number" min="1" step="1" value={inputContainers} onChange={e => setInputContainers(e.target.value)} placeholder={`ex : 2 ${pkgLbl}s`} style={inputStyle(computed?.stockInsufficient??false)} />
                           </div>
                         ) : inputMode === 'bag_weight' ? (
                           <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                               Poids total commandé (kg)
                             </label>
                             <input type="number" min="0.1" step="0.1" value={inputWeight} onChange={e => setInputWeight(e.target.value)}
@@ -808,7 +799,7 @@ export default function VendorSaleForm({
                           </div>
                         ) : inputMode === 'unit_packages' ? (
                           <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                               Nombre de {pkgLbl}s ({selectedProduct.pieces_per_package} {unitLbl}/{pkgLbl})
                             </label>
                             <input type="number" min="1" step="1" value={inputPackages} onChange={e => setInputPackages(e.target.value)}
@@ -816,7 +807,7 @@ export default function VendorSaleForm({
                           </div>
                         ) : (
                           <div>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Quantité ({unitLbl})</label>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Quantité ({unitLbl})</label>
                             <input type="number" min="1" step="1" value={inputQty} onChange={e => setInputQty(e.target.value)} placeholder="ex : 5" style={inputStyle(computed?.stockInsufficient??false)} />
                           </div>
                         )}
@@ -825,81 +816,81 @@ export default function VendorSaleForm({
                           <div style={{ marginTop: 12, padding: 12, background: C.bg, borderRadius: 10, border: `1px solid ${C.border}` }}>
                             {(inputMode==='linear_pieces'||inputMode==='liter_containers') ? (
                               <>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: F.body }}>Équivalences</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{inputMode==='linear_pieces'?(parseInt(inputPieces)||0):(parseInt(inputContainers)||0)}</div>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{pkgLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{inputMode==='linear_pieces'?(parseInt(inputPieces)||0):(parseInt(inputContainers)||0)}</div>
                                   </div>
-                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueL, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)}</div>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueBg, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{unitLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)}</div>
                                   </div>
                                 </div>
-                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
+                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: F.body, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
                               </>
                             ) : inputMode === 'bag_weight' ? (
                               <>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: F.body }}>Équivalences</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Poids demandé</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{parseFloat(inputWeight)||0} kg</div>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Poids demandé</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{parseFloat(inputWeight)||0} kg</div>
                                   </div>
-                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.orangeL, borderRadius: 7, border: `1px solid ${C.orange}33` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>Sacs à livrer</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: FONT }}>{computed.tiles} sac{computed.tiles > 1 ? 's' : ''}</div>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.orangeBg, borderRadius: 7, border: `1px solid ${C.orange}33` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Sacs à livrer</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: F.body }}>{computed.tiles} sac{computed.tiles > 1 ? 's' : ''}</div>
                                   </div>
                                 </div>
                                 {hasBagWeight && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 11, color: C.blue, fontFamily: FONT, textAlign: 'center' }}>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 11, color: C.blue, fontFamily: F.body, textAlign: 'center' }}>
                                     {computed.tiles} sac{computed.tiles>1?'s':''} × {selectedProduct.bag_weight_kg} kg = {fmtNum(Math.round(computed.tiles * parseFloat(selectedProduct.bag_weight_kg)))} kg livré
                                     {computed.tiles * parseFloat(selectedProduct.bag_weight_kg) > parseFloat(inputWeight) && (
                                       <span style={{ color: C.orange }}> (arrondi au sac supérieur)</span>
                                     )}
                                   </div>
                                 )}
-                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} sacs</div>
+                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: F.body, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} sacs</div>
                               </>
                             ) : inputMode === 'unit_packages' ? (
                               <>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: FONT }}>Équivalences</div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10, fontFamily: F.body }}>Équivalences</div>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{pkgLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{parseInt(inputPackages)||0}</div>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{pkgLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{parseInt(inputPackages)||0}</div>
                                   </div>
-                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueL, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
-                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>{unitLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: FONT }}>{computed.tiles}</div>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueBg, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
+                                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{unitLbl}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{computed.tiles}</div>
                                   </div>
                                 </div>
-                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: FONT, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
+                                <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: F.body, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
                               </>
                             ) : (
                               <>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)} {unitLbl}</span>
-                                  <span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>Dispo : {fmtNum(computed.availableTiles)}</span>
+                                  <span style={{ fontSize: 13, color: C.muted, fontFamily: F.body }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)} {unitLbl}</span>
+                                  <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>Dispo : {fmtNum(computed.availableTiles)}</span>
                                 </div>
                                 {hasPieceConv && computed.tiles > 0 && (() => {
                                   const pl=parseFloat(selectedProduct.piece_length_m), fp=Math.floor(computed.tiles/pl), rm=Math.round((computed.tiles%pl)*100)/100
-                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {fp} {pkgLbl}{fp!==1?'s':''}{rm>0?` + ${rm} m`:' complets'}</div>
+                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fp} {pkgLbl}{fp!==1?'s':''}{rm>0?` + ${rm} m`:' complets'}</div>
                                 })()}
                                 {hasBagWeight && computed.tiles > 0 && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {fmtNum(Math.round(computed.tiles*parseFloat(selectedProduct.bag_weight_kg)))} kg total</div>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fmtNum(Math.round(computed.tiles*parseFloat(selectedProduct.bag_weight_kg)))} kg total</div>
                                 )}
                                 {hasContConv && computed.tiles > 0 && (() => {
                                   const vol=parseFloat(selectedProduct.container_volume_l), fc=Math.floor(computed.tiles/vol), rl=Math.round((computed.tiles%vol)*10)/10
-                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {fc} {pkgLbl}{fc!==1?'s':''}{rl>0?` + ${rl} L`:' complets'}</div>
+                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fc} {pkgLbl}{fc!==1?'s':''}{rl>0?` + ${rl} L`:' complets'}</div>
                                 })()}
                                 {hasUnitPkg && computed.tiles > 0 && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueL, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: FONT }}>= {Math.floor(computed.tiles/parseInt(selectedProduct.pieces_per_package))} {pkgLbl}{computed.tiles%parseInt(selectedProduct.pieces_per_package)>0?` + ${computed.tiles%parseInt(selectedProduct.pieces_per_package)} ${unitLbl}`:' complet(s)'}</div>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {Math.floor(computed.tiles/parseInt(selectedProduct.pieces_per_package))} {pkgLbl}{computed.tiles%parseInt(selectedProduct.pieces_per_package)>0?` + ${computed.tiles%parseInt(selectedProduct.pieces_per_package)} ${unitLbl}`:' complet(s)'}</div>
                                 )}
                               </>
                             )}
                             {computed.stockInsufficient && (
-                              <div style={{ marginTop: 8, padding: '8px 10px', background: C.redL, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+                              <div style={{ marginTop: 8, padding: '8px 10px', background: C.redBg, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.red, fontFamily: F.body }}>
                                 Stock insuffisant — disponible : {fmtNum(computed.availableTiles)} {unitLbl}
                               </div>
                             )}
@@ -913,7 +904,7 @@ export default function VendorSaleForm({
                 {/* Price section — shows only when quantity is valid */}
                 {computed && computed.tiles > 0 && (
                   <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: F.body }}>
                       Prix négocié
                     </div>
                     {(() => {
@@ -926,22 +917,22 @@ export default function VendorSaleForm({
                           {(computed.floorPrice > 0 || computed.refPrice > 0) && (
                             <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                               {computed.floorPrice > 0 && (
-                                <div style={{ flex: 1, padding: '10px 12px', background: C.redL, borderRadius: 8, border: `1px solid ${C.red}30` }}>
-                                  <div style={{ fontSize: 9, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>Plancher min.</div>
-                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red, fontFamily: FONT }}>{fmtNum(computed.floorPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
+                                <div style={{ flex: 1, padding: '10px 12px', background: C.redBg, borderRadius: 8, border: `1px solid ${C.red}30` }}>
+                                  <div style={{ fontSize: 9, fontWeight: 700, color: C.red, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: F.body }}>Plancher min.</div>
+                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.red, fontFamily: F.body }}>{fmtNum(computed.floorPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
                                 </div>
                               )}
                               {computed.refPrice > 0 && (
                                 <div style={{ flex: 1, padding: '10px 12px', background: C.bg, borderRadius: 8, border: `1px solid ${C.border}` }}>
-                                  <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: FONT }}>Référence</div>
-                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.slate, fontFamily: FONT }}>{fmtNum(computed.refPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
+                                  <div style={{ fontSize: 9, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: F.body }}>Référence</div>
+                                  <div style={{ fontSize: 14, fontWeight: 800, color: C.muted, fontFamily: F.body }}>{fmtNum(computed.refPrice)} <span style={{ fontSize: 11, fontWeight: 600 }}>{priceSuffix}</span></div>
                                 </div>
                               )}
                             </div>
                           )}
 
                           <div style={{ marginBottom: 12 }}>
-                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                            <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                               Prix par {isTileProd ? 'm²' : unitLbl} ({currency})
                             </label>
                             <input type="number" min="0" value={unitPrice} onChange={e => setUnitPrice(e.target.value)}
@@ -950,13 +941,13 @@ export default function VendorSaleForm({
                           </div>
 
                           {computed.floorViolation && (
-                            <div style={{ padding: '10px 12px', background: C.redL, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12, fontFamily: FONT }}>
+                            <div style={{ padding: '10px 12px', background: C.redBg, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12, fontFamily: F.body }}>
                               Prix inférieur au plancher — vente bloquée
                             </div>
                           )}
 
                           {error && (
-                            <div style={{ padding: '10px 12px', background: C.redL, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12, fontFamily: FONT }}>
+                            <div style={{ padding: '10px 12px', background: C.redBg, borderRadius: 8, border: `1px solid ${C.red}`, fontSize: 12, fontWeight: 600, color: C.red, marginBottom: 12, fontFamily: F.body }}>
                               {error}
                             </div>
                           )}
@@ -964,7 +955,7 @@ export default function VendorSaleForm({
                           <button className="btn-meram"
                             onClick={addToCart}
                             disabled={computed.floorViolation || computed.stockInsufficient || computed.price <= 0 || computed.tiles <= 0}
-                            style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', cursor: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 0.5 : 1 }}>
+                            style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', cursor: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 0.5 : 1 }}>
                             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                               <circle cx="6" cy="13" r="1.2" fill="white"/><circle cx="12" cy="13" r="1.2" fill="white"/>
                               <path d="M1 1h2l2 8h7l1.5-5H5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -986,16 +977,16 @@ export default function VendorSaleForm({
             {/* Boutique selector */}
             {isOwnerOrAdmin && allBoutiques.length > 0 && (
               <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, padding: '12px 14px' }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8, fontFamily: FONT }}>Boutique</label>
+                <label style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', marginBottom: 8, fontFamily: F.body }}>Boutique</label>
                 <select value={selectedBoutique?.id??''} onChange={e => setBoutique(allBoutiques.find(b=>b.id===e.target.value)??null)}
-                  style={{ width: '100%', padding: '8px 10px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, background: C.surface, fontFamily: FONT, outline: 'none' }}>
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, background: C.surface, fontFamily: F.body, outline: 'none' }}>
                   {allBoutiques.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </select>
               </div>
             )}
 
             {/* Cart panel */}
-            <div style={{ background: C.navyDark, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
               {/* Cart header */}
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1003,7 +994,7 @@ export default function VendorSaleForm({
                     <circle cx="6" cy="13" r="1.2" fill="rgba(255,255,255,0.6)"/><circle cx="12" cy="13" r="1.2" fill="rgba(255,255,255,0.6)"/>
                     <path d="M1 1h2l2 8h7l1.5-5H5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Panier</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>Panier</span>
                 </div>
                 {cart.length > 0 && (
                   <div style={{ background: C.blue, color: '#fff', fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1016,7 +1007,7 @@ export default function VendorSaleForm({
               <div style={{ maxHeight: 280, overflowY: 'auto', padding: '8px' }}>
                 {cart.length === 0 ? (
                   <div style={{ padding: '28px 16px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: FONT }}>Aucun produit ajouté</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: F.body }}>Aucun produit ajouté</div>
                   </div>
                 ) : cart.map((item, idx) => {
                   const isItemTile  = (item.product?.product_type ?? 'tile') === 'tile'
@@ -1039,16 +1030,16 @@ export default function VendorSaleForm({
                   return (
                     <div key={idx} style={{ padding: '10px 10px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', marginBottom: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', fontFamily: FONT, flex: 1, marginRight: 8, lineHeight: 1.3 }}>{item.product.product_name}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', fontFamily: F.body, flex: 1, marginRight: 8, lineHeight: 1.3 }}>{item.product.product_name}</span>
                         <button onClick={() => removeFromCart(idx)}
                           style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', width: 20, height: 20, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                         </button>
                       </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 5, fontFamily: FONT }}>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 5, fontFamily: F.body }}>
                         {qtyDisplay} · {priceDisplay}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: FONT }}>{fmt(item.totalPrice)}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: F.body }}>{fmt(item.totalPrice)}</div>
                     </div>
                   )
                 })}
@@ -1057,8 +1048,8 @@ export default function VendorSaleForm({
               {/* Cart total */}
               {cart.length > 0 && (
                 <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: FONT }}>Total</span>
-                  <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: FONT }}>{fmt(cartTotal)}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: F.body }}>Total</span>
+                  <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.body }}>{fmt(cartTotal)}</span>
                 </div>
               )}
             </div>
@@ -1067,7 +1058,7 @@ export default function VendorSaleForm({
             <button className="btn-meram"
               onClick={() => { setError(null); setFormStep(2) }}
               disabled={cart.length === 0}
-              style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
+              style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
               Continuer
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1087,7 +1078,7 @@ export default function VendorSaleForm({
 
             {/* Back */}
             <button onClick={() => { setError(null); setFormStep(1) }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: FONT, alignSelf: 'flex-start' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: F.body, alignSelf: 'flex-start' }}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M7 3L3 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Retour au panier
             </button>
@@ -1095,55 +1086,55 @@ export default function VendorSaleForm({
             {/* Client info */}
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
+                <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>
                   Informations client
                 </div>
-                <div style={{ fontSize: 11, color: C.muted, fontFamily: FONT }}>
+                <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
                   <span style={{ color: C.red }}>*</span> requis pour la vente &nbsp;·&nbsp; téléphone et CNI optionnels pour un devis
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Nom du client <span style={{ color: C.red }}>*</span></label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Nom du client <span style={{ color: C.red }}>*</span></label>
                   <input type="text" value={customerName} onChange={e => setName(e.target.value)} placeholder="ex : Michel Abanda" style={inputStyle(!customerName.trim() && !!error)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                     N° CNI <span style={{ color: C.red }}>*</span> <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel pour devis)</span>
                   </label>
                   <input type="text" value={customerCNI} onChange={e => setCNI(e.target.value)} placeholder="ex : 1 23 04 5678 912 34" style={inputStyle(!customerCNI.trim() && !!error)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                     Téléphone principal <span style={{ color: C.red }}>*</span> <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel pour devis)</span>
                   </label>
                   <input type="tel" value={customerPhone} onChange={e => setPhone(e.target.value)} placeholder="ex : 6 99 11 22 33" style={inputStyle(!customerPhone.trim() && !!error)} />
                 </div>
                 <div>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Téléphone secondaire <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel)</span></label>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Téléphone secondaire <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel)</span></label>
                   <input type="tel" value={customerPhone2} onChange={e => setPhone2(e.target.value)} placeholder="ex : 6 88 44 55 66" style={inputStyle()} />
                 </div>
               </div>
               <div style={{ marginTop: 14 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: FONT }}>Notes <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel)</span></label>
+                <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Notes <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel)</span></label>
                 <textarea value={notes} rows={2} onChange={e => setNotes(e.target.value)} placeholder="Instructions de livraison, observations…" style={{ ...inputStyle(), resize: 'vertical' }} />
               </div>
             </div>
 
             {/* Payment */}
             <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: C.slate, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: FONT }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: F.body }}>
                 Paiement
               </div>
 
               {/* Quick-select */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                 <button type="button" onClick={() => setAmountPaid(String(cartTotal))}
-                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.green : C.border}`, background: parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.greenL : C.bg, color: parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.green : C.slate, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.green : C.border}`, background: parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.greenBg : C.bg, color: parseFloat(amountPaid)>=cartTotal&&amountPaid ? C.green : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Paiement complet
                 </button>
                 <button type="button" onClick={() => setAmountPaid('')}
-                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${amountPaid==='' ? C.blue : C.border}`, background: amountPaid==='' ? C.blueL : C.bg, color: amountPaid==='' ? C.blue : C.slate, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${amountPaid==='' ? C.blue : C.border}`, background: amountPaid==='' ? C.blueBg : C.bg, color: amountPaid==='' ? C.blue : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Acompte / Partiel
                 </button>
               </div>
@@ -1157,14 +1148,14 @@ export default function VendorSaleForm({
                 const isOver  = paid > cartTotal
                 if (paid === 0) return null
                 return (
-                  <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 9, background: isOver ? C.redL : balance===0 ? C.greenL : C.orangeL, border: `1px solid ${isOver ? C.red : balance===0 ? C.green : C.orange}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-                    <span style={{ fontSize: 13, color: C.slate, fontFamily: FONT }}>Encaissé : <strong>{fmt(paid)}</strong></span>
+                  <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 9, background: isOver ? C.redBg : balance===0 ? C.greenBg : C.orangeBg, border: `1px solid ${isOver ? C.red : balance===0 ? C.green : C.orange}`, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                    <span style={{ fontSize: 13, color: C.muted, fontFamily: F.body }}>Encaissé : <strong>{fmt(paid)}</strong></span>
                     {isOver ? (
-                      <span style={{ fontSize: 13, color: C.red, fontWeight: 700, fontFamily: FONT }}>Montant supérieur au total</span>
+                      <span style={{ fontSize: 13, color: C.red, fontWeight: 700, fontFamily: F.body }}>Montant supérieur au total</span>
                     ) : balance === 0 ? (
-                      <span style={{ fontSize: 13, color: C.green, fontWeight: 700, fontFamily: FONT }}>Soldé</span>
+                      <span style={{ fontSize: 13, color: C.green, fontWeight: 700, fontFamily: F.body }}>Soldé</span>
                     ) : (
-                      <span style={{ fontSize: 13, color: C.orange, fontWeight: 700, fontFamily: FONT }}>Reste : {fmt(balance)}</span>
+                      <span style={{ fontSize: 13, color: C.orange, fontWeight: 700, fontFamily: F.body }}>Reste : {fmt(balance)}</span>
                     )}
                   </div>
                 )
@@ -1176,9 +1167,9 @@ export default function VendorSaleForm({
           <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Cart summary (read-only) */}
-            <div style={{ background: C.navyDark, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Récapitulatif</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>Récapitulatif</span>
               </div>
               <div style={{ padding: '8px', maxHeight: 260, overflowY: 'auto' }}>
                 {cart.map((item, idx) => {
@@ -1200,10 +1191,10 @@ export default function VendorSaleForm({
                   return (
                     <div key={idx} style={{ padding: '10px', borderRadius: 8, marginBottom: 5 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontFamily: FONT, flex: 1 }}>{item.product.product_name}</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: FONT, flexShrink: 0 }}>{fmt(item.totalPrice)}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.85)', fontFamily: F.body, flex: 1 }}>{item.product.product_name}</span>
+                        <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', fontFamily: F.body, flexShrink: 0 }}>{fmt(item.totalPrice)}</span>
                       </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2, fontFamily: FONT }}>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginTop: 2, fontFamily: F.body }}>
                         {qtyDisp2} · {priceDisp2}
                       </div>
                     </div>
@@ -1211,21 +1202,21 @@ export default function VendorSaleForm({
                 })}
               </div>
               <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: FONT }}>Total</span>
-                <span style={{ color: '#fff', fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: FONT }}>{fmt(cartTotal)}</span>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: F.body }}>Total</span>
+                <span style={{ color: '#fff', fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.body }}>{fmt(cartTotal)}</span>
               </div>
             </div>
 
             {/* Error */}
             {error && (
-              <div style={{ padding: '12px 14px', background: C.redL, borderRadius: 10, border: `1px solid ${C.red}`, fontSize: 13, fontWeight: 600, color: C.red, fontFamily: FONT }}>
+              <div style={{ padding: '12px 14px', background: C.redBg, borderRadius: 10, border: `1px solid ${C.red}`, fontSize: 13, fontWeight: 600, color: C.red, fontFamily: F.body }}>
                 {error}
               </div>
             )}
 
             {/* Confirm sale */}
             <button className="btn-meram" onClick={handleConfirm} disabled={loading || quoteLoading}
-              style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
+              style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
               {loading ? (
                 <><span className="spinner" />Enregistrement…</>
               ) : (
@@ -1236,7 +1227,7 @@ export default function VendorSaleForm({
             {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ flex: 1, height: 1, background: C.border }} />
-              <span style={{ fontSize: 11, color: C.muted, fontFamily: FONT, whiteSpace: 'nowrap' }}>ou</span>
+              <span style={{ fontSize: 11, color: C.muted, fontFamily: F.body, whiteSpace: 'nowrap' }}>ou</span>
               <div style={{ flex: 1, height: 1, background: C.border }} />
             </div>
 
@@ -1244,7 +1235,7 @@ export default function VendorSaleForm({
             <button
               onClick={handleSaveQuote}
               disabled={loading || quoteLoading}
-              style={{ width: '100%', padding: '12px', borderRadius: 10, cursor: quoteLoading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: loading ? 0.5 : 1, background: C.surface, border: `1.5px solid ${C.gold}`, color: C.gold }}>
+              style={{ width: '100%', padding: '12px', borderRadius: 10, cursor: quoteLoading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: loading ? 0.5 : 1, background: C.surface, border: `1.5px solid ${C.gold}`, color: C.gold }}>
               {quoteLoading ? (
                 <><span className="spinner-blue" style={{ borderTopColor: C.gold, borderRightColor: `${C.gold}40` }} />Enregistrement du devis…</>
               ) : (
@@ -1258,7 +1249,7 @@ export default function VendorSaleForm({
                 </>
               )}
             </button>
-            <p style={{ fontSize: 11, color: C.muted, textAlign: 'center', margin: 0, fontFamily: FONT }}>
+            <p style={{ fontSize: 11, color: C.muted, textAlign: 'center', margin: 0, fontFamily: F.body }}>
               Le devis n'engage pas le stock — il peut être converti en vente plus tard.
             </p>
           </div>
