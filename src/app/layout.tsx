@@ -1,26 +1,29 @@
 import type { Metadata, Viewport } from 'next'
-import { Sora, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google'
+import { Fraunces, DM_Sans, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
 import PwaInstallPrompt    from '@/components/PwaInstallPrompt'
 import NetworkStatusBanner from '@/components/NetworkStatusBanner'
 
-// ── Sora — display / headings ────────────────────────────────────────────────
-// Loaded with the weights used in the design system: 400 (labels), 600 (card
-// titles), 700 (page titles), 800 (KPI), 900 (hero callout).
-const sora = Sora({
+// ── Fraunces — display / headings ────────────────────────────────────────────
+// An optical-size serif with a warm, editorial quality that communicates
+// authority and trust at a glance — critical for a B2B interface that
+// business owners must trust immediately.
+// Loaded at the weights used for KPI figures, page titles, and card headings.
+const fraunces = Fraunces({
   subsets:  ['latin'],
-  variable: '--font-sora',
+  variable: '--font-fraunces',
   display:  'swap',
-  weight:   ['400', '600', '700', '800'],
+  weight:   ['400', '600', '700', '900'],
+  style:    ['normal', 'italic'],
 })
 
-// ── IBM Plex Sans — body / UI ────────────────────────────────────────────────
-// The interface workhorse: forms, tables, labels, body copy.
-// Built-in tabular numerals (font-feature-settings "tnum") — critical for
-// aligned financial figures throughout the app.
-const plexSans = IBM_Plex_Sans({
+// ── DM Sans — body / UI ──────────────────────────────────────────────────────
+// Clean geometric sans designed specifically for digital interfaces.
+// Excellent legibility at 12–14px, built-in tabular numerals for financial
+// figures, and a warmth that pairs well with Fraunces.
+const dmSans = DM_Sans({
   subsets:  ['latin'],
-  variable: '--font-plex',
+  variable: '--font-dm',
   display:  'swap',
   weight:   ['400', '500', '600', '700'],
 })
@@ -45,14 +48,14 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable:        true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title:          'MERAM',
   },
   manifest: '/manifest.webmanifest',
 }
 
 export const viewport: Viewport = {
-  themeColor:   '#1C1917',  // Minerals bg — volcanic stone
+  themeColor:   '#F5EFE6',  // Papier bg — aged cream
   width:        'device-width',
   initialScale: 1,
 }
@@ -61,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="fr"
-      className={`${sora.variable} ${plexSans.variable} ${plexMono.variable}`}
+      className={`${fraunces.variable} ${dmSans.variable} ${plexMono.variable}`}
     >
       <body>
         <NetworkStatusBanner />

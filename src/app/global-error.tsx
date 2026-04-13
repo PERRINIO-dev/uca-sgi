@@ -24,6 +24,8 @@ export default function GlobalError({
         margin: 0, padding: SP[6], boxSizing: 'border-box',
       }}>
         <div style={{ textAlign: 'center', maxWidth: 460 }}>
+
+          {/* Error icon */}
           <div style={{
             width: 72, height: 72, borderRadius: '50%',
             background: C.redBg, border: `1.5px solid ${C.redBd}`,
@@ -32,22 +34,25 @@ export default function GlobalError({
           }}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
               <path d="M16 4L28 26H4L16 4Z" stroke={C.red} strokeWidth="2" strokeLinejoin="round"/>
-              <path d="M16 13v7" stroke={C.red} strokeWidth="2" strokeLinecap="round"/>
+              <path d="M16 13v7"             stroke={C.red} strokeWidth="2" strokeLinecap="round"/>
               <circle cx="16" cy="23" r="1.5" fill={C.red}/>
             </svg>
           </div>
 
           <h1 style={{
-            fontSize: F.xl, fontWeight: F.xbold, color: C.ink,
-            margin: `0 0 ${SP[2]}`, letterSpacing: F.lsTighter, fontFamily: F.display,
+            fontSize: F.xl, fontWeight: F.bold, color: C.ink,
+            margin: `0 0 ${SP[2]}`, letterSpacing: F.lsTighter,
+            fontFamily: F.display,
           }}>
-            Erreur critique de l'application
+            Erreur critique de l&apos;application
           </h1>
           <p style={{
-            fontSize: F.base, color: C.muted, margin: `0 0 ${SP[7]}`, lineHeight: F.lhRelaxed, fontFamily: F.body,
+            fontSize: F.base, color: C.muted,
+            margin: `0 0 ${SP[7]}`, lineHeight: F.lhRelaxed,
+            fontFamily: F.body,
           }}>
             Le système a rencontré une erreur inattendue dans le chargement de la page.<br />
-            Réessayez ou contactez l'administrateur si le problème persiste.
+            Réessayez ou contactez l&apos;administrateur si le problème persiste.
           </p>
 
           <div style={{ display: 'flex', gap: SP[2], justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -55,9 +60,10 @@ export default function GlobalError({
               onClick={reset}
               style={{
                 padding: `${SP[3]} ${SP[6]}`,
-                background: `linear-gradient(135deg, ${C.amberActive}, ${C.amber})`,
-                color: C.bg,
-                border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold,
+                background: `linear-gradient(135deg, ${C.amberActive} 0%, ${C.amber} 100%)`,
+                color: '#FAF5EE',
+                border: 'none', borderRadius: R.md,
+                fontSize: F.sm, fontWeight: F.bold,
                 cursor: 'pointer', fontFamily: F.body,
                 boxShadow: SH.amber,
                 letterSpacing: F.lsTight,
@@ -71,8 +77,8 @@ export default function GlobalError({
                 display: 'inline-block', padding: `${SP[3]} ${SP[6]}`,
                 background: C.surface, color: C.muted,
                 border: `1.5px solid ${C.border}`, borderRadius: R.md,
-                fontSize: F.sm, fontWeight: F.medium, textDecoration: 'none',
-                fontFamily: F.body,
+                fontSize: F.sm, fontWeight: F.medium,
+                textDecoration: 'none', fontFamily: F.body,
               }}
             >
               Retour à la connexion

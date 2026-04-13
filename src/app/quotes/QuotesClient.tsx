@@ -646,7 +646,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CONVERT MODAL ═══════════════════════════════ */}
       {convertId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(6px)', fontFamily: F.body }}>
           <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 480, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
 
             {convertSuccess ? (
@@ -797,7 +797,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CANCEL MODAL ════════════════════════════════ */}
       {cancelId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(6px)', fontFamily: F.body }}>
           <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 420, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
             <div style={{ height: 4, background: 'linear-gradient(90deg,#EF4444,#F87171)' }} />
             <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>

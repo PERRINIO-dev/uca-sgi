@@ -107,10 +107,10 @@ function IconLogout({ c = 'currentColor', size = 15 }: { c?: string; size?: numb
     </svg>
   )
 }
-function IconX({ size = 14 }: { size?: number }) {
+function IconX({ size = 14, color }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M1 1l12 12M13 1L1 13" stroke={C.dim} strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M1 1l12 12M13 1L1 13" stroke={color ?? C.muted} strokeWidth="1.8" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -133,16 +133,15 @@ function Avatar({ name }: { name: string }) {
   const letters = parts.length >= 2
     ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
     : name.slice(0, 2).toUpperCase()
-  // Derive a hue from the name, then build amber-tinted dark gradients
   const hue = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360
   return (
     <div style={{
       width: 32, height: 32, borderRadius: R.full,
-      background:  `linear-gradient(135deg, hsl(${hue},45%,22%), hsl(${(hue+40)%360},55%,35%))`,
-      border:      `1.5px solid rgba(245,158,11,0.25)`,
+      background:  `linear-gradient(135deg, hsl(${hue},40%,20%), hsl(${(hue+40)%360},50%,30%))`,
+      border:      `1.5px solid rgba(160,83,26,0.30)`,
       display:     'flex', alignItems: 'center', justifyContent: 'center',
       flexShrink:  0,
-      fontSize:    11, fontWeight: F.bold, color: C.ink,
+      fontSize:    11, fontWeight: F.bold, color: C.sidebarInk,
       letterSpacing: '0.04em',
       fontFamily:  F.body,
     }}>
@@ -169,10 +168,10 @@ export default function Sidebar({
 }) {
   const router   = useRouter()
   const isMobile = useIsMobile()
-  const [isPending,       startTransition] = useTransition()
-  const [notifSupported,  setNotifSupported]  = useState(false)
-  const [notifState,      setNotifState]      = useState<'subscribed'|'denied'|'default'>('default')
-  const [notifLoading,    setNotifLoading]    = useState(false)
+  const [isPending,       startTransition]  = useTransition()
+  const [notifSupported,  setNotifSupported] = useState(false)
+  const [notifState,      setNotifState]     = useState<'subscribed'|'denied'|'default'>('default')
+  const [notifLoading,    setNotifLoading]   = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isAdmin      = profile.is_platform_admin === true
@@ -236,6 +235,9 @@ export default function Sidebar({
     return 0
   }
 
+  // Cognac glow for active nav items (cognac value)
+  const activeNavGlow = 'rgba(160,83,26,0.14)'
+
   return (
     <>
       {/* Navigation loading bar */}
@@ -255,18 +257,34 @@ export default function Sidebar({
           0%   { background-position: 100% 0 }
           100% { background-position: -100% 0 }
         }
-        .nav-btn:hover { background: ${C.surfaceHov} !important; color: ${C.text} !important; }
-        .nav-btn:hover svg * { stroke: ${C.muted} !important; fill: ${C.muted} !important; }
-        .nav-btn.active svg * { stroke: ${C.amber} !important; fill: ${C.amber} !important; }
+        .nav-btn:hover {
+          background: ${C.sidebarHov} !important;
+          color: ${C.sidebarText} !important;
+        }
+        .nav-btn:hover svg * {
+          stroke: ${C.sidebarMuted} !important;
+          fill: ${C.sidebarMuted} !important;
+        }
+        .nav-btn.active svg * {
+          stroke: ${C.amber} !important;
+          fill: ${C.amber} !important;
+        }
         .nav-btn.active { color: ${C.amber} !important; }
-        .notif-btn:hover { background: ${C.surfaceHov} !important; border-color: ${C.border} !important; }
-        .logout-btn:hover { background: ${C.redBg} !important; color: ${C.red} !important; border-color: ${C.redBd} !important; }
-        .logout-btn:hover svg * { stroke: ${C.red} !important; }
+        .notif-btn:hover {
+          background: ${C.sidebarHov} !important;
+          border-color: ${C.sidebarBd} !important;
+        }
+        .logout-btn:hover {
+          background: rgba(127,29,29,0.28) !important;
+          color: #FCA5A5 !important;
+          border-color: rgba(127,29,29,0.50) !important;
+        }
+        .logout-btn:hover svg * { stroke: #FCA5A5 !important; }
       `}</style>
 
       <aside style={{
         width:          240,
-        background:     C.bgDeep,
+        background:     C.sidebarBg,
         display:        'flex',
         flexDirection:  'column',
         flexShrink:     0,
@@ -276,46 +294,46 @@ export default function Sidebar({
         transition:     `transform ${TR.smooth}`,
         zIndex:         Z.overlay,
         fontFamily:     F.body,
-        borderRight:    `1px solid ${C.borderSub}`,
-        boxShadow:      `4px 0 24px rgba(0,0,0,0.50)`,
+        borderRight:    `1px solid ${C.sidebarBd}`,
+        boxShadow:      `4px 0 32px rgba(0,0,0,0.25)`,
       }}>
 
-        {/* Amber accent stripe */}
+        {/* Cognac accent stripe */}
         <div style={{ height: 3, background: C.amber, flexShrink: 0 }} />
 
         {/* Logo */}
         <div style={{
-          padding:      `${SP[4]} ${SP[5]} ${SP[3]}`,
-          borderBottom: `1px solid ${C.borderSub}`,
+          padding:      `${SP[4]} ${SP[5]} ${SP[4]}`,
+          borderBottom: `1px solid ${C.sidebarBd}`,
           flexShrink:   0,
-          display:      'flex', alignItems: 'center', gap: SP[2],
+          display:      'flex', alignItems: 'center', gap: SP[2.5],
         }}>
           <div style={{
-            width: 30, height: 30, borderRadius: R.lg,
+            width: 32, height: 32, borderRadius: R.lg,
             background:  `linear-gradient(145deg, ${C.amberActive} 0%, ${C.amber} 100%)`,
             display:     'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink:  0,
             boxShadow:   SH.amberSm,
           }}>
             <svg width="16" height="13" viewBox="0 0 20 17" fill="none" aria-hidden="true">
-              <path d="M2 15V2L10 9L18 2V15" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 15h16" stroke={C.bg} strokeWidth="2.4" strokeLinecap="round"/>
+              <path d="M2 15V2L10 9L18 2V15" stroke="#FAF5EE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 15h16"              stroke="#FAF5EE" strokeWidth="2.4" strokeLinecap="round"/>
             </svg>
           </div>
           <div>
             <div style={{
               fontSize:      F.lg,
-              fontWeight:    F.xbold,
+              fontWeight:    F.bold,
               fontFamily:    F.display,
-              color:         C.ink,
-              letterSpacing: F.lsTighter,
+              color:         C.sidebarInk,
+              letterSpacing: '-0.02em',
               lineHeight:    1,
             }}>
               MERAM
             </div>
             <div style={{
               fontSize:      '8.5px',
-              color:         C.dim,
+              color:         C.sidebarDim,
               letterSpacing: F.lsWidest,
               marginTop:     '2px',
               textTransform: 'uppercase',
@@ -329,17 +347,17 @@ export default function Sidebar({
         {/* User card */}
         <div style={{
           padding:      `${SP[3]} ${SP[4]}`,
-          borderBottom: `1px solid ${C.borderSub}`,
+          borderBottom: `1px solid ${C.sidebarBd}`,
           display:      'flex', alignItems: 'center', gap: SP[2],
           flexShrink:   0,
-          background:   C.surfaceSub,
+          background:   C.sidebarEl,
         }}>
           <Avatar name={profile.full_name} />
           <div style={{ minWidth: 0 }}>
             <div style={{
               fontSize:      F.base,
               fontWeight:    F.semibold,
-              color:         C.ink,
+              color:         C.sidebarInk,
               whiteSpace:    'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               lineHeight:    F.lhSnug,
             }}>
@@ -347,7 +365,7 @@ export default function Sidebar({
             </div>
             <div style={{
               fontSize:   F.xs,
-              color:      C.dim,
+              color:      C.sidebarMuted,
               marginTop:  '2px',
               fontWeight: F.medium,
             }}>
@@ -364,7 +382,7 @@ export default function Sidebar({
               padding:       `${SP[3]} ${SP[3]} ${SP[2]}`,
               fontSize:      '10px',
               fontWeight:    F.bold,
-              color:         C.dim,
+              color:         C.sidebarDim,
               letterSpacing: F.lsWider,
               textTransform: 'uppercase',
             }}>
@@ -382,36 +400,36 @@ export default function Sidebar({
                 onMouseEnter={() => router.prefetch(href)}
                 onClick={() => { onClose?.(); startTransition(() => router.push(href)) }}
                 style={{
-                  display:     'flex', alignItems: 'center', gap: SP[3],
-                  width:       '100%',
-                  padding:     isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
+                  display:      'flex', alignItems: 'center', gap: SP[3],
+                  width:        '100%',
+                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
                   marginBottom: SP[0.5],
-                  border:      'none',
-                  borderLeft:  `3px solid ${active ? C.amber : 'transparent'}`,
+                  border:       'none',
+                  borderLeft:   `3px solid ${active ? C.amber : 'transparent'}`,
                   borderRadius: `0 ${R.md} ${R.md} 0`,
-                  background:  active ? `rgba(245,158,11,0.09)` : 'transparent',
-                  color:       active ? C.amber : C.muted,
-                  fontSize:    F.base,
-                  fontWeight:  active ? F.semibold : F.regular,
-                  fontFamily:  F.body,
-                  cursor:      isPending ? 'default' : 'pointer',
-                  textAlign:   'left',
-                  opacity:     isPending && !active ? 0.5 : 1,
-                  transition:  `background ${TR.fast}, color ${TR.fast}, border-color ${TR.fast}`,
+                  background:   active ? activeNavGlow : 'transparent',
+                  color:        active ? C.amber : C.sidebarMuted,
+                  fontSize:     F.base,
+                  fontWeight:   active ? F.semibold : F.regular,
+                  fontFamily:   F.body,
+                  cursor:       isPending ? 'default' : 'pointer',
+                  textAlign:    'left',
+                  opacity:      isPending && !active ? 0.5 : 1,
+                  transition:   `background ${TR.fast}, color ${TR.fast}, border-color ${TR.fast}`,
                 }}
               >
-                <Icon c={active ? C.amber : C.muted} />
+                <Icon c={active ? C.amber : C.sidebarMuted} />
                 <span style={{ flex: 1 }}>{label}</span>
                 {badge > 0 && (
                   <span style={{
-                    minWidth:    18, height: 18, padding: '0 5px',
+                    minWidth:     18, height: 18, padding: '0 5px',
                     borderRadius: R.full,
-                    background:  C.amber,
-                    color:       C.bg,
-                    fontSize:    '10px', fontWeight: F.bold,
-                    display:     'flex', alignItems: 'center', justifyContent: 'center',
-                    lineHeight:  1, flexShrink: 0,
-                    boxShadow:   SH.amberSm,
+                    background:   C.amber,
+                    color:        '#FAF5EE',
+                    fontSize:     '10px', fontWeight: F.bold,
+                    display:      'flex', alignItems: 'center', justifyContent: 'center',
+                    lineHeight:   1, flexShrink: 0,
+                    boxShadow:    SH.amberSm,
                   }}>
                     {badge > 99 ? '99+' : badge}
                   </span>
@@ -426,7 +444,7 @@ export default function Sidebar({
               <div style={{
                 padding:       `${SP[4]} ${SP[3]} ${SP[2]}`,
                 fontSize:      '10px', fontWeight: F.bold,
-                color:         C.dim, letterSpacing: F.lsWider, textTransform: 'uppercase',
+                color:         C.sidebarDim, letterSpacing: F.lsWider, textTransform: 'uppercase',
               }}>
                 Plateforme
               </div>
@@ -434,20 +452,20 @@ export default function Sidebar({
                 className={`nav-btn${activeRoute === '/admin' ? ' active' : ''}`}
                 onClick={() => { onClose?.(); startTransition(() => router.push('/admin')) }}
                 style={{
-                  display:     'flex', alignItems: 'center', gap: SP[3],
-                  width:       '100%',
-                  padding:     isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
-                  border:      'none',
-                  borderLeft:  `3px solid ${activeRoute === '/admin' ? C.amber : 'transparent'}`,
+                  display:      'flex', alignItems: 'center', gap: SP[3],
+                  width:        '100%',
+                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
+                  border:       'none',
+                  borderLeft:   `3px solid ${activeRoute === '/admin' ? C.amber : 'transparent'}`,
                   borderRadius: `0 ${R.md} ${R.md} 0`,
-                  background:  activeRoute === '/admin' ? `rgba(245,158,11,0.09)` : 'transparent',
-                  color:       activeRoute === '/admin' ? C.amber : C.muted,
-                  fontSize:    F.base, fontWeight: activeRoute === '/admin' ? F.semibold : F.regular,
-                  fontFamily:  F.body, cursor: 'pointer', textAlign: 'left',
-                  transition:  `background ${TR.fast}, color ${TR.fast}`,
+                  background:   activeRoute === '/admin' ? activeNavGlow : 'transparent',
+                  color:        activeRoute === '/admin' ? C.amber : C.sidebarMuted,
+                  fontSize:     F.base, fontWeight: activeRoute === '/admin' ? F.semibold : F.regular,
+                  fontFamily:   F.body, cursor: 'pointer', textAlign: 'left',
+                  transition:   `background ${TR.fast}, color ${TR.fast}`,
                 }}
               >
-                <IconPlatform c={activeRoute === '/admin' ? C.amber : C.muted} />
+                <IconPlatform c={activeRoute === '/admin' ? C.amber : C.sidebarMuted} />
                 <span>Administration</span>
               </button>
             </>
@@ -462,28 +480,28 @@ export default function Sidebar({
               disabled={notifLoading || notifState === 'denied'}
               onClick={handleNotifToggle}
               style={{
-                width:       '100%', padding: `${SP[2]} ${SP[3]}`,
+                width:        '100%', padding: `${SP[2]} ${SP[3]}`,
                 borderRadius: R.md,
-                background:  notifState === 'subscribed' ? `rgba(245,158,11,0.09)` : 'transparent',
-                border:      `1px solid ${notifState === 'subscribed' ? `rgba(245,158,11,0.30)` : C.borderSub}`,
-                color:       notifState === 'subscribed' ? C.amber
-                           : notifState === 'denied'     ? C.dim : C.muted,
-                fontSize:    F.xs, fontWeight: F.medium,
-                cursor:      notifLoading || notifState === 'denied' ? 'not-allowed' : 'pointer',
-                fontFamily:  F.body,
-                display:     'flex', alignItems: 'center', gap: SP[2],
-                transition:  `all ${TR.fast}`,
+                background:   notifState === 'subscribed' ? activeNavGlow : 'transparent',
+                border:       `1px solid ${notifState === 'subscribed' ? 'rgba(160,83,26,0.35)' : C.sidebarBd}`,
+                color:        notifState === 'subscribed' ? C.amber
+                            : notifState === 'denied'     ? C.sidebarDim : C.sidebarMuted,
+                fontSize:     F.xs, fontWeight: F.medium,
+                cursor:       notifLoading || notifState === 'denied' ? 'not-allowed' : 'pointer',
+                fontFamily:   F.body,
+                display:      'flex', alignItems: 'center', gap: SP[2],
+                transition:   `all ${TR.fast}`,
               }}
             >
               {notifLoading
-                ? <span className="spinner-amber" />
+                ? <span className="spinner-light" />
                 : <IconBell
-                    c={notifState === 'subscribed' ? C.amber : notifState === 'denied' ? C.dim : C.muted}
+                    c={notifState === 'subscribed' ? C.amber : notifState === 'denied' ? C.sidebarDim : C.sidebarMuted}
                     filled={notifState === 'subscribed'}
                   />
               }
               <span>
-                {notifLoading        ? 'En cours…'
+                {notifLoading             ? 'En cours…'
                  : notifState === 'subscribed' ? 'Notifications activées'
                  : notifState === 'denied'     ? 'Notifications bloquées'
                  : 'Activer les notifications'}
@@ -495,7 +513,7 @@ export default function Sidebar({
         {/* Logout */}
         <div style={{
           padding:    `${SP[1]} ${SP[2]} ${SP[5]}`,
-          borderTop:  `1px solid ${C.borderSub}`,
+          borderTop:  `1px solid ${C.sidebarBd}`,
           flexShrink: 0,
         }}>
           <button
@@ -506,26 +524,26 @@ export default function Sidebar({
               borderRadius: R.md,
               background:   'transparent',
               border:       `1px solid transparent`,
-              color:        C.dim,
+              color:        C.sidebarDim,
               fontSize:     F.base, fontWeight: F.regular,
               fontFamily:   F.body, cursor: 'pointer',
               display:      'flex', alignItems: 'center', gap: SP[3],
               transition:   `all ${TR.fast}`,
             }}
           >
-            <IconLogout c={C.dim} />
+            <IconLogout c={C.sidebarDim} />
             <span>Déconnexion</span>
           </button>
         </div>
       </aside>
 
-      {/* ── Logout confirmation modal ── */}
+      {/* ── Logout confirmation modal (uses light theme — overlaid on cream canvas) ── */}
       {showLogoutModal && (
         <div
           className="modal-overlay"
           style={{
             position:       'fixed', inset: 0,
-            background:     'rgba(0,0,0,0.72)',
+            background:     'rgba(26,15,6,0.55)',
             display:        'flex', alignItems: 'center', justifyContent: 'center',
             zIndex:         Z.modal, padding: SP[5],
             backdropFilter: 'blur(6px)',
@@ -543,8 +561,8 @@ export default function Sidebar({
               overflow:     'hidden',
             }}
           >
-            {/* Red accent stripe */}
-            <div style={{ height: 3, background: C.red, opacity: 0.8 }} />
+            {/* Cognac top stripe */}
+            <div style={{ height: 3, background: C.red, opacity: 0.7 }} />
 
             {/* Header */}
             <div style={{
@@ -562,7 +580,7 @@ export default function Sidebar({
                 <IconLogout c={C.red} size={16} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, marginBottom: SP[1] }}>
+                <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, marginBottom: SP[1], fontFamily: F.display }}>
                   Confirmer la déconnexion
                 </div>
                 <div style={{ fontSize: F.sm, color: C.muted, lineHeight: F.lhRelaxed }}>
@@ -596,7 +614,7 @@ export default function Sidebar({
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
                 }}
               >
-                <IconLogout c={C.red} size={14} />
+                <IconLogout c="#FEF2F2" size={14} />
                 Se déconnecter
               </button>
               <button

@@ -42,7 +42,7 @@ function IconRefresh() {
 function IconX() {
   return (
     <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M1 1l12 12M13 1L1 13" stroke={C.dim} strokeWidth="1.8" strokeLinecap="round"/>
+      <path d="M1 1l12 12M13 1L1 13" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -183,9 +183,9 @@ export default function PageLayout({
             display:       'flex', flexDirection: 'column',
             zIndex:        Z.sticky,
             borderBottom:  `1px solid ${C.border}`,
-            boxShadow:     SH.md,
+            boxShadow:     SH.sm,
           }}>
-            {/* Amber accent stripe */}
+            {/* Cognac accent stripe */}
             <div style={{ height: 3, background: C.amber, flexShrink: 0 }} />
 
             <div style={{
@@ -197,7 +197,7 @@ export default function PageLayout({
                 onClick={() => setSidebar(o => !o)}
                 aria-label="Ouvrir le menu"
                 style={{
-                  background:   C.surfaceEl,
+                  background:   C.surfaceHov,
                   border:       `1px solid ${C.border}`,
                   borderRadius: R.md,
                   width: 36, height: 36,
@@ -232,13 +232,13 @@ export default function PageLayout({
                   boxShadow:   SH.amberSm,
                 }}>
                   <svg width="12" height="10" viewBox="0 0 20 17" fill="none" aria-hidden="true">
-                    <path d="M2 15V2L10 9L18 2V15" stroke={C.bg} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 15h16" stroke={C.bg} strokeWidth="2.5" strokeLinecap="round"/>
+                    <path d="M2 15V2L10 9L18 2V15" stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M2 15h16"              stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round"/>
                   </svg>
                 </div>
                 <span style={{
                   fontSize:      F.base,
-                  fontWeight:    F.xbold,
+                  fontWeight:    F.bold,
                   fontFamily:    F.display,
                   color:         C.ink,
                   letterSpacing: F.lsTighter,
@@ -256,7 +256,7 @@ export default function PageLayout({
             onClick={() => setSidebar(false)}
             style={{
               position:       'fixed', inset: 0,
-              background:     'rgba(0,0,0,0.70)',
+              background:     'rgba(26,15,6,0.55)',
               zIndex:         Z.overlay - 10,
               backdropFilter: 'blur(4px)',
             }}

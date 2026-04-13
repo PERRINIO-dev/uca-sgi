@@ -595,7 +595,7 @@ export default function SalesListClient({
                             display: 'inline-block',
                             background: C.amberGlow,
                             color: C.amber,
-                            border: `1px solid rgba(245,158,11,0.3)`,
+                            border: `1px solid rgba(160,83,26,0.28)`,
                             borderRadius: R.sm,
                             padding: `${SP[0.5]} ${SP[2]}`,
                             fontSize: F.xs, fontWeight: F.bold,
@@ -746,7 +746,7 @@ export default function SalesListClient({
       {cancelId && (
         <div style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.72)',
+          background: 'rgba(26,15,6,0.55)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: Z.modal, padding: SP[5],
           backdropFilter: 'blur(4px)',
@@ -976,7 +976,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
       <div class="total-label">Montant total</div>
       <div class="total-amount">${new Intl.NumberFormat('fr-FR').format(total)} ${currency}</div>
       ${paid > 0 ? `<div style="margin-top:8px;font-size:12px;color:#94A3B8">Encaissé : ${new Intl.NumberFormat('fr-FR').format(Math.round(paid))} ${currency}</div>` : ''}
-      ${balance > 0 ? `<div style="font-size:12px;color:#FCA5A5;margin-top:2px">Reste à payer : ${new Intl.NumberFormat('fr-FR').format(balance)} ${currency}</div>` : ''}
+      ${balance > 0 ? `<div style="font-size:12px;color:#991B1B;margin-top:2px">Reste à payer : ${new Intl.NumberFormat('fr-FR').format(balance)} ${currency}</div>` : ''}
     </div>
   </div>
   <div style="display:flex;justify-content:flex-end;margin-bottom:28px">

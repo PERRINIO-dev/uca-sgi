@@ -1,7 +1,10 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * MEREM — Minerals Design System
+ * MERAM — Papier Design System
  * Single source of truth for every visual value in the application.
+ *
+ * Identity: Warm cream surfaces, dark espresso sidebar, cognac accent.
+ *           Fraunces serif for display authority. DM Sans for interface clarity.
  *
  * Rule: No component file may hardcode a color, spacing value, radius,
  * shadow, or transition. Every value must trace back to a token here.
@@ -16,59 +19,74 @@
 // C — COLOR TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Minerals palette: volcanic-stone dark base, amber accent, softened status.
+// Papier palette: aged-paper warm cream canvas, dark espresso sidebar,
+// cognac accent — the color of fine leather and aged spirits.
 //
 // Surface hierarchy (always respect this order — never invert):
-//   bg < surface < surfaceEl < surfaceHov
+//   bg < surfaceSub < surface < surfaceEl ← light cream scale
+//   sidebarBg < sidebarEl < sidebarHov   ← dark espresso scale (sidebar only)
 //
-// Amber is RESERVED for: primary CTAs, active states, key numerical callouts.
+// Cognac is RESERVED for: primary CTAs, active nav, key numerical callouts.
 // Status colors are RESERVED for operational states only — never decoration.
 // ─────────────────────────────────────────────────────────────────────────────
 export const C = {
 
-  // ── Backgrounds ─────────────────────────────────────────────────────────────
-  // Each step is a perceptible but not jarring lift from the one below.
-  bg:         '#1C1917',  // Page canvas — volcanic stone
-  bgDeep:     '#131110',  // Below-canvas (print areas, full overlays)
-  surface:    '#242120',  // Cards, panels, table rows — primary work surface
-  surfaceEl:  '#2E2B28',  // Elevated: modals, dropdowns, popovers
-  surfaceHov: '#353230',  // Hover on interactive surfaces
-  surfaceSub: '#1F1D1B',  // Slightly sunken (sidebar track, table stripe alt)
+  // ── Light Canvas (page & components) ────────────────────────────────────────
+  bg:         '#F5EFE6',  // Page canvas — aged cream paper
+  bgDeep:     '#EDE5D8',  // Deeper tint (sunken areas, muted backgrounds)
+  surface:    '#FDFAF5',  // Cards, panels — warm near-white
+  surfaceEl:  '#FFFFFF',  // Elevated: modals, dropdowns, popovers
+  surfaceHov: '#F8F3EB',  // Hover on interactive cards
+  surfaceSub: '#EDE6D9',  // Slightly sunken (table stripes, section dividers)
 
-  // ── Borders ──────────────────────────────────────────────────────────────────
-  // Use border for structure; borderSub for breathing-room separators.
-  border:     '#3C3835',  // Structural edge — defines element boundaries
-  borderSub:  '#2A2826',  // Atmospheric separator — rows, sections, lists
+  // ── Borders (warm, never cool) ─────────────────────────────────────────────
+  border:    '#DDD4C5',   // Structural edge — defines element boundaries
+  borderSub: '#EDE6D9',   // Atmospheric separator — rows, sections
 
-  // ── Text ─────────────────────────────────────────────────────────────────────
+  // ── Text (on light surfaces) ──────────────────────────────────────────────
   // Four levels: ink → text → muted → dim. Never use more than these four.
-  // dim (#78716C) fails WCAG AA at body size — use only for placeholder/footnote.
-  ink:        '#FAFAF9',  // Primary: headings, key values, active labels
-  text:       '#E7E5E4',  // Body: standard paragraph and table content
-  muted:      '#A9A49D',  // Secondary: metadata, secondary labels, descriptions
-  dim:        '#78716C',  // Tertiary: placeholders, footnotes, disabled labels
+  // dim (#A8906E) is readable at large sizes; use only for footnotes/placeholders.
+  ink:        '#1A0F06',  // Primary: headings, key values, active labels
+  text:       '#3C2715',  // Body: standard paragraph and table content
+  muted:      '#7A6248',  // Secondary: metadata, descriptions, secondary labels
+  dim:        '#A8906E',  // Tertiary: placeholders, footnotes, disabled
 
-  // ── Amber — the Minerals accent ──────────────────────────────────────────────
-  // The single brand color. Think of it as a spotlight: use it to say
-  // "this matters" — no more. Every other use cheapens it.
-  amber:      '#F59E0B',  // Primary accent — actions, active indicators, key data
-  amberHov:   '#D97706',  // Hover state of amber elements
-  amberActive:'#B45309',  // Pressed / active
-  amberDim:   '#92400E',  // Subtle amber tint (badge backgrounds, inactive rings)
-  amberGlow:  'rgba(245,158,11,0.18)',  // Focus ring / shadow wash
+  // ── Cognac — the Papier accent ────────────────────────────────────────────
+  // The single brand color. Warm amber-brown like aged cognac spirit or fine
+  // leather — authoritative, not loud. Think of it as a spotlight:
+  // use it to say "this matters" — no more than one focal point per view.
+  //
+  // NOTE: Token names keep "amber" prefix for compatibility with all components.
+  amber:      '#A0531A',  // Primary cognac — CTAs, active indicators, key data
+  amberHov:   '#844416',  // Hover state of cognac elements
+  amberActive:'#6A3610',  // Pressed / active
+  amberDim:   '#C87B45',  // Lighter cognac tint (icon glow, subtle wash)
+  amberGlow:  'rgba(160,83,26,0.12)',  // Focus ring / glow wash
 
-  // ── Status — tuned for legibility on dark surfaces ────────────────────────────
-  // Text colors are soft pastels (high contrast on dark bg).
-  // Backgrounds are very deep saturated darks (still clearly tinted).
-  // Borders provide structural definition without harshness.
-  green:      '#86EFAC',  greenBg:  '#052E16',  greenBd:  '#14532D',
-  orange:     '#FED7AA',  orangeBg: '#431407',  orangeBd: '#7C2D12',
-  red:        '#FCA5A5',  redBg:    '#2D0A0A',  redBd:    '#7F1D1D',
-  blue:       '#93C5FD',  blueBg:   '#0C1A3B',  blueBd:   '#1E3A5F',
-  gold:       '#FDE68A',  goldBg:   '#451A03',  goldBd:   '#92400E',
-  purple:     '#C4B5FD',  purpleBg: '#1E0A4A',  purpleBd: '#3B1F8C',
+  // ── Status triplets (on light surfaces) ──────────────────────────────────
+  // Text is deep saturated (high contrast on cream bg).
+  // Backgrounds are very pale tints — readable without dominating.
+  // Borders frame without boxing in.
+  green:      '#166534',  greenBg:  '#F0FDF4',  greenBd:  '#BBF7D0',
+  orange:     '#9A3412',  orangeBg: '#FFF7ED',  orangeBd: '#FED7AA',
+  red:        '#991B1B',  redBg:    '#FEF2F2',  redBd:    '#FECACA',
+  blue:       '#1E40AF',  blueBg:   '#EFF6FF',  blueBd:   '#BFDBFE',
+  gold:       '#78350F',  goldBg:   '#FFFBEB',  goldBd:   '#FDE68A',
+  purple:     '#5B21B6',  purpleBg: '#F5F3FF',  purpleBd: '#DDD6FE',
 
-  // ── Utilities ────────────────────────────────────────────────────────────────
+  // ── Sidebar — dark espresso (strong visual contrast with cream canvas) ─────
+  // These tokens are ONLY used inside Sidebar.tsx.
+  // All other components use the light canvas tokens above.
+  sidebarBg:    '#1B0F07',  // Deep espresso — the sidebar panel background
+  sidebarEl:    '#271608',  // Slightly lifted: user card, active item wash
+  sidebarHov:   '#321E0E',  // Hover on nav items
+  sidebarBd:    '#3E2618',  // Internal borders and separators
+  sidebarInk:   '#FAF5EE',  // Primary text: brand name, user name
+  sidebarText:  '#D8C8B0',  // Secondary text: nav labels
+  sidebarMuted: '#8A7260',  // Tertiary: section labels, metadata
+  sidebarDim:   '#5C4838',  // Disabled / footnote text in sidebar
+
+  // ── Utilities ─────────────────────────────────────────────────────────────
   white:       '#FFFFFF',
   black:       '#000000',
   transparent: 'transparent',
@@ -78,11 +96,13 @@ export const C = {
 // F — TYPOGRAPHY TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Sora for display/headings: warm geometric, authoritative at large weights,
-// excellent at -0.03em tracking for titles and KPI figures.
+// Fraunces for display/headings: an optical-size serif that commands authority
+// at large weights (700–900). Its warmth and editorial quality signal trust
+// instantly to business owners reading KPI figures and page titles.
+// Use font-optical-sizing: auto for best rendering at all sizes.
 //
-// IBM Plex Sans for body/UI: designed for interfaces, optical clarity at 12–14px,
-// built-in tabular numerals, perfect for tables and labels.
+// DM Sans for body/UI: clean geometric sans designed for screens. Excellent
+// legibility at 12–14px, built-in tabular numerals, designed for interfaces.
 //
 // IBM Plex Mono for reference codes, IDs, sale numbers.
 //
@@ -91,44 +111,32 @@ export const C = {
 // ─────────────────────────────────────────────────────────────────────────────
 export const F = {
 
-  // ── Font families ─────────────────────────────────────────────────────────────
-  display: "var(--font-sora), 'Sora', system-ui, sans-serif",
-  body:    "var(--font-plex), 'IBM Plex Sans', system-ui, sans-serif",
+  // ── Font families ─────────────────────────────────────────────────────────
+  display: "var(--font-fraunces), 'Fraunces', Georgia, 'Times New Roman', serif",
+  body:    "var(--font-dm), 'DM Sans', system-ui, sans-serif",
   mono:    "var(--font-plex-mono), 'IBM Plex Mono', 'Fira Code', monospace",
 
-  // ── Size scale ────────────────────────────────────────────────────────────────
-  // xs    → section labels, micro tags
-  // sm    → captions, helper text, footnotes
-  // base  → standard body, table content, inputs — the default
-  // md    → slightly prominent body, subheadings
-  // lg    → card section titles, prominent labels
-  // xl    → card headings, modal titles
-  // 2xl   → page titles
-  // 3xl   → KPI figures (medium)
-  // 4xl   → KPI figures (large)
-  // 5xl   → hero KPI callout (full-page spotlight)
-  xs:    '11px',
-  sm:    '12px',
-  base:  '14px',
-  md:    '15px',
-  lg:    '17px',
-  xl:    '20px',
-  '2xl': '24px',
-  '3xl': '30px',
-  '4xl': '36px',
-  '5xl': '48px',
+  // ── Size scale ────────────────────────────────────────────────────────────
+  xs:    '11px',   // Section labels, micro tags
+  sm:    '12px',   // Captions, helper text, footnotes
+  base:  '14px',   // Standard body, table content, inputs — the default
+  md:    '15px',   // Slightly prominent body, subheadings
+  lg:    '17px',   // Card section titles, prominent labels
+  xl:    '20px',   // Card headings, modal titles
+  '2xl': '24px',   // Page titles
+  '3xl': '30px',   // KPI figures (medium)
+  '4xl': '38px',   // KPI figures (large) — Fraunces looks exceptional here
+  '5xl': '52px',   // Hero KPI callout
 
-  // ── Weights ───────────────────────────────────────────────────────────────────
-  // Regular for body. Semibold for interactive labels. Bold/xbold for headings.
-  // Black (900) reserved for hero KPI numbers only.
-  regular:   400,
-  medium:    500,
-  semibold:  600,
-  bold:      700,
-  xbold:     800,
-  black:     900,
+  // ── Weights ───────────────────────────────────────────────────────────────
+  regular:  400,
+  medium:   500,
+  semibold: 600,
+  bold:     700,
+  xbold:    800,
+  black:    900,
 
-  // ── Line heights ──────────────────────────────────────────────────────────────
+  // ── Line heights ──────────────────────────────────────────────────────────
   lhNone:    1,
   lhTight:   1.2,    // Display headings
   lhSnug:    1.35,   // Subheadings, card titles
@@ -136,15 +144,15 @@ export const F = {
   lhRelaxed: 1.65,   // Long-form descriptions
   lhLoose:   1.8,    // Spacious labels
 
-  // ── Letter spacing ────────────────────────────────────────────────────────────
-  // Tight spacing on display text (Sora reads better tight).
-  // Wide spacing on uppercase labels (SECTION LABELS need air).
-  lsTightest: '-0.04em',  // Hero headings, large KPI numbers
-  lsTighter:  '-0.03em',  // Page titles
-  lsTight:    '-0.015em', // Card headings
+  // ── Letter spacing ────────────────────────────────────────────────────────
+  // Fraunces reads better with slightly tighter tracking at display sizes.
+  // DM Sans section labels need air to distinguish uppercase structure.
+  lsTightest: '-0.04em',  // Hero headings, large KPI numbers (Fraunces)
+  lsTighter:  '-0.03em',  // Page titles (Fraunces)
+  lsTight:    '-0.02em',  // Card headings (Fraunces)
   lsZero:     '0em',
   lsWide:     '0.04em',
-  lsWider:    '0.08em',   // Section labels, uppercase short strings
+  lsWider:    '0.08em',   // Section labels, uppercase short strings (DM Sans)
   lsWidest:   '0.15em',   // Badge text, step indicators
 } as const
 
@@ -153,8 +161,8 @@ export const F = {
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // Every layout dimension must be a multiple of 4px.
-// Fractional units (0.5, 1.5) exist only for micro-adjustments
-// inside components — not for page-level layout.
+// Papier uses generous spacing — the reference showed breathing room
+// is the single largest differentiator between premium and commodity UI.
 // ─────────────────────────────────────────────────────────────────────────────
 export const SP = {
   0:    '0px',
@@ -172,6 +180,7 @@ export const SP = {
   8:    '32px',
   9:    '36px',
   10:   '40px',
+  11:   '44px',
   12:   '48px',
   14:   '56px',
   16:   '64px',
@@ -185,8 +194,8 @@ export const SP = {
 // R — RADIUS TOKENS
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Minerals uses restrained radius — these are tools for a professional,
-// not a consumer app. Over-rounding signals immaturity.
+// Papier uses moderate radius — editorial quality, not a consumer app.
+// Over-rounding signals immaturity in a B2B context.
 //
 // md (8px) is the standard for inputs, buttons, and most cards.
 // lg/xl (10–12px) for cards and modal panels only.
@@ -199,43 +208,35 @@ export const R = {
   md:   '8px',    // Buttons, inputs, table cells
   lg:   '10px',   // Cards, panel sections
   xl:   '12px',   // Modal panels, drawer headers
-  '2xl':'16px',   // Large hero cards, feature banners
+  '2xl':'16px',   // Large hero cards
   full: '9999px', // Pills, circular elements
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SH — SHADOW TOKENS (elevation on dark surfaces)
+// SH — SHADOW TOKENS (warm drops on cream surfaces)
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// On dark backgrounds, shadows are deep black drops — not light grays.
-// The shadow creates the illusion of the element lifting off the canvas.
+// On light backgrounds, shadows are warm brown drops (not cold grays).
+// The warmth of the shadow reinforces the cream paper identity.
 //
-// inset: simulates a subtle top-light source on raised surfaces.
-// amber / amberSm: reserved exclusively for amber interactive elements.
-// Never use amber glow on neutral elements — it would corrupt the accent signal.
+// inset: top-light highlight on raised cards — enhances depth perception.
+// amber / amberSm: cognac glow reserved for cognac interactive elements.
 // ─────────────────────────────────────────────────────────────────────────────
 export const SH = {
   none:    'none',
-  xs:      '0 1px 3px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.40)',
-  sm:      '0 2px 8px rgba(0,0,0,0.60), 0 1px 3px rgba(0,0,0,0.45)',
-  md:      '0 4px 16px rgba(0,0,0,0.65), 0 2px 6px rgba(0,0,0,0.45)',
-  lg:      '0 8px 28px rgba(0,0,0,0.70), 0 3px 10px rgba(0,0,0,0.45)',
-  xl:      '0 16px 48px rgba(0,0,0,0.75), 0 6px 16px rgba(0,0,0,0.45)',
-  amber:   '0 4px 20px rgba(245,158,11,0.35)',
-  amberSm: '0 2px 10px rgba(245,158,11,0.25)',
-  inset:   'inset 0 1px 0 rgba(255,255,255,0.05)',   // Raised surface top highlight
-  insetBd: 'inset 0 0 0 1px rgba(255,255,255,0.07)', // Raised element subtle rim
+  xs:      '0 1px 3px rgba(60,30,10,0.07), 0 1px 2px rgba(60,30,10,0.05)',
+  sm:      '0 2px 8px rgba(60,30,10,0.09), 0 1px 3px rgba(60,30,10,0.06)',
+  md:      '0 4px 16px rgba(60,30,10,0.11), 0 2px 6px rgba(60,30,10,0.07)',
+  lg:      '0 8px 28px rgba(60,30,10,0.13), 0 3px 10px rgba(60,30,10,0.07)',
+  xl:      '0 16px 48px rgba(60,30,10,0.15), 0 6px 16px rgba(60,30,10,0.09)',
+  amber:   '0 4px 20px rgba(160,83,26,0.30)',    // Cognac glow — CTA buttons
+  amberSm: '0 2px 10px rgba(160,83,26,0.22)',    // Cognac glow — small elements
+  inset:   'inset 0 1px 0 rgba(255,255,255,0.80)',    // Card top highlight
+  insetBd: 'inset 0 0 0 1px rgba(255,255,255,0.60)',  // Subtle rim on raised elements
 } as const
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TR — TRANSITION TOKENS
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// fast:   hover state color changes (< 150ms feels instant)
-// base:   standard UI transitions — feels responsive, not abrupt
-// slow:   large layout changes (sidebar open, drawer expand)
-// spring: elements entering with energy — success states, tooltips
-// smooth: panels sliding in from off-screen (drawer, modal)
 // ─────────────────────────────────────────────────────────────────────────────
 export const TR = {
   fast:   '0.12s ease',
@@ -247,10 +248,6 @@ export const TR = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Z — Z-INDEX LAYERS
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// Explicit stacking contract — no z-index arbitrage (z: 9999, z: 99998, etc.)
-// Every element knows where it lives in the stack.
 // ─────────────────────────────────────────────────────────────────────────────
 export const Z = {
   base:     0,
@@ -267,25 +264,21 @@ export const Z = {
 // ─────────────────────────────────────────────────────────────────────────────
 // L — LAYOUT CONSTANTS
 // ─────────────────────────────────────────────────────────────────────────────
-//
-// Fixed structural dimensions used across the entire app.
-// These never change per-component — they define the spatial contract.
-// ─────────────────────────────────────────────────────────────────────────────
 export const L = {
   sidebarW:    '240px',  // Left nav — fixed, never collapses on desktop
   mobileBarH:  '56px',   // Top bar on mobile (3px accent + 53px content)
-  contentMax:  '1280px', // Max-width of page content (centered within remaining space)
-  pageP:       '32px',   // Desktop horizontal page padding
-  pagePTablet: '20px',   // Tablet
+  contentMax:  '1280px', // Max-width of page content
+  pageP:       '36px',   // Desktop horizontal page padding (generous — Papier)
+  pagePTablet: '24px',   // Tablet
   pagePMobile: '16px',   // Mobile
   cardP:       '24px',   // Standard card internal padding
   cardPSm:     '16px',   // Compact card (tables, dense lists)
-  rowH:        '52px',   // Standard table row height (comfortable + touch-capable)
-  rowHSm:      '44px',   // Compact table row (dense data views)
+  rowH:        '52px',   // Standard table row height
+  rowHSm:      '44px',   // Compact table row
   inputH:      '40px',   // Standard input / select height
   btnH:        '40px',   // Standard button height
-  btnHSm:      '34px',   // Small button (inline actions)
+  btnHSm:      '34px',   // Small button
   btnHLg:      '48px',   // Large button (primary CTA in forms)
-  sectionGap:  '24px',   // Gap between cards on the same layout row
-  blockGap:    '40px',   // Gap between distinct visual sections on a page
+  sectionGap:  '24px',   // Gap between cards on the same row
+  blockGap:    '40px',   // Gap between distinct visual sections
 } as const

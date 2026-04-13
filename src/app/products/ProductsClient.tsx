@@ -1470,7 +1470,7 @@ function CreateDrawer({ title, step, children, onClose }: {
         onClick={onClose}
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(15,23,42,0.42)',
+          background: 'rgba(26,15,6,0.40)',
           backdropFilter: 'blur(4px)',
           animation: 'modalBackdrop 0.2s ease',
         }}
@@ -1536,20 +1536,20 @@ function Modal({ title, children, onClose }: {
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0,
-        background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)',
+        background: 'rgba(26,15,6,0.42)', backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 1000, padding: 20,
         animation: 'modalBackdrop 0.2s ease',
       }}>
       <div style={{ background: C.surface, borderRadius: 16,
         width: '100%', maxWidth: 560, maxHeight: '92vh',
-        boxShadow: '0 32px 80px -16px rgba(0,0,0,0.28), 0 0 0 1px rgba(15,23,42,0.06)',
+        boxShadow: '0 32px 80px -16px rgba(60,30,10,0.18), 0 0 0 1px rgba(60,30,10,0.06)',
         animation: 'modalPanel 0.22s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
-        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber})`, flexShrink: 0 }} />
         <div style={{ padding: '20px 24px 16px',
-          borderBottom: `1px solid #E7E5E4`,
+          borderBottom: `1px solid ${C.border}`,
           display: 'flex', alignItems: 'center',
           justifyContent: 'space-between', gap: 16, flexShrink: 0 }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: C.ink,

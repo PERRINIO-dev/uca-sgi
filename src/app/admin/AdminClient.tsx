@@ -742,7 +742,7 @@ export default function AdminClient({
           onClick={() => { setDrawerCompanyId(null); setDrawerError(null) }}
           style={{
             position: 'fixed', inset: 0,
-            background: 'rgba(15,23,42,0.4)', zIndex: 500,
+            background: 'rgba(26,15,6,0.35)', zIndex: 500,
             backdropFilter: 'blur(2px)',
           }}
         />
@@ -911,7 +911,7 @@ export default function AdminClient({
         onClick={e => { if (e.target === e.currentTarget && !resetLoading) { setResetTarget(null); setResetError(null); setResetPwd('') } }}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(15,23,42,0.6)',
+          background: 'rgba(26,15,6,0.50)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 600, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
         }}
@@ -1030,7 +1030,7 @@ export default function AdminClient({
         onClick={e => { if (e.target === e.currentTarget && !submitting) setShowModal(false) }}
         style={{
           position: 'fixed', inset: 0,
-          background: 'rgba(15,23,42,0.55)',
+          background: 'rgba(26,15,6,0.48)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           zIndex: 700, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
         }}
