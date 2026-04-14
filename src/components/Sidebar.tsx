@@ -414,18 +414,6 @@ export default function Sidebar({
         {/* ── Navigation ── */}
         <nav style={{ flex: 1, padding: `${SP[2]} ${SP[2]}`, overflowY: 'auto' }} aria-label="Navigation principale">
 
-          {visibleItems.length > 0 && (
-            <div style={{
-              padding:        `${SP[3]} ${SP[3]} ${SP[1.5]}`,
-              fontSize:       '10px',
-              fontWeight:     F.bold,
-              color:          C.sidebarDim,
-              letterSpacing:  F.lsWider,
-              textTransform:  'uppercase',
-            }}>
-              Menu
-            </div>
-          )}
 
           {visibleItems.map(([Icon, label, href]) => {
             const active = activeRoute === href
@@ -440,7 +428,7 @@ export default function Sidebar({
                 style={{
                   display:      'flex', alignItems: 'center', gap: SP[3],
                   width:        '100%',
-                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2.5]} ${SP[3]}`,
+                  padding:      isMobile ? `${SP[3.5]} ${SP[3]}` : `${SP[3]} ${SP[3]}`,
                   marginBottom: SP[0.5],
                   border:       'none',
                   borderLeft:   `3px solid ${active ? C.amber : 'transparent'}`,
@@ -455,7 +443,7 @@ export default function Sidebar({
                 <Icon c={active ? C.amber : C.sidebarMuted} />
                 <span className="nav-label" style={{
                   flex:       1,
-                  fontSize:   F.sm,
+                  fontSize:   '13px',
                   color:      active ? C.amber : C.sidebarMuted,
                   fontWeight: active ? F.semibold : F.regular,
                   fontFamily: F.body,
@@ -493,7 +481,7 @@ export default function Sidebar({
                 style={{
                   display:      'flex', alignItems: 'center', gap: SP[3],
                   width:        '100%',
-                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2.5]} ${SP[3]}`,
+                  padding:      isMobile ? `${SP[3.5]} ${SP[3]}` : `${SP[3]} ${SP[3]}`,
                   border:       'none',
                   borderLeft:   `3px solid ${activeRoute === '/admin' ? C.amber : 'transparent'}`,
                   borderRadius: `0 ${R.md} ${R.md} 0`,
@@ -504,7 +492,7 @@ export default function Sidebar({
               >
                 <IconPlatform c={activeRoute === '/admin' ? C.amber : C.sidebarMuted} />
                 <span className="nav-label" style={{
-                  fontSize: F.sm,
+                  fontSize: '13px',
                   color:    activeRoute === '/admin' ? C.amber : C.sidebarMuted,
                   fontWeight: activeRoute === '/admin' ? F.semibold : F.regular,
                   fontFamily: F.body,

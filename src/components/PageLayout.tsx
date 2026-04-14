@@ -294,7 +294,7 @@ export default function PageLayout({
           minWidth:   0,
           /* Top padding: mobile = top bar height + breathing room, desktop = generous */
           padding: isMobile
-            ? `${SP[14]} ${SP[4]} ${SP[12]}`          /* 56px + 16px + 48px */
+            ? `72px ${SP[4]} ${SP[12]}`               /* 53px top-bar + 19px gap */
             : `${SP[8]} ${SP[9]}`,                    /* 32px + 36px */
         }}>
           {/* Inner max-width container */}

@@ -197,9 +197,9 @@ export default function LoginPage() {
               MERAM
             </div>
             <div style={{
-              fontSize:      '10px',
+              fontSize:      F.xs,
               color:         C.sidebarMuted,
-              letterSpacing: F.lsWidest,
+              letterSpacing: F.lsWider,
               marginTop:     SP[1],
               textTransform: 'uppercase',
               fontWeight:    F.medium,
@@ -238,7 +238,7 @@ export default function LoginPage() {
           </h2>
 
           <p style={{
-            fontSize:   F.sm,
+            fontSize:   F.base,
             color:      C.sidebarMuted,
             margin:     `0 0 ${SP[8]}`,
             lineHeight: F.lhRelaxed,
@@ -265,7 +265,7 @@ export default function LoginPage() {
                   <IconCheck />
                 </div>
                 <span style={{
-                  fontSize:   F.sm,
+                  fontSize:   F.base,
                   color:      C.sidebarText,
                   lineHeight: F.lhSnug,
                 }}>

@@ -8,12 +8,15 @@ export default function AppleIcon() {
   return new ImageResponse(
     <div style={{
       width: '100%', height: '100%',
-      background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
+      background: 'linear-gradient(150deg, #6A3610 0%, #A0531A 65%, #C87B45 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      borderRadius: 36,
     }}>
-      <svg width="120" height="102" viewBox="0 0 20 17" fill="none">
-        <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2 15h16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+      <svg width="112" height="96" viewBox="0 0 20 16" fill="none">
+        <path d="M2.5 14V2.5L10 9L17.5 2.5V14"
+          stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.5 14h15"
+          stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round"/>
       </svg>
     </div>,
     { width: 180, height: 180 },

@@ -582,12 +582,13 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                                     : `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
 
                                   return (
-                                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
-                                      <div>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body }}>{prod?.name}</div>
-                                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{prod?.reference_code} · {qtyDisp}</div>
+                                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 14px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
+                                      <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prod?.name}</div>
+                                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 2 }}>{prod?.reference_code}</div>
                                       </div>
-                                      <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: F.body }}>{fmt(Math.round(item.total_price))}</div>
+                                      <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body, whiteSpace: 'nowrap', textAlign: 'right' }}>{qtyDisp}</div>
+                                      <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: F.body, whiteSpace: 'nowrap', textAlign: 'right', minWidth: 80 }}>{fmt(Math.round(item.total_price))}</div>
                                     </div>
                                   )
                                 })}

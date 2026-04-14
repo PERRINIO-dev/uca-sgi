@@ -8,19 +8,15 @@ export default function Icon() {
   return new ImageResponse(
     <div style={{
       width: '100%', height: '100%',
-      background: 'linear-gradient(145deg, #1D4ED8 0%, #3B82F6 100%)',
+      background: 'linear-gradient(150deg, #6A3610 0%, #A0531A 65%, #C87B45 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      borderRadius: 96,
     }}>
-      {/*
-        MERAM M logo — filled polygon approach for maximum reliability at all sizes.
-        The M shape is drawn as two filled trapezoids (left and right halves)
-        meeting at a center valley, matching the app's M icon exactly.
-        Fills render more crisply than strokes at small icon sizes.
-      */}
-      <svg width="340" height="300" viewBox="0 0 20 17" fill="none">
-        {/* Left arm: bottom-left → top-left → center-valley */}
-        <path d="M2 15V2L10 9L18 2V15" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2 15h16" stroke="white" strokeWidth="2.8" strokeLinecap="round"/>
+      <svg width="320" height="280" viewBox="0 0 20 16" fill="none">
+        <path d="M2.5 14V2.5L10 9L17.5 2.5V14"
+          stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2.5 14h15"
+          stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round"/>
       </svg>
     </div>,
     { width: 512, height: 512 },

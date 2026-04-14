@@ -616,7 +616,7 @@ export default function SalesListClient({
                         {profile.role !== 'vendor' && (
                           <td style={{ ...TD_STYLE, fontSize: F.sm, color: C.muted }}>{sale.users?.full_name ?? '—'}</td>
                         )}
-                        <td style={{ ...TD_STYLE, fontWeight: F.xbold, fontFamily: F.display, color: C.ink, letterSpacing: F.lsTight }}>
+                        <td style={{ ...TD_STYLE, fontSize: F.md, fontWeight: F.bold, fontFamily: F.display, color: C.ink, letterSpacing: F.lsTight }}>
                           {fmt(sale.total_amount)}
                         </td>
                         <td style={TD_STYLE}>

@@ -508,7 +508,7 @@ export default function VendorSaleForm({
       <div ref={topRef} style={{ marginBottom: 20 }}>
         <button disabled={navPending}
           onClick={() => startNavTransition(() => router.push('/sales'))}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: navPending ? C.muted : C.muted, fontSize: 12, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '0 0 12px', fontFamily: F.body }}>
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.full, color: navPending ? C.dim : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '7px 14px 7px 10px', marginBottom: 16, fontFamily: F.body }}>
           {navPending ? <><span className="spinner" />Chargement…</> : (
             <><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Retour aux ventes</>
           )}
@@ -1028,18 +1028,21 @@ export default function VendorSaleForm({
                     ? `${fmtNum(item.unitPricePerM2)} ${currency}/m²`
                     : `${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
                   return (
-                    <div key={idx} style={{ padding: '10px 10px', borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', marginBottom: 6 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', fontFamily: F.body, flex: 1, marginRight: 8, lineHeight: 1.3 }}>{item.product.product_name}</span>
+                    <div key={idx} style={{ padding: '12px 12px', borderRadius: 9, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', marginBottom: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: '#FAF5EE', fontFamily: F.body, flex: 1, marginRight: 8, lineHeight: 1.3 }}>{item.product.product_name}</span>
                         <button onClick={() => removeFromCart(idx)}
-                          style={{ background: 'rgba(255,255,255,0.08)', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', width: 20, height: 20, borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', width: 22, height: 22, borderRadius: 5, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                         </button>
                       </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginBottom: 5, fontFamily: F.body }}>
-                        {qtyDisplay} · {priceDisplay}
+                      <div style={{ fontSize: 12, color: 'rgba(250,245,238,0.55)', marginBottom: 6, fontFamily: F.body }}>
+                        {qtyDisplay}
                       </div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: F.body }}>{fmt(item.totalPrice)}</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontSize: 11, color: 'rgba(250,245,238,0.40)', fontFamily: F.body }}>{priceDisplay}</span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: '#FAF5EE', fontFamily: F.display, letterSpacing: '-0.03em' }}>{fmt(item.totalPrice)}</span>
+                      </div>
                     </div>
                   )
                 })}
@@ -1078,7 +1081,7 @@ export default function VendorSaleForm({
 
             {/* Back */}
             <button onClick={() => { setError(null); setFormStep(1) }}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: F.body, alignSelf: 'flex-start' }}>
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: C.surface, border: `1px solid ${C.border}`, borderRadius: R.full, color: C.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer', padding: '7px 14px 7px 10px', fontFamily: F.body, alignSelf: 'flex-start' }}>
               <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M11 7H3M7 3L3 7l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
               Retour au panier
             </button>
