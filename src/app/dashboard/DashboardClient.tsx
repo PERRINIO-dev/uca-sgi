@@ -81,7 +81,7 @@ function IconWarning({ color }: { color: string }) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-// Panel — white card on cream canvas
+// Panel — warm surface card on cream canvas
 function Panel({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
@@ -89,7 +89,7 @@ function Panel({ children, style = {} }: { children: React.ReactNode; style?: Re
       borderRadius: R.xl,
       border:       `1px solid ${C.border}`,
       boxShadow:    SH.sm,
-      padding:      `${SP[5]} ${SP[6]}`,
+      padding:      `${SP[6]}`,
       ...style,
     }}>
       {children}
@@ -300,61 +300,36 @@ export default function DashboardClient({
   return (
     <PageLayout profile={profile} activeRoute="/dashboard" onLogout={handleLogout} badgeCounts={d.badgeCounts}>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          PAGE HEADER
-          Large Fraunces title + date. Right side: pending badge if applicable.
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div className="fade-in-up" style={{
-        display: 'flex', alignItems: 'flex-end',
-        justifyContent: 'space-between', flexWrap: 'wrap',
-        gap: SP[4], marginBottom: SP[8],
-        paddingBottom: SP[6],
-        borderBottom: `1px solid ${C.borderSub}`,
-      }}>
+      {/* ─── PAGE HEADER ─────────────────────────────────────────────────────── */}
+      <div className="fade-in-up page-header">
         <div>
-          <p style={{
-            fontSize: F.xs, fontWeight: F.bold, color: C.amber,
-            textTransform: 'uppercase', letterSpacing: F.lsWider,
-            fontFamily: F.body, margin: `0 0 ${SP[2]}`,
-          }}>
+          <p className="page-kicker">
             {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
           </p>
-          <h1 style={{
-            fontSize: F['2xl'], fontWeight: F.bold, color: C.ink,
-            margin: 0, letterSpacing: F.lsTighter, lineHeight: F.lhTight,
-            fontFamily: F.display,
-            fontOpticalSizing: 'auto' as any,
-          }}>
-            Tableau de bord
-          </h1>
-          <p style={{
-            fontSize: F.sm, color: C.muted, margin: `${SP[1]} 0 0`,
-            fontFamily: F.body, textTransform: 'capitalize',
-          }}>
+          <h1 className="page-title">Tableau de bord</h1>
+          <p className="page-subtitle" style={{ textTransform: 'capitalize' }}>
             {dateLabel}
           </p>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>
           {d.pendingRequests.length > 0 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: SP[1.5],
+            <span className="status-badge" style={{
               background: C.goldBg, color: C.gold,
               border: `1px solid ${C.goldBd}`,
-              borderRadius: R.full, padding: `${SP[1.5]} ${SP[3]}`,
-              fontSize: F.xs, fontWeight: F.bold, fontFamily: F.body,
+              padding: `${SP[1.5]} ${SP[3]}`,
+              fontSize: F.xs,
             }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold, flexShrink: 0 }} />
+              <span className="status-dot" style={{ background: C.gold }} />
               {d.pendingRequests.length} approbation{d.pendingRequests.length > 1 ? 's' : ''} en attente
             </span>
           )}
           {d.stockAlerts.length > 0 && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: SP[1.5],
+            <span className="status-badge" style={{
               background: C.orangeBg, color: C.orange,
               border: `1px solid ${C.orangeBd}`,
-              borderRadius: R.full, padding: `${SP[1.5]} ${SP[3]}`,
-              fontSize: F.xs, fontWeight: F.bold, fontFamily: F.body,
+              padding: `${SP[1.5]} ${SP[3]}`,
+              fontSize: F.xs,
             }}>
               <IconWarning color={C.orange} />
               {d.stockAlerts.length} alerte{d.stockAlerts.length > 1 ? 's' : ''} stock
@@ -363,17 +338,8 @@ export default function DashboardClient({
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          KPI CARDS
-          Each card: section label (top-left) + icon (top-right) + big number
-          (Fraunces 4xl) + meta / trend chip below.
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: SP[4],
-        marginBottom: SP[6],
-      }}>
+      {/* ─── KPI CARDS ───────────────────────────────────────────────────────── */}
+      <div className="dash-kpi-grid">
         {kpis.map(({ label, sub, value, iconBg, Icon, trend, accent }) => (
           <div
             key={label}
@@ -384,60 +350,48 @@ export default function DashboardClient({
               border:       `1px solid ${C.border}`,
               borderTop:    accent ? `3px solid ${C.amber}` : `1px solid ${C.border}`,
               boxShadow:    SH.sm,
-              padding:      `${SP[5]} ${SP[5]} ${SP[5]}`,
+              padding:      `${SP[5]} ${SP[6]}`,
               display:      'flex', flexDirection: 'column',
               gap:          SP[3],
             }}
           >
             {/* Label row + icon */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <span style={{
-                fontSize: F.xs, fontWeight: F.bold, color: C.dim,
-                textTransform: 'uppercase', letterSpacing: F.lsWider,
-                fontFamily: F.body, paddingTop: 2,
-              }}>
+              <span className="section-label" style={{ paddingTop: 3 }}>
                 {label}
               </span>
               <div style={{
-                width: 36, height: 36, borderRadius: R.md,
+                width: 40, height: 40, borderRadius: R.lg,
                 background:  iconBg,
                 display:     'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink:  0,
-                boxShadow:   `0 3px 10px ${iconBg}44`,
+                boxShadow:   `0 4px 12px ${iconBg}50, inset 0 1px 0 rgba(255,255,255,0.15)`,
               }}>
                 <Icon />
               </div>
             </div>
 
-            {/* Big number */}
-            <div style={{
-              fontSize:      F['4xl'],
-              fontWeight:    F.bold,
-              color:         C.ink,
-              letterSpacing: F.lsTightest,
-              lineHeight:    F.lhNone,
-              fontFamily:    F.display,
-              fontOpticalSizing: 'auto' as any,
-            }}>
+            {/* Big number — Fraunces display */}
+            <div className="kpi-value">
               {value}
             </div>
 
-            {/* Sub-info + trend */}
+            {/* Sub-info + trend chip */}
             <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>
-              <span style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body }}>{sub}</span>
+              <span style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body, lineHeight: 1.3 }}>
+                {sub}
+              </span>
               {trend !== null && trend !== undefined && (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', gap: SP[1],
-                  fontSize: F.xs, fontWeight: F.bold, fontFamily: F.body,
-                  padding: `${SP[0.5]} ${SP[2]}`,
-                  borderRadius: R.full,
+                <span className="status-badge" style={{
                   background: trend >= 0 ? C.greenBg : C.redBg,
                   color:      trend >= 0 ? C.green    : C.red,
                   border:    `1px solid ${trend >= 0 ? C.greenBd : C.redBd}`,
+                  padding: `${SP[0.5]} ${SP[2]}`,
+                  gap: SP[1],
                 }}>
                   {trend >= 0
-                    ? <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    : <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4l3 3 3-3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    ? <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 7V1M1 4l3-3 3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    : <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><path d="M4 1v6M1 4l3 3 3-3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   }
                   {trend >= 0 ? '+' : ''}{trend.toFixed(0)} %
                 </span>
@@ -447,51 +401,59 @@ export default function DashboardClient({
         ))}
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          CHARTS — 2/3 area chart + 1/3 boutique bars
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-        gap: SP[4],
-        marginBottom: SP[6],
-      }}>
+      {/* ─── CHARTS ──────────────────────────────────────────────────────────── */}
+      <style>{`
+        .dash-chart-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+        @media (max-width: 900px) {
+          .dash-chart-grid { grid-template-columns: 1fr; }
+        }
+        .dash-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+        .dash-bottom-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 16px;
+        }
+      `}</style>
+      <div className="dash-chart-grid">
 
         {/* ── Area chart: revenue trend ── */}
-        <Panel style={{ padding: `${SP[5]} ${SP[5]} ${SP[4]}` }}>
+        <Panel style={{ padding: `${SP[5]} ${SP[6]} ${SP[5]}` }}>
           <div style={{
             display: 'flex', alignItems: 'flex-start',
             justifyContent: 'space-between', marginBottom: SP[5],
-            flexWrap: 'wrap', gap: SP[2],
+            flexWrap: 'wrap', gap: SP[3],
           }}>
             <div>
-              <p style={{
-                fontSize: F.xs, fontWeight: F.bold, color: C.dim,
-                textTransform: 'uppercase', letterSpacing: F.lsWider,
-                fontFamily: F.body, margin: 0,
-              }}>
+              <p className="section-label" style={{ marginBottom: SP[1] }}>
                 Évolution du chiffre d'affaires
               </p>
-              <p style={{ fontSize: F.sm, color: C.muted, margin: `${SP[0.5]} 0 0`, fontFamily: F.body }}>
+              <p style={{ fontSize: F.sm, color: C.muted, margin: 0, fontFamily: F.body }}>
                 30 derniers jours
               </p>
             </div>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: SP[1.5],
+            <span className="status-badge" style={{
               background: C.amberGlow,
               border: `1px solid rgba(160,83,26,0.22)`,
-              borderRadius: R.full,
+              color: C.amber, fontSize: F.xs,
               padding: `${SP[1]} ${SP[3]}`,
             }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: C.amber }} />
-              <span style={{ fontSize: F.xs, fontWeight: F.semibold, color: C.amber, fontFamily: F.body }}>
-                CA
-              </span>
-            </div>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: C.amber }} />
+              CA mensuel
+            </span>
           </div>
 
           {d.dailyChart.length > 0 ? (
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={248}>
               <AreaChart data={d.dailyChart} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>
                 <defs>
                   <linearGradient id="gradCognac" x1="0" y1="0" x2="0" y2="1">
@@ -538,22 +500,18 @@ export default function DashboardClient({
         </Panel>
 
         {/* ── Bar chart: boutique breakdown ── */}
-        <Panel style={{ padding: `${SP[5]} ${SP[5]} ${SP[4]}` }}>
+        <Panel style={{ padding: `${SP[5]} ${SP[6]} ${SP[5]}` }}>
           <div style={{ marginBottom: SP[5] }}>
-            <p style={{
-              fontSize: F.xs, fontWeight: F.bold, color: C.dim,
-              textTransform: 'uppercase', letterSpacing: F.lsWider,
-              fontFamily: F.body, margin: 0,
-            }}>
+            <p className="section-label" style={{ marginBottom: SP[1] }}>
               CA par boutique
             </p>
-            <p style={{ fontSize: F.sm, color: C.muted, margin: `${SP[0.5]} 0 0`, fontFamily: F.body }}>
+            <p style={{ fontSize: F.sm, color: C.muted, margin: 0, fontFamily: F.body }}>
               Mois en cours
             </p>
           </div>
 
           {d.boutiqueStats.length > 0 ? (
-            <ResponsiveContainer width="100%" height={230}>
+            <ResponsiveContainer width="100%" height={248}>
               <BarChart data={d.boutiqueStats} layout="vertical" margin={{ top: 0, right: 16, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={C.borderSub} vertical={true} horizontal={false} />
                 <XAxis
@@ -577,7 +535,7 @@ export default function DashboardClient({
             </ResponsiveContainer>
           ) : (
             <div style={{
-              height: 230, display: 'flex', alignItems: 'center',
+              height: 248, display: 'flex', alignItems: 'center',
               justifyContent: 'center', color: C.dim,
               fontSize: F.sm, fontFamily: F.body, textAlign: 'center',
             }}>
@@ -587,14 +545,8 @@ export default function DashboardClient({
         </Panel>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════════════════
-          BOTTOM PANELS — Approvals + Stock alerts
-          ═══════════════════════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-        gap: SP[4],
-      }}>
+      {/* ─── BOTTOM PANELS ───────────────────────────────────────────────────── */}
+      <div className="dash-bottom-grid">
 
         {/* ── Pending approvals ── */}
         <Panel>
@@ -603,10 +555,7 @@ export default function DashboardClient({
           </SectionLabel>
 
           {d.pendingRequests.length === 0 ? (
-            <div style={{
-              padding: `${SP[7]} 0`, textAlign: 'center',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SP[2],
-            }}>
+            <div className="empty-state" style={{ padding: `${SP[7]} 0` }}>
               <div style={{
                 width: 44, height: 44, borderRadius: '50%',
                 background: C.greenBg, border: `1px solid ${C.greenBd}`,
@@ -614,9 +563,7 @@ export default function DashboardClient({
               }}>
                 <IconCheckCircle />
               </div>
-              <span style={{ color: C.dim, fontSize: F.sm, fontFamily: F.body }}>
-                Aucune demande en attente
-              </span>
+              <span className="empty-state-desc">Aucune demande en attente</span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: SP[2] }}>
@@ -741,10 +688,7 @@ export default function DashboardClient({
           </SectionLabel>
 
           {d.stockAlerts.length === 0 ? (
-            <div style={{
-              padding: `${SP[7]} 0`, textAlign: 'center',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SP[2],
-            }}>
+            <div className="empty-state" style={{ padding: `${SP[7]} 0` }}>
               <div style={{
                 width: 44, height: 44, borderRadius: '50%',
                 background: C.greenBg, border: `1px solid ${C.greenBd}`,
@@ -752,9 +696,7 @@ export default function DashboardClient({
               }}>
                 <IconCheckCircle />
               </div>
-              <span style={{ color: C.dim, fontSize: F.sm, fontFamily: F.body }}>
-                Tous les stocks sont suffisants
-              </span>
+              <span className="empty-state-desc">Tous les stocks sont suffisants</span>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: SP[2] }}>

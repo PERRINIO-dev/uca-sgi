@@ -303,27 +303,21 @@ export default function ReportsClient({
     <PageLayout profile={profile} activeRoute="/reports" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: 24 }}>
+      <div className="fade-in-up page-header">
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
-            Rapports
-          </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
+          <p className="page-kicker">Analyse &amp; performance</p>
+          <h1 className="page-title">Rapports</h1>
+          <p className="page-subtitle">
             {filtered.length} vente{filtered.length !== 1 ? 's' : ''} sur les{' '}
             {filterDays} derniers jours
           </p>
         </div>
         <button
-          className="btn-meram"
+          className="btn-amber"
           onClick={exportCSV}
-          style={{ padding: '10px 18px',
-            border: 'none', borderRadius: 9,
-            fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          style={{ height: 40, padding: `0 ${SP[4]}`, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-            <path d="M6.5 1v7.5M3.5 6l3 3 3-3M1.5 10v1.5h10V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M6.5 1v7.5M3.5 6l3 3 3-3M1.5 10v1.5h10V10" stroke="#FAF5EE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Exporter CSV
         </button>
@@ -339,9 +333,9 @@ export default function ReportsClient({
             <button key={val} onClick={() => setDays(val)}
               style={{ padding: '7px 14px', borderRadius: 100,
                 fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                background: filterDays === val ? C.blue : C.bg,
-                color:      filterDays === val ? C.surface : C.muted,
-                border: `1.5px solid ${filterDays === val ? C.blue : C.border}`,
+                background: filterDays === val ? C.amber : C.bg,
+                color:      filterDays === val ? '#FAF5EE' : C.muted,
+                border: `1.5px solid ${filterDays === val ? C.amber : C.border}`,
                 fontFamily: F.body }}>
               {label}
             </button>
@@ -388,8 +382,8 @@ export default function ReportsClient({
           <button key={id} onClick={() => setTab(id)}
             style={{ padding: '8px 18px', borderRadius: 100,
               fontSize: 13, fontWeight: 600, cursor: 'pointer',
-              background: activeTab === id ? C.blue : 'transparent',
-              color:      activeTab === id ? C.surface : C.muted,
+              background: activeTab === id ? C.amber : 'transparent',
+              color:      activeTab === id ? '#FAF5EE' : C.muted,
               border: 'none', fontFamily: F.body,
               transition: 'all 0.15s ease' }}>
             {label}
@@ -410,9 +404,9 @@ export default function ReportsClient({
               <div style={{
                 background: C.surface, borderRadius: 14,
                 border: `1px solid ${C.border}`,
-                borderLeft: `5px solid ${C.blue}`,
+                borderLeft: `5px solid ${C.amber}`,
                 padding: '22px 24px',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                boxShadow: '0 1px 3px rgba(60,30,10,0.05)',
               }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
                   textTransform: 'uppercase', letterSpacing: '0.08em',
@@ -420,7 +414,7 @@ export default function ReportsClient({
                   Chiffre d'affaires — {filterDays} derniers jours
                 </div>
                 <div style={{ fontSize: 36, fontWeight: 900, color: C.ink,
-                  letterSpacing: '-0.03em', lineHeight: 1, fontFamily: F.body,
+                  letterSpacing: '-0.04em', lineHeight: 1, fontFamily: F.display,
                   marginBottom: 14 }}>
                   {fmt(kpis.totalCA)}
                 </div>
@@ -441,7 +435,7 @@ export default function ReportsClient({
                     <div style={{
                       height: '100%', borderRadius: 4,
                       width: `${Math.min(100, encRate)}%`,
-                      background: encRate >= 100 ? C.green : encRate >= 70 ? C.blue : C.orange,
+                      background: encRate >= 100 ? C.green : encRate >= 70 ? C.amber : C.orange,
                       transition: 'width 0.6s ease',
                     }} />
                   </div>
@@ -464,7 +458,7 @@ export default function ReportsClient({
                 'Montant non encore réglé'],
               ['Commandes',
                 String(kpis.confirmed),
-                C.blue, C.blue,
+                C.amber, C.amber,
                 `dont ${kpis.delivered} livrée${kpis.delivered !== 1 ? 's' : ''}`],
               ['Panier moyen',
                 fmt(kpis.avgBasket),
@@ -519,8 +513,8 @@ export default function ReportsClient({
                 <AreaChart data={dailyData}>
                   <defs>
                     <linearGradient id="caGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor={C.blue} stopOpacity={0.15} />
-                      <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
+                      <stop offset="5%"  stopColor={C.amber} stopOpacity={0.18} />
+                      <stop offset="95%" stopColor={C.amber} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
@@ -534,7 +528,7 @@ export default function ReportsClient({
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: F.body, fontSize: 12 }} />
                   <Area type="monotone" dataKey="ca"
-                    stroke={C.blue} strokeWidth={2} fill="url(#caGrad)" />
+                    stroke={C.amber} strokeWidth={2} fill="url(#caGrad)" />
                 </AreaChart>
               </ResponsiveContainer>
               </div>
@@ -572,7 +566,7 @@ export default function ReportsClient({
                     formatter={(v) => [fmt(Number(v)), 'CA']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: F.body, fontSize: 12 }} />
-                  <Bar dataKey="ca" fill={C.blue} radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="ca" fill={C.amber} radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
               </div>
@@ -651,7 +645,7 @@ export default function ReportsClient({
                           <td style={{ ...TD, color: C.muted, fontSize: 13,
                             textAlign: 'center' }}>
                             {isOpen
-                              ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 8l4-4 4 4" stroke={C.blue} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                              ? <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 8l4-4 4 4" stroke={C.amber} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               : <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                             }
                           </td>
@@ -811,7 +805,7 @@ export default function ReportsClient({
                   <div style={{
                     height: '100%', borderRadius: 3,
                     width: `${share}%`,
-                    background: idx === 0 ? C.gold : C.blue,
+                    background: idx === 0 ? C.amber : C.muted,
                     transition: 'width 0.5s ease',
                   }} />
                 </div>
@@ -1138,7 +1132,7 @@ function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {
       <div style={{
         background: C.surface, borderRadius: 12,
         border: `1px solid ${C.border}`,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        boxShadow: '0 1px 3px rgba(60,30,10,0.05)',
         overflow: 'hidden',
       }}>
         {filtered.length === 0 ? (

@@ -32,7 +32,7 @@ interface CartItem {
 
 function getTypeConfig(type: string) {
   switch (type) {
-    case 'tile':     return { label: 'Carrelage', color: '#2563EB', bg: '#EFF6FF' }
+    case 'tile':     return { label: 'Carrelage', color: '#A0531A', bg: 'rgba(160,83,26,0.10)' }
     case 'unit':     return { label: 'Unités',    color: '#7C3AED', bg: '#F5F3FF' }
     case 'bag':      return { label: 'Sacs',      color: '#D97706', bg: '#FFFBEB' }
     case 'liter':    return { label: 'Liquides',  color: '#0891B2', bg: '#ECFEFF' }
@@ -357,7 +357,7 @@ export default function VendorSaleForm({
         <div style={{ maxWidth: 520, margin: '0 auto', padding: isMobile ? '8px 0 40px' : '24px 0 60px' }}>
 
           {/* Card */}
-          <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(60,30,10,0.08)', overflow: 'hidden' }}>
 
             {/* Green top stripe */}
             <div style={{ height: 4, background: 'linear-gradient(90deg, #059669, #34D399)' }} />
@@ -370,7 +370,7 @@ export default function VendorSaleForm({
                 </svg>
               </div>
 
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.body }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.display }}>
                 Vente enregistrée
               </h2>
               <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: F.body }}>
@@ -380,7 +380,7 @@ export default function VendorSaleForm({
               {/* Sale number */}
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 100, background: C.bg, border: `1px solid ${C.border}`, marginBottom: 24 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.green }} />
-                <span style={{ fontSize: 18, fontWeight: 900, color: C.ink, letterSpacing: '0.02em', fontFamily: 'ui-monospace, monospace' }}>
+                <span style={{ fontSize: 18, fontWeight: 900, color: C.ink, letterSpacing: '0.02em', fontFamily: F.mono }}>
                   {successData?.saleNumber}
                 </span>
               </div>
@@ -390,7 +390,7 @@ export default function VendorSaleForm({
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: F.body }}>
                   Montant total
                 </div>
-                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.body }}>
+                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.display }}>
                   {fmt(total)}
                 </div>
                 {paid > 0 && (
@@ -416,8 +416,8 @@ export default function VendorSaleForm({
 
             {/* Actions */}
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button className="btn-meram" onClick={printReceipt}
-                style={{ width: '100%', padding: '13px', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.body }}>
+              <button className="btn-amber" onClick={printReceipt}
+                style={{ width: '100%', padding: '13px', border: 'none', borderRadius: R.md, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.body, height: 44 }}>
                 <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
                   <rect x="1" y="5" width="13" height="8" rx="1.5" stroke="white" strokeWidth="1.3"/>
                   <path d="M4 5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v2" stroke="white" strokeWidth="1.3"/>
@@ -428,13 +428,13 @@ export default function VendorSaleForm({
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
                 <button disabled={navPending}
                   onClick={() => startNavTransition(() => router.push('/sales'))}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes ventes'}
+                  style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                  {navPending ? <><span className="spinner" />Chargement…</> : 'Mes ventes'}
                 </button>
               </div>
             </div>
@@ -451,7 +451,7 @@ export default function VendorSaleForm({
     return (
       <PageLayout profile={profile} activeRoute="/sales" onLogout={handleLogout} badgeCounts={badgeCounts}>
         <div style={{ maxWidth: 520, margin: '0 auto', padding: isMobile ? '8px 0 40px' : '24px 0 60px' }}>
-          <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+          <div style={{ background: C.surface, borderRadius: 20, border: `1px solid ${C.border}`, boxShadow: '0 8px 40px rgba(60,30,10,0.08)', overflow: 'hidden' }}>
             <div style={{ height: 4, background: 'linear-gradient(90deg,#B45309,#F59E0B)' }} />
             <div style={{ padding: '36px 36px 28px', textAlign: 'center' }}>
               <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.goldBg, border: '4px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
@@ -461,7 +461,7 @@ export default function VendorSaleForm({
                   <path d="M9 13h10M9 17h10M9 21h6" stroke="#B45309" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.body }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 6px', letterSpacing: '-0.03em', fontFamily: F.display }}>
                 Devis enregistré
               </h2>
               <p style={{ color: C.muted, fontSize: 14, margin: '0 0 24px', fontFamily: F.body }}>
@@ -469,26 +469,26 @@ export default function VendorSaleForm({
               </p>
               <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 20px', borderRadius: 100, background: C.goldBg, border: `1px solid ${C.gold}50`, marginBottom: 24 }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: C.gold }} />
-                <span style={{ fontSize: 18, fontWeight: 900, color: C.gold, letterSpacing: '0.02em', fontFamily: 'ui-monospace, monospace' }}>
+                <span style={{ fontSize: 18, fontWeight: 900, color: C.gold, letterSpacing: '0.02em', fontFamily: F.mono }}>
                   {successData?.quoteNumber}
                 </span>
               </div>
               <div style={{ padding: '16px', background: C.bg, borderRadius: 12, border: `1px solid ${C.border}`, marginBottom: 16 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6, fontFamily: F.body }}>Montant estimatif</div>
-                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.body }}>{fmt(successData?.serverTotal ?? cartTotal)}</div>
+                <div style={{ fontSize: 34, fontWeight: 900, color: C.ink, letterSpacing: '-0.04em', fontFamily: F.display }}>{fmt(successData?.serverTotal ?? cartTotal)}</div>
               </div>
             </div>
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.blue}`, background: C.surface, color: C.blue, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
+                  style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
                 <button disabled={navPending}
                   onClick={() => startNavTransition(() => router.push('/quotes'))}
-                  style={{ flex: 1, padding: '11px', borderRadius: 9, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
-                  {navPending ? <><span className="spinner-blue" />Chargement…</> : 'Mes devis'}
+                  style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.border}`, background: C.surface, color: navPending ? C.muted : C.muted, fontSize: 13, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7 }}>
+                  {navPending ? <><span className="spinner" />Chargement…</> : 'Mes devis'}
                 </button>
               </div>
             </div>
@@ -509,14 +509,14 @@ export default function VendorSaleForm({
         <button disabled={navPending}
           onClick={() => startNavTransition(() => router.push('/sales'))}
           style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'transparent', border: 'none', color: navPending ? C.muted : C.muted, fontSize: 12, fontWeight: 600, cursor: navPending ? 'not-allowed' : 'pointer', padding: '0 0 12px', fontFamily: F.body }}>
-          {navPending ? <><span className="spinner-blue" />Chargement…</> : (
+          {navPending ? <><span className="spinner" />Chargement…</> : (
             <><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Retour aux ventes</>
           )}
         </button>
 
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.display }}>
               Nouvelle vente
             </h1>
             <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
@@ -528,11 +528,11 @@ export default function VendorSaleForm({
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 100, padding: '4px 6px' }}>
             {([{ n: 1, label: 'Sélection' }, { n: 2, label: 'Client & finalisation' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
               <React.Fragment key={n}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.blue : 'transparent', transition: 'background 0.2s ease' }}>
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#fff' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.amber : 'transparent', transition: 'background 0.2s ease' }}>
+                  <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#FAF5EE' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
                     {formStep > n ? <svg width="9" height="8" viewBox="0 0 9 8" fill="none"><path d="M1 4l2.5 2.5L8 1" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg> : n}
                   </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: formStep === n ? '#fff' : C.muted, fontFamily: F.body }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: formStep === n ? '#FAF5EE' : C.muted, fontFamily: F.body }}>
                     {label}
                   </span>
                 </div>
@@ -548,7 +548,7 @@ export default function VendorSaleForm({
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.8fr 1.5fr 280px', gap: 16, alignItems: 'start' }}>
 
           {/* ── COL 1: Product catalogue ── */}
-          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+          <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
             {/* Search + header */}
             <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${C.border}`, background: C.bg }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: F.body }}>
@@ -566,7 +566,7 @@ export default function VendorSaleForm({
               {availableTypes.length > 1 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   <button onClick={() => setTypeFilter('all')}
-                    style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${typeFilter==='all' ? C.blue : C.border}`, background: typeFilter==='all' ? C.blueBg : 'transparent', color: typeFilter==='all' ? C.blue : C.muted, fontFamily: F.body }}>
+                    style={{ padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: `1.5px solid ${typeFilter==='all' ? C.amber : C.border}`, background: typeFilter==='all' ? C.amberGlow : 'transparent', color: typeFilter==='all' ? C.amber : C.muted, fontFamily: F.body }}>
                     Tous
                   </button>
                   {availableTypes.map(t => {
@@ -612,13 +612,13 @@ export default function VendorSaleForm({
                 return (
                   <button key={prod.product_id}
                     onClick={() => { setProduct(prod); setInputMode(prodIsTile ? 'm2' : 'qty'); resetInputs(); setError(null) }}
-                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, cursor: 'pointer', textAlign: 'left', width: '100%', background: isSelected ? C.blueBg : 'transparent', border: `1.5px solid ${isSelected ? C.blue : 'transparent'}`, fontFamily: F.body, marginBottom: 2 }}>
+                    style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 9, cursor: 'pointer', textAlign: 'left', width: '100%', background: isSelected ? C.amberGlow : 'transparent', border: `1.5px solid ${isSelected ? C.amber : 'transparent'}`, fontFamily: F.body, marginBottom: 2 }}>
                     {/* Type icon badge */}
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: isSelected ? cfg.bg : C.bg, border: `1px solid ${isSelected ? cfg.color + '40' : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
                       <TypeIcon type={prodType} color={isSelected ? cfg.color : C.muted} size={14} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? C.blue : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: F.body }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: isSelected ? C.amber : C.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: F.body }}>
                         {prod.product_name}
                       </div>
                       <div style={{ fontSize: 11, color: C.muted, marginTop: 1, fontFamily: F.body }}>
@@ -662,7 +662,7 @@ export default function VendorSaleForm({
                   const prodType = selectedProduct.product_type ?? 'tile'
                   const cfg      = getTypeConfig(prodType)
                   return (
-                    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                    <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
                       <div style={{ width: 40, height: 40, borderRadius: 10, background: cfg.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                         <TypeIcon type={prodType} color={cfg.color} size={17} />
                       </div>
@@ -679,7 +679,7 @@ export default function VendorSaleForm({
                 })()}
 
                 {/* Quantity section */}
-                <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: F.body }}>
                     Quantité
                   </div>
@@ -690,7 +690,7 @@ export default function VendorSaleForm({
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                         {([['m2', 'm²'], ['cartons_tiles', 'Cartons + pièces']] as [InputMode, string][]).map(([mode, label]) => (
                           <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: F.body }}>
+                            style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.amber : C.bg, color: inputMode===mode ? '#FAF5EE' : C.muted, border: `1.5px solid ${inputMode===mode ? C.amber : C.border}`, fontFamily: F.body }}>
                             {label}
                           </button>
                         ))}
@@ -726,9 +726,9 @@ export default function VendorSaleForm({
                               ['Cartons', `${computed.fullCartons}${computed.loose?` +${computed.loose}`:''} `, inputMode==='cartons'||inputMode==='cartons_tiles'],
                               ['Carreaux', fmtNum(computed.tiles), inputMode==='tiles'],
                             ] as [string, string, boolean][]).map(([lbl, val, active]) => (
-                              <div key={lbl} style={{ textAlign: 'center', padding: '8px 4px', background: active ? C.blueBg : C.surface, borderRadius: 7, border: `1px solid ${active ? C.blue : C.border}` }}>
+                              <div key={lbl} style={{ textAlign: 'center', padding: '8px 4px', background: active ? C.amberGlow : C.surface, borderRadius: 7, border: `1px solid ${active ? C.amber : C.border}` }}>
                                 <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{lbl}</div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.blue : C.ink, fontFamily: F.body }}>{val}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: active ? C.amber : C.ink, fontFamily: F.body }}>{val}</div>
                               </div>
                             ))}
                           </div>
@@ -772,7 +772,7 @@ export default function VendorSaleForm({
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
                             {modeTabs.map(([mode, label]) => (
                               <button key={mode} onClick={() => { setInputMode(mode); resetInputs() }}
-                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.blue : C.bg, color: inputMode===mode ? '#fff' : C.muted, border: `1.5px solid ${inputMode===mode ? C.blue : C.border}`, fontFamily: F.body }}>
+                                style={{ padding: '9px 4px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: inputMode===mode ? C.amber : C.bg, color: inputMode===mode ? '#FAF5EE' : C.muted, border: `1.5px solid ${inputMode===mode ? C.amber : C.border}`, fontFamily: F.body }}>
                                 {label}
                               </button>
                             ))}
@@ -820,11 +820,11 @@ export default function VendorSaleForm({
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{pkgLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{inputMode==='linear_pieces'?(parseInt(inputPieces)||0):(parseInt(inputContainers)||0)}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: F.body }}>{inputMode==='linear_pieces'?(parseInt(inputPieces)||0):(parseInt(inputContainers)||0)}</div>
                                   </div>
-                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueBg, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.amberGlow, borderRadius: 7, border: `1px solid ${C.amber}33` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{unitLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: F.body }}>{new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2}).format(computed.tiles)}</div>
                                   </div>
                                 </div>
                                 <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: F.body, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
@@ -835,7 +835,7 @@ export default function VendorSaleForm({
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Poids demandé</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{parseFloat(inputWeight)||0} kg</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: F.body }}>{parseFloat(inputWeight)||0} kg</div>
                                   </div>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.orangeBg, borderRadius: 7, border: `1px solid ${C.orange}33` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Sacs à livrer</div>
@@ -843,7 +843,7 @@ export default function VendorSaleForm({
                                   </div>
                                 </div>
                                 {hasBagWeight && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 11, color: C.blue, fontFamily: F.body, textAlign: 'center' }}>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.amberGlow, borderRadius: 6, fontSize: 11, color: C.amber, fontFamily: F.body, textAlign: 'center' }}>
                                     {computed.tiles} sac{computed.tiles>1?'s':''} × {selectedProduct.bag_weight_kg} kg = {fmtNum(Math.round(computed.tiles * parseFloat(selectedProduct.bag_weight_kg)))} kg livré
                                     {computed.tiles * parseFloat(selectedProduct.bag_weight_kg) > parseFloat(inputWeight) && (
                                       <span style={{ color: C.orange }}> (arrondi au sac supérieur)</span>
@@ -858,11 +858,11 @@ export default function VendorSaleForm({
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                                   <div style={{ textAlign: 'center', padding: '8px 6px', background: C.surface, borderRadius: 7, border: `1px solid ${C.border}` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{pkgLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{parseInt(inputPackages)||0}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.muted, fontFamily: F.body }}>{parseInt(inputPackages)||0}</div>
                                   </div>
-                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.blueBg, borderRadius: 7, border: `1px solid ${C.blue}33` }}>
+                                  <div style={{ textAlign: 'center', padding: '8px 6px', background: C.amberGlow, borderRadius: 7, border: `1px solid ${C.amber}33` }}>
                                     <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{unitLbl}</div>
-                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.blue, fontFamily: F.body }}>{computed.tiles}</div>
+                                    <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: F.body }}>{computed.tiles}</div>
                                   </div>
                                 </div>
                                 <div style={{ marginTop: 8, fontSize: 11, color: C.muted, fontFamily: F.body, textAlign: 'center' }}>Disponible : {fmtNum(computed.availableTiles)} {unitLbl}</div>
@@ -875,17 +875,17 @@ export default function VendorSaleForm({
                                 </div>
                                 {hasPieceConv && computed.tiles > 0 && (() => {
                                   const pl=parseFloat(selectedProduct.piece_length_m), fp=Math.floor(computed.tiles/pl), rm=Math.round((computed.tiles%pl)*100)/100
-                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fp} {pkgLbl}{fp!==1?'s':''}{rm>0?` + ${rm} m`:' complets'}</div>
+                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.amberGlow, borderRadius: 6, fontSize: 12, color: C.amber, fontFamily: F.body }}>= {fp} {pkgLbl}{fp!==1?'s':''}{rm>0?` + ${rm} m`:' complets'}</div>
                                 })()}
                                 {hasBagWeight && computed.tiles > 0 && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fmtNum(Math.round(computed.tiles*parseFloat(selectedProduct.bag_weight_kg)))} kg total</div>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.amberGlow, borderRadius: 6, fontSize: 12, color: C.amber, fontFamily: F.body }}>= {fmtNum(Math.round(computed.tiles*parseFloat(selectedProduct.bag_weight_kg)))} kg total</div>
                                 )}
                                 {hasContConv && computed.tiles > 0 && (() => {
                                   const vol=parseFloat(selectedProduct.container_volume_l), fc=Math.floor(computed.tiles/vol), rl=Math.round((computed.tiles%vol)*10)/10
-                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {fc} {pkgLbl}{fc!==1?'s':''}{rl>0?` + ${rl} L`:' complets'}</div>
+                                  return <div style={{ marginTop: 8, padding: '6px 10px', background: C.amberGlow, borderRadius: 6, fontSize: 12, color: C.amber, fontFamily: F.body }}>= {fc} {pkgLbl}{fc!==1?'s':''}{rl>0?` + ${rl} L`:' complets'}</div>
                                 })()}
                                 {hasUnitPkg && computed.tiles > 0 && (
-                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.blueBg, borderRadius: 6, fontSize: 12, color: C.blue, fontFamily: F.body }}>= {Math.floor(computed.tiles/parseInt(selectedProduct.pieces_per_package))} {pkgLbl}{computed.tiles%parseInt(selectedProduct.pieces_per_package)>0?` + ${computed.tiles%parseInt(selectedProduct.pieces_per_package)} ${unitLbl}`:' complet(s)'}</div>
+                                  <div style={{ marginTop: 8, padding: '6px 10px', background: C.amberGlow, borderRadius: 6, fontSize: 12, color: C.amber, fontFamily: F.body }}>= {Math.floor(computed.tiles/parseInt(selectedProduct.pieces_per_package))} {pkgLbl}{computed.tiles%parseInt(selectedProduct.pieces_per_package)>0?` + ${computed.tiles%parseInt(selectedProduct.pieces_per_package)} ${unitLbl}`:' complet(s)'}</div>
                                 )}
                               </>
                             )}
@@ -903,7 +903,7 @@ export default function VendorSaleForm({
 
                 {/* Price section — shows only when quantity is valid */}
                 {computed && computed.tiles > 0 && (
-                  <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+                  <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '16px', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: F.body }}>
                       Prix négocié
                     </div>
@@ -952,10 +952,10 @@ export default function VendorSaleForm({
                             </div>
                           )}
 
-                          <button className="btn-meram"
+                          <button className="btn-amber"
                             onClick={addToCart}
                             disabled={computed.floorViolation || computed.stockInsufficient || computed.price <= 0 || computed.tiles <= 0}
-                            style={{ width: '100%', padding: '13px', borderRadius: 10, border: 'none', cursor: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 0.5 : 1 }}>
+                            style={{ width: '100%', padding: '13px', borderRadius: R.md, border: 'none', cursor: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: computed.floorViolation||computed.stockInsufficient||computed.price<=0 ? 0.5 : 1, height: 44 }}>
                             <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
                               <circle cx="6" cy="13" r="1.2" fill="white"/><circle cx="12" cy="13" r="1.2" fill="white"/>
                               <path d="M1 1h2l2 8h7l1.5-5H5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -986,7 +986,7 @@ export default function VendorSaleForm({
             )}
 
             {/* Cart panel */}
-            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.12)' }}>
               {/* Cart header */}
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -997,7 +997,7 @@ export default function VendorSaleForm({
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>Panier</span>
                 </div>
                 {cart.length > 0 && (
-                  <div style={{ background: C.blue, color: '#fff', fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: C.amber, color: '#FAF5EE', fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {cart.length}
                   </div>
                 )}
@@ -1049,16 +1049,16 @@ export default function VendorSaleForm({
               {cart.length > 0 && (
                 <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: F.body }}>Total</span>
-                  <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.body }}>{fmt(cartTotal)}</span>
+                  <span style={{ color: '#fff', fontSize: 22, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.display }}>{fmt(cartTotal)}</span>
                 </div>
               )}
             </div>
 
             {/* Continue button */}
-            <button className="btn-meram"
+            <button className="btn-amber"
               onClick={() => { setError(null); setFormStep(2) }}
               disabled={cart.length === 0}
-              style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1 }}>
+              style={{ width: '100%', padding: '14px', borderRadius: R.md, border: 'none', cursor: cart.length===0?'not-allowed':'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cart.length===0 ? 0.45 : 1, height: 48 }}>
               Continuer
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1084,7 +1084,7 @@ export default function VendorSaleForm({
             </button>
 
             {/* Client info */}
-            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>
                   Informations client
@@ -1122,7 +1122,7 @@ export default function VendorSaleForm({
             </div>
 
             {/* Payment */}
-            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, padding: '20px', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, fontFamily: F.body }}>
                 Paiement
               </div>
@@ -1134,7 +1134,7 @@ export default function VendorSaleForm({
                   Paiement complet
                 </button>
                 <button type="button" onClick={() => setAmountPaid('')}
-                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${amountPaid==='' ? C.blue : C.border}`, background: amountPaid==='' ? C.blueBg : C.bg, color: amountPaid==='' ? C.blue : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
+                  style={{ flex: 1, padding: '9px', borderRadius: 8, border: `1.5px solid ${amountPaid==='' ? C.amber : C.border}`, background: amountPaid==='' ? C.amberGlow : C.bg, color: amountPaid==='' ? C.amber : C.muted, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Acompte / Partiel
                 </button>
               </div>
@@ -1167,7 +1167,7 @@ export default function VendorSaleForm({
           <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Cart summary (read-only) */}
-            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.15)' }}>
+            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.12)' }}>
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>Récapitulatif</span>
               </div>
@@ -1203,7 +1203,7 @@ export default function VendorSaleForm({
               </div>
               <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, fontFamily: F.body }}>Total</span>
-                <span style={{ color: '#fff', fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.body }}>{fmt(cartTotal)}</span>
+                <span style={{ color: '#fff', fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.display }}>{fmt(cartTotal)}</span>
               </div>
             </div>
 
@@ -1215,8 +1215,8 @@ export default function VendorSaleForm({
             )}
 
             {/* Confirm sale */}
-            <button className="btn-meram" onClick={handleConfirm} disabled={loading || quoteLoading}
-              style={{ width: '100%', padding: '15px', borderRadius: 12, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1 }}>
+            <button className="btn-amber" onClick={handleConfirm} disabled={loading || quoteLoading}
+              style={{ width: '100%', padding: '15px', borderRadius: R.md, border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 800, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: loading ? 0.7 : 1, height: 52 }}>
               {loading ? (
                 <><span className="spinner" />Enregistrement…</>
               ) : (
@@ -1237,7 +1237,7 @@ export default function VendorSaleForm({
               disabled={loading || quoteLoading}
               style={{ width: '100%', padding: '12px', borderRadius: 10, cursor: quoteLoading ? 'not-allowed' : 'pointer', fontSize: 13, fontWeight: 600, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, opacity: loading ? 0.5 : 1, background: C.surface, border: `1.5px solid ${C.gold}`, color: C.gold }}>
               {quoteLoading ? (
-                <><span className="spinner-blue" style={{ borderTopColor: C.gold, borderRightColor: `${C.gold}40` }} />Enregistrement du devis…</>
+                <><span className="spinner" style={{ borderTopColor: C.gold, borderRightColor: `${C.gold}40` }} />Enregistrement du devis…</>
               ) : (
                 <>
                   <svg width="13" height="14" viewBox="0 0 13 16" fill="none">

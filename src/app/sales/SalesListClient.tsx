@@ -343,16 +343,11 @@ export default function SalesListClient({
       )}
 
       {/* ── Page header ── */}
-      <div className="fade-in-up" style={{
-        display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: SP[6],
-        flexWrap: 'wrap', gap: SP[3],
-      }}>
+      <div className="fade-in-up page-header">
         <div>
-          <h1 style={{ fontSize: F['2xl'], fontWeight: F.xbold, color: C.ink, margin: `0 0 ${SP[1]}`, letterSpacing: F.lsTighter, fontFamily: F.display }}>
-            Ventes
-          </h1>
-          <p style={{ fontSize: F.sm, color: C.muted, margin: 0, fontFamily: F.body }}>
+          <p className="page-kicker">Gestion commerciale</p>
+          <h1 className="page-title">Ventes</h1>
+          <p className="page-subtitle">
             {d.totalCount === 0 && !hasFilters
               ? 'Aucune vente enregistrée'
               : hasFilters
@@ -373,7 +368,8 @@ export default function SalesListClient({
               startNavTransition(() => router.push('/sales/new'))
             }}
             style={{
-              border: 'none', borderRadius: R.md,
+              border: 'none', borderRadius: R.md, height: 40,
+              padding: `0 ${SP[4]}`,
               fontSize: F.sm, fontWeight: F.bold,
               cursor: navPending ? 'not-allowed' : 'pointer',
               fontFamily: F.body,
@@ -384,7 +380,7 @@ export default function SalesListClient({
             {navPending ? (
               <><span className="spinner" />Chargement…</>
             ) : (
-              <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke={C.bg} strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
+              <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
             )}
           </button>
         )}
@@ -461,7 +457,7 @@ export default function SalesListClient({
               border: `1px solid ${C.border}`, borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: dateFrom ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
-              colorScheme: 'dark',
+              colorScheme: 'light',
             }}
           />
           <span style={{ fontSize: F.xs, color: C.dim, flexShrink: 0 }}>→</span>
@@ -475,7 +471,7 @@ export default function SalesListClient({
               border: `1px solid ${C.border}`, borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: dateTo ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
-              colorScheme: 'dark',
+              colorScheme: 'light',
             }}
           />
           {/* Boutique (only for admin/owner who can see all boutiques) */}

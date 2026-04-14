@@ -1,10 +1,10 @@
 'use client'
 
-import { useRouter }                        from 'next/navigation'
+import { useRouter }                          from 'next/navigation'
 import { useTransition, useEffect, useState } from 'react'
-import { useIsMobile }                      from '@/hooks/useIsMobile'
-import type { BadgeCounts }                 from '@/lib/supabase/badge-counts'
-import { C, F, R, SP, SH, TR, Z }          from '@/lib/design-system'
+import { useIsMobile }                        from '@/hooks/useIsMobile'
+import type { BadgeCounts }                   from '@/lib/supabase/badge-counts'
+import { C, F, R, SP, SH, TR, Z }            from '@/lib/design-system'
 
 const ROLE_LABELS: Record<string, string> = {
   owner:     'Propriétaire',
@@ -13,82 +13,94 @@ const ROLE_LABELS: Record<string, string> = {
   warehouse: 'Magasinier',
 }
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════════════
+// ICONS
+// ═════════════════════════════════════════════════════════════════════════════
+
 function IconDashboard({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="2"    y="2"    width="7.5" height="7.5" rx="1.8" fill={c} opacity="0.9"/>
-      <rect x="10.5" y="2"    width="7.5" height="7.5" rx="1.8" fill={c} opacity="0.45"/>
-      <rect x="2"    y="10.5" width="7.5" height="7.5" rx="1.8" fill={c} opacity="0.45"/>
-      <rect x="10.5" y="10.5" width="7.5" height="7.5" rx="1.8" fill={c} opacity="0.9"/>
+      <rect x="2"    y="2"    width="7.5" height="7.5" rx="2" fill={c} opacity="0.85"/>
+      <rect x="10.5" y="2"    width="7.5" height="7.5" rx="2" fill={c} opacity="0.35"/>
+      <rect x="2"    y="10.5" width="7.5" height="7.5" rx="2" fill={c} opacity="0.35"/>
+      <rect x="10.5" y="10.5" width="7.5" height="7.5" rx="2" fill={c} opacity="0.85"/>
     </svg>
   )
 }
+
 function IconSales({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M2.5 4h1.8l2.8 8.5h7.5l1.9-5.5H6" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="8"  cy="16" r="1.4" fill={c}/>
-      <circle cx="14" cy="16" r="1.4" fill={c}/>
+      <path d="M2.5 4h2l2.8 8h7.2l2-5.5H6.5" stroke={c} strokeWidth="1.55" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="8.5"  cy="15.5" r="1.3" fill={c}/>
+      <circle cx="14.5" cy="15.5" r="1.3" fill={c}/>
     </svg>
   )
 }
+
 function IconWarehouse({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M2 8.8L10 3l8 5.8V17.5H2V8.8Z" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/>
-      <rect x="7" y="11.5" width="6" height="6" rx="1" stroke={c} strokeWidth="1.3"/>
+      <path d="M2.5 9L10 3.5L17.5 9V17H2.5V9Z" stroke={c} strokeWidth="1.5" strokeLinejoin="round"/>
+      <rect x="7.5" y="11.5" width="5" height="5.5" rx="1" stroke={c} strokeWidth="1.3"/>
     </svg>
   )
 }
+
 function IconCatalog({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="2"  y="2" width="7" height="5" rx="1.5" stroke={c} strokeWidth="1.4"/>
-      <rect x="11" y="2" width="7" height="5" rx="1.5" stroke={c} strokeWidth="1.4"/>
-      <rect x="2"  y="9" width="7" height="5" rx="1.5" stroke={c} strokeWidth="1.4"/>
-      <rect x="11" y="9" width="7" height="5" rx="1.5" stroke={c} strokeWidth="1.4"/>
-      <rect x="2"  y="16" width="16" height="2" rx="1" fill={c} opacity="0.45"/>
+      <rect x="2.5"  y="2.5" width="6" height="5"  rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="11.5" y="2.5" width="6" height="5"  rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="2.5"  y="9.5" width="6" height="5"  rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="11.5" y="9.5" width="6" height="5"  rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="2.5"  y="16.5" width="15" height="1.5" rx="0.75" fill={c} opacity="0.35"/>
     </svg>
   )
 }
+
 function IconUsers({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <circle cx="8" cy="6" r="3" stroke={c} strokeWidth="1.5"/>
-      <path d="M2 17c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M14 8a2.5 2.5 0 100-5"         stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
-      <path d="M17 17c0-2.2-1.3-3.8-3-4.5"   stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
+      <circle cx="8" cy="6.5" r="2.8" stroke={c} strokeWidth="1.5"/>
+      <path d="M2 17c0-3 2.5-5 6-5s6 2 6 5" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M14.5 8.5a2.5 2.5 0 100-5"        stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M17.5 17c0-2-1.2-3.6-3-4.3"       stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   )
 }
+
 function IconReports({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="3" y="2" width="14" height="16" rx="2" stroke={c} strokeWidth="1.4"/>
-      <path d="M7 7h6M7 10.5h6M7 14h4" stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
+      <rect x="3.5" y="2.5" width="13" height="15" rx="2" stroke={c} strokeWidth="1.4"/>
+      <path d="M7 7.5h6M7 11h6M7 14.5h4" stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   )
 }
+
 function IconQuote({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M4 2h9l4 4v12a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1Z" stroke={c} strokeWidth="1.4" strokeLinejoin="round"/>
-      <path d="M13 2v5h4" stroke={c} strokeWidth="1.4" strokeLinejoin="round"/>
-      <path d="M7 10h6M7 13h6M7 16h4" stroke={c} strokeWidth="1.2" strokeLinecap="round"/>
+      <path d="M4.5 2.5h8.5l4 4v11a1 1 0 01-1 1H4.5a1 1 0 01-1-1V3.5a1 1 0 011-1Z"
+        stroke={c} strokeWidth="1.4" strokeLinejoin="round"/>
+      <path d="M13 2.5V7h4" stroke={c} strokeWidth="1.4" strokeLinejoin="round"/>
+      <path d="M7 10.5h6M7 13.5h6M7 16.5h4" stroke={c} strokeWidth="1.2" strokeLinecap="round"/>
     </svg>
   )
 }
+
 function IconPlatform({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <rect x="2" y="5" width="16" height="12" rx="1.5" stroke={c} strokeWidth="1.4"/>
-      <path d="M6 10h2M12 10h2M6 13h2M12 13h2" stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
-      <path d="M9 17V9" stroke={c} strokeWidth="1.3"/>
-      <path d="M6 5V3.5a1 1 0 011-1h6a1 1 0 011 1V5" stroke={c} strokeWidth="1.3"/>
+      <rect x="2.5" y="5" width="15" height="11" rx="1.5" stroke={c} strokeWidth="1.4"/>
+      <path d="M6 9.5h2M12 9.5h2M6 12.5h2M12 12.5h2" stroke={c} strokeWidth="1.3" strokeLinecap="round"/>
+      <path d="M9.5 16.5V9" stroke={c} strokeWidth="1.3"/>
+      <path d="M6.5 5V3.5a1 1 0 011-1h5a1 1 0 011 1V5" stroke={c} strokeWidth="1.3"/>
     </svg>
   )
 }
+
 function IconBell({ c = 'currentColor', filled = false }: { c?: string; filled?: boolean }) {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill={filled ? c : 'none'}
@@ -98,6 +110,7 @@ function IconBell({ c = 'currentColor', filled = false }: { c?: string; filled?:
     </svg>
   )
 }
+
 function IconLogout({ c = 'currentColor', size = 15 }: { c?: string; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -107,11 +120,52 @@ function IconLogout({ c = 'currentColor', size = 15 }: { c?: string; size?: numb
     </svg>
   )
 }
+
 function IconX({ size = 14, color }: { size?: number; color?: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M1 1l12 12M13 1L1 13" stroke={color ?? C.muted} strokeWidth="1.8" strokeLinecap="round"/>
     </svg>
+  )
+}
+
+// ── MERAM Logo Mark ─────────────────────────────────────────────────────────
+// The M-with-baseline: two pillars + diagonal valley + horizontal baseline.
+// A geometric lettermark — clean, architectural, unmistakable at all sizes.
+function MeramMark({ size = 17, color = '#FAF5EE' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={Math.round(size * 0.8)} viewBox="0 0 20 16" fill="none" aria-hidden="true">
+      <path
+        d="M2.5 14V2.5L10 9L17.5 2.5V14"
+        stroke={color} strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path
+        d="M2.5 14h15"
+        stroke={color} strokeWidth="2.3" strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+// ── Avatar ─────────────────────────────────────────────────────────────────────
+function Avatar({ name }: { name: string }) {
+  const parts   = name.trim().split(' ')
+  const letters = parts.length >= 2
+    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase()
+  const hue = name.split('').reduce((a, ch) => a + ch.charCodeAt(0), 0) % 360
+  return (
+    <div style={{
+      width: 32, height: 32, borderRadius: R.full,
+      background: `linear-gradient(135deg, hsl(${hue},45%,22%), hsl(${(hue+40)%360},52%,32%))`,
+      border:     `1.5px solid rgba(160,83,26,0.28)`,
+      display:    'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+      fontSize:   11, fontWeight: F.bold, color: C.sidebarInk,
+      letterSpacing: '0.04em', fontFamily: F.body,
+    }}>
+      {letters}
+    </div>
   )
 }
 
@@ -126,29 +180,6 @@ const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
   [IconReports,   'Rapports',        '/reports',    ['owner', 'admin']],
 ]
-
-// ── Avatar ─────────────────────────────────────────────────────────────────────
-function Avatar({ name }: { name: string }) {
-  const parts   = name.trim().split(' ')
-  const letters = parts.length >= 2
-    ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-    : name.slice(0, 2).toUpperCase()
-  const hue = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0) % 360
-  return (
-    <div style={{
-      width: 32, height: 32, borderRadius: R.full,
-      background:  `linear-gradient(135deg, hsl(${hue},40%,20%), hsl(${(hue+40)%360},50%,30%))`,
-      border:      `1.5px solid rgba(160,83,26,0.30)`,
-      display:     'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink:  0,
-      fontSize:    11, fontWeight: F.bold, color: C.sidebarInk,
-      letterSpacing: '0.04em',
-      fontFamily:  F.body,
-    }}>
-      {letters}
-    </div>
-  )
-}
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Sidebar({
@@ -168,10 +199,10 @@ export default function Sidebar({
 }) {
   const router   = useRouter()
   const isMobile = useIsMobile()
-  const [isPending,       startTransition]  = useTransition()
-  const [notifSupported,  setNotifSupported] = useState(false)
-  const [notifState,      setNotifState]     = useState<'subscribed'|'denied'|'default'>('default')
-  const [notifLoading,    setNotifLoading]   = useState(false)
+  const [isPending,       startTransition]   = useTransition()
+  const [notifSupported,  setNotifSupported]  = useState(false)
+  const [notifState,      setNotifState]      = useState<'subscribed'|'denied'|'default'>('default')
+  const [notifLoading,    setNotifLoading]    = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isAdmin      = profile.is_platform_admin === true
@@ -204,7 +235,11 @@ export default function Sidebar({
         const reg = await navigator.serviceWorker.ready
         const sub = await reg.pushManager.getSubscription()
         if (sub) {
-          await fetch('/api/push/subscribe', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) })
+          await fetch('/api/push/subscribe', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          })
           await sub.unsubscribe()
           setNotifState('default')
         }
@@ -220,8 +255,15 @@ export default function Sidebar({
       const raw     = window.atob(b64)
       const arr     = new Uint8Array(raw.length)
       for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
-      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: arr.buffer as ArrayBuffer })
-      await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscription: sub.toJSON() }) })
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: arr.buffer as ArrayBuffer,
+      })
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: sub.toJSON() }),
+      })
       setNotifState('subscribed')
     } finally {
       setNotifLoading(false)
@@ -235,19 +277,18 @@ export default function Sidebar({
     return 0
   }
 
-  // Cognac glow for active nav items (cognac value)
-  const activeNavGlow = 'rgba(160,83,26,0.14)'
+  const activeGlow = 'rgba(160,83,26,0.12)'
 
   return (
     <>
-      {/* Navigation loading bar */}
+      {/* ── Navigation loading bar ── */}
       {isPending && (
         <div style={{
           position:       'fixed', top: 0, left: 0, right: 0, height: 2,
           zIndex:         Z.tooltip,
-          background:     `linear-gradient(90deg, ${C.amberActive} 0%, ${C.amber} 50%, ${C.amberActive} 100%)`,
+          background:     `linear-gradient(90deg, ${C.amberActive} 0%, ${C.amber} 50%, ${C.amberDim} 100%)`,
           backgroundSize: '200% 100%',
-          animation:      'sidebarLoadbar 1.1s linear infinite',
+          animation:      'sidebarLoadbar 1.2s linear infinite',
           pointerEvents:  'none',
         }} />
       )}
@@ -257,105 +298,100 @@ export default function Sidebar({
           0%   { background-position: 100% 0 }
           100% { background-position: -100% 0 }
         }
-        .nav-btn:hover {
+        .nav-item:hover {
           background: ${C.sidebarHov} !important;
+        }
+        .nav-item.active {
+          background: ${activeGlow} !important;
+          border-left-color: ${C.amber} !important;
+        }
+        .nav-item.active .nav-label {
+          color: ${C.amber} !important;
+          font-weight: 600 !important;
+        }
+        .nav-item:not(.active):hover .nav-label {
           color: ${C.sidebarText} !important;
         }
-        .nav-btn:hover svg * {
-          stroke: ${C.sidebarMuted} !important;
-          fill: ${C.sidebarMuted} !important;
-        }
-        .nav-btn.active svg * {
-          stroke: ${C.amber} !important;
-          fill: ${C.amber} !important;
-        }
-        .nav-btn.active { color: ${C.amber} !important; }
         .notif-btn:hover {
           background: ${C.sidebarHov} !important;
-          border-color: ${C.sidebarBd} !important;
         }
         .logout-btn:hover {
-          background: rgba(127,29,29,0.28) !important;
-          color: #FCA5A5 !important;
-          border-color: rgba(127,29,29,0.50) !important;
+          background: rgba(127,29,29,0.22) !important;
+          border-color: rgba(127,29,29,0.45) !important;
         }
-        .logout-btn:hover svg * { stroke: #FCA5A5 !important; }
+        .logout-btn:hover .logout-label {
+          color: #FCA5A5 !important;
+        }
+        .logout-btn:hover svg path {
+          stroke: #FCA5A5 !important;
+        }
       `}</style>
 
+      {/* ── Sidebar panel ── */}
       <aside style={{
-        width:          240,
-        background:     C.sidebarBg,
-        display:        'flex',
-        flexDirection:  'column',
-        flexShrink:     0,
-        position:       'fixed',
+        width:         240,
+        background:    C.sidebarBg,
+        display:       'flex',
+        flexDirection: 'column',
+        flexShrink:    0,
+        position:      'fixed',
         top: 0, left: 0, bottom: 0,
-        transform:      isMobileOpen ? 'translateX(0)' : 'translateX(-240px)',
-        transition:     `transform ${TR.smooth}`,
-        zIndex:         Z.overlay,
-        fontFamily:     F.body,
-        borderRight:    `1px solid ${C.sidebarBd}`,
-        boxShadow:      `4px 0 32px rgba(0,0,0,0.25)`,
+        transform:     isMobileOpen ? 'translateX(0)' : 'translateX(-240px)',
+        transition:    `transform ${TR.smooth}`,
+        zIndex:        Z.overlay,
+        fontFamily:    F.body,
+        borderRight:   `1px solid ${C.sidebarBd}`,
+        boxShadow:     `6px 0 40px rgba(0,0,0,0.22)`,
       }}>
 
-        {/* Cognac accent stripe */}
-        <div style={{ height: 3, background: C.amber, flexShrink: 0 }} />
+        {/* Cognac accent line at top */}
+        <div style={{ height: 3, background: C.amber, flexShrink: 0, opacity: 0.9 }} />
 
-        {/* Logo */}
+        {/* ── Logo area ── */}
         <div style={{
-          padding:      `${SP[4]} ${SP[5]} ${SP[4]}`,
+          padding:      `${SP[4]} ${SP[5]}`,
           borderBottom: `1px solid ${C.sidebarBd}`,
+          display:      'flex', alignItems: 'center', gap: SP[3],
           flexShrink:   0,
-          display:      'flex', alignItems: 'center', gap: SP[2.5],
         }}>
+          {/* Icon container — cognac gradient with subtle inner highlight */}
           <div style={{
-            width: 32, height: 32, borderRadius: R.lg,
-            background:  `linear-gradient(145deg, ${C.amberActive} 0%, ${C.amber} 100%)`,
-            display:     'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink:  0,
-            boxShadow:   SH.amberSm,
+            width:        34,
+            height:       34,
+            borderRadius: R.lg,
+            background:   `linear-gradient(150deg, ${C.amberActive} 0%, ${C.amber} 65%, ${C.amberDim} 100%)`,
+            display:      'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink:   0,
+            boxShadow:    `${SH.amberSm}, inset 0 1px 0 rgba(255,255,255,0.14)`,
           }}>
-            <svg width="16" height="13" viewBox="0 0 20 17" fill="none" aria-hidden="true">
-              <path d="M2 15V2L10 9L18 2V15" stroke="#FAF5EE" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 15h16"              stroke="#FAF5EE" strokeWidth="2.4" strokeLinecap="round"/>
-            </svg>
+            <MeramMark size={17} color="#FAF5EE" />
           </div>
-          <div>
-            <div style={{
-              fontSize:      F.lg,
-              fontWeight:    F.bold,
-              fontFamily:    F.display,
-              color:         C.sidebarInk,
-              letterSpacing: '-0.02em',
-              lineHeight:    1,
-            }}>
-              MERAM
-            </div>
-            <div style={{
-              fontSize:      '8.5px',
-              color:         C.sidebarDim,
-              letterSpacing: F.lsWidest,
-              marginTop:     '2px',
-              textTransform: 'uppercase',
-              fontWeight:    F.semibold,
-            }}>
-              Manage · Sell · Optimize
-            </div>
+
+          {/* Wordmark */}
+          <div style={{
+            fontSize:      F.xl,
+            fontWeight:    F.xbold,
+            fontFamily:    F.display,
+            color:         C.sidebarInk,
+            letterSpacing: '-0.025em',
+            lineHeight:    1,
+          }}>
+            MERAM
           </div>
         </div>
 
-        {/* User card */}
+        {/* ── User card ── */}
         <div style={{
           padding:      `${SP[3]} ${SP[4]}`,
           borderBottom: `1px solid ${C.sidebarBd}`,
-          display:      'flex', alignItems: 'center', gap: SP[2],
+          display:      'flex', alignItems: 'center', gap: SP[2.5],
           flexShrink:   0,
           background:   C.sidebarEl,
         }}>
           <Avatar name={profile.full_name} />
-          <div style={{ minWidth: 0 }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
-              fontSize:      F.base,
+              fontSize:      F.sm,
               fontWeight:    F.semibold,
               color:         C.sidebarInk,
               whiteSpace:    'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -364,29 +400,30 @@ export default function Sidebar({
               {profile.full_name}
             </div>
             <div style={{
-              fontSize:   F.xs,
-              color:      C.sidebarMuted,
-              marginTop:  '2px',
-              fontWeight: F.medium,
+              fontSize:    F.xs,
+              color:       C.sidebarMuted,
+              marginTop:   '2px',
+              fontWeight:  F.medium,
+              lineHeight:  1.2,
             }}>
               {isAdmin ? 'Opérateur Plateforme' : (ROLE_LABELS[profile.role] ?? profile.role)}
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav style={{ flex: 1, padding: `${SP[2]} ${SP[2]}`, overflowY: 'auto' }}>
+        {/* ── Navigation ── */}
+        <nav style={{ flex: 1, padding: `${SP[2]} ${SP[2]}`, overflowY: 'auto' }} aria-label="Navigation principale">
 
           {visibleItems.length > 0 && (
             <div style={{
-              padding:       `${SP[3]} ${SP[3]} ${SP[2]}`,
-              fontSize:      '10px',
-              fontWeight:    F.bold,
-              color:         C.sidebarDim,
-              letterSpacing: F.lsWider,
-              textTransform: 'uppercase',
+              padding:        `${SP[3]} ${SP[3]} ${SP[1.5]}`,
+              fontSize:       '10px',
+              fontWeight:     F.bold,
+              color:          C.sidebarDim,
+              letterSpacing:  F.lsWider,
+              textTransform:  'uppercase',
             }}>
-              Navigation
+              Menu
             </div>
           )}
 
@@ -396,40 +433,42 @@ export default function Sidebar({
             return (
               <button
                 key={href}
-                className={`nav-btn${active ? ' active' : ''}`}
+                className={`nav-item${active ? ' active' : ''}`}
                 onMouseEnter={() => router.prefetch(href)}
                 onClick={() => { onClose?.(); startTransition(() => router.push(href)) }}
+                aria-current={active ? 'page' : undefined}
                 style={{
                   display:      'flex', alignItems: 'center', gap: SP[3],
                   width:        '100%',
-                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
+                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2.5]} ${SP[3]}`,
                   marginBottom: SP[0.5],
                   border:       'none',
                   borderLeft:   `3px solid ${active ? C.amber : 'transparent'}`,
                   borderRadius: `0 ${R.md} ${R.md} 0`,
-                  background:   active ? activeNavGlow : 'transparent',
-                  color:        active ? C.amber : C.sidebarMuted,
-                  fontSize:     F.base,
-                  fontWeight:   active ? F.semibold : F.regular,
-                  fontFamily:   F.body,
+                  background:   active ? activeGlow : 'transparent',
                   cursor:       isPending ? 'default' : 'pointer',
                   textAlign:    'left',
                   opacity:      isPending && !active ? 0.5 : 1,
-                  transition:   `background ${TR.fast}, color ${TR.fast}, border-color ${TR.fast}`,
+                  transition:   `background ${TR.fast}, border-color ${TR.fast}`,
                 }}
               >
                 <Icon c={active ? C.amber : C.sidebarMuted} />
-                <span style={{ flex: 1 }}>{label}</span>
+                <span className="nav-label" style={{
+                  flex:       1,
+                  fontSize:   F.sm,
+                  color:      active ? C.amber : C.sidebarMuted,
+                  fontWeight: active ? F.semibold : F.regular,
+                  fontFamily: F.body,
+                  lineHeight: F.lhSnug,
+                }}>
+                  {label}
+                </span>
                 {badge > 0 && (
-                  <span style={{
-                    minWidth:     18, height: 18, padding: '0 5px',
-                    borderRadius: R.full,
-                    background:   C.amber,
-                    color:        '#FAF5EE',
-                    fontSize:     '10px', fontWeight: F.bold,
-                    display:      'flex', alignItems: 'center', justifyContent: 'center',
-                    lineHeight:   1, flexShrink: 0,
-                    boxShadow:    SH.amberSm,
+                  <span className="count-badge" style={{
+                    background: C.amber,
+                    color:      '#FAF5EE',
+                    boxShadow:  SH.amberSm,
+                    fontSize:   '10px', fontWeight: F.bold,
                   }}>
                     {badge > 99 ? '99+' : badge}
                   </span>
@@ -442,37 +481,42 @@ export default function Sidebar({
           {isAdmin && (
             <>
               <div style={{
-                padding:       `${SP[4]} ${SP[3]} ${SP[2]}`,
+                padding:       `${SP[4]} ${SP[3]} ${SP[1.5]}`,
                 fontSize:      '10px', fontWeight: F.bold,
                 color:         C.sidebarDim, letterSpacing: F.lsWider, textTransform: 'uppercase',
               }}>
                 Plateforme
               </div>
               <button
-                className={`nav-btn${activeRoute === '/admin' ? ' active' : ''}`}
+                className={`nav-item${activeRoute === '/admin' ? ' active' : ''}`}
                 onClick={() => { onClose?.(); startTransition(() => router.push('/admin')) }}
                 style={{
                   display:      'flex', alignItems: 'center', gap: SP[3],
                   width:        '100%',
-                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2]} ${SP[3]}`,
+                  padding:      isMobile ? `${SP[3]} ${SP[3]}` : `${SP[2.5]} ${SP[3]}`,
                   border:       'none',
                   borderLeft:   `3px solid ${activeRoute === '/admin' ? C.amber : 'transparent'}`,
                   borderRadius: `0 ${R.md} ${R.md} 0`,
-                  background:   activeRoute === '/admin' ? activeNavGlow : 'transparent',
-                  color:        activeRoute === '/admin' ? C.amber : C.sidebarMuted,
-                  fontSize:     F.base, fontWeight: activeRoute === '/admin' ? F.semibold : F.regular,
-                  fontFamily:   F.body, cursor: 'pointer', textAlign: 'left',
-                  transition:   `background ${TR.fast}, color ${TR.fast}`,
+                  background:   activeRoute === '/admin' ? activeGlow : 'transparent',
+                  cursor:       'pointer', textAlign: 'left',
+                  transition:   `background ${TR.fast}, border-color ${TR.fast}`,
                 }}
               >
                 <IconPlatform c={activeRoute === '/admin' ? C.amber : C.sidebarMuted} />
-                <span>Administration</span>
+                <span className="nav-label" style={{
+                  fontSize: F.sm,
+                  color:    activeRoute === '/admin' ? C.amber : C.sidebarMuted,
+                  fontWeight: activeRoute === '/admin' ? F.semibold : F.regular,
+                  fontFamily: F.body,
+                }}>
+                  Administration
+                </span>
               </button>
             </>
           )}
         </nav>
 
-        {/* Notification toggle */}
+        {/* ── Notification toggle ── */}
         {notifSupported && !isAdmin && (
           <div style={{ padding: `0 ${SP[2]} ${SP[1]}`, flexShrink: 0 }}>
             <button
@@ -482,8 +526,8 @@ export default function Sidebar({
               style={{
                 width:        '100%', padding: `${SP[2]} ${SP[3]}`,
                 borderRadius: R.md,
-                background:   notifState === 'subscribed' ? activeNavGlow : 'transparent',
-                border:       `1px solid ${notifState === 'subscribed' ? 'rgba(160,83,26,0.35)' : C.sidebarBd}`,
+                background:   notifState === 'subscribed' ? 'rgba(160,83,26,0.10)' : 'transparent',
+                border:       `1px solid ${notifState === 'subscribed' ? 'rgba(160,83,26,0.30)' : C.sidebarBd}`,
                 color:        notifState === 'subscribed' ? C.amber
                             : notifState === 'denied'     ? C.sidebarDim : C.sidebarMuted,
                 fontSize:     F.xs, fontWeight: F.medium,
@@ -494,14 +538,15 @@ export default function Sidebar({
               }}
             >
               {notifLoading
-                ? <span className="spinner-light" />
+                ? <span className="spinner-light" style={{ width: 13, height: 13 }} />
                 : <IconBell
-                    c={notifState === 'subscribed' ? C.amber : notifState === 'denied' ? C.sidebarDim : C.sidebarMuted}
+                    c={notifState === 'subscribed' ? C.amber
+                       : notifState === 'denied'   ? C.sidebarDim : C.sidebarMuted}
                     filled={notifState === 'subscribed'}
                   />
               }
               <span>
-                {notifLoading             ? 'En cours…'
+                {notifLoading              ? 'En cours…'
                  : notifState === 'subscribed' ? 'Notifications activées'
                  : notifState === 'denied'     ? 'Notifications bloquées'
                  : 'Activer les notifications'}
@@ -510,10 +555,10 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* Logout */}
+        {/* ── Logout ── */}
         <div style={{
-          padding:    `${SP[1]} ${SP[2]} ${SP[5]}`,
-          borderTop:  `1px solid ${C.sidebarBd}`,
+          padding:   `${SP[1]} ${SP[2]} ${SP[5]}`,
+          borderTop: `1px solid ${C.sidebarBd}`,
           flexShrink: 0,
         }}>
           <button
@@ -524,23 +569,29 @@ export default function Sidebar({
               borderRadius: R.md,
               background:   'transparent',
               border:       `1px solid transparent`,
-              color:        C.sidebarDim,
-              fontSize:     F.base, fontWeight: F.regular,
-              fontFamily:   F.body, cursor: 'pointer',
+              cursor:       'pointer',
               display:      'flex', alignItems: 'center', gap: SP[3],
               transition:   `all ${TR.fast}`,
             }}
           >
             <IconLogout c={C.sidebarDim} />
-            <span>Déconnexion</span>
+            <span className="logout-label" style={{
+              fontSize: F.sm, fontWeight: F.regular,
+              color:    C.sidebarDim, fontFamily: F.body,
+            }}>
+              Déconnexion
+            </span>
           </button>
         </div>
       </aside>
 
-      {/* ── Logout confirmation modal (uses light theme — overlaid on cream canvas) ── */}
+      {/* ═══════════════════════════════════════════════════════════════════════
+          LOGOUT CONFIRMATION MODAL
+          ═══════════════════════════════════════════════════════════════════════ */}
       {showLogoutModal && (
         <div
           className="modal-overlay"
+          onClick={e => { if (e.target === e.currentTarget) setShowLogoutModal(false) }}
           style={{
             position:       'fixed', inset: 0,
             background:     'rgba(26,15,6,0.55)',
@@ -556,13 +607,13 @@ export default function Sidebar({
               background:   C.surfaceEl,
               borderRadius: R.xl,
               border:       `1px solid ${C.border}`,
-              width:        '100%', maxWidth: 380,
+              width:        '100%', maxWidth: 376,
               boxShadow:    SH.xl,
               overflow:     'hidden',
             }}
           >
-            {/* Cognac top stripe */}
-            <div style={{ height: 3, background: C.red, opacity: 0.7 }} />
+            {/* Red accent stripe */}
+            <div style={{ height: 3, background: C.red, opacity: 0.75 }} />
 
             {/* Header */}
             <div style={{
@@ -572,15 +623,17 @@ export default function Sidebar({
             }}>
               <div style={{
                 width: 36, height: 36, borderRadius: R.lg,
-                background:  C.redBg,
-                border:      `1px solid ${C.redBd}`,
-                display:     'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink:  0,
+                background: C.redBg, border: `1px solid ${C.redBd}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
               }}>
                 <IconLogout c={C.red} size={16} />
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, marginBottom: SP[1], fontFamily: F.display }}>
+                <div style={{
+                  fontSize: F.md, fontWeight: F.bold, color: C.ink,
+                  marginBottom: SP[1], fontFamily: F.display, letterSpacing: '-0.01em',
+                }}>
                   Confirmer la déconnexion
                 </div>
                 <div style={{ fontSize: F.sm, color: C.muted, lineHeight: F.lhRelaxed }}>
@@ -594,6 +647,7 @@ export default function Sidebar({
                   background: 'transparent', border: 'none',
                   cursor: 'pointer', padding: SP[0.5],
                   display: 'flex', color: C.dim,
+                  borderRadius: R.sm,
                   transition: `color ${TR.fast}`,
                 }}
               >
@@ -602,14 +656,17 @@ export default function Sidebar({
             </div>
 
             {/* Actions */}
-            <div style={{ padding: `${SP[5]} ${SP[6]}`, display: 'flex', gap: SP[2] }}>
+            <div style={{
+              padding: `${SP[4]} ${SP[6]} ${SP[5]}`,
+              display: 'flex', gap: SP[2],
+            }}>
               <button
                 className="btn-red"
                 onClick={() => { setShowLogoutModal(false); onLogout() }}
                 style={{
                   flex: 1, height: 40,
                   border: 'none', borderRadius: R.md,
-                  fontSize: F.base, fontWeight: F.bold,
+                  fontSize: F.sm, fontWeight: F.bold,
                   cursor: 'pointer', fontFamily: F.body,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
                 }}
@@ -623,8 +680,9 @@ export default function Sidebar({
                 style={{
                   padding: `0 ${SP[5]}`, height: 40,
                   borderRadius: R.md, cursor: 'pointer',
-                  fontSize: F.base, fontWeight: F.medium,
+                  fontSize: F.sm, fontWeight: F.medium,
                   fontFamily: F.body, whiteSpace: 'nowrap',
+                  flex: 0,
                 }}
               >
                 Annuler

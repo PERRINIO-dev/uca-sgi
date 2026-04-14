@@ -2,8 +2,9 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MERAM — Papier Design System
-   CSS Custom Properties (mirror of tokens.ts — kept in sync manually)
-   Used by CSS-class-based rules that cannot reference TypeScript tokens.
+   CSS Custom Properties + Global Component Library
+   Single source of truth for CSS-class-based styling.
+   All values mirror tokens.ts exactly.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root {
   /* Light canvas */
@@ -25,10 +26,11 @@
   --dim:         #A8906E;
 
   /* Cognac accent (kept as --amber for compat) */
-  --amber:       #A0531A;
-  --amber-hov:   #844416;
-  --amber-dim:   #C87B45;
-  --amber-glow:  rgba(160,83,26,0.12);
+  --amber:        #A0531A;
+  --amber-hov:    #844416;
+  --amber-active: #6A3610;
+  --amber-dim:    #C87B45;
+  --amber-glow:   rgba(160,83,26,0.12);
 
   /* Status — light theme */
   --green:       #166534;  --green-bg:    #F0FDF4;  --green-bd:    #BBF7D0;
@@ -36,32 +38,37 @@
   --red:         #991B1B;  --red-bg:      #FEF2F2;  --red-bd:      #FECACA;
   --blue:        #1E40AF;  --blue-bg:     #EFF6FF;  --blue-bd:     #BFDBFE;
   --gold:        #78350F;  --gold-bg:     #FFFBEB;  --gold-bd:     #FDE68A;
+  --purple:      #5B21B6;  --purple-bg:   #F5F3FF;  --purple-bd:   #DDD6FE;
 
   /* Sidebar espresso */
   --sidebar-bg:    #1B0F07;
   --sidebar-bd:    #3E2618;
   --sidebar-ink:   #FAF5EE;
+  --sidebar-text:  #D8C8B0;
+  --sidebar-muted: #8A7260;
 }
 
 /* ── Keyframe animations ──────────────────────────────────────────────────── */
 @keyframes modalBackdrop  { from { opacity: 0 }                                          to { opacity: 1 } }
-@keyframes modalPanel     { from { opacity: 0; transform: translateY(20px) scale(0.96) } to { opacity: 1; transform: translateY(0) scale(1) } }
+@keyframes modalPanel     { from { opacity: 0; transform: translateY(16px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
 @keyframes slideDown      { from { opacity: 0; transform: translateY(-8px) }             to { opacity: 1; transform: translateY(0) } }
 @keyframes slideUp        { from { opacity: 0; transform: translateY(8px) }              to { opacity: 1; transform: translateY(0) } }
-@keyframes slideInRight   { from { opacity: 0; transform: translateX(16px) }             to { opacity: 1; transform: translateX(0) } }
+@keyframes slideInRight   { from { opacity: 0; transform: translateX(20px) }             to { opacity: 1; transform: translateX(0) } }
 @keyframes fadeIn         { from { opacity: 0 }                                          to { opacity: 1 } }
-@keyframes fadeInUp       { from { opacity: 0; transform: translateY(14px) }             to { opacity: 1; transform: translateY(0) } }
+@keyframes fadeInUp       { from { opacity: 0; transform: translateY(12px) }             to { opacity: 1; transform: translateY(0) } }
 @keyframes fadeInScale    { from { opacity: 0; transform: scale(0.97) }                  to { opacity: 1; transform: scale(1) } }
 @keyframes spin           { to   { transform: rotate(360deg) } }
 @keyframes shimmer        { 0%   { background-position: -200% 0 }                        100% { background-position: 200% 0 } }
 @keyframes pulseCognac    { 0%, 100% { box-shadow: 0 0 0 0 rgba(160,83,26,0.30) }        50%  { box-shadow: 0 0 0 6px rgba(160,83,26,0) } }
-@keyframes skeletonPulse  { 0%, 100% { opacity: 1 }                                      50%  { opacity: 0.5 } }
+@keyframes skeletonPulse  { 0%, 100% { opacity: 1 }                                      50%  { opacity: 0.45 } }
 
 /* ── Page-entry animation ─────────────────────────────────────────────────── */
-.fade-in-up { animation: fadeInUp 0.30s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.fade-in-up { animation: fadeInUp 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box }
+
+html { scroll-behavior: smooth }
 
 body {
   background:              var(--bg);
@@ -73,7 +80,24 @@ body {
   line-height:             1.5;
 }
 
-/* ── Input / select / textarea ───────────────────────────────────────────── */
+/* Text selection */
+::selection {
+  background: rgba(160,83,26,0.15);
+  color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOCUS MANAGEMENT
+   Global keyboard focus ring — cognac outline, warm glow.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:focus-visible {
+  outline:        2px solid var(--amber) !important;
+  outline-offset: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INPUT / SELECT / TEXTAREA — base transitions
+   ═══════════════════════════════════════════════════════════════════════════ */
 input, select, textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -85,15 +109,66 @@ textarea:focus-visible {
   box-shadow:   0 0 0 3px var(--amber-glow) !important;
 }
 
-/* ── iOS: prevent auto-zoom on input focus ─────────────────────────────── */
+/* iOS: prevent auto-zoom on input focus */
 @supports (-webkit-touch-callout: none) {
   input, select, textarea { font-size: 16px !important; }
 }
 
+/* ── Styled input class ─────────────────────────────────────────────────── */
+.input-field {
+  width:         100%;
+  height:        40px;
+  padding:       0 12px;
+  border-radius: 8px;
+  border:        1.5px solid var(--border);
+  font-size:     14px;
+  color:         var(--ink);
+  background:    var(--surface-el);
+  font-family:   var(--font-dm), 'DM Sans', system-ui, sans-serif;
+  transition:    border-color 0.15s ease, box-shadow 0.15s ease, background 0.12s ease;
+  appearance:    none;
+}
+.input-field::placeholder { color: var(--dim); opacity: 1; }
+.input-field:focus-visible {
+  outline:      none;
+  border-color: var(--amber);
+  box-shadow:   0 0 0 3px var(--amber-glow);
+  background:   var(--surface-el);
+}
+.input-field:disabled {
+  opacity:    0.55;
+  cursor:     not-allowed;
+  background: var(--surface-sub);
+}
+textarea.input-field {
+  height:     auto;
+  padding:    10px 12px;
+  resize:     vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+/* ── Form label ─────────────────────────────────────────────────────────── */
+.form-label {
+  display:        block;
+  font-size:      11px;
+  font-weight:    700;
+  color:          var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family:    var(--font-dm), 'DM Sans', system-ui, sans-serif;
+  margin-bottom:  6px;
+}
+.form-helper {
+  font-size:   12px;
+  color:       var(--muted);
+  margin-top:  4px;
+  line-height: 1.4;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    BUTTON SYSTEM
-   Global transitions applied to all button elements.
-   Color themes applied via modifier classes (.btn-amber, etc.)
+   Global transitions + modifier classes.
    ═══════════════════════════════════════════════════════════════════════════ */
 button {
   transition:
@@ -107,7 +182,7 @@ button {
 }
 button:not(:disabled):active {
   transform: translateY(1px) scale(0.98) !important;
-  opacity:   0.90 !important;
+  opacity:   0.88 !important;
 }
 button:disabled {
   cursor:  not-allowed !important;
@@ -118,47 +193,68 @@ button:focus-visible {
   outline-offset: 2px !important;
 }
 
-/* ── Cognac / Amber — primary CTA ──────────────────────────────────────── */
-/* Reserved: the dominant action on any screen. Use once per view hierarchy. */
+/* ── Primary: Cognac / Amber ──────────────────────────────────────────── */
 .btn-amber {
-  background: linear-gradient(135deg, #6A3610 0%, #844416 45%, #A0531A 100%) !important;
-  border: none !important;
-  color: #FAF5EE !important;
+  background:  linear-gradient(160deg, #844416 0%, #A0531A 55%, #B86020 100%) !important;
+  border:      none !important;
+  color:       #FAF5EE !important;
   font-weight: 700 !important;
-  position: relative;
-  overflow: hidden;
+  position:    relative;
+  overflow:    hidden;
+  box-shadow:  inset 0 1px 0 rgba(255,255,255,0.12) !important;
 }
 .btn-amber::after {
   content: '';
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, transparent 100%);
+  background: linear-gradient(160deg, rgba(255,255,255,0.12) 0%, transparent 60%);
   opacity: 0;
   transition: opacity 0.18s ease;
+  pointer-events: none;
 }
 .btn-amber:hover:not(:disabled)::after  { opacity: 1; }
 .btn-amber:hover:not(:disabled) {
-  box-shadow: 0 4px 20px rgba(160,83,26,0.40) !important;
+  box-shadow: 0 4px 20px rgba(160,83,26,0.42), inset 0 1px 0 rgba(255,255,255,0.12) !important;
   transform:  translateY(-1px) !important;
 }
+.btn-amber:active:not(:disabled) {
+  box-shadow: 0 2px 8px rgba(160,83,26,0.30), inset 0 1px 0 rgba(255,255,255,0.10) !important;
+}
 
-/* ── Surface — default secondary action ─────────────────────────────────── */
-/* A clean raised button on the cream canvas. Visible but not loud. */
+/* ── Outline Amber — secondary cognac action ─────────────────────────── */
+.btn-outline-amber {
+  background:   transparent !important;
+  border:       1.5px solid var(--amber) !important;
+  color:        var(--amber) !important;
+  font-weight:  600 !important;
+}
+.btn-outline-amber:hover:not(:disabled) {
+  background:  rgba(160,83,26,0.08) !important;
+  border-color: var(--amber-hov) !important;
+  color:       var(--amber-hov) !important;
+  box-shadow:  0 2px 10px rgba(160,83,26,0.14) !important;
+  transform:   translateY(-1px) !important;
+}
+
+/* ── Surface — clean raised on cream canvas ──────────────────────────── */
 .btn-surface {
-  background:   var(--surface-el) !important;
-  border:       1px solid var(--border) !important;
-  color:        var(--text) !important;
+  background:  var(--surface-el) !important;
+  border:      1px solid var(--border) !important;
+  color:       var(--text) !important;
+  box-shadow:  0 1px 3px rgba(60,30,10,0.07) !important;
 }
 .btn-surface:hover:not(:disabled) {
   background:   var(--surface-hov) !important;
   border-color: var(--muted) !important;
   color:        var(--ink) !important;
+  box-shadow:   0 2px 8px rgba(60,30,10,0.10) !important;
+  transform:    translateY(-1px) !important;
 }
 
-/* ── Ghost — tertiary / contextual action ────────────────────────────────── */
+/* ── Ghost — transparent contextual ─────────────────────────────────── */
 .btn-ghost {
-  background:   transparent !important;
-  border:       1px solid var(--border) !important;
-  color:        var(--muted) !important;
+  background: transparent !important;
+  border:     1px solid var(--border) !important;
+  color:      var(--muted) !important;
 }
 .btn-ghost:hover:not(:disabled) {
   background:   var(--surface-hov) !important;
@@ -166,11 +262,11 @@ button:focus-visible {
   color:        var(--text) !important;
 }
 
-/* ── Ghost danger — destructive (confirm before proceeding) ──────────────── */
+/* ── Ghost danger ─────────────────────────────────────────────────────── */
 .btn-ghost-danger {
-  background:   transparent !important;
-  border:       1px solid var(--border) !important;
-  color:        var(--muted) !important;
+  background: transparent !important;
+  border:     1px solid var(--border) !important;
+  color:      var(--muted) !important;
 }
 .btn-ghost-danger:hover:not(:disabled) {
   background:   var(--red-bg) !important;
@@ -178,31 +274,33 @@ button:focus-visible {
   color:        var(--red) !important;
 }
 
-/* ── Green — confirm / approve ──────────────────────────────────────────── */
+/* ── Green — confirm / approve ─────────────────────────────────────────── */
 .btn-green {
   background: #14532D !important;
-  border: none !important;
-  color: #F0FDF4 !important;
+  border:     none !important;
+  color:      #F0FDF4 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10) !important;
 }
 .btn-green:hover:not(:disabled) {
   background: #166534 !important;
-  box-shadow: 0 4px 16px rgba(20,83,45,0.35) !important;
+  box-shadow: 0 4px 16px rgba(20,83,45,0.35), inset 0 1px 0 rgba(255,255,255,0.10) !important;
   transform:  translateY(-1px) !important;
 }
 
-/* ── Red / danger — irreversible destructive action ─────────────────────── */
+/* ── Red / danger ─────────────────────────────────────────────────────── */
 .btn-red {
   background: #991B1B !important;
-  border: none !important;
-  color: #FEF2F2 !important;
+  border:     none !important;
+  color:      #FEF2F2 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.10) !important;
 }
 .btn-red:hover:not(:disabled) {
   background: #B91C1C !important;
-  box-shadow: 0 4px 16px rgba(153,27,27,0.35) !important;
+  box-shadow: 0 4px 16px rgba(153,27,27,0.35), inset 0 1px 0 rgba(255,255,255,0.10) !important;
   transform:  translateY(-1px) !important;
 }
 
-/* ── Icon-only ghost ─────────────────────────────────────────────────────── */
+/* ── Icon-only ghost ──────────────────────────────────────────────────── */
 .btn-icon {
   background:   transparent !important;
   border:       1px solid transparent !important;
@@ -224,8 +322,151 @@ button:focus-visible {
 .btn-dark-danger  { }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TABLE ROWS
+   PAGE LAYOUT PATTERNS
    ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Page header — standardized across all authenticated pages */
+.page-header {
+  display:         flex;
+  align-items:     flex-end;
+  justify-content: space-between;
+  flex-wrap:       wrap;
+  gap:             16px;
+  margin-bottom:   32px;
+  padding-bottom:  20px;
+  border-bottom:   1px solid var(--border-sub);
+}
+
+/* Eyebrow label above page title */
+.page-kicker {
+  font-size:      11px;
+  font-weight:    700;
+  color:          var(--amber);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family:    var(--font-dm), 'DM Sans', system-ui, sans-serif;
+  margin-bottom:  6px;
+}
+
+/* Main page title — Fraunces display */
+.page-title {
+  font-size:      24px;
+  font-weight:    700;
+  color:          var(--ink);
+  letter-spacing: -0.03em;
+  line-height:    1.2;
+  font-family:    var(--font-fraunces), 'Fraunces', Georgia, serif;
+  margin:         0;
+  font-optical-sizing: auto;
+}
+
+/* Subtitle below page title */
+.page-subtitle {
+  font-size:   13px;
+  color:       var(--muted);
+  margin-top:  4px;
+  line-height: 1.5;
+  font-family: var(--font-dm), 'DM Sans', system-ui, sans-serif;
+}
+
+/* Section heading within a page */
+.section-heading {
+  font-size:      16px;
+  font-weight:    600;
+  color:          var(--ink);
+  letter-spacing: -0.02em;
+  line-height:    1.3;
+  font-family:    var(--font-fraunces), 'Fraunces', Georgia, serif;
+  margin:         0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANEL / CARD SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.panel {
+  background:   var(--surface);
+  border-radius: 12px;
+  border:        1px solid var(--border);
+  box-shadow:    0 2px 8px rgba(60,30,10,0.09), 0 1px 3px rgba(60,30,10,0.06);
+  padding:       24px;
+}
+
+.panel-sm {
+  background:    var(--surface);
+  border-radius: 10px;
+  border:        1px solid var(--border);
+  box-shadow:    0 1px 4px rgba(60,30,10,0.07);
+  padding:       16px;
+}
+
+.panel-elevated {
+  background:    var(--surface-el);
+  border-radius: 12px;
+  border:        1px solid var(--border);
+  box-shadow:    0 4px 16px rgba(60,30,10,0.11), 0 2px 6px rgba(60,30,10,0.07);
+  padding:       24px;
+}
+
+/* Interactive cards */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
+}
+.card-hover:hover {
+  box-shadow:   0 8px 28px rgba(60,30,10,0.14) !important;
+  transform:    translateY(-2px);
+  border-color: var(--border) !important;
+}
+
+.kpi-card {
+  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
+}
+.kpi-card:hover {
+  box-shadow: 0 8px 28px rgba(60,30,10,0.13), 0 2px 8px rgba(160,83,26,0.07) !important;
+  transform:  translateY(-2px);
+}
+
+.card-premium {
+  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
+}
+.card-premium:hover {
+  box-shadow: 0 10px 36px rgba(60,30,10,0.15) !important;
+  transform:  translateY(-2px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE SYSTEM
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.table-premium {
+  width:           100%;
+  border-collapse: collapse;
+  font-family:     var(--font-dm), 'DM Sans', system-ui, sans-serif;
+}
+.table-premium th {
+  padding:        11px 16px;
+  text-align:     left;
+  font-size:      11px;
+  font-weight:    700;
+  color:          var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom:  1.5px solid var(--border);
+  white-space:    nowrap;
+  background:     var(--surface-sub);
+}
+.table-premium th:first-child { border-radius: 8px 0 0 0; }
+.table-premium th:last-child  { border-radius: 0 8px 0 0; }
+.table-premium td {
+  padding:        14px 16px;
+  font-size:      13px;
+  color:          var(--text);
+  border-bottom:  1px solid var(--border-sub);
+  vertical-align: middle;
+}
+.table-premium tr:last-child td { border-bottom: none; }
+
+/* Row hover classes */
 .trow:hover > td,
 .trow:hover > th {
   background-color: var(--surface-hov) !important;
@@ -242,37 +483,8 @@ button:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   INTERACTIVE CARDS
-   ═══════════════════════════════════════════════════════════════════════════ */
-.card-hover {
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease !important;
-}
-.card-hover:hover {
-  box-shadow:   0 8px 28px rgba(60,30,10,0.14) !important;
-  transform:    translateY(-2px);
-  border-color: var(--border) !important;
-}
-
-.kpi-card {
-  transition: box-shadow 0.2s ease, transform 0.2s ease !important;
-}
-.kpi-card:hover {
-  box-shadow: 0 8px 28px rgba(60,30,10,0.13), 0 2px 8px rgba(160,83,26,0.08) !important;
-  transform:  translateY(-2px);
-}
-
-.card-premium {
-  transition: box-shadow 0.22s ease, transform 0.18s ease !important;
-}
-.card-premium:hover {
-  box-shadow: 0 8px 32px rgba(60,30,10,0.14) !important;
-  transform:  translateY(-2px);
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
    SPINNERS
    ═══════════════════════════════════════════════════════════════════════════ */
-/* Default — dark on light bg */
 .spinner {
   width: 15px; height: 15px;
   border: 2px solid rgba(60,30,10,0.15);
@@ -282,7 +494,6 @@ button:focus-visible {
   display: inline-block;
   flex-shrink: 0;
 }
-/* On cognac button — cream spinner */
 .btn-amber .spinner,
 .spinner-dark {
   width: 15px; height: 15px;
@@ -293,7 +504,6 @@ button:focus-visible {
   display: inline-block;
   flex-shrink: 0;
 }
-/* Inverted context (dark sidebar) — warm light spinner */
 .spinner-light {
   width: 15px; height: 15px;
   border: 2px solid rgba(250,245,238,0.20);
@@ -303,7 +513,6 @@ button:focus-visible {
   display: inline-block;
   flex-shrink: 0;
 }
-/* Cognac spinner — loading in neutral contexts */
 .spinner-amber {
   width: 15px; height: 15px;
   border: 2px solid rgba(160,83,26,0.18);
@@ -315,7 +524,7 @@ button:focus-visible {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SCROLLBAR
+   SCROLLBAR — warm, minimal
    ═══════════════════════════════════════════════════════════════════════════ */
 ::-webkit-scrollbar          { width: 5px; height: 5px }
 ::-webkit-scrollbar-track    { background: transparent }
@@ -329,12 +538,13 @@ button:focus-visible {
   display:        inline-flex;
   align-items:    center;
   gap:            5px;
-  padding:        3px 10px;
+  padding:        3px 9px;
   border-radius:  9999px;
   font-size:      11px;
   font-weight:    600;
   letter-spacing: 0.02em;
   white-space:    nowrap;
+  font-family:    var(--font-dm), 'DM Sans', system-ui, sans-serif;
 }
 .status-dot {
   width:         5px;
@@ -343,8 +553,23 @@ button:focus-visible {
   flex-shrink:   0;
 }
 
+/* ── Count badge (nav badges, notification counts) ──────────────────── */
+.count-badge {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  min-width:       18px;
+  height:          18px;
+  padding:         0 5px;
+  border-radius:   9999px;
+  font-size:       10px;
+  font-weight:     700;
+  line-height:     1;
+  flex-shrink:     0;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
-   SECTION LABEL
+   SECTION LABEL — uppercase divider
    ═══════════════════════════════════════════════════════════════════════════ */
 .section-label {
   font-family:    var(--font-dm), 'DM Sans', system-ui, sans-serif;
@@ -355,16 +580,62 @@ button:focus-visible {
   color:          var(--dim);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   MODAL ANIMATION
-   ═══════════════════════════════════════════════════════════════════════════ */
-.modal-overlay { animation: modalBackdrop 0.18s ease forwards; }
-.modal-panel   { animation: modalPanel    0.24s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+/* Panel section label with cognac accent bar */
+.panel-section-label {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  margin-bottom: 16px;
+}
+.panel-section-label::before {
+  content:       '';
+  display:       block;
+  width:         3px;
+  height:        14px;
+  border-radius: 2px;
+  background:    var(--amber);
+  flex-shrink:   0;
+}
+.panel-section-label span {
+  font-size:      11px;
+  font-weight:    700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color:          var(--dim);
+  font-family:    var(--font-dm), 'DM Sans', system-ui, sans-serif;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DRAWER SLIDE-IN
+   MODAL / OVERLAY SYSTEM
    ═══════════════════════════════════════════════════════════════════════════ */
-.drawer-panel { animation: slideInRight 0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.modal-overlay { animation: modalBackdrop 0.18s ease forwards; }
+.modal-panel   { animation: modalPanel    0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+/* ── Drawer slide-in from right ─────────────────────────────────────── */
+.drawer-panel { animation: slideInRight 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+
+/* ── Toast notification ─────────────────────────────────────────────── */
+.toast {
+  position:     fixed;
+  bottom:       24px;
+  left:         50%;
+  transform:    translateX(-50%);
+  z-index:      500;
+  background:   var(--surface-el);
+  border:       1px solid var(--border);
+  border-radius: 12px;
+  padding:      12px 16px;
+  display:      flex;
+  align-items:  center;
+  gap:          12px;
+  box-shadow:   0 16px 48px rgba(60,30,10,0.15), 0 6px 16px rgba(60,30,10,0.09);
+  max-width:    calc(100vw - 32px);
+  animation:    slideUp 0.28s ease both;
+  font-family:  var(--font-dm), 'DM Sans', system-ui, sans-serif;
+}
+.toast-amber  { border-left: 3px solid var(--amber); }
+.toast-green  { border-left: 3px solid var(--green); }
+.toast-red    { border-left: 3px solid var(--red);   }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SKELETON LOADER
@@ -389,12 +660,14 @@ button:focus-visible {
 /* ═══════════════════════════════════════════════════════════════════════════
    TYPOGRAPHY UTILITIES
    ═══════════════════════════════════════════════════════════════════════════ */
-/* Tabular numbers — always use for financial and data figures */
+
+/* Tabular numbers — for financial and data figures */
 .num {
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum";
-  font-family: var(--font-dm), 'DM Sans', system-ui, sans-serif;
+  font-variant-numeric:   tabular-nums;
+  font-feature-settings:  "tnum";
+  font-family:            var(--font-dm), 'DM Sans', system-ui, sans-serif;
 }
+
 /* Monospace reference codes */
 .mono {
   font-family:           var(--font-plex-mono), 'IBM Plex Mono', monospace;
@@ -402,6 +675,7 @@ button:focus-visible {
   font-feature-settings: "tnum";
   letter-spacing:        0.02em;
 }
+
 /* Cognac gradient text for hero display */
 .text-amber {
   background:              linear-gradient(135deg, #A0531A 0%, #C87B45 100%);
@@ -409,16 +683,116 @@ button:focus-visible {
   -webkit-text-fill-color: transparent;
   background-clip:         text;
 }
+
 /* Display font (Fraunces) */
 .font-display { font-family: var(--font-fraunces), 'Fraunces', Georgia, serif !important; }
 .font-body    { font-family: var(--font-dm), 'DM Sans', system-ui, sans-serif !important; }
 .font-mono    { font-family: var(--font-plex-mono), 'IBM Plex Mono', monospace !important; }
+
+/* KPI value display */
+.kpi-value {
+  font-size:           38px;
+  font-weight:         700;
+  color:               var(--ink);
+  letter-spacing:      -0.04em;
+  line-height:         1;
+  font-family:         var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-optical-sizing: auto;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-value-sm {
+  font-size:           28px;
+  font-weight:         700;
+  color:               var(--ink);
+  letter-spacing:      -0.03em;
+  line-height:         1;
+  font-family:         var(--font-fraunces), 'Fraunces', Georgia, serif;
+  font-optical-sizing: auto;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SEGMENT TABS (pill control)
    ═══════════════════════════════════════════════════════════════════════════ */
 .seg-btn {
   transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease !important;
+}
+.seg-container {
+  display:       inline-flex;
+  align-items:   center;
+  background:    var(--surface-sub);
+  border-radius: 9999px;
+  padding:       3px;
+  gap:           2px;
+}
+.seg-btn-item {
+  padding:       6px 14px;
+  border-radius: 9999px;
+  border:        none;
+  font-size:     13px;
+  font-weight:   500;
+  cursor:        pointer;
+  font-family:   var(--font-dm), 'DM Sans', system-ui, sans-serif;
+  transition:    background 0.14s ease, color 0.14s ease, box-shadow 0.14s ease !important;
+  background:    transparent;
+  color:         var(--muted);
+}
+.seg-btn-item.active {
+  background: var(--surface-el);
+  color:      var(--ink);
+  box-shadow: 0 1px 4px rgba(60,30,10,0.12);
+  font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DIVIDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+.divider {
+  height:     1px;
+  background: var(--border-sub);
+  margin:     0;
+  border:     none;
+}
+.divider-strong {
+  height:     1px;
+  background: var(--border);
+  margin:     0;
+  border:     none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EMPTY STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.empty-state {
+  display:         flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  padding:         48px 24px;
+  text-align:      center;
+  gap:             12px;
+}
+.empty-state-icon {
+  width:         48px;
+  height:        48px;
+  border-radius: 12px;
+  background:    var(--surface-sub);
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.empty-state-title {
+  font-size:   15px;
+  font-weight: 600;
+  color:       var(--ink);
+  font-family: var(--font-fraunces), 'Fraunces', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+.empty-state-desc {
+  font-size:   13px;
+  color:       var(--muted);
+  line-height: 1.5;
+  max-width:   280px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -427,4 +801,8 @@ button:focus-visible {
 @media print {
   .no-print { display: none !important; }
   body { background: white !important; color: #1A0F06 !important; }
+  .panel, .panel-sm, .panel-elevated {
+    box-shadow: none !important;
+    border: 1px solid #DDD4C5 !important;
+  }
 }

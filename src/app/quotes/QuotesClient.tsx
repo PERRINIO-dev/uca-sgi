@@ -344,33 +344,32 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
     <PageLayout profile={profile} activeRoute="/quotes" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
-      <div className="fade-in-up" style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, color: C.ink, margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
-              Devis
-            </h1>
-            <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
-              {totalCount} devis au total · Confirmez pour créer une vente
-            </p>
-          </div>
-          <button
-            onClick={() => push('/sales/new')}
-            disabled={navPending}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px', borderRadius: 10, border: 'none',
-              background: 'linear-gradient(135deg,#2563EB,#1D4ED8)',
-              color: '#fff', fontSize: 13, fontWeight: 700, cursor: navPending ? 'not-allowed' : 'pointer',
-              fontFamily: F.body, boxShadow: '0 4px 16px rgba(37,99,235,0.3)',
-            }}
-          >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            Nouvelle vente
-          </button>
+      <div className="fade-in-up page-header">
+        <div>
+          <p className="page-kicker">Avant-vente</p>
+          <h1 className="page-title">Devis</h1>
+          <p className="page-subtitle">
+            {totalCount} devis au total · Confirmez pour convertir en vente
+          </p>
         </div>
+        <button
+          className="btn-amber"
+          onClick={() => push('/sales/new')}
+          disabled={navPending}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: SP[2],
+            padding: `0 ${SP[4]}`, height: 40,
+            borderRadius: R.md, border: 'none',
+            fontSize: F.sm, fontWeight: F.bold,
+            cursor: navPending ? 'not-allowed' : 'pointer',
+            fontFamily: F.body,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+            <path d="M6.5 1v11M1 6.5h11" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          Nouvelle vente
+        </button>
       </div>
 
       {/* ── Filters ── */}
@@ -403,11 +402,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
           return (
             <button key={s} onClick={() => applyFilters({ status: s })}
               style={{
-                padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
+                padding: '8px 14px', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold,
                 cursor: 'pointer', fontFamily: F.body,
-                border: `1.5px solid ${active ? C.blue : C.border}`,
-                background: active ? C.blueBg : C.surface,
-                color: active ? C.blue : C.muted,
+                border: `1.5px solid ${active ? C.amber : C.border}`,
+                background: active ? C.amberGlow : C.surface,
+                color: active ? C.amber : C.muted,
               }}>
               {labels[s]}
             </button>
@@ -433,7 +432,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
           </div>
         </div>
       ) : (
-        <div style={{ background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+        <div style={{ background: C.surface, borderRadius: 16, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
               <thead>
@@ -458,7 +457,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                     <React.Fragment key={quote.id}>
                       <tr style={{ cursor: 'pointer' }} onClick={() => setExpanded(isExp ? null : quote.id)}>
                         <td style={TD}>
-                          <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, fontWeight: 700, color: C.gold }}>
+                          <span style={{ fontFamily: F.mono, fontSize: 13, fontWeight: 700, color: C.gold }}>
                             {quote.quote_number || '—'}
                           </span>
                         </td>
@@ -646,8 +645,8 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CONVERT MODAL ═══════════════════════════════ */}
       {convertId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(6px)', fontFamily: F.body }}>
-          <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 480, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal, padding: SP[5], backdropFilter: 'blur(6px)', fontFamily: F.body }}>
+          <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 480, boxShadow: SH.xl, overflow: 'hidden', border: `1px solid ${C.border}` }}>
 
             {convertSuccess ? (
               /* ── Success state ── */
@@ -699,7 +698,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                 </div>
 
                 <div style={{ padding: '20px 24px', maxHeight: '70vh', overflowY: 'auto' }}>
-                  <div style={{ padding: '12px 14px', background: C.blueBg, borderRadius: 10, border: `1px solid ${C.blue}30`, fontSize: 12, color: C.blue, marginBottom: 16, fontFamily: F.body }}>
+                  <div style={{ padding: '12px 14px', background: C.amberGlow, borderRadius: R.md, border: `1px solid rgba(160,83,26,0.20)`, fontSize: 12, color: C.amber, marginBottom: 16, fontFamily: F.body }}>
                     La vente sera enregistrée et la commande envoyée à l'entrepôt. Le stock sera réservé.
                   </div>
 
@@ -745,7 +744,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                         Paiement complet
                       </button>
                       <button type="button" onClick={() => setConvertAmount('')}
-                        style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${convertAmount === '' ? C.blue : C.border}`, background: convertAmount === '' ? C.blueBg : C.bg, color: convertAmount === '' ? C.blue : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
+                        style={{ flex: 1, padding: '8px', borderRadius: R.sm, border: `1.5px solid ${convertAmount === '' ? C.amber : C.border}`, background: convertAmount === '' ? C.amberGlow : C.bg, color: convertAmount === '' ? C.amber : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                         Sans paiement
                       </button>
                     </div>
@@ -797,8 +796,8 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
       {/* ═══════════════════════ CANCEL MODAL ════════════════════════════════ */}
       {cancelId && (
-        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: 20, backdropFilter: 'blur(6px)', fontFamily: F.body }}>
-          <div className="modal-panel" style={{ background: C.surface, borderRadius: 18, width: '100%', maxWidth: 420, boxShadow: '0 32px 80px rgba(0,0,0,0.22)', overflow: 'hidden' }}>
+        <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal, padding: SP[5], backdropFilter: 'blur(6px)', fontFamily: F.body }}>
+          <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 420, boxShadow: SH.xl, overflow: 'hidden', border: `1px solid ${C.border}` }}>
             <div style={{ height: 4, background: 'linear-gradient(90deg,#EF4444,#F87171)' }} />
             <div style={{ padding: '20px 24px 16px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'flex-start', gap: 14 }}>
               <div style={{ width: 40, height: 40, borderRadius: 10, background: C.redBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>

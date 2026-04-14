@@ -419,42 +419,32 @@ export default function AdminClient({
 
         {/* ── Banner ── */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '11px 16px', borderRadius: 10, marginBottom: 28,
-          background: C.blueBg,
-          border: `1px solid #BFDBFE`,
+          display: 'flex', alignItems: 'center', gap: SP[2],
+          padding: `${SP[2.5]} ${SP[4]}`, borderRadius: R.lg, marginBottom: SP[7],
+          background: C.amberGlow,
+          border: `1px solid rgba(160,83,26,0.22)`,
         }}>
-          <IconShield size={15} color={C.blue} />
-          <span style={{ fontSize: 12, fontWeight: 600, color: C.blue, letterSpacing: '0.01em' }}>
+          <IconShield size={15} color={C.amber} />
+          <span style={{ fontSize: F.xs, fontWeight: F.semibold, color: C.amber, letterSpacing: '0.01em', fontFamily: F.body }}>
             Administration Plateforme — vue transversale, toutes entreprises
           </span>
         </div>
 
         {/* ── Header ── */}
-        <div style={{
-          display: 'flex', alignItems: 'flex-start',
-          justifyContent: 'space-between', gap: 16,
-          marginBottom: 28, flexWrap: 'wrap',
-        }}>
+        <div className="fade-in-up page-header">
           <div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: C.ink, letterSpacing: '-0.03em' }}>
-              Gestion de la plateforme
-            </h1>
-            <p style={{ margin: '5px 0 0', fontSize: 13, color: C.muted }}>
+            <p className="page-kicker">MERAM Platform</p>
+            <h1 className="page-title">Gestion de la plateforme</h1>
+            <p className="page-subtitle">
               Gérez les entreprises clientes et consultez l'historique des actions.
             </p>
           </div>
           <button
-            className="btn-meram"
+            className="btn-amber"
             onClick={() => { setShowModal(true); setFormError(null) }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '10px 18px',
-              borderRadius: 9, fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', flexShrink: 0, fontFamily: F.body,
-            }}
+            style={{ height: 40, padding: `0 ${SP[4]}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}
           >
-            <IconPlus size={14} color="#fff" />
+            <IconPlus size={14} color="#FAF5EE" />
             Nouvelle entreprise
           </button>
         </div>
@@ -479,12 +469,12 @@ export default function AdminClient({
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {[
             { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber, bg: C.goldBg },
-            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.blue,  bg: C.blueBg },
+            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.amber, bg: C.goldBg },
             { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenBg },
           ].map(({ label, value, Icon, accent, bg }) => (
             <div key={label} className="card-hover" style={{
               background: C.surface, borderRadius: 14, overflow: 'hidden',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: `1px solid ${C.border}`,
+              boxShadow: '0 1px 4px rgba(60,30,10,0.06)', border: `1px solid ${C.border}`,
             }}>
               <div style={{ height: 3, background: `linear-gradient(90deg, ${accent} 0%, ${accent}66 100%)` }} />
               <div style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -517,11 +507,11 @@ export default function AdminClient({
                 color: activeTab === id ? C.ink : C.muted,
                 fontSize: 13, fontWeight: activeTab === id ? 600 : 400,
                 cursor: 'pointer', fontFamily: F.body,
-                boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                boxShadow: activeTab === id ? '0 1px 4px rgba(60,30,10,0.08)' : 'none',
                 transition: 'all 0.15s',
               }}
             >
-              <Icon size={14} color={activeTab === id ? C.blue : C.muted} />
+              <Icon size={14} color={activeTab === id ? C.amber : C.muted} />
               {label}
             </button>
           ))}
@@ -532,7 +522,7 @@ export default function AdminClient({
           <div style={{
             background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(60,30,10,0.05)', overflow: 'hidden',
           }}>
             {companies.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', color: C.muted, fontSize: 13 }}>
@@ -649,7 +639,7 @@ export default function AdminClient({
           <div style={{
             background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`,
-            boxShadow: '0 1px 3px rgba(0,0,0,0.05)', overflow: 'hidden',
+            boxShadow: '0 1px 3px rgba(60,30,10,0.05)', overflow: 'hidden',
           }}>
             {/* Filter bar */}
             <div style={{
@@ -752,7 +742,7 @@ export default function AdminClient({
           position: 'fixed', top: 0, right: 0, bottom: 0,
           width: '100%', maxWidth: 440,
           background: '#FDFCF9', zIndex: 501,
-          boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
+          boxShadow: '-8px 0 40px rgba(60,30,10,0.12)',
           display: 'flex', flexDirection: 'column',
           fontFamily: F.body,
         }}>
@@ -865,12 +855,13 @@ export default function AdminClient({
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           padding: '7px 12px',
                           border: `1px solid ${C.border}`, borderRadius: 7,
-                          background: C.blueBg, color: C.blue,
+                          background: C.amberGlow, color: C.amber,
+                          border: `1px solid rgba(160,83,26,0.28)`,
                           fontSize: 12, fontWeight: 600,
                           cursor: 'pointer', fontFamily: F.body,
                         }}
                       >
-                        <IconKey size={12} color={C.blue} />
+                        <IconKey size={12} color={C.amber} />
                         Réinitialiser MDP
                       </button>
                       <button
@@ -913,25 +904,26 @@ export default function AdminClient({
           position: 'fixed', inset: 0,
           background: 'rgba(26,15,6,0.50)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 600, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
+          zIndex: Z.modal, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body,
         }}
       >
         <div className="modal-panel" style={{
-          background: '#FDFCF9', borderRadius: 14,
+          background: C.surfaceEl, borderRadius: R.xl,
           width: '100%', maxWidth: 420,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.18)', overflow: 'hidden',
+          border: `1px solid ${C.border}`,
+          boxShadow: SH.xl, overflow: 'hidden',
         }}>
-          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)' }} />
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})` }} />
           {/* Header */}
           <div style={{
-            padding: '16px 20px', borderBottom: `1px solid ${C.border}`,
-            display: 'flex', alignItems: 'center', gap: 12,
+            padding: `${SP[4]} ${SP[5]}`, borderBottom: `1px solid ${C.border}`,
+            display: 'flex', alignItems: 'center', gap: SP[3],
           }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 9,
-              background: C.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              width: 36, height: 36, borderRadius: R.md,
+              background: C.amberGlow, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}>
-              <IconKey size={16} color={C.blue} />
+              <IconKey size={16} color={C.amber} />
             </div>
             <div>
               <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Réinitialiser le mot de passe</div>
@@ -990,15 +982,16 @@ export default function AdminClient({
             {/* Actions */}
             <div style={{ display: 'flex', gap: 10 }}>
               <button
-                className="btn-meram"
+                className="btn-amber"
                 onClick={handlePasswordReset}
                 disabled={resetLoading || resetPwd.length < 8}
                 style={{
-                  flex: 1, padding: '11px',
-                  border: 'none', borderRadius: 9,
-                  fontSize: 13.5, fontWeight: 700,
+                  flex: 1, height: 44,
+                  border: 'none', borderRadius: R.md,
+                  fontSize: F.sm, fontWeight: F.bold,
                   cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer',
                   fontFamily: F.body,
+                  opacity: resetPwd.length < 8 ? 0.45 : 1,
                 }}
               >
                 {resetLoading ? 'En cours…' : 'Confirmer'}
@@ -1032,25 +1025,26 @@ export default function AdminClient({
           position: 'fixed', inset: 0,
           background: 'rgba(26,15,6,0.48)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          zIndex: 700, padding: 20, backdropFilter: 'blur(3px)', fontFamily: F.body,
+          zIndex: Z.modal, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body,
         }}
       >
         <div className="modal-panel" style={{
-          background: '#FDFCF9', borderRadius: 16,
+          background: C.surfaceEl, borderRadius: R.xl,
           width: '100%', maxWidth: 520,
-          boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
+          border: `1px solid ${C.border}`,
+          boxShadow: SH.xl,
           maxHeight: '90vh', overflowY: 'auto',
         }}>
-          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})`, flexShrink: 0 }} />
 
           {/* Modal header */}
           <div style={{
-            padding: '18px 22px', borderBottom: `1px solid ${C.border}`,
+            padding: `${SP[4]} ${SP[5]}`, borderBottom: `1px solid ${C.border}`,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 9, background: C.blueBg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <IconBuilding size={16} color={C.blue} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: SP[2.5] }}>
+              <div style={{ width: 36, height: 36, borderRadius: R.md, background: C.amberGlow, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <IconBuilding size={16} color={C.amber} />
               </div>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.ink }}>Nouvelle entreprise</div>
@@ -1071,8 +1065,8 @@ export default function AdminClient({
 
           <form onSubmit={handleSubmit} style={{ padding: '22px' }}>
             {/* Section 1 */}
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <IconBuilding size={12} color={C.blue} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: F.body }}>
+              <IconBuilding size={12} color={C.amber} />
               Informations de l'entreprise
             </div>
 
@@ -1103,8 +1097,8 @@ export default function AdminClient({
             <div style={{ borderTop: `1px solid ${C.border}`, marginBottom: 18 }} />
 
             {/* Section 2 */}
-            <div style={{ fontSize: 11, fontWeight: 700, color: C.blue, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <IconUsers size={12} color={C.blue} />
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.amber, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6, fontFamily: F.body }}>
+              <IconUsers size={12} color={C.amber} />
               Compte propriétaire
             </div>
 
@@ -1138,7 +1132,7 @@ export default function AdminClient({
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button type="submit" className="btn-meram" disabled={submitting} style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body }}>
+              <button type="submit" className="btn-amber" disabled={submitting} style={{ flex: 1, height: 44, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body }}>
                 {submitting ? 'Création en cours…' : 'Créer l\'entreprise'}
               </button>
               <button type="button" className="btn-ghost" onClick={() => !submitting && setShowModal(false)} disabled={submitting} style={{ padding: '11px 18px', background: C.bg, color: C.muted, border: `1px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: submitting ? 'not-allowed' : 'pointer', fontFamily: F.body }}>

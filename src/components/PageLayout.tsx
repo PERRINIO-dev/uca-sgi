@@ -19,18 +19,21 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin':     'Administration',
 }
 
+// ── Icons ──────────────────────────────────────────────────────────────────────
 function IconMenu() {
   return (
     <svg width="17" height="13" viewBox="0 0 17 13" fill="none" aria-hidden="true">
-      <path d="M1 1h15M1 6.5h15M1 12h9" stroke={C.muted} strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M1 1h15M1 6.5h15M1 12h9"
+        stroke={C.muted} strokeWidth="1.7" strokeLinecap="round"/>
     </svg>
   )
 }
 
 function IconRefresh() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-      stroke={C.amber} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+      stroke={C.amber} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+      aria-hidden="true">
       <path d="M21 2v6h-6"/>
       <path d="M3 12a9 9 0 0115-6.7L21 8"/>
       <path d="M3 22v-6h6"/>
@@ -41,8 +44,21 @@ function IconRefresh() {
 
 function IconX() {
   return (
-    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M1 1l12 12M13 1L1 13" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+// M lettermark — used in mobile top bar
+function MeramMark({ size = 13, color = C.ink }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={Math.round(size * 0.8)} viewBox="0 0 20 16" fill="none" aria-hidden="true">
+      <path
+        d="M2.5 14V2.5L10 9L17.5 2.5V14"
+        stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+      />
+      <path d="M2.5 14h15" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -115,23 +131,19 @@ export default function PageLayout({
 
       {/* ── SW update toast ── */}
       {updateReady && (
-        <div style={{
-          position:     'fixed', bottom: 80, left: '50%',
-          transform:    'translateX(-50%)',
-          zIndex:       Z.toast,
-          background:   C.surfaceEl,
-          border:       `1px solid ${C.border}`,
-          color:        C.text,
-          borderRadius: R.xl,
-          padding:      `${SP[3]} ${SP[4]}`,
-          display:      'flex', alignItems: 'center', gap: SP[3],
-          boxShadow:    SH.xl,
-          maxWidth:     'calc(100vw - 32px)',
-          fontFamily:   F.body,
-          animation:    'slideUp 0.28s ease both',
-          borderLeft:   `3px solid ${C.amber}`,
+        <div className="toast toast-amber" style={{
+          bottom: isMobile ? '80px' : '24px',
+          fontFamily: F.body,
         }}>
-          <IconRefresh />
+          <div style={{
+            width: 32, height: 32, borderRadius: R.md,
+            background: C.amberGlow,
+            border: `1px solid rgba(160,83,26,0.20)`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <IconRefresh />
+          </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: F.base, fontWeight: F.semibold, color: C.ink }}>
               Mise à jour disponible
@@ -156,11 +168,12 @@ export default function PageLayout({
           <button
             onClick={() => setUpdateReady(false)}
             aria-label="Fermer"
+            className="btn-icon"
             style={{
-              background: 'transparent', border: 'none',
-              cursor: 'pointer', padding: SP[1],
+              border: 'none', borderRadius: R.sm,
+              cursor: 'pointer', padding: SP[1.5],
               display: 'flex', alignItems: 'center',
-              color: C.dim,
+              height: 30, width: 30, justifyContent: 'center',
             }}
           >
             <IconX />
@@ -177,25 +190,26 @@ export default function PageLayout({
 
         {/* ── Mobile top bar ── */}
         {isMobile && (
-          <div style={{
-            position:      'fixed', top: 0, left: 0, right: 0,
-            background:    C.surface,
-            display:       'flex', flexDirection: 'column',
-            zIndex:        Z.sticky,
-            borderBottom:  `1px solid ${C.border}`,
-            boxShadow:     SH.sm,
+          <header style={{
+            position:     'fixed', top: 0, left: 0, right: 0,
+            background:   C.surface,
+            display:      'flex', flexDirection: 'column',
+            zIndex:       Z.sticky,
+            borderBottom: `1px solid ${C.border}`,
+            boxShadow:    SH.sm,
           }}>
             {/* Cognac accent stripe */}
-            <div style={{ height: 3, background: C.amber, flexShrink: 0 }} />
+            <div style={{ height: 3, background: C.amber, flexShrink: 0, opacity: 0.85 }} />
 
             <div style={{
               display:    'flex', alignItems: 'center',
-              padding:    `0 ${SP[3]}`, gap: SP[3], height: 52,
+              padding:    `0 ${SP[3]}`, gap: SP[3], height: 50,
             }}>
               {/* Hamburger */}
               <button
                 onClick={() => setSidebar(o => !o)}
                 aria-label="Ouvrir le menu"
+                aria-expanded={sidebarOpen}
                 style={{
                   background:   C.surfaceHov,
                   border:       `1px solid ${C.border}`,
@@ -223,22 +237,22 @@ export default function PageLayout({
                 </div>
               </div>
 
-              {/* MERAM wordmark */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], flexShrink: 0 }}>
+              {/* MERAM compact logo */}
+              <div style={{
+                display:    'flex', alignItems: 'center', gap: SP[1.5],
+                flexShrink: 0,
+              }}>
                 <div style={{
-                  width: 24, height: 24, borderRadius: R.sm,
-                  background:  `linear-gradient(145deg, ${C.amberActive}, ${C.amber})`,
+                  width: 26, height: 26, borderRadius: R.sm,
+                  background:  `linear-gradient(150deg, ${C.amberActive}, ${C.amber})`,
                   display:     'flex', alignItems: 'center', justifyContent: 'center',
                   boxShadow:   SH.amberSm,
                 }}>
-                  <svg width="12" height="10" viewBox="0 0 20 17" fill="none" aria-hidden="true">
-                    <path d="M2 15V2L10 9L18 2V15" stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 15h16"              stroke="#FAF5EE" strokeWidth="2.5" strokeLinecap="round"/>
-                  </svg>
+                  <MeramMark size={13} color="#FAF5EE" />
                 </div>
                 <span style={{
-                  fontSize:      F.base,
-                  fontWeight:    F.bold,
+                  fontSize:      F.sm,
+                  fontWeight:    F.xbold,
                   fontFamily:    F.display,
                   color:         C.ink,
                   letterSpacing: F.lsTighter,
@@ -247,16 +261,17 @@ export default function PageLayout({
                 </span>
               </div>
             </div>
-          </div>
+          </header>
         )}
 
-        {/* ── Mobile overlay ── */}
+        {/* ── Mobile overlay backdrop ── */}
         {isMobile && sidebarOpen && (
           <div
             onClick={() => setSidebar(false)}
+            aria-hidden="true"
             style={{
               position:       'fixed', inset: 0,
-              background:     'rgba(26,15,6,0.55)',
+              background:     'rgba(26,15,6,0.52)',
               zIndex:         Z.overlay - 10,
               backdropFilter: 'blur(4px)',
             }}
@@ -276,12 +291,16 @@ export default function PageLayout({
         <main style={{
           marginLeft: isMobile ? 0 : 240,
           flex:       1,
-          padding:    isMobile
-            ? `${SP[14]} ${SP[4]} ${SP[10]}`
-            : `${SP[8]} ${SP[10]}`,
           minWidth:   0,
+          /* Top padding: mobile = top bar height + breathing room, desktop = generous */
+          padding: isMobile
+            ? `${SP[14]} ${SP[4]} ${SP[12]}`          /* 56px + 16px + 48px */
+            : `${SP[8]} ${SP[9]}`,                    /* 32px + 36px */
         }}>
-          {children}
+          {/* Inner max-width container */}
+          <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+            {children}
+          </div>
         </main>
       </div>
     </>

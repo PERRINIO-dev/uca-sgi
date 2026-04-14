@@ -454,21 +454,18 @@ export default function ProductsClient({
     <PageLayout profile={profile} activeRoute="/products" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="fade-in-up page-header">
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
-            Catalogue produits
-          </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
+          <p className="page-kicker">Inventaire</p>
+          <h1 className="page-title">Catalogue produits</h1>
+          <p className="page-subtitle">
             {products.filter(p => p.is_active).length} produit
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''} actif
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
-          className="btn-meram"
+          className="btn-amber"
           onClick={() => {
             setForm(emptyForm('tile'))
             setError(null)
@@ -477,10 +474,8 @@ export default function ProductsClient({
             setModalStep(1)
             setShowCreate(true)
           }}
-          style={{ padding: '11px 20px', border: 'none', borderRadius: 9,
-            fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
-            display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+          style={{ height: 40, padding: `0 ${SP[5]}`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>
           Nouveau produit
         </button>
       </div>
@@ -488,7 +483,7 @@ export default function ProductsClient({
       {/* Filter bar */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap',
         background: C.surface, padding: '12px 16px', borderRadius: 12,
-        border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(60,30,10,0.04)' }}>
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="Rechercher par nom ou référence…"
           style={{ ...inputStyle, width: 260, padding: '8px 12px', fontSize: 13 }} />
@@ -585,8 +580,8 @@ export default function ProductsClient({
                     <div style={{
                       width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: modalStep === n ? C.blue : modalStep > n ? C.green : C.border,
-                      color: modalStep >= n ? '#fff' : C.muted,
+                      background: modalStep === n ? C.amber : modalStep > n ? C.green : C.border,
+                      color: modalStep >= n ? '#FAF5EE' : C.muted,
                       fontSize: 11, fontWeight: 700,
                     }}>
                       {modalStep > n
@@ -595,7 +590,7 @@ export default function ProductsClient({
                     </div>
                     <span style={{
                       fontSize: 10, fontWeight: modalStep === n ? 700 : 400,
-                      color: modalStep === n ? C.blue : C.muted, fontFamily: F.body,
+                      color: modalStep === n ? C.amber : C.muted, fontFamily: F.body,
                       whiteSpace: 'nowrap',
                     }}>
                       {label}
@@ -723,8 +718,8 @@ export default function ProductsClient({
                       </Field>
                     </Row>
                     {tileAreaPreview && (
-                      <div style={{ padding: '10px 14px', background: C.blueBg,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
+                      <div style={{ padding: '10px 14px', background: C.amberGlow,
+                        borderRadius: R.sm, fontSize: 12, color: C.amber, fontFamily: F.body }}>
                         1 carreau = <strong>{tileAreaPreview.area.toFixed(4)} m²</strong>
                         {tileAreaPreview.cartonArea > 0 && (
                           <> · 1 carton = <strong>{tileAreaPreview.cartonArea.toFixed(4)} m²</strong></>
@@ -751,8 +746,8 @@ export default function ProductsClient({
                         placeholder="ex : 6" style={inputStyle} />
                     </Field>
                     {form.pieceLengthM && (
-                      <div style={{ padding: '8px 14px', background: C.blueBg,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
+                      <div style={{ padding: '8px 14px', background: C.amberGlow,
+                        borderRadius: R.sm, fontSize: 12, color: C.amber, fontFamily: F.body }}>
                         1 {form.packageLabel || 'barre'} = <strong>{form.pieceLengthM} m</strong>
                         {' · '}Le vendeur saisit en mètres ou en {form.packageLabel || 'barres'}
                       </div>
@@ -777,8 +772,8 @@ export default function ProductsClient({
                         placeholder="ex : 20" style={inputStyle} />
                     </Field>
                     {form.containerVolumeL && (
-                      <div style={{ padding: '8px 14px', background: C.blueBg,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
+                      <div style={{ padding: '8px 14px', background: C.amberGlow,
+                        borderRadius: R.sm, fontSize: 12, color: C.amber, fontFamily: F.body }}>
                         1 {form.packageLabel || 'bidon'} = <strong>{form.containerVolumeL} L</strong>
                         {' · '}Le vendeur saisit en litres ou en {form.packageLabel || 'bidons'}
                       </div>
@@ -803,8 +798,8 @@ export default function ProductsClient({
                         placeholder="ex : 50" style={inputStyle} />
                     </Field>
                     {form.bagWeightKg && (
-                      <div style={{ padding: '8px 14px', background: C.blueBg,
-                        borderRadius: 8, fontSize: 12, color: C.blue, fontFamily: F.body }}>
+                      <div style={{ padding: '8px 14px', background: C.amberGlow,
+                        borderRadius: R.sm, fontSize: 12, color: C.amber, fontFamily: F.body }}>
                         1 sac = <strong>{form.bagWeightKg} kg</strong>
                         {' · '}Stock et vente comptés en nombre de sacs
                       </div>
@@ -881,7 +876,7 @@ export default function ProductsClient({
                         </Field>
                       </Row>
                       {(form.initialCartons || form.initialLooseTiles) && form.tilesPerCarton && (
-                        <div style={{ fontSize: 12, color: C.blue, fontWeight: 600, marginTop: 6, fontFamily: F.body }}>
+                        <div style={{ fontSize: 12, color: C.amber, fontWeight: 600, marginTop: 6, fontFamily: F.body }}>
                           = {fmtNum(
                             (parseInt(form.initialCartons) || 0) * parseInt(form.tilesPerCarton)
                             + (parseInt(form.initialLooseTiles) || 0)
@@ -956,10 +951,10 @@ export default function ProductsClient({
                   <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
                     Vérifiez les informations avant de créer le produit.
                   </p>
-                  <div style={{ background: C.blueBg, borderRadius: 12,
-                    border: `1.5px solid ${C.blue}33`, padding: '18px 20px' }}>
+                  <div style={{ background: C.surfaceSub, borderRadius: R.lg,
+                    border: `1.5px solid ${C.border}`, padding: '18px 20px' }}>
                     <div style={{ fontSize: 18, fontWeight: 800, color: C.ink,
-                      letterSpacing: '-0.02em', fontFamily: F.body, marginBottom: 4 }}>
+                      letterSpacing: '-0.02em', fontFamily: F.display, marginBottom: 4 }}>
                       {form.name || '—'}
                     </div>
                     <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body, marginBottom: 14 }}>
@@ -968,7 +963,7 @@ export default function ProductsClient({
                     {rows.map(([label, value]) => (
                       <div key={label} style={{ display: 'flex', justifyContent: 'space-between',
                         alignItems: 'center', padding: '8px 0',
-                        borderTop: `1px solid ${C.blue}22` }}>
+                        borderTop: `1px solid ${C.borderSub}` }}>
                         <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>{label}</span>
                         <span style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: F.body }}>{value}</span>
                       </div>
@@ -1008,7 +1003,7 @@ export default function ProductsClient({
                     onClick={() => { setError(null); setModalStep(prev => (prev - 1) as 1|2|3|4) }}
                     style={{ padding: '10px 16px', borderRadius: 8,
                       border: `1.5px solid ${C.border}`, background: C.surface,
-                      color: C.blue, fontSize: 13, fontWeight: 600,
+                      color: C.muted, fontSize: 13, fontWeight: 600,
                       cursor: 'pointer', fontFamily: F.body }}>
                     ← Retour
                   </button>
@@ -1016,10 +1011,10 @@ export default function ProductsClient({
               </div>
               {modalStep < 4 ? (
                 <button
-                  className="btn-meram"
+                  className="btn-amber"
                   onClick={advanceModalStep}
-                  style={{ padding: '10px 24px', borderRadius: 9,
-                    border: 'none', fontSize: 13, fontWeight: 700,
+                  style={{ height: 42, padding: `0 ${SP[6]}`, borderRadius: R.md,
+                    border: 'none', fontSize: F.sm, fontWeight: F.bold,
                     cursor: 'pointer', fontFamily: F.body,
                     display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                   Suivant
@@ -1183,7 +1178,7 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
     <div style={{
       background: C.surface, borderRadius: 14,
       border: `1px solid ${C.border}`,
-      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+      boxShadow: '0 1px 4px rgba(60,30,10,0.05)',
       overflow: 'hidden',
       opacity: p.is_active ? 1 : 0.6,
     }}>
@@ -1231,8 +1226,8 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => onEdit(p)}
-          style={{ flex: 1, padding: '8px', background: C.blueBg, color: C.blue,
-            border: `1px solid ${C.blue}20`, borderRadius: 8,
+          style={{ flex: 1, padding: '8px', background: C.amberGlow, color: C.amber,
+            border: `1px solid rgba(160,83,26,0.22)`, borderRadius: R.sm,
             fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
           Modifier
         </button>
@@ -1247,7 +1242,7 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             fontFamily: F.body }}>
           {toggleLoadingId === p.id
-            ? <><span className="spinner-blue" />…</>
+            ? <><span className="spinner" />…</>
             : p.is_active ? 'Désactiver' : 'Réactiver'}
         </button>
       </div>
@@ -1462,7 +1457,7 @@ function CreateDrawer({ title, step, children, onClose }: {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 1000,
+      position: 'fixed', inset: 0, zIndex: Z.modal,
       display: 'flex', justifyContent: 'flex-end',
     }}>
       {/* Backdrop */}
@@ -1480,12 +1475,12 @@ function CreateDrawer({ title, step, children, onClose }: {
         position: 'relative',
         width: '100%', maxWidth: 560,
         background: C.surface,
-        boxShadow: '-12px 0 48px rgba(0,0,0,0.18)',
+        boxShadow: '-8px 0 40px rgba(60,30,10,0.15)',
         display: 'flex', flexDirection: 'column',
         overflow: 'hidden',
       }}>
-        {/* Blue accent stripe */}
-        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8 0%,#3B82F6 60%,#60A5FA 100%)', flexShrink: 0 }} />
+        {/* Cognac accent stripe */}
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})`, flexShrink: 0 }} />
         {/* Drawer header */}
         <div style={{
           padding: '18px 24px 14px',
@@ -1538,7 +1533,7 @@ function Modal({ title, children, onClose }: {
       style={{ position: 'fixed', inset: 0,
         background: 'rgba(26,15,6,0.42)', backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 20,
+        zIndex: Z.modal, padding: SP[5],
         animation: 'modalBackdrop 0.2s ease',
       }}>
       <div style={{ background: C.surface, borderRadius: 16,
@@ -1657,7 +1652,7 @@ function CategoryCombobox({
         <div style={{
           position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
           background: C.surface, border: `1.5px solid ${C.border}`,
-          borderRadius: 8, boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+          borderRadius: 8, boxShadow: '0 8px 24px rgba(60,30,10,0.1)',
           zIndex: 100, maxHeight: 220, overflowY: 'auto',
         }}>
           {filtered.map(c => (
@@ -1694,13 +1689,13 @@ function CategoryCombobox({
                   display: 'flex', alignItems: 'center', gap: 6,
                   width: '100%', padding: '9px 12px', border: 'none',
                   background: 'transparent', cursor: 'pointer', textAlign: 'left',
-                  fontSize: 13, color: C.blue, fontWeight: 600, fontFamily: F.body,
+                  fontSize: 13, color: C.amber, fontWeight: 600, fontFamily: F.body,
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = C.blueBg)}
+                onMouseEnter={e => (e.currentTarget.style.background = C.amberGlow)}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1v10M1 6h10" stroke={C.blue} strokeWidth="1.8" strokeLinecap="round"/>
+                  <path d="M6 1v10M1 6h10" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
                 Créer &ldquo;{query.trim()}&rdquo;
               </button>
@@ -1753,11 +1748,12 @@ function FormFooter({ error, success, loading, onConfirm, onCancel, confirmLabel
           Annuler
         </button>
         <button onClick={onConfirm} disabled={loading}
-          style={{ padding: '9px 20px', borderRadius: 8, border: 'none',
-            background: loading ? C.muted : C.blue,
-            color: 'white', fontSize: 13, fontWeight: 600,
+          className="btn-amber"
+          style={{ height: 42, padding: `0 ${SP[5]}`, borderRadius: R.md, border: 'none',
+            fontSize: F.sm, fontWeight: F.bold,
             cursor: loading ? 'not-allowed' : 'pointer',
-            fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8,
+            opacity: loading ? 0.7 : 1 }}>
           {loading ? <><span className="spinner" />{confirmLabel}…</> : confirmLabel}
         </button>
       </div>

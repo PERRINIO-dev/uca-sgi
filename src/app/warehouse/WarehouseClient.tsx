@@ -334,16 +334,14 @@ export default function WarehouseClient({
     <PageLayout profile={profile} activeRoute="/warehouse" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
         {/* Header */}
-        <div style={{ marginBottom: 28 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
-            Entrepôt
-          </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
-            {TAB_LABELS[activeTab]} ·{' '}
-            {orders.length} commande{orders.length !== 1 ? 's' : ''} active
-            {orders.length !== 1 ? 's' : ''} · Entrepôt Central
-          </p>
+        <div className="fade-in-up page-header" style={{ marginBottom: SP[6] }}>
+          <div>
+            <p className="page-kicker">Logistique</p>
+            <h1 className="page-title">Entrepôt</h1>
+            <p className="page-subtitle">
+              {orders.length} commande{orders.length !== 1 ? 's' : ''} active{orders.length !== 1 ? 's' : ''} en cours
+            </p>
+          </div>
         </div>
 
         {/* Tabs — pill/segment control */}
@@ -366,13 +364,13 @@ export default function WarehouseClient({
                 border: 'none', display: 'flex',
                 alignItems: 'center', gap: 6,
                 fontFamily: F.body,
-                boxShadow: activeTab === id ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+                boxShadow: activeTab === id ? '0 1px 4px rgba(60,30,10,0.10)' : 'none',
               }}>
               {label}
               {count !== null && count > 0 && (
                 <span style={{
-                  background: activeTab === id ? C.blue : C.border,
-                  color: activeTab === id ? C.surface : C.muted,
+                  background: activeTab === id ? C.amber : C.border,
+                  color: activeTab === id ? '#FAF5EE' : C.muted,
                   fontSize: 10, fontWeight: 700,
                   padding: '1px 6px', borderRadius: 100,
                 }}>
@@ -389,7 +387,7 @@ export default function WarehouseClient({
             {orders.length === 0 && (
               <div style={{ background: C.surface, borderRadius: 14,
                 border: `1px solid ${C.border}`,
-                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+                boxShadow: '0 1px 4px rgba(60,30,10,0.04)',
                 padding: '52px 32px', textAlign: 'center' }}>
                 <div style={{
                   width: 52, height: 52, borderRadius: '50%',
@@ -512,11 +510,11 @@ export default function WarehouseClient({
                       )}
                       {order.status === 'ready' && (
                         <button
-                          className="btn-meram"
+                          className="btn-amber"
                           onClick={() => handleOrderAction(order.id, 'delivered')}
                           disabled={loadingOrder === order.id}
                           style={{
-                            padding: '9px 16px', border: 'none', borderRadius: 7,
+                            padding: '9px 16px', borderRadius: R.md,
                             fontSize: 12, fontWeight: 700,
                             cursor: 'pointer', fontFamily: F.body,
                             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -678,7 +676,8 @@ export default function WarehouseClient({
                             <span style={{ display: 'inline-flex', alignItems: 'center',
                               gap: 5, fontSize: 11, fontWeight: 600,
                               padding: '3px 10px', borderRadius: 100,
-                              background: '#F0F0F0', color: C.muted, fontFamily: F.body }}>
+                              background: C.surfaceEl, color: C.muted,
+                              border: `1px solid ${C.border}`, fontFamily: F.body }}>
                               <span style={{ width: 5, height: 5, borderRadius: '50%',
                                 background: C.muted, flexShrink: 0 }} />
                               Livrée
@@ -930,16 +929,19 @@ export default function WarehouseClient({
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
 
             {/* Request form */}
-            <div style={{ background: C.surface, borderRadius: 12,
+            <div style={{ background: C.surface, borderRadius: R.xl,
               border: `1px solid ${C.border}`,
               overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px',
-                borderBottom: `1px solid ${C.border}`,
-                background: C.blue }}>
-                <div style={{ fontSize: 14, fontWeight: 700,
-                  color: C.surface, fontFamily: F.body }}>
+              <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber})` }} />
+              <div style={{ padding: `${SP[4]} ${SP[5]}`,
+                borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ fontSize: F.md, fontWeight: F.bold,
+                  color: C.ink, fontFamily: F.display }}>
                   Nouvelle demande
                 </div>
+                <p style={{ margin: `${SP[1]} 0 0`, fontSize: F.xs, color: C.muted, fontFamily: F.body }}>
+                  Entrée de stock ou correction d'inventaire
+                </p>
               </div>
               <div style={{ padding: '20px 22px' }}>
               <div style={{ display: 'flex', flexDirection: 'column',
@@ -964,8 +966,8 @@ export default function WarehouseClient({
                           flex: 1, padding: '8px', borderRadius: 100,
                           fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', fontFamily: F.body,
-                          background: reqType === t ? C.blue : 'transparent',
-                          color: reqType === t ? C.surface : C.muted,
+                          background: reqType === t ? C.amber : 'transparent',
+                          color: reqType === t ? '#FAF5EE' : C.muted,
                           border: 'none',
                         }}>
                         {l}
@@ -1016,7 +1018,7 @@ export default function WarehouseClient({
                         <div style={{ position: 'absolute', zIndex: 50, top: '100%',
                           left: 0, right: 0, marginTop: 2,
                           background: C.surface, border: `1px solid ${C.border}`,
-                          borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                          borderRadius: 8, boxShadow: '0 4px 16px rgba(60,30,10,0.12)',
                           maxHeight: 220, overflowY: 'auto' }}>
                           {filtered.length === 0 ? (
                             <div style={{ padding: '10px 14px', fontSize: 12,
@@ -1035,8 +1037,8 @@ export default function WarehouseClient({
                               }}
                               style={{ padding: '9px 14px', cursor: 'pointer',
                                 fontSize: 13, fontFamily: F.body,
-                                background: reqProduct === p.id ? C.blueBg : 'transparent',
-                                color: reqProduct === p.id ? C.blue : C.ink,
+                                background: reqProduct === p.id ? C.amberGlow : 'transparent',
+                                color: reqProduct === p.id ? C.amber : C.ink,
                                 borderBottom: `1px solid ${C.border}` }}>
                               <span style={{ fontWeight: 600 }}>{p.name}</span>
                               <span style={{ fontSize: 11, color: C.muted, marginLeft: 6 }}>
@@ -1121,7 +1123,7 @@ export default function WarehouseClient({
                             const m2    = total * parseFloat(selProd?.tile_area_m2 ?? '0')
                             return total > 0 ? (
                               <div style={{ marginTop: 6, fontSize: 12,
-                                color: C.blue, fontWeight: 600, fontFamily: F.body }}>
+                                color: C.amber, fontWeight: 600, fontFamily: F.body }}>
                                 = {fmtNum(total)} carreaux · {fmtM2(m2)}
                               </div>
                             ) : null
@@ -1136,7 +1138,7 @@ export default function WarehouseClient({
                             style={inputStyle} />
                           {reqQty && parseInt(reqQty) > 0 && (
                             <div style={{ marginTop: 6, fontSize: 12,
-                              color: C.blue, fontWeight: 600, fontFamily: F.body }}>
+                              color: C.amber, fontWeight: 600, fontFamily: F.body }}>
                               = {fmtNum(parseInt(reqQty))} {pluralize(unitLbl, parseInt(reqQty))}
                             </div>
                           )}
@@ -1192,13 +1194,13 @@ export default function WarehouseClient({
                   const disabled = reqLoading || !reqProduct || reqJustif.trim().length < 10 || !hasQty
                   return (
                 <button
-                  className="btn-meram"
+                  className="btn-amber"
                   onClick={handleStockRequest}
                   disabled={disabled}
                   style={{
-                    padding: '13px', borderRadius: 8, border: 'none',
+                    width: '100%', height: 44, borderRadius: R.md, border: 'none',
                     cursor: disabled ? 'not-allowed' : 'pointer', fontFamily: F.body,
-                    fontSize: 13, fontWeight: 700,
+                    fontSize: F.sm, fontWeight: F.bold,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     opacity: disabled ? 0.45 : 1,
                   }}>
@@ -1297,50 +1299,59 @@ export default function WarehouseClient({
       {confirmDelivery && (
         <div style={{ position: 'fixed', inset: 0,
           background: 'rgba(26,15,6,0.50)',
-          backdropFilter: 'blur(2px)',
+          backdropFilter: 'blur(4px)',
           display: 'flex', alignItems: 'center',
-          justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: C.surface, borderRadius: 14,
-            width: 420, overflow: 'hidden',
-            boxShadow: '0 24px 80px rgba(0,0,0,0.3)' }}>
-            <div style={{ padding: '18px 24px',
+          justifyContent: 'center', zIndex: Z.modal, padding: SP[5] }}>
+          <div style={{ background: C.surfaceEl, borderRadius: R.xl,
+            width: '100%', maxWidth: 420, overflow: 'hidden',
+            border: `1px solid ${C.border}`, boxShadow: SH.xl }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber})` }} />
+            <div style={{ padding: `${SP[4]} ${SP[5]}`,
               borderBottom: `1px solid ${C.border}`,
-              background: C.blue }}>
-              <h3 style={{ margin: 0, fontSize: 16,
-                fontWeight: 700, color: C.surface, fontFamily: F.body }}>
-                Confirmer la livraison
-              </h3>
+              display: 'flex', alignItems: 'center', gap: SP[3] }}>
+              <div style={{ width: 32, height: 32, borderRadius: R.md,
+                background: C.amberGlow, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                  <path d="M1.5 6l3 3 6-6" stroke={C.amber} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: F.md, fontWeight: F.bold,
+                  color: C.ink, fontFamily: F.display }}>
+                  Confirmer la livraison
+                </h3>
+                <div style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body }}>
+                  Cette action est irréversible
+                </div>
+              </div>
             </div>
-            <div style={{ padding: '24px' }}>
-              <p style={{ margin: '0 0 20px', fontSize: 13,
+            <div style={{ padding: `${SP[5]} ${SP[6]}` }}>
+              <p style={{ margin: `0 0 ${SP[5]}`, fontSize: F.sm,
                 color: C.muted, fontFamily: F.body }}>
-                Cette action est irréversible. Le stock sera définitivement
-                déduit et la vente marquée comme livrée.
+                Le stock sera définitivement déduit et la vente marquée comme livrée.
               </p>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: SP[2] }}>
                 <button
-                  className="btn-meram"
+                  className="btn-amber"
                   onClick={handleConfirmDelivery}
                   disabled={!!loadingOrder}
-                  style={{ flex: 1, padding: '12px',
-                    border: 'none', borderRadius: 8, fontSize: 13,
-                    fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  style={{ flex: 1, height: 44,
+                    borderRadius: R.md, border: 'none', fontSize: F.sm,
+                    fontWeight: F.bold, cursor: 'pointer', fontFamily: F.body,
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
                     opacity: !!loadingOrder ? 0.7 : 1,
                   }}>
                   {loadingOrder ? (
                     <><span className="spinner" />En cours…</>
                   ) : (
-                    <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6l3 3 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer la livraison</>
+                    <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 6l3 3 6-6" stroke="#FAF5EE" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>Confirmer la livraison</>
                   )}
                 </button>
                 <button
                   className="btn-ghost"
                   onClick={() => setConfirm(null)}
-                  style={{ padding: '12px 16px', background: C.surface,
-                    color: C.muted,
-                    border: `1.5px solid ${C.border}`,
-                    borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  style={{ borderRadius: R.md, fontSize: F.sm, fontWeight: F.medium,
                     cursor: 'pointer', fontFamily: F.body }}>
                   Annuler
                 </button>

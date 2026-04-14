@@ -247,14 +247,11 @@ export default function UsersClient({
     <PageLayout profile={profile} activeRoute="/users" onLogout={handleLogout} badgeCounts={badgeCounts}>
 
       {/* ── Page header ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between',
-        alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+      <div className="fade-in-up page-header">
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: C.ink,
-            margin: '0 0 4px', letterSpacing: '-0.03em', fontFamily: F.body }}>
-            Utilisateurs
-          </h1>
-          <p style={{ fontSize: 13, color: C.muted, margin: 0, fontFamily: F.body }}>
+          <p className="page-kicker">Équipe &amp; accès</p>
+          <h1 className="page-title">Utilisateurs</h1>
+          <p className="page-subtitle">
             {employees.filter(e => e.is_active).length} compte
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''} actif
             {employees.filter(e => e.is_active).length !== 1 ? 's' : ''}
@@ -266,20 +263,19 @@ export default function UsersClient({
             onClick={() => { setShowBoutiques(true); setBoutiqueError(null); setBoutiqueSuccess(null) }}
             style={{
               display: 'flex', alignItems: 'center', gap: 7,
-              padding: '10px 16px', background: C.surface,
-              color: C.muted, border: `1.5px solid ${C.border}`, borderRadius: 9,
-              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
+              height: 40, padding: `0 ${SP[4]}`,
+              background: C.surface, color: C.muted,
+              border: `1.5px solid ${C.border}`, borderRadius: R.md,
+              fontSize: F.sm, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
             }}>
             <IconStore />
             Boutiques ({boutiques.filter(b => b.is_active).length}/{boutiques.length})
           </button>
           <button
-            className="btn-meram"
+            className="btn-amber"
             onClick={() => { setShowCreate(true); setCreateError(null); setCreateSuccess(null) }}
-            style={{ padding: '10px 20px', border: 'none', borderRadius: 9,
-              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
-              display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
+            style={{ height: 40, padding: `0 ${SP[5]}`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>
             Nouvel employé
           </button>
         </div>
@@ -294,14 +290,14 @@ export default function UsersClient({
           return (
             <div key={role} style={{ background: C.surface, borderRadius: 10,
               border: `1px solid ${C.border}`,
-              boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              boxShadow: '0 1px 3px rgba(60,30,10,0.04)',
               padding: '14px 18px', borderLeft: `3px solid ${cfg.accent}` }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
                 textTransform: 'uppercase', letterSpacing: '0.07em',
                 marginBottom: 6, fontFamily: F.body }}>
                 {cfg.label}
               </div>
-              <div style={{ fontSize: 26, fontWeight: 800, color: cfg.color, fontFamily: F.body }}>
+              <div style={{ fontSize: 26, fontWeight: 800, color: cfg.color, fontFamily: F.display, letterSpacing: '-0.03em' }}>
                 {count}
               </div>
             </div>
@@ -312,7 +308,7 @@ export default function UsersClient({
       {/* ── Filters ── */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap',
         background: C.surface, padding: '10px 14px', borderRadius: 10,
-        border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+        border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(60,30,10,0.04)' }}>
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
@@ -341,7 +337,7 @@ export default function UsersClient({
       {/* ── Users table ── */}
       <div style={{ background: C.surface, borderRadius: 12,
         border: `1px solid ${C.border}`, overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        boxShadow: '0 1px 3px rgba(60,30,10,0.05)' }}>
         {filtered.length === 0 ? (
           <div style={{ padding: '56px 24px', textAlign: 'center',
             color: C.muted, fontSize: 14, fontFamily: F.body }}>
@@ -388,7 +384,7 @@ export default function UsersClient({
                               {emp.full_name}
                             </div>
                             {isMe && (
-                              <div style={{ fontSize: 11, color: C.blue, fontWeight: 600, marginTop: 1 }}>
+                              <div style={{ fontSize: 11, color: C.amber, fontWeight: 600, marginTop: 1 }}>
                                 Votre compte
                               </div>
                             )}
@@ -430,12 +426,10 @@ export default function UsersClient({
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                           {(emp.role !== 'owner' || isMe) && (
                             <button
-                              className="btn-outline-navy"
+                              className="btn-ghost"
                               onClick={() => openEdit(emp)}
                               style={{ display: 'flex', alignItems: 'center', gap: 5,
-                                padding: '5px 12px', borderRadius: 6, cursor: 'pointer',
-                                background: 'transparent', color: C.blue,
-                                border: `1px solid ${C.border}`,
+                                padding: '5px 12px', borderRadius: R.sm, cursor: 'pointer',
                                 fontSize: 12, fontWeight: 600, fontFamily: F.body }}>
                               <IconPencil /> Modifier
                             </button>
@@ -452,7 +446,7 @@ export default function UsersClient({
                                 fontFamily: F.body,
                                 display: 'inline-flex', alignItems: 'center', gap: 5,
                                 opacity: togglingId === emp.id ? 0.6 : 1 }}>
-                              {togglingId === emp.id ? <><span className="spinner-blue" />…</> : emp.is_active ? 'Désactiver' : 'Réactiver'}
+                              {togglingId === emp.id ? <><span className="spinner" />…</> : emp.is_active ? 'Désactiver' : 'Réactiver'}
                             </button>
                           )}
                         </div>
@@ -563,10 +557,10 @@ export default function UsersClient({
 
             <div style={{ display: 'flex', gap: 8 }}>
               <button
-                className="btn-meram"
+                className="btn-amber"
                 onClick={handleEdit} disabled={editLoading}
-                style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
-                  fontSize: 13, fontWeight: 700, cursor: editLoading ? 'not-allowed' : 'pointer',
+                style={{ flex: 1, height: 44, border: 'none', borderRadius: R.md,
+                  fontSize: F.sm, fontWeight: F.bold, cursor: editLoading ? 'not-allowed' : 'pointer',
                   fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                   opacity: editLoading ? 0.7 : 1 }}>
                 {editLoading ? <><span className="spinner" />Enregistrement…</> : 'Enregistrer les modifications'}
@@ -582,10 +576,10 @@ export default function UsersClient({
                   setEditPwd(''); setEditPwdError(null); setEditPwdSuccess(false)
                 }}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                  padding: '9px 12px', borderRadius: 8,
-                  background: editPwdOpen ? C.blueBg : C.bg,
-                  border: `1px solid ${editPwdOpen ? '#BFDBFE' : C.border}`,
-                  cursor: 'pointer', color: editPwdOpen ? C.blue : C.muted,
+                  padding: '9px 12px', borderRadius: R.md,
+                  background: editPwdOpen ? C.amberGlow : C.bg,
+                  border: `1px solid ${editPwdOpen ? 'rgba(160,83,26,0.28)' : C.border}`,
+                  cursor: 'pointer', color: editPwdOpen ? C.amber : C.muted,
                   fontSize: 13, fontWeight: 600, fontFamily: F.body, textAlign: 'left' }}>
                 <IconKey />
                 Modifier le mot de passe
@@ -615,9 +609,9 @@ export default function UsersClient({
                       className="btn-primary"
                       onClick={handleEditPassword}
                       disabled={editPwdLoading || editPwd.length < 8}
-                      style={{ padding: '10px 14px', borderRadius: 8,
-                        background: (editPwdLoading || editPwd.length < 8) ? C.muted : C.blue,
-                        color: '#fff', border: 'none', cursor: 'pointer',
+                      style={{ padding: '10px 14px', borderRadius: R.md,
+                        background: (editPwdLoading || editPwd.length < 8) ? C.muted : C.amber,
+                        color: '#FAF5EE', border: 'none', cursor: 'pointer',
                         fontSize: 12, fontWeight: 700, fontFamily: F.body,
                         whiteSpace: 'nowrap', flexShrink: 0,
                         display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -704,11 +698,11 @@ export default function UsersClient({
                       onKeyDown={e => { if (e.key === 'Enter') handleCreateBoutique() }}
                       style={{ ...inputStyle, flex: 1 }} />
                     <button
-                      className="btn-meram"
+                      className="btn-amber"
                       onClick={handleCreateBoutique}
                       disabled={boutiqueLoading || !newBoutiqueName.trim()}
-                      style={{ padding: '10px 16px', borderRadius: 9, border: 'none',
-                        fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      style={{ height: 44, padding: `0 ${SP[4]}`, borderRadius: R.md, border: 'none',
+                        fontSize: F.sm, fontWeight: F.bold, cursor: 'pointer',
                         fontFamily: F.body, whiteSpace: 'nowrap', flexShrink: 0,
                         display: 'inline-flex', alignItems: 'center', gap: 7,
                         opacity: (boutiqueLoading || !newBoutiqueName.trim()) ? 0.5 : 1 }}>
@@ -752,11 +746,11 @@ function RoleSelector({ value, onChange }: {
     <div style={{ display: 'flex', gap: 6 }}>
       {ROLE_OPTIONS.map(([r, l]) => (
         <button key={r} type="button" onClick={() => onChange(r)}
-          style={{ flex: 1, padding: '9px 4px', borderRadius: 7,
+          style={{ flex: 1, padding: '9px 4px', borderRadius: R.sm,
             fontSize: 11.5, fontWeight: 600, cursor: 'pointer',
-            background: value === r ? C.blue    : C.surface,
-            color:      value === r ? C.surface : C.muted,
-            border: `1.5px solid ${value === r ? C.blue : C.border}`,
+            background: value === r ? C.amber   : C.surface,
+            color:      value === r ? '#FAF5EE' : C.muted,
+            border: `1.5px solid ${value === r ? C.amber : C.border}`,
             fontFamily: F.body, transition: 'all 0.12s' }}>
           {l}
         </button>
@@ -782,18 +776,19 @@ function Modal({ title, subtitle, children, onClose, maxWidth = 500 }: {
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
       style={{ position: 'fixed', inset: 0,
-        background: 'rgba(26,15,6,0.42)', backdropFilter: 'blur(6px)',
+        background: 'rgba(26,15,6,0.50)', backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1000, padding: 20,
+        zIndex: Z.modal, padding: SP[5],
         animation: 'modalBackdrop 0.2s ease',
       }}>
-      <div style={{ background: C.surfaceEl, borderRadius: 16,
+      <div style={{ background: C.surfaceEl, borderRadius: R.xl,
         width: '100%', maxWidth, maxHeight: '92vh',
-        boxShadow: '0 32px 80px -16px rgba(60,30,10,0.18), 0 0 0 1px rgba(60,30,10,0.06)',
+        boxShadow: SH.xl,
+        border: `1px solid ${C.border}`,
         animation: 'modalPanel 0.22s cubic-bezier(0.16,1,0.3,1)',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
       }}>
-        <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
+        <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})`, flexShrink: 0 }} />
         {/* Header */}
         <div style={{ padding: '20px 24px 16px',
           borderBottom: `1px solid ${C.border}`,
@@ -879,10 +874,10 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
   return (
     <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
       <button
-        className="btn-meram"
+        className="btn-amber"
         onClick={onConfirm} disabled={loading || disabled}
-        style={{ flex: 1, padding: '11px', border: 'none', borderRadius: 9,
-          fontSize: 13, fontWeight: 700,
+        style={{ flex: 1, height: 44, border: 'none', borderRadius: R.md,
+          fontSize: F.sm, fontWeight: F.bold,
           cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
           fontFamily: F.body, display: 'flex', alignItems: 'center',
           justifyContent: 'center', gap: 7,
@@ -892,9 +887,7 @@ function ModalFooter({ onConfirm, onCancel, loading, disabled, confirmLabel }: {
       <button
         className="btn-ghost"
         onClick={onCancel}
-        style={{ padding: '11px 18px', background: C.surface, color: C.muted,
-          border: `1.5px solid ${C.border}`, borderRadius: 8,
-          fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: F.body }}>
+        style={{ borderRadius: R.md, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}>
         Annuler
       </button>
     </div>
