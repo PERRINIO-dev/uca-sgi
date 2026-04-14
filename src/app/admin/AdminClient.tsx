@@ -854,9 +854,8 @@ export default function AdminClient({
                         style={{
                           flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                           padding: '7px 12px',
-                          border: `1px solid ${C.border}`, borderRadius: 7,
+                          border: `1px solid rgba(160,83,26,0.28)`, borderRadius: 7,
                           background: C.amberGlow, color: C.amber,
-                          border: `1px solid rgba(160,83,26,0.28)`,
                           fontSize: 12, fontWeight: 600,
                           cursor: 'pointer', fontFamily: F.body,
                         }}
