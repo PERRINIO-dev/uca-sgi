@@ -79,6 +79,40 @@ function IconWarning({ color }: { color: string }) {
   )
 }
 
+// ── KPI value — splits "3 599 300 FCFA" into big number + small currency label
+function KpiValue({ value }: { value: string }) {
+  // fmtCurrency uses \u00a0 (non-breaking space) before the currency code
+  const nbspIdx = value.lastIndexOf('\u00a0')
+  if (nbspIdx === -1) {
+    return (
+      <div style={{
+        fontFamily: F.display, fontWeight: F.xbold, color: C.ink,
+        fontSize: 'clamp(28px, 2.8vw, 40px)', letterSpacing: F.lsTighter, lineHeight: 1,
+      }}>
+        {value}
+      </div>
+    )
+  }
+  const number   = value.slice(0, nbspIdx)
+  const currency = value.slice(nbspIdx + 1)
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <div style={{
+        fontFamily: F.display, fontWeight: F.xbold, color: C.ink,
+        fontSize: 'clamp(26px, 2.6vw, 38px)', letterSpacing: F.lsTighter, lineHeight: 1,
+      }}>
+        {number}
+      </div>
+      <div style={{
+        fontFamily: F.body, fontWeight: F.semibold, color: C.muted,
+        fontSize: F.xs, letterSpacing: F.lsWider, textTransform: 'uppercase',
+      }}>
+        {currency}
+      </div>
+    </div>
+  )
+}
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 // Panel — warm surface card on cream canvas
@@ -371,10 +405,8 @@ export default function DashboardClient({
               </div>
             </div>
 
-            {/* Big number — Fraunces display */}
-            <div className="kpi-value">
-              {value}
-            </div>
+            {/* Big number — split display: large Fraunces number + small currency */}
+            <KpiValue value={value} />
 
             {/* Sub-info + trend chip */}
             <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>

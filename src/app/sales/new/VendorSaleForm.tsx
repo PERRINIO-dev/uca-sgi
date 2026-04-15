@@ -986,7 +986,7 @@ export default function VendorSaleForm({
             )}
 
             {/* Cart panel */}
-            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.12)' }}>
+            <div style={{ background: C.sidebarBg, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.18)' }}>
               {/* Cart header */}
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1170,7 +1170,7 @@ export default function VendorSaleForm({
           <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             {/* Cart summary (read-only) */}
-            <div style={{ background: C.bgDeep, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.12)' }}>
+            <div style={{ background: C.sidebarBg, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.18)' }}>
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body }}>Récapitulatif</span>
               </div>

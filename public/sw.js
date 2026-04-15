@@ -1,5 +1,5 @@
-// MERAM SGI — Service Worker v6
-const CACHE_NAME   = 'meram-sgi-v6'
+// MERAM SGI — Service Worker v7
+const CACHE_NAME   = 'meram-sgi-v7'
 const OFFLINE_URL  = '/offline.html'
 
 // Pages to pre-cache so they're available instantly

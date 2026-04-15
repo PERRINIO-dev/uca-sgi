@@ -555,11 +555,28 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                       {isExp && (
                         <tr>
                           <td colSpan={7} style={{ padding: 0, background: C.bg }}>
-                            <div style={{ padding: '14px 20px', borderBottom: `1px solid ${C.border}` }}>
-                              <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.10em', marginBottom: 10, fontFamily: F.body }}>
-                                Articles du devis
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ padding: '16px 20px 18px', borderBottom: `1px solid ${C.border}` }}>
+
+                              {/* Mini article table */}
+                              <div style={{ borderRadius: 10, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+
+                                {/* Column headers */}
+                                <div style={{
+                                  display: 'grid', gridTemplateColumns: '1fr 160px 130px 110px',
+                                  padding: '8px 14px', background: C.surfaceSub,
+                                  borderBottom: `1.5px solid ${C.border}`,
+                                }}>
+                                  {(['Produit', 'Quantité', 'Prix unit.', 'Sous-total'] as const).map((h, i) => (
+                                    <div key={h} style={{
+                                      fontSize: 11, fontWeight: F.bold, color: C.dim,
+                                      textTransform: 'uppercase', letterSpacing: F.lsWider,
+                                      fontFamily: F.body,
+                                      textAlign: i === 0 ? 'left' : 'right',
+                                    }}>{h}</div>
+                                  ))}
+                                </div>
+
+                                {/* Item rows */}
                                 {(quote.sale_items ?? []).map((item: any, idx: number) => {
                                   const prod       = item.products
                                   const isItemTile = (prod?.product_type ?? 'tile') === 'tile'
@@ -569,30 +586,78 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                                   const pkgCnt     = !isItemTile && prod?.product_type === 'unit' && prod?.pieces_per_package
                                     ? Math.floor(item.quantity_tiles / parseInt(prod.pieces_per_package)) : null
 
+                                  const ta = parseFloat(item.tile_area_m2_snapshot ?? 0)
+                                  const tc = parseInt(item.tiles_per_carton_snapshot ?? 0)
+
                                   const qtyDisp = isItemTile
-                                    ? (() => {
-                                        const ta = parseFloat(item.tile_area_m2_snapshot ?? 0)
-                                        const tc = parseInt(item.tiles_per_carton_snapshot ?? 0)
-                                        return `${fmtM2(item.quantity_tiles * ta)} · ${tc ? Math.floor(item.quantity_tiles/tc) : 0} ctn`
-                                      })()
+                                    ? `${fmtM2(item.quantity_tiles * ta)} · ${tc ? Math.floor(item.quantity_tiles / tc) : 0} ctn`
                                     : bagKg
-                                    ? `${fmtNum(item.quantity_tiles)} sac${item.quantity_tiles>1?'s':''} (${fmtNum(bagKg)} kg)`
+                                    ? `${fmtNum(item.quantity_tiles)} sac${item.quantity_tiles > 1 ? 's' : ''} (${fmtNum(bagKg)} kg)`
                                     : pkgCnt && pkgCnt > 0
-                                    ? `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)} (${pkgCnt} ${prod?.package_label ?? 'lot'}${pkgCnt>1?'s':''})`
+                                    ? `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)} (${pkgCnt} ${prod?.package_label ?? 'lot'}${pkgCnt > 1 ? 's' : ''})`
                                     : `${fmtNum(item.quantity_tiles)} ${pluralize(unitLbl, item.quantity_tiles)}`
 
+                                  // Unit price: for tiles → per m², for others → per unit
+                                  const unitPrice = isItemTile && ta > 0
+                                    ? Math.round(item.total_price / (item.quantity_tiles * ta))
+                                    : item.quantity_tiles > 0
+                                    ? Math.round(item.total_price / item.quantity_tiles)
+                                    : 0
+                                  const unitPriceDisp = isItemTile
+                                    ? `${fmtNum(unitPrice)} ${currency}/m²`
+                                    : `${fmtNum(unitPrice)} ${currency}/${unitLbl}`
+
+                                  const isLast = idx === (quote.sale_items ?? []).length - 1
+
                                   return (
-                                    <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 12, padding: '10px 14px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}` }}>
+                                    <div key={idx} style={{
+                                      display: 'grid', gridTemplateColumns: '1fr 160px 130px 110px',
+                                      padding: '11px 14px', alignItems: 'center',
+                                      borderBottom: isLast ? 'none' : `1px solid ${C.borderSub}`,
+                                      background: idx % 2 === 0 ? C.surface : C.bg,
+                                    }}>
+                                      {/* Product name + ref */}
                                       <div style={{ minWidth: 0 }}>
-                                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{prod?.name}</div>
-                                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 2 }}>{prod?.reference_code}</div>
+                                        <div style={{ fontSize: 13, fontWeight: F.semibold, color: C.ink, fontFamily: F.body, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                          {prod?.name}
+                                        </div>
+                                        {prod?.reference_code && (
+                                          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 1 }}>
+                                            {prod.reference_code}
+                                          </div>
+                                        )}
                                       </div>
-                                      <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body, whiteSpace: 'nowrap', textAlign: 'right' }}>{qtyDisp}</div>
-                                      <div style={{ fontSize: 13, fontWeight: 700, color: C.amber, fontFamily: F.body, whiteSpace: 'nowrap', textAlign: 'right', minWidth: 80 }}>{fmt(Math.round(item.total_price))}</div>
+                                      {/* Quantity */}
+                                      <div style={{ fontSize: 12, color: C.text, fontFamily: F.body, textAlign: 'right', paddingRight: 4 }}>
+                                        {qtyDisp}
+                                      </div>
+                                      {/* Unit price */}
+                                      <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body, textAlign: 'right', paddingRight: 4 }}>
+                                        {unitPriceDisp}
+                                      </div>
+                                      {/* Subtotal */}
+                                      <div style={{ fontSize: 13, fontWeight: F.bold, color: C.amber, fontFamily: F.body, textAlign: 'right' }}>
+                                        {fmt(Math.round(item.total_price))}
+                                      </div>
                                     </div>
                                   )
                                 })}
+
+                                {/* Total row */}
+                                <div style={{
+                                  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                                  padding: '10px 14px',
+                                  background: C.surfaceSub, borderTop: `1.5px solid ${C.border}`,
+                                }}>
+                                  <span style={{ fontSize: 11, fontWeight: F.bold, color: C.muted, textTransform: 'uppercase', letterSpacing: F.lsWider, fontFamily: F.body }}>
+                                    Total devis
+                                  </span>
+                                  <span style={{ fontSize: 15, fontWeight: F.xbold, color: C.ink, fontFamily: F.body }}>
+                                    {fmt(quote.total_amount)}
+                                  </span>
+                                </div>
                               </div>
+
                               {quote.notes && (
                                 <div style={{ marginTop: 10, padding: '8px 12px', background: C.surface, borderRadius: 8, border: `1px solid ${C.border}`, fontSize: 12, color: C.muted, fontFamily: F.body }}>
                                   <strong>Notes :</strong> {quote.notes}
