@@ -546,3 +546,73 @@ export async function updateProduct(payload: {
   revalidatePath('/sales/new')
   return { success: true }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// deleteProduct — hard delete for inactive products with no sale history.
+// Only owner / admin may call this.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function deleteProduct(productId: string) {
+  const { supabase, user, profile } = await getAuthorizedProfile()
+  if (!user || !profile) return { error: 'Non authentifié.' }
+  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+
+  const admin = getAdminClient()
+
+  // Guard: product must be inactive
+  const { data: prod } = await supabase
+    .from('products')
+    .select('id, name, is_active, company_id')
+    .eq('id', productId)
+    .single()
+
+  if (!prod) return { error: 'Produit introuvable.' }
+  if (prod.company_id !== profile.company_id) return { error: 'Accès refusé.' }
+  if (prod.is_active) return { error: 'Désactivez le produit avant de le supprimer.' }
+
+  // Guard: no sale items referencing this product
+  const { count: saleCount } = await admin
+    .from('sale_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_id', productId)
+
+  if ((saleCount ?? 0) > 0) {
+    return { error: 'Ce produit a un historique de ventes et ne peut pas être supprimé. Gardez-le désactivé.' }
+  }
+
+  // Guard: no pending/approved stock requests
+  const { count: reqCount } = await admin
+    .from('stock_requests')
+    .select('id', { count: 'exact', head: true })
+    .eq('product_id', productId)
+    .in('status', ['pending', 'approved'])
+
+  if ((reqCount ?? 0) > 0) {
+    return { error: 'Ce produit a des demandes de stock en cours. Traitez-les avant de supprimer.' }
+  }
+
+  // Delete stock row first (FK constraint), then the product
+  await admin.from('stock').delete().eq('product_id', productId)
+
+  const { error } = await admin
+    .from('products')
+    .delete()
+    .eq('id', productId)
+    .eq('company_id', profile.company_id)
+
+  if (error) return { error: error.message }
+
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: profile.role,
+    action_type:        'PRODUCT_DELETED',
+    entity_type:        'products',
+    entity_id:          productId,
+    company_id:         profile.company_id,
+    data_before:        { name: prod.name },
+  })
+
+  revalidatePath('/products')
+  revalidatePath('/warehouse')
+  return { success: true }
+}

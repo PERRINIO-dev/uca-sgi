@@ -122,12 +122,12 @@ export async function updateOrderStatus(
       }
 
       // Atomic decrement via RPC — single UPDATE per product, no read-then-write race.
-      // Requires the `decrement_stock_on_delivery` function from
-      // supabase/migrations/20260326_decrement_stock_on_delivery.sql
+      // p_company_id scopes the UPDATE to this tenant's stock row (defense-in-depth).
       for (const [productId, qty] of qtyMap) {
         await admin.rpc('decrement_stock_on_delivery', {
           p_product_id: productId,
           p_quantity:   qty,
+          p_company_id: profile.company_id,
         })
       }
 

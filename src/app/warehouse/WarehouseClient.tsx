@@ -282,7 +282,7 @@ export default function WarehouseClient({
       const loose   = parseInt(reqLoose)   || 0
       delta = (cartons * tpc) + loose
     } else {
-      delta = parseInt(reqQty) || 0
+      delta = parseFloat(reqQty) || 0
     }
 
     if (delta === 0) {
@@ -468,8 +468,9 @@ export default function WarehouseClient({
 
                     {/* Action button */}
                     <div style={{ display: 'flex', gap: 8,
-                      alignItems: 'center', flexWrap: 'wrap' }}
-                      onClick={e => e.stopPropagation()}>
+                      alignItems: 'center', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'contents' }}
+                        onClick={e => e.stopPropagation()}>
                       {order.status === 'confirmed' && (
                         <button
                           className="btn-orange"
@@ -544,7 +545,8 @@ export default function WarehouseClient({
                         </svg>
                         Imprimer
                       </button>
-                      <span style={{ color: C.muted, paddingLeft: 4, display: 'flex' }}>
+                      </div>{/* end stopPropagation */}
+                      <span style={{ color: C.muted, paddingLeft: 4, display: 'flex', cursor: 'pointer' }}>
                         {isOpen
                           ? <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 9l4-4 4 4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                           : <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -1129,21 +1131,49 @@ export default function WarehouseClient({
                             ) : null
                           })()}
                         </>
-                      ) : (
-                        <>
-                          <input type="number" min="0"
-                            value={reqQty}
-                            onChange={e => setReqQty(e.target.value)}
-                            placeholder={`Quantité (${unitLbl})`}
-                            style={inputStyle} />
-                          {reqQty && parseInt(reqQty) > 0 && (
-                            <div style={{ marginTop: 6, fontSize: 12,
-                              color: C.amber, fontWeight: 600, fontFamily: F.body }}>
-                              = {fmtNum(parseInt(reqQty))} {pluralize(unitLbl, parseInt(reqQty))}
-                            </div>
-                          )}
-                        </>
-                      )}
+                      ) : (() => {
+                        // For linear_m and liter products the canonical storage unit
+                        // is the BASE unit (metres / litres).  Always label the input
+                        // with that unit so warehouse agents cannot accidentally enter
+                        // "1 rouleau" when the system expects metres — that mismatch
+                        // is exactly what causes stock to hit 0 after delivery.
+                        const baseUnitLbl =
+                          selProd?.product_type === 'linear_m' ? 'm'
+                          : selProd?.product_type === 'liter'   ? 'L'
+                          : unitLbl  // bag = sacs, unit = pièces (already base units)
+
+                        // Package conversion hint (e.g. "1 rouleau = 100 m")
+                        let pkgHint: string | null = null
+                        if (selProd?.product_type === 'linear_m' && selProd?.piece_length_m) {
+                          pkgHint = `1 ${selProd.package_label ?? 'barre'} = ${selProd.piece_length_m} m`
+                        } else if (selProd?.product_type === 'liter' && selProd?.container_volume_l) {
+                          pkgHint = `1 ${selProd.package_label ?? 'bidon'} = ${selProd.container_volume_l} L`
+                        } else if (selProd?.product_type === 'unit' && selProd?.pieces_per_package && selProd?.package_label) {
+                          pkgHint = `1 ${selProd.package_label} = ${selProd.pieces_per_package} ${unitLbl}`
+                        }
+
+                        const qtyVal = parseFloat(reqQty) || 0
+                        return (
+                          <>
+                            <input type="number" min="0" step="any"
+                              value={reqQty}
+                              onChange={e => setReqQty(e.target.value)}
+                              placeholder={`Quantité (${baseUnitLbl})`}
+                              style={inputStyle} />
+                            {pkgHint && (
+                              <div style={{ marginTop: 4, fontSize: 11, color: C.muted, fontFamily: F.body }}>
+                                {pkgHint}
+                              </div>
+                            )}
+                            {qtyVal > 0 && (
+                              <div style={{ marginTop: 6, fontSize: 12,
+                                color: C.amber, fontWeight: 600, fontFamily: F.body }}>
+                                = {fmtNum(qtyVal)} {pluralize(baseUnitLbl, qtyVal)}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
                     </div>
                   )
                 })()}
@@ -1190,7 +1220,7 @@ export default function WarehouseClient({
                   const isTile  = !selProd || selProd.product_type === 'tile'
                   const hasQty  = isTile
                     ? (parseInt(reqCartons) || 0) + (parseInt(reqLoose) || 0) > 0
-                    : (parseInt(reqQty) || 0) > 0
+                    : (parseFloat(reqQty) || 0) > 0
                   const disabled = reqLoading || !reqProduct || reqJustif.trim().length < 10 || !hasQty
                   return (
                 <button

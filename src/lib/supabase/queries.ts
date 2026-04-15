@@ -58,7 +58,7 @@ export async function getDashboardStats() {
         id, created_at, request_type,
         quantity_tiles_delta, justification,
         stock_before_tiles, product_id,
-        products(name, reference_code, product_type, unit_label),
+        products(name, reference_code, product_type, unit_label, tiles_per_carton, tile_area_m2),
         users!stock_requests_requested_by_fkey(full_name)
       `)
       .eq('status', 'pending')

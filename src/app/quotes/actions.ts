@@ -162,11 +162,12 @@ export async function createQuote(payload: CreateQuotePayload) {
 }
 
 export async function convertQuote(
-  quoteId:       string,
-  amountPaid:    number,
-  notes:         string | null,
-  customerPhone: string | null = null,
-  customerCni:   string | null = null,
+  quoteId:        string,
+  amountPaid:     number,
+  notes:          string | null,
+  customerPhone:  string | null = null,
+  customerCni:    string | null = null,
+  customerPhone2: string | null = null,
 ) {
   const supabase = await createClient()
 
@@ -231,12 +232,15 @@ export async function convertQuote(
     }
   }
 
-  // Patch phone/CNI if they were missing at quote creation (collected at conversion)
-  if (customerPhone || customerCni) {
+  // Patch phone / CNI / phone2 if they were missing at quote creation
+  {
     const patch: Record<string, string> = {}
-    if (customerPhone) patch.customer_phone = customerPhone
-    if (customerCni)   patch.customer_cni   = customerCni
-    await adminSupabase.from('sales').update(patch).eq('id', quoteId)
+    if (customerPhone)  patch.customer_phone  = customerPhone
+    if (customerCni)    patch.customer_cni    = customerCni
+    if (customerPhone2) patch.customer_phone2 = customerPhone2
+    if (Object.keys(patch).length > 0) {
+      await adminSupabase.from('sales').update(patch).eq('id', quoteId)
+    }
   }
 
   // Atomically generate VNT number and set status=confirmed

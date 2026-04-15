@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { createProduct, updateProduct } from './actions'
+import { createProduct, updateProduct, deleteProduct } from './actions'
 import PageLayout       from '@/components/PageLayout'
 import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 import type { ProductType, ProductCategory } from '@/lib/types'
@@ -50,13 +50,28 @@ function generateRefCode(
   const catAbbr = category.split(' ').map(w => w[0]?.toUpperCase() ?? '').join('').slice(0, 3)
   const cleanName = name.trim()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase().replace(/[^A-Z0-9\s]/g, '')
+    .toUpperCase().replace(/[^A-Z0-9\s×XØΦ]/gi, ' ')
   const words    = cleanName.split(/\s+/).filter(Boolean)
-  const namePart = words.slice(0, 2).map(w => w.slice(0, 3)).join('')
-  const dims     = productType === 'tile' && widthCm && heightCm
-    ? `-${widthCm}X${heightCm}`
-    : ''
-  return namePart ? `${catAbbr}-${namePart}${dims}` : ''
+
+  if (productType === 'tile') {
+    const namePart = words.slice(0, 2).map(w => w.slice(0, 3)).join('')
+    const dims     = widthCm && heightCm ? `-${widthCm}X${heightCm}` : ''
+    return namePart ? `${catAbbr}-${namePart}${dims}` : ''
+  }
+
+  // Non-tile: take first 2 alpha words + up to one numeric/dimensional token
+  // so "Parpaing creux 10x20x40" → PARCRE-10X20 and "Câble 100m" → CAB-100M
+  // preventing collisions between products with same name prefix but different sizes.
+  const alphaWords = words.filter(w => /^[A-Z]/.test(w))
+  const dimToken   = words.find(w =>
+    /^[\dØ×X]/.test(w) ||            // starts with digit or special char
+    /\d+[A-Z]*$/.test(w) ||           // ends with a number (e.g. 32MM, 100M)
+    /^\d+[Xx×]\d/.test(w)             // dimension pattern like 10x20
+  )
+
+  const namePart = alphaWords.slice(0, 2).map(w => w.slice(0, 3)).join('')
+  const suffix   = dimToken ? `-${dimToken.slice(0, 7)}` : ''
+  return namePart ? `${catAbbr}-${namePart}${suffix}` : ''
 }
 
 // ── Empty form ────────────────────────────────────────────────────────────────
@@ -118,6 +133,9 @@ export default function ProductsClient({
   const [modalStep,         setModalStep]         = useState<1|2|3|4>(1)
   const [editProduct,       setEditProduct]       = useState<any>(null)
   const [confirmDeactivate, setConfirmDeactivate] = useState<any>(null)
+  const [confirmDelete,     setConfirmDelete]     = useState<any>(null)
+  const [deleteLoading,     setDeleteLoading]     = useState(false)
+  const [deleteError,       setDeleteError]       = useState<string | null>(null)
   const [form,              setForm]              = useState<FormState>(emptyForm('tile'))
   const [loading,           setLoading]           = useState(false)
   const [toggleLoadingId,   setToggleLoadingId]   = useState<string | null>(null)
@@ -429,6 +447,17 @@ export default function ProductsClient({
     router.refresh()
   }
 
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    setDeleteLoading(true)
+    setDeleteError(null)
+    const result = await deleteProduct(confirmDelete.id)
+    setDeleteLoading(false)
+    if (result.error) { setDeleteError(result.error); return }
+    setConfirmDelete(null)
+    router.refresh()
+  }
+
   // ── Filter ────────────────────────────────────────────────────────────────
   const filtered = products.filter(p => {
     if (filterActive === 'active'   && !p.is_active) return false
@@ -522,6 +551,7 @@ export default function ProductsClient({
               toggleLoadingId={toggleLoadingId}
               onEdit={openEdit}
               onToggle={p => p.is_active ? setConfirmDeactivate(p) : handleToggleActive(p)}
+              onDelete={p => { setDeleteError(null); setConfirmDelete(p) }}
             />
           ))}
         </div>
@@ -557,6 +587,48 @@ export default function ProductsClient({
               {toggleLoadingId === confirmDeactivate?.id
                 ? <><span className="spinner" />Désactivation…</>
                 : 'Désactiver'}
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Delete confirmation ── */}
+      {confirmDelete && (
+        <Modal title="Supprimer définitivement ?" onClose={() => { setConfirmDelete(null); setDeleteError(null) }}>
+          <div style={{ padding: '4px 0 8px' }}>
+            <p style={{ fontSize: 14, color: C.muted, margin: '0 0 12px', lineHeight: 1.6, fontFamily: F.body }}>
+              Le produit <strong style={{ color: C.ink }}>{confirmDelete.name}</strong> sera
+              supprimé de façon permanente, ainsi que son entrée de stock.
+            </p>
+            <p style={{ fontSize: 13, color: C.red, margin: '0 0 4px', fontWeight: 600, fontFamily: F.body }}>
+              Cette action est irréversible.
+            </p>
+            <p style={{ fontSize: 12, color: C.muted, margin: 0, fontFamily: F.body }}>
+              Seuls les produits sans historique de vente peuvent être supprimés.
+            </p>
+          </div>
+          {deleteError && (
+            <div style={{ padding: '10px 12px', background: C.redBg, borderRadius: 8,
+              fontSize: 13, color: C.red, fontWeight: 600, fontFamily: F.body, marginTop: 8 }}>
+              {deleteError}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 20 }}>
+            <button onClick={() => { setConfirmDelete(null); setDeleteError(null) }}
+              style={{ padding: '9px 18px', borderRadius: 8, border: `1.5px solid ${C.border}`,
+                background: C.surface, color: C.muted, fontSize: 13, fontWeight: 500,
+                cursor: 'pointer', fontFamily: F.body }}>
+              Annuler
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              style={{ padding: '9px 18px', borderRadius: 8, border: 'none',
+                background: deleteLoading ? C.muted : C.red,
+                color: 'white', fontSize: 13, fontWeight: 600,
+                cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              {deleteLoading ? <><span className="spinner" />Suppression…</> : 'Supprimer définitivement'}
             </button>
           </div>
         </Modal>
@@ -1135,13 +1207,14 @@ export default function ProductsClient({
 // Product card — type-aware display
 // ─────────────────────────────────────────────────────────────────────────────
 
-function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }: {
+function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, onDelete }: {
   p:               any
   profile:         any
   currency:        string
   toggleLoadingId: string | null
   onEdit:          (p: any) => void
   onToggle:        (p: any) => void
+  onDelete:        (p: any) => void
 }) {
   const pt: ProductType = p.product_type ?? 'tile'
   const stock     = Array.isArray(p.stock) ? p.stock[0] : p.stock
@@ -1245,6 +1318,20 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle }
             ? <><span className="spinner" />…</>
             : p.is_active ? 'Désactiver' : 'Réactiver'}
         </button>
+        {/* Delete — only shown on inactive products, for owners and admins */}
+        {!p.is_active && ['owner', 'admin'].includes(profile.role) && (
+          <button
+            onClick={() => onDelete(p)}
+            title="Supprimer définitivement"
+            style={{ padding: '8px 10px', background: 'transparent',
+              color: C.red, border: `1px solid ${C.redBd}`, borderRadius: 8,
+              fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
+              display: 'inline-flex', alignItems: 'center' }}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <path d="M2 3h9M5 3V1.5h3V3M5.5 5.5v4M7.5 5.5v4M3 3l.5 8a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5L10 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
       </div>
       </div>
     </div>

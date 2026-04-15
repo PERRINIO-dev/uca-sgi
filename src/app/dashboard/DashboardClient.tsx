@@ -640,8 +640,25 @@ export default function DashboardClient({
                         color: req.quantity_tiles_delta > 0 ? C.green : C.red,
                       }}>
                         {req.quantity_tiles_delta > 0 ? '+' : ''}
-                        {fmtNum(req.quantity_tiles_delta)}{' '}
-                        {(req.products?.product_type ?? 'tile') === 'tile' ? 'carreaux' : (req.products?.unit_label ?? 'unités')}
+                        {(() => {
+                          const delta = req.quantity_tiles_delta
+                          const prod  = req.products
+                          const isTile = (prod?.product_type ?? 'tile') === 'tile'
+                          if (isTile && prod?.tiles_per_carton) {
+                            const tpc = parseInt(prod.tiles_per_carton)
+                            const cartons = Math.floor(Math.abs(delta) / tpc)
+                            const loose   = Math.abs(delta) % tpc
+                            const m2      = prod.tile_area_m2
+                              ? (Math.abs(delta) * parseFloat(prod.tile_area_m2)).toFixed(2) + ' m²'
+                              : null
+                            const parts = []
+                            if (cartons > 0) parts.push(`${cartons} ctn`)
+                            if (loose   > 0) parts.push(`${loose} car.`)
+                            if (m2) parts.push(m2)
+                            return parts.join(' · ') || `${Math.abs(delta)} carreaux`
+                          }
+                          return `${fmtNum(Math.abs(delta))} ${isTile ? 'carreaux' : (prod?.unit_label ?? 'unités')}`
+                        })()}
                       </span>
                     </div>
                   </div>

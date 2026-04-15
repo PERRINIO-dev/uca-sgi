@@ -107,6 +107,7 @@ export default function QuotesClient({
   const [convertAmount,  setConvertAmount]  = useState('')
   const [convertNotes,   setConvertNotes]   = useState('')
   const [convertPhone,   setConvertPhone]   = useState('')
+  const [convertPhone2,  setConvertPhone2]  = useState('')
   const [convertCNI,     setConvertCNI]     = useState('')
   const [convertLoading, setConvertLoading] = useState(false)
   const [convertSuccess, setConvertSuccess] = useState<string | null>(null) // VNT number after success
@@ -145,7 +146,8 @@ export default function QuotesClient({
     if (!cni)   { setActionError('Le numéro CNI est requis pour confirmer la vente.'); return }
     setConvertLoading(true)
     setActionError(null)
-    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null, phone, cni)
+    const phone2 = convertPhone2.trim() || null
+    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null, phone, cni, phone2)
     setConvertLoading(false)
     if (result.error) { setActionError(result.error); return }
     setConvertSuccess(result.saleNumber ?? null)
@@ -153,7 +155,7 @@ export default function QuotesClient({
 
   const closeConvertModal = () => {
     setConvertId(null); setConvertAmount(''); setConvertNotes('')
-    setConvertPhone(''); setConvertCNI('')
+    setConvertPhone(''); setConvertPhone2(''); setConvertCNI('')
     setConvertSuccess(null); setActionError(null)
   }
 
@@ -798,6 +800,16 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                       </div>
                     </div>
                   )}
+
+                  {/* Secondary phone — always optional */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 4, fontFamily: F.body }}>
+                      Téléphone secondaire <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
+                    </label>
+                    <input type="tel" value={convertPhone2} onChange={e => setConvertPhone2(e.target.value)}
+                      placeholder="WhatsApp, ligne secondaire…"
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: 7, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }} />
+                  </div>
 
                   {/* Payment amount */}
                   <div style={{ marginBottom: 14 }}>

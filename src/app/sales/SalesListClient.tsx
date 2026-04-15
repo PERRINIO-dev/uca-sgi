@@ -417,11 +417,13 @@ export default function SalesListClient({
           <select
             value={statusFilter}
             onChange={e => handleStatusChange(e.target.value)}
+            disabled={navPending}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${C.border}`, borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: statusFilter ? C.text : C.dim,
-              background: C.bg, cursor: 'pointer', outline: 'none', flex: '0 0 auto',
+              background: C.bg, cursor: navPending ? 'not-allowed' : 'pointer', outline: 'none', flex: '0 0 auto',
+              opacity: navPending ? 0.5 : 1,
             }}
           >
             <option value="">Tous les statuts</option>
@@ -433,13 +435,15 @@ export default function SalesListClient({
           <select
             value={paymentFilter}
             onChange={e => handlePaymentChange(e.target.value)}
+            disabled={navPending}
             style={{
               height: 32, paddingLeft: 8, paddingRight: 24,
               border: `1px solid ${paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeBd : C.border}`,
               borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: paymentFilter ? C.text : C.dim,
               background: paymentFilter === 'unpaid' || paymentFilter === 'partial' ? C.orangeBg : C.bg,
-              cursor: 'pointer', outline: 'none', flex: '0 0 auto',
+              cursor: navPending ? 'not-allowed' : 'pointer', outline: 'none', flex: '0 0 auto',
+              opacity: navPending ? 0.5 : 1,
             }}
           >
             <option value="">Tous les paiements</option>
@@ -452,12 +456,13 @@ export default function SalesListClient({
             type="date"
             value={dateFrom}
             onChange={e => handleDateFromChange(e.target.value)}
+            disabled={navPending}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: dateFrom ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
-              colorScheme: 'light',
+              colorScheme: 'light', opacity: navPending ? 0.5 : 1,
             }}
           />
           <span style={{ fontSize: F.xs, color: C.dim, flexShrink: 0 }}>→</span>
@@ -466,12 +471,13 @@ export default function SalesListClient({
             type="date"
             value={dateTo}
             onChange={e => handleDateToChange(e.target.value)}
+            disabled={navPending}
             style={{
               height: 32, padding: '0 8px',
               border: `1px solid ${C.border}`, borderRadius: R.sm,
               fontSize: F.sm, fontFamily: F.body, color: dateTo ? C.text : C.dim,
               background: C.bg, outline: 'none', flex: '0 0 auto',
-              colorScheme: 'light',
+              colorScheme: 'light', opacity: navPending ? 0.5 : 1,
             }}
           />
           {/* Boutique (only for admin/owner who can see all boutiques) */}
@@ -479,11 +485,13 @@ export default function SalesListClient({
             <select
               value={boutiqueId}
               onChange={e => handleBoutiqueChange(e.target.value)}
+              disabled={navPending}
               style={{
                 height: 32, paddingLeft: 8, paddingRight: 24,
                 border: `1px solid ${C.border}`, borderRadius: R.sm,
                 fontSize: F.sm, fontFamily: F.body, color: boutiqueId ? C.text : C.dim,
-                background: C.bg, cursor: 'pointer', outline: 'none', flex: '0 0 auto',
+                background: C.bg, cursor: navPending ? 'not-allowed' : 'pointer', outline: 'none', flex: '0 0 auto',
+                opacity: navPending ? 0.5 : 1,
               }}
             >
               <option value="">Toutes les boutiques</option>
