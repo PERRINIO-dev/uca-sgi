@@ -204,19 +204,26 @@ export async function createSale(payload: CreateSalePayload) {
     )
   }
 
+  // Track which reservations succeed so we can release them all on any failure.
+  const confirmedReservations = new Map<string, number>()
   for (const [productId, qty] of reserveMap) {
     const { data: reserved, error: rpcError } = await adminSupabase
       .rpc('reserve_stock_on_sale', { p_product_id: productId, p_quantity: qty })
 
     if (rpcError || reserved === false) {
-      // Rollback: remove items and sale already inserted above
-      await supabase.from('sale_items').delete().eq('sale_id', sale.id)
-      await supabase.from('sales').delete().eq('id', sale.id)
+      // Release every product we already reserved before this failure
+      for (const [prevId, prevQty] of confirmedReservations) {
+        await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: prevId, p_quantity: prevQty })
+      }
+      // Use admin client for cleanup — no DELETE RLS policy exists for authenticated role
+      await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
+      await adminSupabase.from('sales').delete().eq('id', sale.id)
       if (rpcError) return { error: 'Erreur lors de la réservation du stock. Veuillez réessayer.' }
       return {
         error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.',
       }
     }
+    confirmedReservations.set(productId, qty)
   }
 
   // 5. Create the warehouse order
@@ -233,21 +240,20 @@ export async function createSale(payload: CreateSalePayload) {
 
   if (orderError) {
     // Clean up orphaned sale and items to preserve data consistency
-    // Release the reservations we just made using the atomic RPC
-    for (const [productId, qty] of reserveMap) {
-      await adminSupabase.rpc('release_stock_on_cancel', {
-        p_product_id: productId,
-        p_quantity:   qty,
-      })
+    for (const [productId, qty] of confirmedReservations) {
+      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: productId, p_quantity: qty })
     }
-    await supabase.from('sale_items').delete().eq('sale_id', sale.id)
-    await supabase.from('sales').delete().eq('id', sale.id)
+    await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
+    await adminSupabase.from('sales').delete().eq('id', sale.id)
     return { error: orderError.message }
   }
 
-  // 5.5 Record initial payment in history (enables multi-tranche tracking)
+  // 5.5 Record initial payment in history (enables multi-tranche tracking).
+  // Uses admin client — the authenticated sale_payments_insert RLS only covers
+  // owner/admin; server actions already authenticate the caller, so bypassing
+  // RLS here is safe and ensures vendor-created sales record the initial payment.
   if (amountPaid > 0) {
-    const { data: initPayment } = await supabase
+    const { data: initPayment } = await adminSupabase
       .from('sale_payments')
       .insert({ sale_id: sale.id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id, company_id: callerProfile.company_id })
       .select('id')
@@ -352,8 +358,10 @@ export async function cancelSale(saleId: string) {
     console.error('[cancelSale] Échec annulation order:', orderCancelError)
   }
 
-  // Release reserved stock for the cancelled sale items
-  const { data: saleItems } = await supabase
+  // Release reserved stock for the cancelled sale items.
+  // Use admin client to guarantee visibility regardless of RLS edge cases
+  // (e.g. admin cancelling a preparing sale that belongs to another vendor).
+  const { data: saleItems } = await adminSupabase
     .from('sale_items')
     .select('product_id, quantity_tiles')
     .eq('sale_id', saleId)
@@ -423,7 +431,9 @@ export async function addPayment(
     return { error: `Montant dépasse le solde restant (${new Intl.NumberFormat('fr-FR').format(Math.round(remaining))}).` }
   }
 
-  const { data: newPayment, error: insertError } = await supabase
+  // Use admin client — sale_payments_insert RLS only covers owner/admin;
+  // server action already authenticates and authorises the caller.
+  const { data: newPayment, error: insertError } = await getAdminClient()
     .from('sale_payments')
     .insert({ sale_id: saleId, amount, notes, created_by: user.id, company_id: profile.company_id })
     .select('id')

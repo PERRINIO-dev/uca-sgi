@@ -198,8 +198,20 @@ export async function convertQuote(
 
   const saleItems = quote.sale_items as { product_id: string; quantity_tiles: number }[]
 
-  // Check stock availability before committing
+  // Re-validate that all products are still active (they may have been deactivated
+  // between quote creation and conversion).
   const productIds = saleItems.map(i => i.product_id)
+  const { data: activeProducts } = await supabase
+    .from('products')
+    .select('id')
+    .in('id', productIds)
+    .eq('is_active', true)
+
+  if (!activeProducts || activeProducts.length < productIds.length) {
+    return { error: 'Un ou plusieurs produits du devis ont été désactivés. Veuillez créer un nouveau devis.' }
+  }
+
+  // Check stock availability before committing
   const { data: stocks } = await supabase
     .from('stock')
     .select('product_id, total_tiles, reserved_tiles')
@@ -235,8 +247,10 @@ export async function convertQuote(
     return { error: rpcError?.message ?? 'Erreur lors de la confirmation du devis.' }
   }
 
-  // Reserve stock atomically per product
-  const reserveMap = new Map<string, number>()
+  // Reserve stock atomically per product.
+  // Track confirmed reservations so partial failures can be fully rolled back.
+  const reserveMap           = new Map<string, number>()
+  const confirmedReservations = new Map<string, number>()
   for (const item of saleItems) {
     reserveMap.set(item.product_id, (reserveMap.get(item.product_id) ?? 0) + item.quantity_tiles)
   }
@@ -246,10 +260,15 @@ export async function convertQuote(
       .rpc('reserve_stock_on_sale', { p_product_id: productId, p_quantity: qty })
 
     if (reserveError || reserved === false) {
-      // Revert: set back to draft, clear VNT number
+      // Release every product already reserved before this failure
+      for (const [prevId, prevQty] of confirmedReservations) {
+        await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: prevId, p_quantity: prevQty })
+      }
+      // Revert sale to draft, clear VNT number
       await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
       return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez réessayer.' }
     }
+    confirmedReservations.set(productId, qty)
   }
 
   // Create the warehouse order
@@ -263,14 +282,16 @@ export async function convertQuote(
     })
 
   if (orderError) {
-    for (const [productId, qty] of reserveMap) {
+    for (const [productId, qty] of confirmedReservations) {
       await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: productId, p_quantity: qty })
     }
     await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
     return { error: orderError.message }
   }
 
-  // Record initial payment
+  // Record initial payment.
+  // Uses admin client — sale_payments_insert RLS only covers owner/admin;
+  // server action already authenticates the caller.
   const paidAmount = Math.max(0, amountPaid ?? 0)
   if (paidAmount > 0) {
     const totalAmount    = Number(quote.total_amount)
@@ -280,7 +301,7 @@ export async function convertQuote(
       .update({ amount_paid: paidAmount, payment_status: paymentStatus })
       .eq('id', quoteId)
 
-    const { data: initPayment } = await supabase
+    const { data: initPayment } = await adminSupabase
       .from('sale_payments')
       .insert({
         sale_id:    quoteId,
