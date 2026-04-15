@@ -72,12 +72,14 @@ export async function sendPushToRoles(
   payload:   PushPayload,
   companyId: string,
 ) {
-  // Step 1: resolve user IDs that match the role/company criteria
+  // Step 1: resolve user IDs that match the role/company criteria.
+  // Use neq(false) instead of eq(true) so that users whose is_active column
+  // is NULL (accounts created before the column existed) are not silently excluded.
   const { data: users } = await admin
     .from('users')
     .select('id')
     .eq('company_id', companyId)
-    .eq('is_active', true)
+    .neq('is_active', false)
     .in('role', roles)
 
   if (!users?.length) return
