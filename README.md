@@ -520,6 +520,7 @@ npm run start
   - `20260330_companies_currency.sql`
   - `20260412_quotes.sql`
   - `20260414_fixes.sql`
+  - `20260415_drop_sale_reservation_trigger.sql`
   - `20260414_reserved_tiles_correction.sql`
 - [ ] `npm run build` locally — zero errors
 - [ ] Functional test: vendor → new sale → warehouse receives Realtime update
