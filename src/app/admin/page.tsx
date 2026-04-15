@@ -52,9 +52,10 @@ export default async function AdminPage() {
       .select('company_id')
       .eq('is_active', true),
 
-    // Platform-level events only — the platform admin has no legal basis
-    // to read tenant operational data (sales, payments, stock) without a DPA.
-    // Tenant owners see their own full audit trail in the Reports page.
+    // All events — no action_type filter. The platform admin manages all
+    // companies and must be able to see the full operational history.
+    // (Operational data is scoped per company via the company_id column;
+    //  the journal filter in AdminClient lets the operator drill down.)
     admin
       .from('audit_logs')
       .select(`
@@ -62,16 +63,8 @@ export default async function AdminPage() {
         company_id, user_role_snapshot, data_after,
         users!audit_logs_user_id_fkey ( full_name )
       `)
-      .in('action_type', [
-        'COMPANY_CREATED',
-        'COMPANY_ACTIVATED',
-        'COMPANY_DEACTIVATED',
-        'PLATFORM_USER_SUSPENDED',
-        'PLATFORM_USER_REACTIVATED',
-        'PLATFORM_USER_PASSWORD_RESET',
-      ])
       .order('created_at', { ascending: false })
-      .limit(500),
+      .limit(1000),
 
     getBadgeCounts(profile.role, supabase),
   ])

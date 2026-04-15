@@ -61,22 +61,34 @@ async function dispatch(
 }
 
 /** Send a push notification to all active users with any of the given roles,
- *  scoped to a specific company (admin client bypasses RLS, so we must filter
- *  company_id explicitly to prevent cross-tenant notification leakage).
- *  Single query via join — avoids the two-step users → subscriptions lookup. */
+ *  scoped to a specific company.
+ *
+ *  Two-step approach (instead of a JOIN) because push_subscriptions.user_id
+ *  typically FKs to auth.users — PostgREST only operates on the public schema
+ *  and cannot resolve cross-schema joins, so users!inner would return 0 rows. */
 export async function sendPushToRoles(
   admin:     AdminClient,
   roles:     string[],
   payload:   PushPayload,
   companyId: string,
 ) {
-  // Join push_subscriptions → users in one query
+  // Step 1: resolve user IDs that match the role/company criteria
+  const { data: users } = await admin
+    .from('users')
+    .select('id')
+    .eq('company_id', companyId)
+    .eq('is_active', true)
+    .in('role', roles)
+
+  if (!users?.length) return
+
+  const userIds = users.map((u: { id: string }) => u.id)
+
+  // Step 2: fetch push subscriptions for those users
   const { data: subs } = await admin
     .from('push_subscriptions')
-    .select('endpoint, subscription, users!inner(role, is_active, company_id)')
-    .eq('users.company_id', companyId)
-    .eq('users.is_active', true)
-    .in('users.role', roles)
+    .select('endpoint, subscription')
+    .in('user_id', userIds)
 
   if (!subs?.length) return
   await dispatch(admin, subs, payload)

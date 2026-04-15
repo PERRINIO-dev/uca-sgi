@@ -26,12 +26,34 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string; bd: 
 // to events the platform operator performs directly. Tenant operational data
 // (sales, payments, stock) is visible only to each tenant in their own Reports page.
 const ACTION_META: Record<string, { label: string; color: string; bg: string; bd: string }> = {
+  // Platform-level
   COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
   COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
   COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
   PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redBg,    bd: C.redBd    },
   PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
   PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  // Sales & quotes
+  SALE_CREATED:                 { label: 'Vente créée',               color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  SALE_CANCELLED:               { label: 'Vente annulée',             color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  QUOTE_CREATED:                { label: 'Devis créé',                color: C.gold,   bg: C.goldBg,   bd: C.goldBd   },
+  QUOTE_CONVERTED:              { label: 'Devis converti',            color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  QUOTE_CANCELLED:              { label: 'Devis annulé',              color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  PAYMENT_RECORDED:             { label: 'Paiement enregistré',       color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  FLOOR_PRICE_VIOLATION_ATTEMPT:{ label: 'Violation prix plancher',   color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  // Orders
+  ORDER_PREPARING:              { label: 'Préparation démarrée',      color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
+  ORDER_READY:                  { label: 'Commande prête',            color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  ORDER_DELIVERED:              { label: 'Livraison confirmée',       color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  // Stock
+  STOCK_REQUEST_SUBMITTED:      { label: 'Demande stock soumise',     color: C.gold,   bg: C.goldBg,   bd: C.goldBd   },
+  STOCK_REQUEST_APPROVED:       { label: 'Demande stock approuvée',   color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  STOCK_REQUEST_REJECTED:       { label: 'Demande stock refusée',     color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  // Users & admin
+  EMPLOYEE_CREATED:             { label: 'Employé créé',              color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  EMPLOYEE_UPDATED:             { label: 'Employé modifié',           color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  USER_DEACTIVATED:             { label: 'Utilisateur désactivé',     color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
+  USER_REACTIVATED:             { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -393,8 +415,36 @@ export default function AdminClient({
       case 'PLATFORM_USER_REACTIVATED':
       case 'PLATFORM_USER_PASSWORD_RESET':
         return d.target_email ?? '—'
+      case 'SALE_CREATED':
+        return d.sale_number ? `${d.sale_number} · ${d.item_count ?? 0} art. · ${d.total_amount != null ? new Intl.NumberFormat('fr-FR').format(Number(d.total_amount)) : ''}` : '—'
+      case 'SALE_CANCELLED':
+        return [d.sale_number, d.customer_name].filter(Boolean).join(' · ') || '—'
+      case 'QUOTE_CREATED':
+        return d.quote_number ? `${d.quote_number} · ${d.item_count ?? 0} art.` : '—'
+      case 'QUOTE_CONVERTED':
+        return d.sale_number ? `→ ${d.sale_number}` : '—'
+      case 'QUOTE_CANCELLED':
+        return d.quote_number ?? '—'
+      case 'PAYMENT_RECORDED':
+        return d.amount != null ? `${new Intl.NumberFormat('fr-FR').format(Number(d.amount))} FCFA` : '—'
+      case 'FLOOR_PRICE_VIOLATION_ATTEMPT':
+        return d.attempted_price != null ? `Tenté: ${d.attempted_price} · Plancher: ${d.floor_price}` : '—'
+      case 'ORDER_PREPARING':
+      case 'ORDER_READY':
+      case 'ORDER_DELIVERED':
+        return d.order_number ? `${d.order_number} (${d.previous_status} → ${d.new_status})` : '—'
+      case 'STOCK_REQUEST_SUBMITTED':
+      case 'STOCK_REQUEST_APPROVED':
+      case 'STOCK_REQUEST_REJECTED':
+        return d.product_name ? `${d.product_name} · Δ ${d.quantity_delta ?? ''}` : '—'
+      case 'EMPLOYEE_CREATED':
+      case 'EMPLOYEE_UPDATED':
+        return d.email ?? d.full_name ?? '—'
+      case 'USER_DEACTIVATED':
+      case 'USER_REACTIVATED':
+        return d.email ?? '—'
       default:
-        return '—'
+        return Object.entries(d).slice(0, 2).map(([k, v]) => `${k}: ${v}`).join(' · ') || '—'
     }
   }
 
