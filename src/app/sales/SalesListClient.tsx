@@ -358,26 +358,26 @@ export default function SalesListClient({
         {['owner', 'admin', 'vendor'].includes(profile.role) && (
           <button
             className="btn-amber"
-            disabled={navPending}
+            disabled={firstSalePending}
             onClick={() => {
               if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
                 setNoBoutiqueWarning(true)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
                 return
               }
-              startNavTransition(() => router.push('/sales/new'))
+              startFirstSaleTransition(() => router.push('/sales/new'))
             }}
             style={{
               border: 'none', borderRadius: R.md, height: 40,
               padding: `0 ${SP[4]}`,
               fontSize: F.sm, fontWeight: F.bold,
-              cursor: navPending ? 'not-allowed' : 'pointer',
+              cursor: firstSalePending ? 'not-allowed' : 'pointer',
               fontFamily: F.body,
               display: 'flex', alignItems: 'center', gap: SP[2],
-              opacity: navPending ? 0.7 : 1,
+              opacity: firstSalePending ? 0.7 : 1,
             }}
           >
-            {navPending ? (
+            {firstSalePending ? (
               <><span className="spinner" />Chargement…</>
             ) : (
               <><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>Nouvelle vente</>
