@@ -1082,29 +1082,57 @@ export default function WarehouseClient({
                   const unitLbl  = selProd?.unit_label ?? 'unités'
                   const pkgLbl   = selProd?.package_label ?? (isTile ? 'carton' : 'lot')
 
-                  const correctionToggle = reqType === 'correction' ? (
-                    <div style={{ display: 'flex', gap: 2,
-                      background: C.bg, padding: 2, borderRadius: 6 }}>
-                      {([['negative', '− Déduction'], ['positive', '+ Ajout']] as const).map(([sign, lbl]) => (
-                        <button key={sign}
-                          onClick={() => setReqCorrectionSign(sign)}
+                  // ── Pre-compute mode availability ──────────────────────────
+                  const tileHasM2 = isTile
+                    && !!selProd?.tile_area_m2
+                    && parseFloat(String(selProd.tile_area_m2)) > 0
+
+                  const baseUnitLbl = !isTile
+                    ? selProd?.product_type === 'linear_m' ? 'm'
+                      : selProd?.product_type === 'liter'   ? 'L'
+                      : unitLbl
+                    : ''
+
+                  const pkgConvFactor: number = !isTile && selProd ? (
+                    selProd.product_type === 'linear_m' && selProd.piece_length_m
+                      ? parseFloat(String(selProd.piece_length_m))
+                    : selProd.product_type === 'liter' && selProd.container_volume_l
+                      ? parseFloat(String(selProd.container_volume_l))
+                    : selProd.product_type === 'unit' && selProd.pieces_per_package
+                      ? parseInt(String(selProd.pieces_per_package))
+                    : 0
+                  ) : 0
+
+                  const pkgLabel = !isTile ? (selProd?.package_label ?? (
+                    selProd?.product_type === 'linear_m' ? 'barre'
+                    : selProd?.product_type === 'liter'   ? 'bidon'
+                    : 'lot'
+                  )) : ''
+
+                  const hasPackageMode = !isTile && pkgConvFactor > 0 && !!selProd?.package_label
+
+                  // ── Compact pill toggle (used in label row) ────────────────
+                  const pillToggle = (opts: readonly (readonly [string, string])[], active: string, onSelect: (v: string) => void) => (
+                    <div style={{ display: 'inline-flex', gap: 1,
+                      background: C.bgDeep, padding: 2, borderRadius: 6 }}>
+                      {opts.map(([val, lbl]) => (
+                        <button key={val} type="button"
+                          onClick={() => onSelect(val)}
                           style={{
-                            padding: '4px 10px', borderRadius: 5, border: 'none',
-                            fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                            fontFamily: F.body,
-                            background: reqCorrectionSign === sign
-                              ? (sign === 'negative' ? C.red : C.green)
-                              : 'transparent',
-                            color: reqCorrectionSign === sign ? '#fff' : C.muted,
-                            transition: 'background 0.15s, color 0.15s',
+                            padding: '3px 8px', borderRadius: 4, border: 'none',
+                            fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
+                            whiteSpace: 'nowrap',
+                            background: active === val ? C.amber : 'transparent',
+                            color: active === val ? '#FAF5EE' : C.muted,
+                            transition: 'background 0.12s, color 0.12s',
                           }}>
                           {lbl}
                         </button>
                       ))}
                     </div>
-                  ) : null
+                  )
 
-                  // No product selected — show neutral placeholder, no quantity inputs
+                  // No product selected — neutral placeholder
                   if (!selProd) {
                     return (
                       <div>
@@ -1114,195 +1142,149 @@ export default function WarehouseClient({
                         </label>
                         <div style={{ padding: '10px 12px', borderRadius: 8,
                           border: `1.5px solid ${C.border}`, fontSize: 13,
-                          color: C.dim, fontFamily: F.body, background: C.surfaceSub }}>
+                          color: C.dim, fontFamily: F.body, background: C.surfaceSub,
+                          fontStyle: 'italic' }}>
                           Sélectionnez un produit pour saisir la quantité
                         </div>
                       </div>
                     )
                   }
 
-                  return (
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', marginBottom: 6 }}>
-                        <label style={{ fontSize: 12, fontWeight: 600,
-                          color: C.ink, fontFamily: F.body }}>
-                          Quantité{' '}
+                  // ── Label row: label + mode toggle + correction toggle ─────
+                  const labelRow = (
+                    <div style={{ display: 'flex', alignItems: 'flex-start',
+                      justifyContent: 'space-between', marginBottom: 8, gap: 8 }}>
+                      <label style={{ fontSize: 12, fontWeight: 600,
+                        color: C.ink, fontFamily: F.body, paddingTop: 4, lineHeight: 1.3 }}>
+                        Quantité{' '}
+                        <span style={{ fontWeight: 400, color: C.muted }}>
                           {reqType === 'correction'
-                            ? reqCorrectionSign === 'negative'
-                              ? '(à déduire du stock)'
-                              : '(à ajouter au stock)'
+                            ? reqCorrectionSign === 'negative' ? '(à déduire)' : '(à ajouter)'
                             : '(à ajouter au stock)'}
-                        </label>
-                        {correctionToggle}
+                        </span>
+                      </label>
+                      <div style={{ display: 'flex', flexDirection: 'column',
+                        alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                        {/* Mode toggle: Cartons/m² or base/package — always on top */}
+                        {tileHasM2 && pillToggle(
+                          [['cartons', 'Cartons'], ['m2', 'm²']],
+                          reqTileMode,
+                          v => { setReqTileMode(v as 'cartons' | 'm2'); setReqCartons(''); setReqLoose(''); setReqQty('') }
+                        )}
+                        {hasPackageMode && pillToggle(
+                          [['base', baseUnitLbl], ['package', pkgLabel]],
+                          reqInputMode,
+                          v => { setReqInputMode(v as 'base' | 'package'); setReqQty('') }
+                        )}
+                        {/* Correction toggle below */}
+                        {reqType === 'correction' && pillToggle(
+                          [['negative', '− Déduction'], ['positive', '+ Ajout']],
+                          reqCorrectionSign,
+                          v => setReqCorrectionSign(v as 'negative' | 'positive')
+                        )}
                       </div>
+                    </div>
+                  )
 
-                      {isTile ? (
-                        <>
-                          {/* Cartons / m² toggle for tile products */}
-                          {selProd.tile_area_m2 && parseFloat(String(selProd.tile_area_m2)) > 0 && (
-                            <div style={{ display: 'flex', gap: 2,
-                              background: C.bg, padding: 2, borderRadius: 6,
-                              marginBottom: 8 }}>
-                              {([['cartons', 'Cartons'], ['m2', 'm²']] as const).map(([mode, lbl]) => (
-                                <button key={mode} type="button"
-                                  onClick={() => { setReqTileMode(mode); setReqCartons(''); setReqLoose(''); setReqQty('') }}
-                                  style={{
-                                    padding: '4px 10px', borderRadius: 5, border: 'none',
-                                    fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
-                                    flex: 1,
-                                    background: reqTileMode === mode ? C.amber : 'transparent',
-                                    color: reqTileMode === mode ? '#FAF5EE' : C.muted,
-                                    transition: 'background 0.15s, color 0.15s',
-                                  }}>
-                                  {lbl}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-
-                          {reqTileMode === 'm2' ? (
-                            <>
-                              <input type="number" min="0" step="any"
-                                value={reqQty}
-                                onChange={e => setReqQty(e.target.value)}
-                                placeholder="Surface (m²)"
-                                style={inputStyle} />
-                              {parseFloat(reqQty) > 0 && selProd.tile_area_m2 && (() => {
-                                const tileArea = parseFloat(String(selProd.tile_area_m2))
-                                const tiles    = tileArea > 0 ? Math.round(parseFloat(reqQty) / tileArea) : 0
-                                const tpc      = selProd.tiles_per_carton ? parseInt(String(selProd.tiles_per_carton)) : null
-                                const cartons  = tpc ? Math.floor(tiles / tpc) : null
-                                const loose    = tpc ? tiles % tpc : null
-                                const ctnPart  = cartons !== null
-                                  ? ` · ${cartons} ctn${loose ? ` + ${loose} car.` : ''}`
-                                  : ''
-                                return tiles > 0 ? (
-                                  <div style={{ marginTop: 6, fontSize: 12,
-                                    color: C.amber, fontWeight: 600, fontFamily: F.body }}>
-                                    = {fmtNum(tiles)} carreaux{ctnPart}
-                                  </div>
-                                ) : null
-                              })()}
-                            </>
-                          ) : (
-                            <>
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <div style={{ flex: 1 }}>
-                                  <input type="number" min="0"
-                                    value={reqCartons}
-                                    onChange={e => setReqCartons(e.target.value)}
-                                    placeholder={pkgLbl.charAt(0).toUpperCase() + pkgLbl.slice(1) + 's'}
-                                    style={inputStyle} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                  <input type="number" min="0"
-                                    value={reqLoose}
-                                    onChange={e => setReqLoose(e.target.value)}
-                                    placeholder="Carreaux en plus"
-                                    style={inputStyle} />
-                                </div>
-                              </div>
-                              {(reqCartons || reqLoose) && (() => {
-                                const tpc   = parseInt(selProd.tiles_per_carton) || 1
-                                const c     = parseInt(reqCartons) || 0
-                                const l     = parseInt(reqLoose)   || 0
-                                const total = (c * tpc) + l
-                                const m2    = total * parseFloat(selProd.tile_area_m2 ?? '0')
-                                return total > 0 ? (
-                                  <div style={{ marginTop: 6, fontSize: 12,
-                                    color: C.amber, fontWeight: 600, fontFamily: F.body }}>
-                                    = {fmtNum(total)} carreaux · {fmtM2(m2)}
-                                  </div>
-                                ) : null
-                              })()}
-                            </>
-                          )}
-                        </>
-                      ) : (() => {
-                        const baseUnitLbl =
-                          selProd?.product_type === 'linear_m' ? 'm'
-                          : selProd?.product_type === 'liter'   ? 'L'
-                          : unitLbl  // bag = sacs, unit = pièces (already base units)
-
-                        const pkgConvFactor: number =
-                          selProd?.product_type === 'linear_m' && selProd?.piece_length_m
-                            ? parseFloat(String(selProd.piece_length_m))
-                          : selProd?.product_type === 'liter' && selProd?.container_volume_l
-                            ? parseFloat(String(selProd.container_volume_l))
-                          : selProd?.product_type === 'unit' && selProd?.pieces_per_package
-                            ? parseInt(String(selProd.pieces_per_package))
-                          : 0
-
-                        const pkgLabel = selProd?.package_label ?? (
-                          selProd?.product_type === 'linear_m' ? 'barre'
-                          : selProd?.product_type === 'liter'   ? 'bidon'
-                          : 'lot'
-                        )
-
-                        const hasPackageMode = pkgConvFactor > 0 && !!selProd?.package_label
-
-                        const qtyVal = parseFloat(reqQty) || 0
-                        const isPackage = reqInputMode === 'package' && hasPackageMode
-
-                        // Derived preview values
-                        const baseEquiv = isPackage ? qtyVal * pkgConvFactor : qtyVal
-                        const pkgEquiv  = !isPackage && hasPackageMode && pkgConvFactor > 0
-                          ? qtyVal / pkgConvFactor : null
-
-                        return (
+                  // ── Tile inputs ────────────────────────────────────────────
+                  if (isTile) {
+                    return (
+                      <div>
+                        {labelRow}
+                        {reqTileMode === 'm2' ? (
                           <>
-                            {/* Base / Conditionnement toggle */}
-                            {hasPackageMode && (
-                              <div style={{ display: 'flex', gap: 2,
-                                background: C.bg, padding: 2, borderRadius: 6,
-                                marginBottom: 8 }}>
-                                {([['base', baseUnitLbl], ['package', pkgLabel]] as const).map(([mode, lbl]) => (
-                                  <button key={mode} type="button"
-                                    onClick={() => { setReqInputMode(mode as 'base' | 'package'); setReqQty('') }}
-                                    style={{
-                                      padding: '4px 10px', borderRadius: 5, border: 'none',
-                                      fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
-                                      flex: 1,
-                                      background: reqInputMode === mode ? C.amber : 'transparent',
-                                      color: reqInputMode === mode ? '#FAF5EE' : C.muted,
-                                      transition: 'background 0.15s, color 0.15s',
-                                    }}>
-                                    {lbl}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-
                             <input type="number" min="0" step="any"
                               value={reqQty}
                               onChange={e => setReqQty(e.target.value)}
-                              placeholder={isPackage
-                                ? `Quantité (${pkgLabel})`
-                                : `Quantité (${baseUnitLbl})`}
+                              placeholder="Surface (m²)"
                               style={inputStyle} />
-
-                            {/* Static hint in base mode */}
-                            {!isPackage && hasPackageMode && qtyVal === 0 && (
-                              <div style={{ marginTop: 4, fontSize: 11, color: C.muted, fontFamily: F.body }}>
-                                1 {pkgLabel} = {fmtNum(pkgConvFactor)} {baseUnitLbl}
-                              </div>
-                            )}
-
-                            {/* Live conversion preview */}
-                            {qtyVal > 0 && (
-                              <div style={{ marginTop: 6, fontSize: 12,
-                                color: C.amber, fontWeight: 600, fontFamily: F.body }}>
-                                {isPackage
-                                  ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`
-                                  : pkgEquiv !== null && pkgEquiv > 0
-                                    ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)} · ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgEquiv)} ${pkgLabel}`
-                                    : `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`}
-                              </div>
-                            )}
+                            {parseFloat(reqQty) > 0 && selProd.tile_area_m2 && (() => {
+                              const tileArea = parseFloat(String(selProd.tile_area_m2))
+                              const tiles    = tileArea > 0 ? Math.round(parseFloat(reqQty) / tileArea) : 0
+                              const tpc      = selProd.tiles_per_carton ? parseInt(String(selProd.tiles_per_carton)) : null
+                              const cartons  = tpc ? Math.floor(tiles / tpc) : null
+                              const loose    = tpc ? tiles % tpc : null
+                              const ctnPart  = cartons !== null
+                                ? ` · ${cartons} ctn${loose ? ` + ${loose} car.` : ''}`
+                                : ''
+                              return tiles > 0 ? (
+                                <div style={{ marginTop: 6, fontSize: 12,
+                                  color: C.amber, fontWeight: 600, fontFamily: F.body }}>
+                                  = {fmtNum(tiles)} carreaux{ctnPart}
+                                </div>
+                              ) : null
+                            })()}
                           </>
-                        )
-                      })()}
+                        ) : (
+                          <>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <div style={{ flex: 1 }}>
+                                <input type="number" min="0"
+                                  value={reqCartons}
+                                  onChange={e => setReqCartons(e.target.value)}
+                                  placeholder={pkgLbl.charAt(0).toUpperCase() + pkgLbl.slice(1) + 's'}
+                                  style={inputStyle} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <input type="number" min="0"
+                                  value={reqLoose}
+                                  onChange={e => setReqLoose(e.target.value)}
+                                  placeholder="Carreaux en plus"
+                                  style={inputStyle} />
+                              </div>
+                            </div>
+                            {(reqCartons || reqLoose) && (() => {
+                              const tpc   = parseInt(selProd.tiles_per_carton) || 1
+                              const c     = parseInt(reqCartons) || 0
+                              const l     = parseInt(reqLoose)   || 0
+                              const total = (c * tpc) + l
+                              const m2    = total * parseFloat(selProd.tile_area_m2 ?? '0')
+                              return total > 0 ? (
+                                <div style={{ marginTop: 6, fontSize: 12,
+                                  color: C.amber, fontWeight: 600, fontFamily: F.body }}>
+                                  = {fmtNum(total)} carreaux · {fmtM2(m2)}
+                                </div>
+                              ) : null
+                            })()}
+                          </>
+                        )}
+                      </div>
+                    )
+                  }
+
+                  // ── Non-tile inputs ────────────────────────────────────────
+                  const qtyVal   = parseFloat(reqQty) || 0
+                  const isPackage = reqInputMode === 'package' && hasPackageMode
+                  const baseEquiv = isPackage ? qtyVal * pkgConvFactor : qtyVal
+                  const pkgEquiv  = !isPackage && hasPackageMode && pkgConvFactor > 0
+                    ? qtyVal / pkgConvFactor : null
+
+                  return (
+                    <div>
+                      {labelRow}
+                      {/* Hint: conversion ratio (base mode, field empty) */}
+                      {!isPackage && hasPackageMode && qtyVal === 0 && (
+                        <div style={{ marginBottom: 6, fontSize: 11, color: C.muted, fontFamily: F.body }}>
+                          1 {pkgLabel} = {fmtNum(pkgConvFactor)} {baseUnitLbl}
+                        </div>
+                      )}
+                      <input type="number" min="0" step="any"
+                        value={reqQty}
+                        onChange={e => setReqQty(e.target.value)}
+                        placeholder={isPackage
+                          ? `Quantité (${pkgLabel})`
+                          : `Quantité (${baseUnitLbl})`}
+                        style={inputStyle} />
+                      {qtyVal > 0 && (
+                        <div style={{ marginTop: 6, fontSize: 12,
+                          color: C.amber, fontWeight: 600, fontFamily: F.body }}>
+                          {isPackage
+                            ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`
+                            : pkgEquiv !== null && pkgEquiv > 0
+                              ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)} · ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgEquiv)} ${pkgLabel}`
+                              : `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`}
+                        </div>
+                      )}
                     </div>
                   )
                 })()}
