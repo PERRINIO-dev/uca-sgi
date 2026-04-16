@@ -655,7 +655,30 @@ export default function DashboardClient({
                             }
                             return `${fmtNum(absDelta)} carreau${absDelta > 1 ? 'x' : ''}`
                           }
-                          return `${fmtNum(absDelta)} ${prod?.unit_label ?? 'unités'}`
+                          const pt   = prod?.product_type
+                          const base = `${fmtNum(absDelta)} ${prod?.unit_label ?? 'unités'}`
+                          if (pt === 'linear_m' && prod?.piece_length_m) {
+                            const factor = parseFloat(String(prod.piece_length_m))
+                            if (factor > 0) {
+                              const pkgs = absDelta / factor
+                              return `${base} · ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgs)} ${prod.package_label ?? 'barre'}`
+                            }
+                          }
+                          if (pt === 'liter' && prod?.container_volume_l) {
+                            const factor = parseFloat(String(prod.container_volume_l))
+                            if (factor > 0) {
+                              const pkgs = absDelta / factor
+                              return `${base} · ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgs)} ${prod.package_label ?? 'bidon'}`
+                            }
+                          }
+                          if (pt === 'unit' && prod?.pieces_per_package && prod?.package_label) {
+                            const factor = parseInt(String(prod.pieces_per_package))
+                            if (factor > 0) {
+                              const pkgs = Math.floor(absDelta / factor)
+                              if (pkgs > 0) return `${base} · ${fmtNum(pkgs)} ${prod.package_label}`
+                            }
+                          }
+                          return base
                         })()}
                       </span>
                     </div>

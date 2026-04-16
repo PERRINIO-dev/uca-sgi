@@ -82,6 +82,7 @@ export default function WarehouseClient({
   const [reqCartons,        setReqCartons]        = useState('')
   const [reqLoose,          setReqLoose]          = useState('')
   const [reqQty,            setReqQty]            = useState('')   // non-tile quantity
+  const [reqInputMode,      setReqInputMode]      = useState<'base' | 'package'>('base')
   const [reqJustif,         setReqJustif]         = useState('')
   const [reqLoading,        setReqLoading]        = useState(false)
   const [reqError,          setReqError]          = useState<string | null>(null)
@@ -282,7 +283,20 @@ export default function WarehouseClient({
       const loose   = parseInt(reqLoose)   || 0
       delta = (cartons * tpc) + loose
     } else {
-      delta = parseFloat(reqQty) || 0
+      const rawQty = parseFloat(reqQty) || 0
+      if (reqInputMode === 'package' && prod) {
+        const factor =
+          prod.product_type === 'linear_m' && prod.piece_length_m
+            ? parseFloat(String(prod.piece_length_m))
+          : prod.product_type === 'liter' && prod.container_volume_l
+            ? parseFloat(String(prod.container_volume_l))
+          : prod.product_type === 'unit' && prod.pieces_per_package
+            ? parseInt(String(prod.pieces_per_package))
+          : 1
+        delta = rawQty * (factor > 0 ? factor : 1)
+      } else {
+        delta = rawQty
+      }
     }
 
     if (delta === 0) {
@@ -310,7 +324,7 @@ export default function WarehouseClient({
 
     setReqSuccess(true)
     setReqProduct(''); setReqProductSearch('')
-    setReqCartons(''); setReqLoose(''); setReqQty(''); setReqJustif('')
+    setReqCartons(''); setReqLoose(''); setReqQty(''); setReqInputMode('base'); setReqJustif('')
     setTimeout(() => setReqSuccess(false), 4000)
     router.refresh()
   }
@@ -1035,7 +1049,7 @@ export default function WarehouseClient({
                                 setReqProductOpen(false)
                                 setReqError(null)
                                 setReqSuccess(false)
-                                setReqCartons(''); setReqLoose(''); setReqQty('')
+                                setReqCartons(''); setReqLoose(''); setReqQty(''); setReqInputMode('base')
                               }}
                               style={{ padding: '9px 14px', cursor: 'pointer',
                                 fontSize: 13, fontFamily: F.body,
@@ -1132,43 +1146,84 @@ export default function WarehouseClient({
                           })()}
                         </>
                       ) : (() => {
-                        // For linear_m and liter products the canonical storage unit
-                        // is the BASE unit (metres / litres).  Always label the input
-                        // with that unit so warehouse agents cannot accidentally enter
-                        // "1 rouleau" when the system expects metres — that mismatch
-                        // is exactly what causes stock to hit 0 after delivery.
                         const baseUnitLbl =
                           selProd?.product_type === 'linear_m' ? 'm'
                           : selProd?.product_type === 'liter'   ? 'L'
                           : unitLbl  // bag = sacs, unit = pièces (already base units)
 
-                        // Package conversion hint (e.g. "1 rouleau = 100 m")
-                        let pkgHint: string | null = null
-                        if (selProd?.product_type === 'linear_m' && selProd?.piece_length_m) {
-                          pkgHint = `1 ${selProd.package_label ?? 'barre'} = ${selProd.piece_length_m} m`
-                        } else if (selProd?.product_type === 'liter' && selProd?.container_volume_l) {
-                          pkgHint = `1 ${selProd.package_label ?? 'bidon'} = ${selProd.container_volume_l} L`
-                        } else if (selProd?.product_type === 'unit' && selProd?.pieces_per_package && selProd?.package_label) {
-                          pkgHint = `1 ${selProd.package_label} = ${selProd.pieces_per_package} ${unitLbl}`
-                        }
+                        const pkgConvFactor: number =
+                          selProd?.product_type === 'linear_m' && selProd?.piece_length_m
+                            ? parseFloat(String(selProd.piece_length_m))
+                          : selProd?.product_type === 'liter' && selProd?.container_volume_l
+                            ? parseFloat(String(selProd.container_volume_l))
+                          : selProd?.product_type === 'unit' && selProd?.pieces_per_package
+                            ? parseInt(String(selProd.pieces_per_package))
+                          : 0
+
+                        const pkgLabel = selProd?.package_label ?? (
+                          selProd?.product_type === 'linear_m' ? 'barre'
+                          : selProd?.product_type === 'liter'   ? 'bidon'
+                          : 'lot'
+                        )
+
+                        const hasPackageMode = pkgConvFactor > 0 && !!selProd?.package_label
 
                         const qtyVal = parseFloat(reqQty) || 0
+                        const isPackage = reqInputMode === 'package' && hasPackageMode
+
+                        // Derived preview values
+                        const baseEquiv = isPackage ? qtyVal * pkgConvFactor : qtyVal
+                        const pkgEquiv  = !isPackage && hasPackageMode && pkgConvFactor > 0
+                          ? qtyVal / pkgConvFactor : null
+
                         return (
                           <>
+                            {/* Base / Conditionnement toggle */}
+                            {hasPackageMode && (
+                              <div style={{ display: 'flex', gap: 2,
+                                background: C.bg, padding: 2, borderRadius: 6,
+                                marginBottom: 8 }}>
+                                {([['base', baseUnitLbl], ['package', pkgLabel]] as const).map(([mode, lbl]) => (
+                                  <button key={mode} type="button"
+                                    onClick={() => { setReqInputMode(mode as 'base' | 'package'); setReqQty('') }}
+                                    style={{
+                                      padding: '4px 10px', borderRadius: 5, border: 'none',
+                                      fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
+                                      flex: 1,
+                                      background: reqInputMode === mode ? C.amber : 'transparent',
+                                      color: reqInputMode === mode ? '#FAF5EE' : C.muted,
+                                      transition: 'background 0.15s, color 0.15s',
+                                    }}>
+                                    {lbl}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
                             <input type="number" min="0" step="any"
                               value={reqQty}
                               onChange={e => setReqQty(e.target.value)}
-                              placeholder={`Quantité (${baseUnitLbl})`}
+                              placeholder={isPackage
+                                ? `Quantité (${pkgLabel})`
+                                : `Quantité (${baseUnitLbl})`}
                               style={inputStyle} />
-                            {pkgHint && (
+
+                            {/* Static hint in base mode */}
+                            {!isPackage && hasPackageMode && qtyVal === 0 && (
                               <div style={{ marginTop: 4, fontSize: 11, color: C.muted, fontFamily: F.body }}>
-                                {pkgHint}
+                                1 {pkgLabel} = {fmtNum(pkgConvFactor)} {baseUnitLbl}
                               </div>
                             )}
+
+                            {/* Live conversion preview */}
                             {qtyVal > 0 && (
                               <div style={{ marginTop: 6, fontSize: 12,
                                 color: C.amber, fontWeight: 600, fontFamily: F.body }}>
-                                = {fmtNum(qtyVal)} {pluralize(baseUnitLbl, qtyVal)}
+                                {isPackage
+                                  ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`
+                                  : pkgEquiv !== null && pkgEquiv > 0
+                                    ? `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)} · ${new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgEquiv)} ${pkgLabel}`
+                                    : `= ${fmtNum(baseEquiv)} ${pluralize(baseUnitLbl, baseEquiv)}`}
                               </div>
                             )}
                           </>
@@ -1275,7 +1330,35 @@ export default function WarehouseClient({
                       const cartons = tpc ? Math.floor(absDelta / tpc) : null
                       return cartons ? `${m2Str} m² · ${cartons} ctn` : `${m2Str} m²`
                     })()
-                  : `${fmtNum(absDelta)} ${pluralize(unitLblReq, absDelta)}`
+                  : (() => {
+                      const prod = req.products
+                      const pt   = prod?.product_type
+                      const base = `${fmtNum(absDelta)} ${pluralize(unitLblReq, absDelta)}`
+                      if (pt === 'linear_m' && prod?.piece_length_m) {
+                        const factor = parseFloat(String(prod.piece_length_m))
+                        if (factor > 0) {
+                          const pkgs = absDelta / factor
+                          const pkgsStr = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgs)
+                          return `${base} · ${pkgsStr} ${prod.package_label ?? 'barre'}`
+                        }
+                      }
+                      if (pt === 'liter' && prod?.container_volume_l) {
+                        const factor = parseFloat(String(prod.container_volume_l))
+                        if (factor > 0) {
+                          const pkgs = absDelta / factor
+                          const pkgsStr = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(pkgs)
+                          return `${base} · ${pkgsStr} ${prod.package_label ?? 'bidon'}`
+                        }
+                      }
+                      if (pt === 'unit' && prod?.pieces_per_package && prod?.package_label) {
+                        const factor = parseInt(String(prod.pieces_per_package))
+                        if (factor > 0) {
+                          const pkgs = Math.floor(absDelta / factor)
+                          if (pkgs > 0) return `${base} · ${fmtNum(pkgs)} ${prod.package_label}`
+                        }
+                      }
+                      return base
+                    })()
                 return (
                   <div key={req.id} style={{
                     background: C.surface, borderRadius: 10,
