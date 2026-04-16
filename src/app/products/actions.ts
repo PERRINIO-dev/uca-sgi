@@ -23,24 +23,9 @@ async function getAuthorizedProfile() {
   return { supabase, user, profile }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Slug normalization (must mirror the SQL trigger: lowercase + unaccent + trim)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function normalizeCategorySlug(name: string): string {
-  return name
-    .trim()
-    // Expand ligatures BEFORE NFD — PostgreSQL unaccent handles these but JS NFD does not.
-    // Without this, "Gros Œuvre" → JS slug "gros œuvre" ≠ DB slug "gros oeuvre",
-    // causing ensureProductCategory to miss the existing row and hit a UNIQUE violation on INSERT.
-    .replace(/[Œœ]/g, c => c === 'Œ' ? 'OE' : 'oe')
-    .replace(/[Ææ]/g, c => c === 'Æ' ? 'AE' : 'ae')
-    .replace(/ß/g, 'ss')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // strip combining diacritics
-    .toLowerCase()
-    .replace(/\s+/g, ' ')            // collapse whitespace
-}
+// normalizeCategorySlug removed — slug computation now happens exclusively in
+// PostgreSQL via the find_or_create_product_category RPC, which calls the DB's
+// own normalize_category_slug(). This eliminates any JS/DB normalization mismatch.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Categories
@@ -81,73 +66,28 @@ export async function getProductCategories(
 
 /**
  * Resolve a category name to an id for the caller's company + product type.
- * - If a category with the same normalized slug already exists → return it
- *   and increment its usage_count.
- * - If it does not exist → create it and return the new row.
- *
- * Called server-side within createProduct / updateProduct.
- * Never creates a duplicate thanks to the UNIQUE(company_id, product_type, slug).
+ * Delegates entirely to the find_or_create_product_category RPC which runs
+ * normalize_category_slug() in PostgreSQL — the exact same function the
+ * set_category_slug trigger uses. This eliminates any JS/DB slug mismatch.
+ * Uses adminSupabase to bypass RLS (the server action already authenticates
+ * and authorises the caller before reaching this point).
  */
 async function ensureProductCategory(
-  supabase:    Awaited<ReturnType<typeof createClient>>,
   companyId:   string,
   productType: ProductType,
   rawName:     string,
 ): Promise<{ id: string; name: string } | null> {
-  const trimmedName = rawName.trim()
-  if (!trimmedName) return null
+  if (!rawName.trim()) return null
 
-  const slug = normalizeCategorySlug(trimmedName)
-
-  // Try to find existing category
-  const { data: existing } = await supabase
-    .from('product_categories')
-    .select('id, name, usage_count')
-    .eq('company_id',   companyId)
-    .eq('product_type', productType)
-    .eq('slug',         slug)
-    .maybeSingle()
-
-  if (existing) {
-    // Increment usage counter
-    await supabase
-      .from('product_categories')
-      .update({ usage_count: (existing.usage_count ?? 0) + 1 })
-      .eq('id', existing.id)
-    return { id: existing.id, name: existing.name }
-  }
-
-  // Title-case the first letter of each word for consistent display
-  const displayName = trimmedName
-    .split(' ')
-    .map(w => w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w)
-    .join(' ')
-
-  const { data: created, error: insertError } = await supabase
-    .from('product_categories')
-    .insert({
-      company_id:   companyId,
-      product_type: productType,
-      name:         displayName,
-      usage_count:  1,
+  const { data, error } = await getAdminClient()
+    .rpc('find_or_create_product_category', {
+      p_company_id:   companyId,
+      p_product_type: productType,
+      p_name:         rawName.trim(),
     })
-    .select('id, name')
-    .single()
 
-  if (insertError || !created) {
-    // INSERT failed — most likely a concurrent creation produced the same DB-generated slug.
-    // Re-query by slug so the caller gets the existing row rather than a null.
-    const { data: fallback } = await supabase
-      .from('product_categories')
-      .select('id, name')
-      .eq('company_id',   companyId)
-      .eq('product_type', productType)
-      .eq('slug',         slug)
-      .maybeSingle()
-    return fallback ?? null
-  }
-
-  return created
+  if (error || !data || (data as any[]).length === 0) return null
+  return (data as { id: string; name: string }[])[0]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,7 +208,6 @@ export async function createProduct(payload: CreateProductPayload) {
 
   // ── Resolve / create category ──────────────────────────────────────────────
   const category = await ensureProductCategory(
-    supabase,
     profile.company_id,
     payload.productType,
     payload.category,
@@ -476,7 +415,6 @@ export async function updateProduct(payload: {
 
   // Resolve category (create if new, increment usage if existing)
   const category = await ensureProductCategory(
-    supabase,
     profile.company_id,
     productType,
     payload.category,
