@@ -30,6 +30,12 @@ async function getAuthorizedProfile() {
 function normalizeCategorySlug(name: string): string {
   return name
     .trim()
+    // Expand ligatures BEFORE NFD — PostgreSQL unaccent handles these but JS NFD does not.
+    // Without this, "Gros Œuvre" → JS slug "gros œuvre" ≠ DB slug "gros oeuvre",
+    // causing ensureProductCategory to miss the existing row and hit a UNIQUE violation on INSERT.
+    .replace(/[Œœ]/g, c => c === 'Œ' ? 'OE' : 'oe')
+    .replace(/[Ææ]/g, c => c === 'Æ' ? 'AE' : 'ae')
+    .replace(/ß/g, 'ss')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // strip combining diacritics
     .toLowerCase()
@@ -117,7 +123,7 @@ async function ensureProductCategory(
     .map(w => w.length > 0 ? w[0].toUpperCase() + w.slice(1) : w)
     .join(' ')
 
-  const { data: created } = await supabase
+  const { data: created, error: insertError } = await supabase
     .from('product_categories')
     .insert({
       company_id:   companyId,
@@ -128,7 +134,20 @@ async function ensureProductCategory(
     .select('id, name')
     .single()
 
-  return created ?? null
+  if (insertError || !created) {
+    // INSERT failed — most likely a concurrent creation produced the same DB-generated slug.
+    // Re-query by slug so the caller gets the existing row rather than a null.
+    const { data: fallback } = await supabase
+      .from('product_categories')
+      .select('id, name')
+      .eq('company_id',   companyId)
+      .eq('product_type', productType)
+      .eq('slug',         slug)
+      .maybeSingle()
+    return fallback ?? null
+  }
+
+  return created
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

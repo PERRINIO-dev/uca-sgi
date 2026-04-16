@@ -1707,7 +1707,11 @@ function CategoryCombobox({
   }, [open])
 
   const slugify = (s: string) =>
-    s.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ')
+    s.trim()
+      .replace(/[Œœ]/g, c => c === 'Œ' ? 'OE' : 'oe')
+      .replace(/[Ææ]/g, c => c === 'Æ' ? 'AE' : 'ae')
+      .replace(/ß/g, 'ss')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ')
 
   const querySlug  = slugify(query)
   const filtered   = querySlug
