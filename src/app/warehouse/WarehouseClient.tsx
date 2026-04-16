@@ -1263,9 +1263,19 @@ export default function WarehouseClient({
                 const cfg = REQUEST_STATUS[
                   req.status as keyof typeof REQUEST_STATUS
                 ]
-                const isNeg   = req.quantity_tiles_delta < 0
+                const isNeg     = req.quantity_tiles_delta < 0
                 const isTileReq = !req.products?.product_type || req.products.product_type === 'tile'
+                const absDelta  = Math.abs(req.quantity_tiles_delta)
                 const unitLblReq = isTileReq ? 'carreau' : (req.products?.unit_label ?? 'unité')
+                const tileArea  = req.products?.tile_area_m2  ? parseFloat(String(req.products.tile_area_m2))  : null
+                const tpc       = req.products?.tiles_per_carton ? parseInt(String(req.products.tiles_per_carton)) : null
+                const qtyDisplay = isTileReq && tileArea
+                  ? (() => {
+                      const m2Str  = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(absDelta * tileArea)
+                      const cartons = tpc ? Math.floor(absDelta / tpc) : null
+                      return cartons ? `${m2Str} m² · ${cartons} ctn` : `${m2Str} m²`
+                    })()
+                  : `${fmtNum(absDelta)} ${pluralize(unitLblReq, absDelta)}`
                 return (
                   <div key={req.id} style={{
                     background: C.surface, borderRadius: 10,
@@ -1297,8 +1307,7 @@ export default function WarehouseClient({
                       </span>
                       <span style={{ fontSize: 13, fontWeight: 700,
                         color: isNeg ? C.red : C.green, fontFamily: F.body }}>
-                        {isNeg ? '' : '+'}
-                        {fmtNum(Math.abs(req.quantity_tiles_delta))} {pluralize(unitLblReq, Math.abs(req.quantity_tiles_delta))}
+                        {isNeg ? '' : '+'}{qtyDisplay}
                       </span>
                     </div>
                     <div style={{ fontSize: 11, color: C.muted,

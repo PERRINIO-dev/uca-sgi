@@ -641,23 +641,21 @@ export default function DashboardClient({
                       }}>
                         {req.quantity_tiles_delta > 0 ? '+' : ''}
                         {(() => {
-                          const delta = req.quantity_tiles_delta
-                          const prod  = req.products
-                          const isTile = (prod?.product_type ?? 'tile') === 'tile'
-                          if (isTile && prod?.tiles_per_carton) {
-                            const tpc = parseInt(prod.tiles_per_carton)
-                            const cartons = Math.floor(Math.abs(delta) / tpc)
-                            const loose   = Math.abs(delta) % tpc
-                            const m2      = prod.tile_area_m2
-                              ? (Math.abs(delta) * parseFloat(prod.tile_area_m2)).toFixed(2) + ' m²'
-                              : null
-                            const parts = []
-                            if (cartons > 0) parts.push(`${cartons} ctn`)
-                            if (loose   > 0) parts.push(`${loose} car.`)
-                            if (m2) parts.push(m2)
-                            return parts.join(' · ') || `${Math.abs(delta)} carreaux`
+                          const delta    = req.quantity_tiles_delta
+                          const prod     = req.products
+                          const isTile   = (prod?.product_type ?? 'tile') === 'tile'
+                          const absDelta = Math.abs(delta)
+                          if (isTile) {
+                            const tileArea = prod?.tile_area_m2 ? parseFloat(String(prod.tile_area_m2)) : null
+                            const tpc      = prod?.tiles_per_carton ? parseInt(String(prod.tiles_per_carton)) : null
+                            if (tileArea) {
+                              const m2Str  = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(absDelta * tileArea)
+                              const cartons = tpc ? Math.floor(absDelta / tpc) : null
+                              return cartons ? `${m2Str} m² · ${cartons} ctn` : `${m2Str} m²`
+                            }
+                            return `${fmtNum(absDelta)} carreau${absDelta > 1 ? 'x' : ''}`
                           }
-                          return `${fmtNum(Math.abs(delta))} ${isTile ? 'carreaux' : (prod?.unit_label ?? 'unités')}`
+                          return `${fmtNum(absDelta)} ${prod?.unit_label ?? 'unités'}`
                         })()}
                       </span>
                     </div>
