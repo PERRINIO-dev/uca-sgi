@@ -471,6 +471,24 @@ export default function ProductsClient({
     return true
   })
 
+  // Count per type within active filter (for tab badges)
+  const countForType = (type: ProductType | 'all') =>
+    products.filter(p => {
+      if (filterActive === 'active'   && !p.is_active) return false
+      if (filterActive === 'inactive' &&  p.is_active) return false
+      if (type !== 'all' && (p.product_type ?? 'tile') !== type) return false
+      return true
+    }).length
+
+  const tabConfig: { type: ProductType | 'all'; label: string; color: string }[] = [
+    { type: 'all',      label: 'Tous',       color: C.amber  },
+    { type: 'tile',     label: 'Carrelage',  color: '#2563EB' },
+    { type: 'unit',     label: 'Unités',     color: '#7C3AED' },
+    { type: 'linear_m', label: 'Métrés',     color: '#059669' },
+    { type: 'bag',      label: 'Sacs',       color: '#D97706' },
+    { type: 'liter',    label: 'Liquides',   color: '#0891B2' },
+  ]
+
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', borderRadius: 8,
     border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink,
@@ -509,39 +527,99 @@ export default function ProductsClient({
         </button>
       </div>
 
-      {/* Filter bar */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap',
-        background: C.surface, padding: '12px 16px', borderRadius: 12,
-        border: `1px solid ${C.border}`, boxShadow: '0 1px 3px rgba(60,30,10,0.04)' }}>
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Rechercher par nom ou référence…"
-          style={{ ...inputStyle, width: 260, padding: '8px 12px', fontSize: 13 }} />
-        <select value={filterType} onChange={e => setFilterType(e.target.value as any)}
-          style={{ ...inputStyle, width: 'auto', padding: '8px 12px', fontSize: 13 }}>
-          <option value="all">Tous les types</option>
-          {(Object.entries(TYPE_LABELS) as [ProductType, string][]).map(([v, l]) => (
-            <option key={v} value={v}>{l}</option>
-          ))}
-        </select>
-        <select value={filterActive} onChange={e => setFilterActive(e.target.value as any)}
-          style={{ ...inputStyle, width: 'auto', padding: '8px 12px', fontSize: 13 }}>
-          <option value="active">Actifs</option>
-          <option value="inactive">Désactivés</option>
-          <option value="all">Tous</option>
-        </select>
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div style={{ marginBottom: 18 }}>
+
+        {/* Search row */}
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ position: 'relative', maxWidth: 400 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+              <circle cx="6" cy="6" r="4.5" stroke={C.dim} strokeWidth="1.5"/>
+              <path d="M9.5 9.5L12.5 12.5" stroke={C.dim} strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher par nom ou référence…"
+              style={{ ...inputStyle, width: '100%', paddingLeft: 34, paddingTop: 9, paddingBottom: 9, fontSize: 13, borderRadius: 10, height: 38, boxSizing: 'border-box' }} />
+          </div>
+        </div>
+
+        {/* Tab bar + status toggle */}
+        <div style={{ background: C.surface, borderRadius: 12,
+          border: `1px solid ${C.border}`,
+          boxShadow: '0 1px 3px rgba(60,30,10,0.04)',
+          display: 'flex', alignItems: 'stretch', justifyContent: 'space-between',
+          overflow: 'hidden' }}>
+
+          {/* Type tabs */}
+          <div style={{ display: 'flex', overflowX: 'auto', msOverflowStyle: 'none' }}>
+            {tabConfig.map(({ type, label, color }) => {
+              const active = filterType === type
+              const cnt    = countForType(type)
+              return (
+                <button key={type}
+                  onClick={() => setFilterType(type as any)}
+                  style={{
+                    padding: '11px 14px', border: 'none', background: 'transparent',
+                    cursor: 'pointer', fontFamily: F.body, fontSize: 12.5,
+                    fontWeight: active ? 700 : 500,
+                    color: active ? color : C.muted,
+                    borderBottom: active ? `2px solid ${color}` : '2px solid transparent',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    whiteSpace: 'nowrap', flexShrink: 0,
+                    transition: 'color 0.15s, border-color 0.15s',
+                  }}>
+                  {label}
+                  <span style={{
+                    fontSize: 10.5, fontWeight: 700,
+                    padding: '1px 6px', borderRadius: 20,
+                    background: active ? `${color}18` : C.bgDeep,
+                    color: active ? color : C.dim,
+                    minWidth: 16, textAlign: 'center',
+                  }}>
+                    {cnt}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Status toggle — right side */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '0 10px', borderLeft: `1px solid ${C.borderSub}`, flexShrink: 0 }}>
+            {(['active', 'inactive', 'all'] as const).map(v => (
+              <button key={v}
+                onClick={() => setFilterActive(v)}
+                style={{
+                  padding: '5px 10px', borderRadius: 20, border: 'none',
+                  background: filterActive === v ? C.amberGlow : 'transparent',
+                  color: filterActive === v ? C.amber : C.muted,
+                  fontWeight: filterActive === v ? 700 : 500,
+                  fontSize: 11.5, cursor: 'pointer', fontFamily: F.body,
+                  transition: 'all 0.15s',
+                }}>
+                {v === 'active' ? 'Actifs' : v === 'inactive' ? 'Inactifs' : 'Tous'}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Product grid */}
       {filtered.length === 0 ? (
         <div style={{ background: C.surface, borderRadius: 12,
-          border: `1px solid ${C.border}`, padding: '48px',
-          textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: F.body }}>
-          Aucun produit trouvé.
+          border: `1px solid ${C.border}`, padding: '56px 32px',
+          textAlign: 'center', fontFamily: F.body }}>
+          <div style={{ fontSize: 28, marginBottom: 10, opacity: 0.3 }}>▤</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.muted, marginBottom: 4 }}>
+            Aucun produit trouvé
+          </div>
+          <div style={{ fontSize: 12, color: C.dim }}>
+            Modifiez les filtres ou ajoutez un nouveau produit.
+          </div>
         </div>
       ) : (
         <div style={{ display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 14 }}>
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: 12 }}>
           {filtered.map((p: any) => (
             <ProductCard
               key={p.id}
@@ -1238,12 +1316,12 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
 
   const stockColor = !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green
 
-  const typeConfig: Record<ProductType, { color: string; bg: string }> = {
-    tile:     { color: '#2563EB', bg: '#EFF6FF' },
-    unit:     { color: '#7C3AED', bg: '#F5F3FF' },
-    bag:      { color: '#D97706', bg: '#FFFBEB' },
-    liter:    { color: '#0891B2', bg: '#ECFEFF' },
-    linear_m: { color: '#059669', bg: '#F0FDF4' },
+  const typeConfig: Record<ProductType, { color: string; bg: string; short: string }> = {
+    tile:     { color: '#2563EB', bg: '#EFF6FF', short: 'Carrelage' },
+    unit:     { color: '#7C3AED', bg: '#F5F3FF', short: 'Unité'     },
+    bag:      { color: '#D97706', bg: '#FFFBEB', short: 'Sac'       },
+    liter:    { color: '#0891B2', bg: '#ECFEFF', short: 'Litre'     },
+    linear_m: { color: '#059669', bg: '#F0FDF4', short: 'Mètre'     },
   }
   const tcfg = typeConfig[pt] ?? typeConfig.unit
 
@@ -1251,88 +1329,121 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
     <div style={{
       background: C.surface, borderRadius: 14,
       border: `1px solid ${C.border}`,
-      boxShadow: '0 1px 4px rgba(60,30,10,0.05)',
+      borderLeft: `3px solid ${tcfg.color}`,
+      boxShadow: '0 2px 8px rgba(60,30,10,0.06)',
       overflow: 'hidden',
-      opacity: p.is_active ? 1 : 0.6,
+      opacity: p.is_active ? 1 : 0.62,
+      display: 'flex', flexDirection: 'column',
+      transition: 'box-shadow 0.15s',
     }}>
-      {/* Color top stripe based on stock status */}
-      <div style={{ height: 3, background: !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green }} />
+      <div style={{ padding: '16px 18px 14px', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
-      <div style={{ padding: '16px 18px 16px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, gap: 10, alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flex: 1, minWidth: 0 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 9, background: tcfg.bg, border: `1px solid ${tcfg.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        {/* Header */}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          {/* Type icon */}
+          <div style={{ width: 42, height: 42, borderRadius: 11,
+            background: `${tcfg.color}14`,
+            border: `1.5px solid ${tcfg.color}28`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <ProductTypeIcon type={pt} color={tcfg.color} />
           </div>
+          {/* Name + ref */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, lineHeight: 1.3, fontFamily: F.body,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {p.name}
             </div>
-            <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 2 }}>
               {p.reference_code}{p.category ? ` · ${p.category}` : ''}
             </div>
           </div>
+          {/* Badges column */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0, marginLeft: 4 }}>
+            {/* Type badge */}
+            <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.05em',
+              textTransform: 'uppercase', padding: '2px 7px', borderRadius: 100,
+              background: `${tcfg.color}14`, color: tcfg.color,
+              border: `1px solid ${tcfg.color}28`, fontFamily: F.body }}>
+              {tcfg.short}
+            </span>
+            {/* Status pill */}
+            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 100,
+              background: p.is_active ? C.greenBg : C.redBg,
+              color:      p.is_active ? C.green  : C.red,
+              display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: F.body }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%',
+                background: p.is_active ? C.green : C.red, flexShrink: 0 }} />
+              {p.is_active ? 'Actif' : 'Inactif'}
+            </span>
+          </div>
         </div>
-        <span style={{ display: 'inline-flex', alignItems: 'center',
-          gap: 5, fontSize: 11, fontWeight: 600,
-          padding: '3px 10px', height: 'fit-content',
-          borderRadius: 100, flexShrink: 0, marginLeft: 8,
-          background: p.is_active ? C.greenBg : C.redBg,
-          color:      p.is_active ? C.green  : C.red, fontFamily: F.body }}>
-          <span style={{ width: 5, height: 5, borderRadius: '50%',
-            background: p.is_active ? C.green : C.red, flexShrink: 0 }} />
-          {p.is_active ? 'Actif' : 'Inactif'}
-        </span>
-      </div>
 
-      {/* Info grid */}
-      {pt === 'tile' && <TileInfoGrid p={p} currency={currency} />}
-      {pt !== 'tile' && <NonTileInfoGrid p={p} currency={currency} />}
+        {/* Stock hero */}
+        <StockBlock
+          pt={pt} p={p} available={available} reserved={reserved}
+          isCritical={isCritical} isLow={isLow} stockColor={stockColor}
+        />
 
-      {/* Stock */}
-      <StockBlock
-        pt={pt} p={p} available={available} reserved={reserved}
-        isCritical={isCritical} isLow={isLow}
-      />
+        {/* Info grid */}
+        {pt === 'tile' ? <TileInfoGrid p={p} currency={currency} /> : <NonTileInfoGrid p={p} currency={currency} />}
 
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => onEdit(p)}
-          style={{ flex: 1, padding: '8px', background: C.amberGlow, color: C.amber,
-            border: `1px solid rgba(160,83,26,0.22)`, borderRadius: R.sm,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
-          Modifier
-        </button>
-        <button
-          onClick={() => onToggle(p)}
-          disabled={toggleLoadingId === p.id}
-          style={{ flex: 1, padding: '8px',
-            background: p.is_active ? C.redBg   : C.greenBg,
-            color:      p.is_active ? C.red    : C.green,
-            border: 'none', borderRadius: 8,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            fontFamily: F.body }}>
-          {toggleLoadingId === p.id
-            ? <><span className="spinner" />…</>
-            : p.is_active ? 'Désactiver' : 'Réactiver'}
-        </button>
-        {/* Delete — only shown on inactive products, for owners and admins */}
-        {!p.is_active && ['owner', 'admin'].includes(profile.role) && (
-          <button
-            onClick={() => onDelete(p)}
-            title="Supprimer définitivement"
-            style={{ padding: '8px 10px', background: 'transparent',
-              color: C.red, border: `1px solid ${C.redBd}`, borderRadius: 8,
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 7, paddingTop: 2 }}>
+          <button onClick={() => onEdit(p)}
+            style={{ flex: 1, padding: '7px 10px', background: C.amberGlow, color: C.amber,
+              border: `1px solid rgba(160,83,26,0.22)`, borderRadius: 8,
               fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
-              display: 'inline-flex', alignItems: 'center' }}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <path d="M2 3h9M5 3V1.5h3V3M5.5 5.5v4M7.5 5.5v4M3 3l.5 8a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5L10 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+              <path d="M8.5 1.5a1.414 1.414 0 0 1 2 2L3.5 10.5l-3 .5.5-3 7.5-6.5z" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+            Modifier
           </button>
-        )}
-      </div>
+          <button
+            onClick={() => onToggle(p)}
+            disabled={toggleLoadingId === p.id}
+            style={{ flex: 1, padding: '7px 10px',
+              background: p.is_active ? C.redBg : C.greenBg,
+              color:      p.is_active ? C.red  : C.green,
+              border: `1px solid ${p.is_active ? C.redBd : C.greenBd}`, borderRadius: 8,
+              fontSize: 12, fontWeight: 700, cursor: toggleLoadingId === p.id ? 'not-allowed' : 'pointer',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              fontFamily: F.body }}>
+            {toggleLoadingId === p.id ? (
+              <><span className="spinner" />…</>
+            ) : p.is_active ? (
+              <>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M4 4l4 4M8 4l-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+                </svg>
+                Désactiver
+              </>
+            ) : (
+              <>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                  <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.3"/>
+                  <path d="M3.5 6l2 2 3-3.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Réactiver
+              </>
+            )}
+          </button>
+          {/* Delete — only shown on inactive products, for owners and admins */}
+          {!p.is_active && ['owner', 'admin'].includes(profile.role) && (
+            <button
+              onClick={() => onDelete(p)}
+              title="Supprimer définitivement"
+              style={{ padding: '7px 10px', background: 'transparent',
+                color: C.red, border: `1px solid ${C.redBd}`, borderRadius: 8,
+                fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="12" height="12" viewBox="0 0 13 13" fill="none">
+                <path d="M2 3h9M5 3V1.5h3V3M5.5 5.5v4M7.5 5.5v4M3 3l.5 8a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5L10 3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1357,7 +1468,7 @@ function TileInfoGrid({ p, currency }: { p: any; currency: string }) {
   const tpc      = parseInt(p.tiles_per_carton) || 0
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
       {([
         ['Format',         `${p.width_cm}×${p.height_cm} cm`],
         ['Surface/car.',   fmtM2(tileArea)],
@@ -1398,7 +1509,7 @@ function NonTileInfoGrid({ p, currency }: { p: any; currency: string }) {
     rows.push([p.package_label ?? 'Par lot', String(p.pieces_per_package) + ' ' + unit + 's'])
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, marginBottom: 12 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
       {rows.map(([lbl, val]) => <InfoCell key={lbl} label={lbl} value={val} />)}
     </div>
   )
@@ -1406,12 +1517,13 @@ function NonTileInfoGrid({ p, currency }: { p: any; currency: string }) {
 
 function InfoCell({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ padding: '7px 8px', background: C.bg, borderRadius: 6 }}>
-      <div style={{ fontSize: 9, fontWeight: 600, color: C.muted,
-        textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: F.body }}>
+    <div style={{ padding: '7px 9px', background: C.bg, borderRadius: 7, border: `1px solid ${C.borderSub}` }}>
+      <div style={{ fontSize: 9, fontWeight: 700, color: C.dim,
+        textTransform: 'uppercase', letterSpacing: '0.06em', fontFamily: F.body, marginBottom: 3 }}>
         {label}
       </div>
-      <div style={{ fontSize: 12, fontWeight: 600, color: C.ink, marginTop: 2, fontFamily: F.body }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.ink, fontFamily: F.body,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
         {value}
       </div>
     </div>
@@ -1420,16 +1532,21 @@ function InfoCell({ label, value }: { label: string; value: string }) {
 
 // ── Stock block — type-aware ──────────────────────────────────────────────────
 
-function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
-  pt:         ProductType
-  p:          any
-  available:  number
-  reserved:   number
-  isCritical: boolean
-  isLow:      boolean
+function StockBlock({ pt, p, available, reserved, isCritical, isLow, stockColor }: {
+  pt:          ProductType
+  p:           any
+  available:   number
+  reserved:    number
+  isCritical:  boolean
+  isLow:       boolean
+  stockColor?: string
 }) {
-  const bg    = isCritical ? C.redBg    : isLow ? C.orangeBg : C.greenBg
-  const color = isCritical ? C.red     : isLow ? C.orange  : C.green
+  const bgMap   = isCritical ? C.redBg    : isLow ? C.orangeBg    : C.greenBg
+  const bdMap   = isCritical ? C.redBd    : isLow ? C.orangeBd    : C.greenBd
+  const color   = isCritical ? C.red      : isLow ? C.orange      : C.green
+
+  const statusLabel = isCritical ? 'Critique' : isLow ? 'Faible' : 'Normal'
+  const statusIcon  = isCritical ? '!' : isLow ? '▾' : '✓'
 
   let mainLabel = ''
   let subLabel  = ''
@@ -1441,7 +1558,7 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
     mainLabel = new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2, maximumFractionDigits: 2,
     }).format(availM2) + ' m²'
-    subLabel = `${fmtNum(available)} carreaux · ${Math.floor(available / tpc)} cartons`
+    subLabel = `${fmtNum(available)} car. · ${Math.floor(available / tpc)} ctn`
       + (available % tpc > 0 ? ` + ${available % tpc}` : '')
   } else if (pt === 'linear_m' && p.piece_length_m) {
     const totalM = available * parseFloat(p.piece_length_m)
@@ -1466,25 +1583,49 @@ function StockBlock({ pt, p, available, reserved, isCritical, isLow }: {
   }
 
   return (
-    <div style={{ padding: '10px 12px', background: bg, borderRadius: 8, marginBottom: 12,
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{
+      padding: '11px 14px',
+      background: bgMap,
+      border: `1px solid ${bdMap}`,
+      borderRadius: 10,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+    }}>
+      {/* Left — main stock figure */}
       <div>
-        <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
-          textTransform: 'uppercase', fontFamily: F.body }}>
-          Stock disponible
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.08em', color: C.muted, fontFamily: F.body }}>
+            Stock disponible
+          </span>
+          {/* Status badge */}
+          <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 100,
+            background: color, color: '#fff', fontFamily: F.body, letterSpacing: '0.04em' }}>
+            {statusLabel}
+          </span>
         </div>
-        <div style={{ fontSize: 18, fontWeight: 900, color, fontFamily: F.body }}>
+        <div style={{ fontSize: 22, fontWeight: 900, color, lineHeight: 1.1,
+          fontFamily: F.body, letterSpacing: '-0.02em' }}>
           {mainLabel}
         </div>
         {subLabel && (
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{subLabel}</div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 2, fontFamily: F.body }}>
+            {subLabel}
+          </div>
         )}
       </div>
+
+      {/* Right — reserved (if any) */}
       {reserved > 0 && (
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Réservé</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.orange, fontFamily: F.body }}>
-            {fmtNum(reserved)} {p.unit_label ?? 'car.'}
+        <div style={{ textAlign: 'right', flexShrink: 0, borderLeft: `1px solid ${bdMap}`, paddingLeft: 12 }}>
+          <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase',
+            letterSpacing: '0.06em', color: C.muted, marginBottom: 2, fontFamily: F.body }}>
+            Réservé
+          </div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: C.orange, fontFamily: F.body }}>
+            {fmtNum(reserved)}
+          </div>
+          <div style={{ fontSize: 10, color: C.muted, fontFamily: F.body }}>
+            {p.unit_label ?? 'car.'}
           </div>
         </div>
       )}
