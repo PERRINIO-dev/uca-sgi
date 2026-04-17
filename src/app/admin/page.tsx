@@ -99,6 +99,22 @@ export default async function AdminPage() {
     })
   }
 
+  // ── Build per-company 30-day sparkline arrays (index 0 = 30 days ago, 29 = today) ──
+  const sparklineMap = new Map<string, number[]>()
+  const sparklineRef  = new Date()
+  sparklineRef.setHours(23, 59, 59, 999)
+
+  for (const s of salesActivity ?? []) {
+    const daysAgo = Math.floor(
+      (sparklineRef.getTime() - new Date(s.created_at).getTime()) / (1000 * 60 * 60 * 24)
+    )
+    if (daysAgo >= 0 && daysAgo < 30) {
+      if (!sparklineMap.has(s.company_id)) sparklineMap.set(s.company_id, Array(30).fill(0))
+      const arr = sparklineMap.get(s.company_id)!
+      arr[29 - daysAgo] = (arr[29 - daysAgo] || 0) + 1
+    }
+  }
+
   // ── Enrich companies ──────────────────────────────────────────────────────
   const companiesWithStats = (companies ?? []).map(c => {
     const activity     = activityMap.get(c.id) ?? { count: 0, lastAt: null }
@@ -110,6 +126,7 @@ export default async function AdminPage() {
       activeProducts: (allProducts ?? []).filter(p => p.company_id === c.id).length,
       salesCount:     activity.count,
       lastSaleAt:     activity.lastAt,
+      sparkline:      sparklineMap.get(c.id) ?? Array(30).fill(0),
       owner:          companyUsers.find(u => u.role === 'owner') ?? null,
       // All non-owner users — shown in drawer for seat management
       members:        companyUsers.filter(u => u.role !== 'owner'),
