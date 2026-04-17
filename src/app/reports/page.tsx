@@ -28,7 +28,7 @@ export default async function ReportsPage() {
     { data: auditLogs },
     badgeCounts,
   ] = await Promise.all([
-    // All sales — no date limit (payment cycles can span years in this business)
+    // All confirmed sales — drafts (devis) excluded: they are not revenue
     supabase
       .from('sales')
       .select(`
@@ -44,6 +44,7 @@ export default async function ReportsPage() {
           products ( id, name, reference_code, category, product_type, unit_label )
         )
       `)
+      .neq('status', 'draft')
       .order('created_at', { ascending: false }),
 
     supabase

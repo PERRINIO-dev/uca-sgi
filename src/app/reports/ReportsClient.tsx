@@ -27,7 +27,6 @@ const STATUS_LABELS: Record<string, string> = {
   ready:      'Prête',
   delivered:  'Livrée',
   cancelled:  'Annulée',
-  draft:      'Brouillon',
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string; bd: string }> = {
@@ -99,7 +98,7 @@ export default function ReportsClient({
 
   // ── KPIs ───────────────────────────────────────────────────────────────
   const kpis = useMemo(() => {
-    const confirmed = filtered.filter(s => s.status !== 'cancelled')
+    const confirmed = filtered.filter(s => s.status !== 'cancelled' && s.status !== 'draft')
     const totalCA   = confirmed.reduce((sum, s) => sum + s.total_amount, 0)
     const delivered = filtered.filter(s => s.status === 'delivered')
     const totalM2   = confirmed.reduce((sum, s) =>
