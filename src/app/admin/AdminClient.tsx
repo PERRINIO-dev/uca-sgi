@@ -280,6 +280,9 @@ export default function AdminClient({
   const [drawerError,     setDrawerError]     = useState<string | null>(null)
   const [togglingUser,    setTogglingUser]    = useState<string | null>(null)
 
+  // ── Suspend user confirmation ─────────────────────────────────────────────
+  const [confirmSuspendUser, setConfirmSuspendUser] = useState<{ userId: string; name: string } | null>(null)
+
   // ── Password reset modal ──────────────────────────────────────────────────
   const [resetTarget,  setResetTarget]  = useState<{ userId: string; name: string; email: string } | null>(null)
   const [resetPwd,     setResetPwd]     = useState('')
@@ -360,6 +363,10 @@ export default function AdminClient({
     else startTransition(() => router.refresh())
   }
 
+  function requestSuspendUser(userId: string, name: string) {
+    setConfirmSuspendUser({ userId, name })
+  }
+
   async function handlePasswordReset() {
     if (!resetTarget) return
     setResetLoading(true)
@@ -403,9 +410,21 @@ export default function AdminClient({
     }
   }
 
+  const visibleCompanies = companySearch
+    ? companies.filter(c =>
+        c.name.toLowerCase().includes(companySearch.toLowerCase()) ||
+        c.slug.toLowerCase().includes(companySearch.toLowerCase()) ||
+        c.owner?.full_name?.toLowerCase().includes(companySearch.toLowerCase()) ||
+        c.owner?.email?.toLowerCase().includes(companySearch.toLowerCase())
+      )
+    : companies
+
   const filteredAudit = journalFilter === 'all'
     ? auditLogs
-    : auditLogs.filter(e => e.company_id === journalFilter)
+    : auditLogs.filter(e => {
+        const isCompanyAction = ['COMPANY_CREATED', 'COMPANY_ACTIVATED', 'COMPANY_DEACTIVATED'].includes(e.action_type)
+        return (isCompanyAction ? e.entity_id : e.company_id) === journalFilter
+      })
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -552,17 +571,7 @@ export default function AdminClient({
               </div>
             </div>
 
-            {(() => {
-              const visibleCompanies = companySearch
-                ? companies.filter(c =>
-                    c.name.toLowerCase().includes(companySearch.toLowerCase()) ||
-                    c.slug.toLowerCase().includes(companySearch.toLowerCase()) ||
-                    c.owner?.full_name?.toLowerCase().includes(companySearch.toLowerCase()) ||
-                    c.owner?.email?.toLowerCase().includes(companySearch.toLowerCase())
-                  )
-                : companies
-
-              return visibleCompanies.length === 0 ? (
+            {visibleCompanies.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', color: C.muted, fontSize: 13 }}>
                 {companySearch ? 'Aucune entreprise ne correspond à cette recherche.' : 'Aucune entreprise enregistrée.'}
               </div>
@@ -688,8 +697,7 @@ export default function AdminClient({
                   </tbody>
                 </table>
               </div>
-            )
-            })()}
+            )}
           </div>
         )}
 
@@ -811,7 +819,7 @@ export default function AdminClient({
           display: 'flex', flexDirection: 'column',
           fontFamily: F.body,
         }}>
-          <div style={{ height: 3, background: 'linear-gradient(90deg,#1D4ED8,#3B82F6,#60A5FA)', flexShrink: 0 }} />
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})`, flexShrink: 0 }} />
 
           {/* Sticky header */}
           <div style={{
@@ -929,7 +937,7 @@ export default function AdminClient({
                         Réinitialiser MDP
                       </button>
                       <button
-                        onClick={() => handleUserToggle(owner.id, !owner.is_active)}
+                        onClick={() => owner.is_active ? requestSuspendUser(owner.id, owner.full_name) : handleUserToggle(owner.id, true)}
                         disabled={togglingUser === owner.id}
                         style={{
                           flex: 1, padding: '7px 12px',
@@ -997,7 +1005,7 @@ export default function AdminClient({
                             Réinit. MDP
                           </button>
                           <button
-                            onClick={() => handleUserToggle(member.id, !member.is_active)}
+                            onClick={() => member.is_active ? requestSuspendUser(member.id, member.full_name) : handleUserToggle(member.id, true)}
                             disabled={togglingUser === member.id}
                             style={{
                               flex: 1, padding: '6px 10px',
@@ -1135,6 +1143,64 @@ export default function AdminClient({
                   border: `1px solid ${C.border}`, borderRadius: 9,
                   fontSize: 13, fontWeight: 500,
                   cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: F.body,
+                }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ═══════════════════════════════════════════════════════════════════════
+        Suspend User Confirmation
+    ════════════════════════════════════════════════════════════════════════ */}
+    {confirmSuspendUser && (
+      <div
+        onClick={e => { if (e.target === e.currentTarget) setConfirmSuspendUser(null) }}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(26,15,6,0.50)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: Z.modal + 10, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body,
+        }}
+      >
+        <div className="modal-panel" style={{
+          background: C.surfaceEl, borderRadius: R.xl,
+          width: '100%', maxWidth: 380,
+          border: `1px solid ${C.border}`,
+          boxShadow: SH.xl, overflow: 'hidden',
+        }}>
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})` }} />
+          <div style={{ padding: '22px 24px' }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 10 }}>Suspendre ce compte ?</div>
+            <p style={{ margin: '0 0 20px', fontSize: 13, color: C.muted, lineHeight: 1.65 }}>
+              Le compte de <strong style={{ color: C.ink }}>{confirmSuspendUser.name}</strong> sera suspendu immédiatement. L'utilisateur ne pourra plus se connecter.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={async () => {
+                  const target = confirmSuspendUser
+                  setConfirmSuspendUser(null)
+                  await handleUserToggle(target.userId, false)
+                }}
+                style={{
+                  flex: 1, height: 40,
+                  background: C.red, color: '#FFF',
+                  border: 'none', borderRadius: R.md,
+                  fontSize: 13, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: F.body,
+                }}
+              >
+                Confirmer la suspension
+              </button>
+              <button
+                onClick={() => setConfirmSuspendUser(null)}
+                style={{
+                  padding: '0 18px', background: C.bg, color: C.muted,
+                  border: `1px solid ${C.border}`, borderRadius: 9,
+                  fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: F.body,
                 }}
               >
                 Annuler

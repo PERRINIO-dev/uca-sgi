@@ -211,7 +211,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
   // Fetch target user for audit context
   const { data: target } = await admin
     .from('users')
-    .select('email, company_id')
+    .select('email, company_id, full_name')
     .eq('id', userId)
     .single()
 
@@ -227,7 +227,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     entity_type:        'users',
     entity_id:          userId,
     company_id:         caller.company_id,
-    data_after:         { target_email: target.email, target_company_id: target.company_id },
+    data_after:         { target_name: target.full_name, target_email: target.email, target_company_id: target.company_id },
   })
 
   return { success: true }
@@ -246,7 +246,7 @@ export async function togglePlatformUserActive(userId: string, isActive: boolean
 
   const { data: target } = await admin
     .from('users')
-    .select('email, company_id, role')
+    .select('email, company_id, role, full_name')
     .eq('id', userId)
     .single()
 
@@ -272,7 +272,7 @@ export async function togglePlatformUserActive(userId: string, isActive: boolean
     entity_type:        'users',
     entity_id:          userId,
     company_id:         caller.company_id,
-    data_after:         { target_email: target.email, target_company_id: target.company_id, is_active: isActive },
+    data_after:         { target_name: target.full_name, target_email: target.email, target_company_id: target.company_id, is_active: isActive },
   })
 
   revalidatePath('/admin')
