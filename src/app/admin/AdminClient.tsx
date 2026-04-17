@@ -22,38 +22,16 @@ const ROLE_META: Record<string, { label: string; color: string; bg: string; bd: 
 }
 
 // ── Audit action display ──────────────────────────────────────────────────────
-// Only platform-level actions — the admin journal is intentionally scoped
-// to events the platform operator performs directly. Tenant operational data
-// (sales, payments, stock) is visible only to each tenant in their own Reports page.
+// Restricted to platform-level events only.
+// Tenant operational data (sales, payments, stock, employees) is their
+// proprietary business data — it must not appear in the operator console.
 const ACTION_META: Record<string, { label: string; color: string; bg: string; bd: string }> = {
-  // Platform-level
-  COMPANY_CREATED:              { label: 'Entreprise créée',          color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  COMPANY_ACTIVATED:            { label: 'Entreprise réactivée',      color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
-  COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue',      color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
-  PLATFORM_USER_SUSPENDED:      { label: 'Utilisateur suspendu',      color: C.red,    bg: C.redBg,    bd: C.redBd    },
-  PLATFORM_USER_REACTIVATED:    { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',          color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
-  // Sales & quotes
-  SALE_CREATED:                 { label: 'Vente créée',               color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  SALE_CANCELLED:               { label: 'Vente annulée',             color: C.red,    bg: C.redBg,    bd: C.redBd    },
-  QUOTE_CREATED:                { label: 'Devis créé',                color: C.gold,   bg: C.goldBg,   bd: C.goldBd   },
-  QUOTE_CONVERTED:              { label: 'Devis converti',            color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  QUOTE_CANCELLED:              { label: 'Devis annulé',              color: C.red,    bg: C.redBg,    bd: C.redBd    },
-  PAYMENT_RECORDED:             { label: 'Paiement enregistré',       color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
-  FLOOR_PRICE_VIOLATION_ATTEMPT:{ label: 'Violation prix plancher',   color: C.red,    bg: C.redBg,    bd: C.redBd    },
-  // Orders
-  ORDER_PREPARING:              { label: 'Préparation démarrée',      color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
-  ORDER_READY:                  { label: 'Commande prête',            color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
-  ORDER_DELIVERED:              { label: 'Livraison confirmée',       color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  // Stock
-  STOCK_REQUEST_SUBMITTED:      { label: 'Demande stock soumise',     color: C.gold,   bg: C.goldBg,   bd: C.goldBd   },
-  STOCK_REQUEST_APPROVED:       { label: 'Demande stock approuvée',   color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  STOCK_REQUEST_REJECTED:       { label: 'Demande stock refusée',     color: C.red,    bg: C.redBg,    bd: C.redBd    },
-  // Users & admin
-  EMPLOYEE_CREATED:             { label: 'Employé créé',              color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
-  EMPLOYEE_UPDATED:             { label: 'Employé modifié',           color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
-  USER_DEACTIVATED:             { label: 'Utilisateur désactivé',     color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
-  USER_REACTIVATED:             { label: 'Utilisateur réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  COMPANY_CREATED:              { label: 'Entreprise créée',     color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  COMPANY_ACTIVATED:            { label: 'Entreprise réactivée', color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+  COMPANY_DEACTIVATED:          { label: 'Entreprise suspendue', color: C.orange, bg: C.orangeBg, bd: C.orangeBd },
+  PLATFORM_USER_SUSPENDED:      { label: 'Compte suspendu',      color: C.red,    bg: C.redBg,    bd: C.redBd    },
+  PLATFORM_USER_REACTIVATED:    { label: 'Compte réactivé',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+  PLATFORM_USER_PASSWORD_RESET: { label: 'MDP réinitialisé',     color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -235,6 +213,8 @@ interface Company {
   totalUsers:     number
   activeUsers:    number
   activeProducts: number
+  salesCount:     number
+  lastSaleAt:     string | null
   owner:          CompanyUser | null
   members:        CompanyUser[]
 }
@@ -268,18 +248,21 @@ export default function AdminClient({
   profile,
   companies,
   auditLogs,
+  totalSalesThisMonth,
   badgeCounts,
 }: {
-  profile:      Profile
-  companies:    Company[]
-  auditLogs:    AuditEntry[]
-  badgeCounts?: BadgeCounts
+  profile:               Profile
+  companies:             Company[]
+  auditLogs:             AuditEntry[]
+  totalSalesThisMonth:   number
+  badgeCounts?:          BadgeCounts
 }) {
   const router = useRouter()
   const [, startTransition] = useTransition()
 
   // ── Tab ───────────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'companies' | 'journal'>('companies')
+  const [activeTab,      setActiveTab]      = useState<'companies' | 'journal'>('companies')
+  const [companySearch,  setCompanySearch]  = useState('')
 
   // ── New company modal ─────────────────────────────────────────────────────
   const [showModal,  setShowModal]  = useState(false)
@@ -407,44 +390,16 @@ export default function AdminClient({
     if (!d) return '—'
     switch (entry.action_type) {
       case 'COMPANY_CREATED':
-        return d.name ? `${d.name} · ${d.ownerEmail ?? ''}` : '—'
+        return [d.name, d.ownerEmail].filter(Boolean).join(' · ') || '—'
       case 'COMPANY_ACTIVATED':
       case 'COMPANY_DEACTIVATED':
-        return d.affectedUsers != null ? `${d.affectedUsers} utilisateur(s) affecté(s)` : '—'
+        return d.affectedUsers != null ? `${d.affectedUsers} compte(s) affecté(s)` : '—'
       case 'PLATFORM_USER_SUSPENDED':
       case 'PLATFORM_USER_REACTIVATED':
       case 'PLATFORM_USER_PASSWORD_RESET':
-        return d.target_email ?? '—'
-      case 'SALE_CREATED':
-        return d.sale_number ? `${d.sale_number} · ${d.item_count ?? 0} art. · ${d.total_amount != null ? new Intl.NumberFormat('fr-FR').format(Number(d.total_amount)) : ''}` : '—'
-      case 'SALE_CANCELLED':
-        return [d.sale_number, d.customer_name].filter(Boolean).join(' · ') || '—'
-      case 'QUOTE_CREATED':
-        return d.quote_number ? `${d.quote_number} · ${d.item_count ?? 0} art.` : '—'
-      case 'QUOTE_CONVERTED':
-        return d.sale_number ? `→ ${d.sale_number}` : '—'
-      case 'QUOTE_CANCELLED':
-        return d.quote_number ?? '—'
-      case 'PAYMENT_RECORDED':
-        return d.amount != null ? `${new Intl.NumberFormat('fr-FR').format(Number(d.amount))} FCFA` : '—'
-      case 'FLOOR_PRICE_VIOLATION_ATTEMPT':
-        return d.attempted_price != null ? `Tenté: ${d.attempted_price} · Plancher: ${d.floor_price}` : '—'
-      case 'ORDER_PREPARING':
-      case 'ORDER_READY':
-      case 'ORDER_DELIVERED':
-        return d.order_number ? `${d.order_number} (${d.previous_status} → ${d.new_status})` : '—'
-      case 'STOCK_REQUEST_SUBMITTED':
-      case 'STOCK_REQUEST_APPROVED':
-      case 'STOCK_REQUEST_REJECTED':
-        return d.product_name ? `${d.product_name} · Δ ${d.quantity_delta ?? ''}` : '—'
-      case 'EMPLOYEE_CREATED':
-      case 'EMPLOYEE_UPDATED':
-        return d.email ?? d.full_name ?? '—'
-      case 'USER_DEACTIVATED':
-      case 'USER_REACTIVATED':
-        return d.email ?? '—'
+        return [d.target_name, d.target_email].filter(Boolean).join(' · ') || d.target_email || '—'
       default:
-        return Object.entries(d).slice(0, 2).map(([k, v]) => `${k}: ${v}`).join(' · ') || '—'
+        return '—'
     }
   }
 
@@ -518,9 +473,10 @@ export default function AdminClient({
         {/* ── KPI cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           {[
-            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber, bg: C.goldBg },
-            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.amber, bg: C.goldBg },
-            { label: 'Produits actifs',     value: String(totalProducts),                      Icon: IconBox,      accent: C.green, bg: C.greenBg },
+            { label: 'Entreprises actives', value: `${activeCompanies} / ${companies.length}`, Icon: IconBuilding, accent: C.amber,  bg: C.goldBg  },
+            { label: 'Utilisateurs totaux', value: String(totalUsers),                         Icon: IconUsers,    accent: C.amber,  bg: C.goldBg  },
+            { label: 'Produits catalogués', value: String(totalProducts),                      Icon: IconBox,      accent: C.green,  bg: C.greenBg },
+            { label: 'Ventes ce mois',      value: String(totalSalesThisMonth),                Icon: IconHistory,  accent: C.blue,   bg: C.blueBg  },
           ].map(({ label, value, Icon, accent, bg }) => (
             <div key={label} className="card-hover" style={{
               background: C.surface, borderRadius: 14, overflow: 'hidden',
@@ -574,20 +530,52 @@ export default function AdminClient({
             border: `1px solid ${C.border}`,
             boxShadow: '0 1px 3px rgba(60,30,10,0.05)', overflow: 'hidden',
           }}>
-            {companies.length === 0 ? (
+            {/* Search */}
+            <div style={{ padding: '12px 16px', borderBottom: `1px solid ${C.borderSub}` }}>
+              <div style={{ position: 'relative', maxWidth: 340 }}>
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                  <circle cx="6" cy="6" r="4.5" stroke={C.dim} strokeWidth="1.5"/>
+                  <path d="M9.5 9.5L12.5 12.5" stroke={C.dim} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <input
+                  value={companySearch}
+                  onChange={e => setCompanySearch(e.target.value)}
+                  placeholder="Rechercher une entreprise…"
+                  style={{
+                    width: '100%', paddingLeft: 32, paddingRight: 12,
+                    paddingTop: 8, paddingBottom: 8,
+                    borderRadius: 8, border: `1.5px solid ${C.border}`,
+                    fontSize: 13, color: C.ink, background: C.bg,
+                    outline: 'none', fontFamily: F.body, boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+
+            {(() => {
+              const visibleCompanies = companySearch
+                ? companies.filter(c =>
+                    c.name.toLowerCase().includes(companySearch.toLowerCase()) ||
+                    c.slug.toLowerCase().includes(companySearch.toLowerCase()) ||
+                    c.owner?.full_name?.toLowerCase().includes(companySearch.toLowerCase()) ||
+                    c.owner?.email?.toLowerCase().includes(companySearch.toLowerCase())
+                  )
+                : companies
+
+              return visibleCompanies.length === 0 ? (
               <div style={{ padding: '48px 24px', textAlign: 'center', color: C.muted, fontSize: 13 }}>
-                Aucune entreprise enregistrée.
+                {companySearch ? 'Aucune entreprise ne correspond à cette recherche.' : 'Aucune entreprise enregistrée.'}
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ background: C.bg }}>
-                      {['Entreprise', 'Propriétaire', 'Utilisateurs', 'Produits', 'Créée le', 'Statut', ''].map(h => (
+                      {['Entreprise', 'Propriétaire', 'Équipe', 'Produits', 'Ventes', 'Dernière activité', 'Créée le', 'Statut', ''].map(h => (
                         <th key={h} style={{
                           padding: '10px 16px', textAlign: 'left',
-                          fontSize: 12, fontWeight: 700, color: C.muted,
-                          letterSpacing: '0.10em', textTransform: 'uppercase',
+                          fontSize: 11, fontWeight: 700, color: C.muted,
+                          letterSpacing: '0.08em', textTransform: 'uppercase',
                           borderBottom: `1px solid ${C.border}`, whiteSpace: 'nowrap',
                         }}>
                           {h}
@@ -596,7 +584,7 @@ export default function AdminClient({
                     </tr>
                   </thead>
                   <tbody>
-                    {companies.map((company, i) => (
+                    {visibleCompanies.map((company, i) => (
                       <tr
                         key={company.id}
                         className="trow-click"
@@ -632,7 +620,7 @@ export default function AdminClient({
                           )}
                         </td>
 
-                        {/* Users */}
+                        {/* Team */}
                         <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>
                             {company.activeUsers}
@@ -645,6 +633,26 @@ export default function AdminClient({
                         <td style={{ padding: '14px 16px' }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: C.ink }}>{company.activeProducts}</div>
                           <div style={{ fontSize: 11, color: C.muted }}>actifs</div>
+                        </td>
+
+                        {/* Sales count */}
+                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: company.salesCount > 0 ? C.ink : C.dim }}>
+                            {new Intl.NumberFormat('fr-FR').format(company.salesCount)}
+                          </div>
+                          <div style={{ fontSize: 11, color: C.muted }}>au total</div>
+                        </td>
+
+                        {/* Last activity */}
+                        <td style={{ padding: '14px 16px', whiteSpace: 'nowrap' }}>
+                          {company.lastSaleAt ? (
+                            <>
+                              <div style={{ fontSize: 13, fontWeight: 500, color: C.ink }}>{fmtDate(company.lastSaleAt)}</div>
+                              <div style={{ fontSize: 11, color: C.muted }}>dernière vente</div>
+                            </>
+                          ) : (
+                            <span style={{ fontSize: 12, color: C.dim, fontStyle: 'italic' }}>Aucune activité</span>
+                          )}
                         </td>
 
                         {/* Created */}
@@ -680,7 +688,8 @@ export default function AdminClient({
                   </tbody>
                 </table>
               </div>
-            )}
+            )
+            })()}
           </div>
         )}
 
@@ -693,16 +702,22 @@ export default function AdminClient({
           }}>
             {/* Filter bar */}
             <div style={{
-              padding: '12px 20px', borderBottom: `1px solid ${C.border}`,
-              display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+              padding: '12px 16px', borderBottom: `1px solid ${C.borderSub}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap',
             }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: C.muted }}>Filtrer par entreprise :</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <IconShield size={13} color={C.amber} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: C.amber, letterSpacing: '0.03em' }}>
+                  Actions plateforme uniquement
+                </span>
+                <span style={{ fontSize: 11, color: C.muted }}>— données métier non visibles ici</span>
+              </div>
               <select
                 value={journalFilter}
                 onChange={e => setJournalFilter(e.target.value)}
                 style={{
                   padding: '6px 10px', borderRadius: 7,
-                  border: `1px solid ${C.border}`, background: '#FFFFFF',
+                  border: `1px solid ${C.border}`, background: C.bg,
                   fontSize: 12.5, color: C.ink, fontFamily: F.body,
                   cursor: 'pointer', outline: 'none',
                 }}
@@ -937,7 +952,73 @@ export default function AdminClient({
               )}
             </div>
 
-            {/* Team members are internal to each company — not exposed here. */}
+            {/* ── Team members ── */}
+            {drawerCompany.members.length > 0 && (
+              <div>
+                <div style={{
+                  fontSize: 12, fontWeight: 700, color: C.muted,
+                  letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12,
+                }}>
+                  Équipe ({drawerCompany.members.length})
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {drawerCompany.members.map(member => {
+                    const rm = ROLE_META[member.role] ?? ROLE_META.vendor
+                    return (
+                      <div key={member.id} style={{
+                        padding: '12px 14px', borderRadius: 10,
+                        border: `1px solid ${C.border}`, background: C.surface,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                          <UserInitials name={member.full_name} size={32} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.full_name}</div>
+                            <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>{member.email}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                            <Badge color={rm.color} bg={rm.bg}>{rm.label}</Badge>
+                            <Badge color={member.is_active ? C.green : C.red} bg={member.is_active ? C.greenBg : C.redBg}>
+                              {member.is_active ? 'Actif' : 'Inactif'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 7 }}>
+                          <button
+                            onClick={() => setResetTarget({ userId: member.id, name: member.full_name, email: member.email })}
+                            style={{
+                              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+                              padding: '6px 10px',
+                              border: `1px solid rgba(160,83,26,0.28)`, borderRadius: 7,
+                              background: C.amberGlow, color: C.amber,
+                              fontSize: 11.5, fontWeight: 600, cursor: 'pointer', fontFamily: F.body,
+                            }}
+                          >
+                            <IconKey size={11} color={C.amber} />
+                            Réinit. MDP
+                          </button>
+                          <button
+                            onClick={() => handleUserToggle(member.id, !member.is_active)}
+                            disabled={togglingUser === member.id}
+                            style={{
+                              flex: 1, padding: '6px 10px',
+                              border: `1px solid ${member.is_active ? C.redBd : C.orangeBd}`,
+                              borderRadius: 7,
+                              background: member.is_active ? C.redBg : C.orangeBg,
+                              color: member.is_active ? C.red : C.orange,
+                              fontSize: 11.5, fontWeight: 600,
+                              cursor: togglingUser === member.id ? 'wait' : 'pointer',
+                              fontFamily: F.body, opacity: togglingUser === member.id ? 0.6 : 1,
+                            }}
+                          >
+                            {togglingUser === member.id ? '…' : member.is_active ? 'Suspendre' : 'Réactiver'}
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </>
