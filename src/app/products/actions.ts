@@ -505,7 +505,10 @@ export async function updateProduct(payload: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// deleteProduct — hard delete for inactive products with no sale history.
+// deleteProduct — conditional hard delete. Allowed only when the product has
+// zero stock, no sale history, and no pending/approved stock requests.
+// A product does NOT need to be inactive first — if it has never been used,
+// it can be removed directly (e.g. created by mistake).
 // Only owner / admin may call this.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -516,16 +519,25 @@ export async function deleteProduct(productId: string) {
 
   const admin = getAdminClient()
 
-  // Guard: product must be inactive
   const { data: prod } = await supabase
     .from('products')
-    .select('id, name, is_active, company_id')
+    .select('id, name, company_id')
     .eq('id', productId)
     .single()
 
   if (!prod) return { error: 'Produit introuvable.' }
   if (prod.company_id !== profile.company_id) return { error: 'Accès refusé.' }
-  if (prod.is_active) return { error: 'Désactivez le produit avant de le supprimer.' }
+
+  // Guard: stock must be zero (total — not just available)
+  const { data: stockRow } = await admin
+    .from('stock')
+    .select('quantity_tiles')
+    .eq('product_id', productId)
+    .single()
+
+  if ((stockRow?.quantity_tiles ?? 0) > 0) {
+    return { error: 'Ce produit a du stock en cours. Désactivez-le plutôt que de le supprimer.' }
+  }
 
   // Guard: no sale items referencing this product
   const { count: saleCount } = await admin
@@ -534,7 +546,7 @@ export async function deleteProduct(productId: string) {
     .eq('product_id', productId)
 
   if ((saleCount ?? 0) > 0) {
-    return { error: 'Ce produit a un historique de ventes et ne peut pas être supprimé. Gardez-le désactivé.' }
+    return { error: 'Ce produit a un historique de ventes — désactivez-le pour le retirer du catalogue.' }
   }
 
   // Guard: no pending/approved stock requests

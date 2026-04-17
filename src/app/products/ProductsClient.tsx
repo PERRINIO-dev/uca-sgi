@@ -682,7 +682,7 @@ export default function ProductsClient({
               Cette action est irréversible.
             </p>
             <p style={{ fontSize: 12, color: C.muted, margin: 0, fontFamily: F.body }}>
-              Seuls les produits sans historique de vente peuvent être supprimés.
+              Possible uniquement si le produit n'a aucun stock, aucune vente et aucune demande en cours.
             </p>
           </div>
           {deleteError && (
@@ -1429,12 +1429,13 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
               </>
             )}
           </button>
-          {/* Delete — only shown on inactive products, for owners and admins */}
-          {!p.is_active && ['owner', 'admin'].includes(profile.role) && (
+          {/* Delete — available to owner/admin for any product with no history */}
+          {['owner', 'admin'].includes(profile.role) && (
             <button
               onClick={() => onDelete(p)}
               title="Supprimer définitivement"
-              style={{ padding: '7px 10px', background: 'transparent',
+              style={{ padding: '7px 10px',
+                background: 'transparent',
                 color: C.red, border: `1px solid ${C.redBd}`, borderRadius: 8,
                 fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
