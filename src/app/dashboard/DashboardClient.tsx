@@ -234,9 +234,11 @@ export default function DashboardClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const [rejectId,  setRejectId]  = useState<string | null>(null)
-  const [rejectMsg, setRejectMsg] = useState('')
-  const [loading,   setLoading]   = useState<string | null>(null)
+  const [rejectId,     setRejectId]     = useState<string | null>(null)
+  const [rejectMsg,    setRejectMsg]    = useState('')
+  const [loading,      setLoading]      = useState<string | null>(null)
+  const [approveError, setApproveError] = useState<string | null>(null)
+  const [rejectError,  setRejectError]  = useState<string | null>(null)
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -244,20 +246,22 @@ export default function DashboardClient({
   }
 
   const handleApprove = async (id: string) => {
+    setApproveError(null)
     setLoading(id)
     const result = await approveStockRequest(id)
     setLoading(null)
-    if (result?.error) { alert(result.error); return }
+    if (result?.error) { setApproveError(result.error); return }
     mutate('/api/dashboard')
     router.refresh()
   }
 
   const handleReject = async () => {
     if (!rejectId || !rejectMsg.trim()) return
+    setRejectError(null)
     setLoading(rejectId)
     const result = await rejectStockRequest(rejectId, rejectMsg)
     setLoading(null)
-    if (result?.error) { alert(result.error); return }
+    if (result?.error) { setRejectError(result.error); return }
     setRejectId(null)
     setRejectMsg('')
     mutate('/api/dashboard')
@@ -586,6 +590,21 @@ export default function DashboardClient({
             Approbations en attente
           </SectionLabel>
 
+          {approveError && (
+            <div style={{
+              marginBottom: SP[3], padding: `${SP[2]} ${SP[3]}`,
+              borderRadius: R.md, background: C.redBg,
+              border: `1px solid ${C.redBd}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: SP[2],
+            }}>
+              <span style={{ fontSize: F.sm, color: C.red, fontFamily: F.body }}>{approveError}</span>
+              <button onClick={() => setApproveError(null)} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: C.red, fontSize: 16, lineHeight: 1, padding: 0, flexShrink: 0,
+              }}>×</button>
+            </div>
+          )}
+
           {d.pendingRequests.length === 0 ? (
             <div className="empty-state" style={{ padding: `${SP[7]} 0` }}>
               <div style={{
@@ -719,7 +738,7 @@ export default function DashboardClient({
                       }
                     </button>
                     <button
-                      onClick={() => setRejectId(req.id)}
+                      onClick={() => { setRejectId(req.id); setRejectError(null) }}
                       disabled={loading === req.id}
                       style={{
                         flex: 1, padding: `${SP[2]} ${SP[3]}`, background: 'transparent',
@@ -870,6 +889,16 @@ export default function DashboardClient({
               </div>
             </div>
             <div style={{ padding: `${SP[5]} ${SP[6]}` }}>
+              {rejectError && (
+                <div style={{
+                  marginBottom: SP[3], padding: `${SP[2]} ${SP[3]}`,
+                  borderRadius: R.md, background: C.redBg,
+                  border: `1px solid ${C.redBd}`,
+                  fontSize: F.sm, color: C.red, fontFamily: F.body,
+                }}>
+                  {rejectError}
+                </div>
+              )}
               <textarea
                 value={rejectMsg}
                 onChange={e => setRejectMsg(e.target.value)}
@@ -906,7 +935,7 @@ export default function DashboardClient({
                 </button>
                 <button
                   className="btn-ghost"
-                  onClick={() => { setRejectId(null); setRejectMsg('') }}
+                  onClick={() => { setRejectId(null); setRejectMsg(''); setRejectError(null) }}
                   style={{
                     padding: `${SP[3]} ${SP[4]}`,
                     borderRadius: R.md,

@@ -23,27 +23,28 @@ export async function getDashboardStats() {
     creancesResult, productTypesResult,
   ] = await Promise.all([
 
-    // Today's sales (all non-cancelled — not just delivered)
+    // Today's confirmed sales (drafts are not yet revenue)
     supabase
       .from('sales')
       .select('total_amount, amount_paid')
       .gte('created_at', todayISO)
-      .neq('status', 'cancelled'),
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
-    // Month-to-date sales (with sale_items for cost/margin calculation)
+    // Month-to-date confirmed sales — sale_items include product_type so the
+    // shared KPI helper can use it as the authoritative isTile signal
     supabase
       .from('sales')
-      .select('total_amount, amount_paid, boutique_id, boutiques(name), sale_items(purchase_price_snapshot, quantity_tiles, tile_area_m2_snapshot)')
+      .select('total_amount, amount_paid, boutique_id, boutiques(name), sale_items(purchase_price_snapshot, quantity_tiles, tile_area_m2_snapshot, products(product_type))')
       .gte('created_at', mtdISO)
-      .neq('status', 'cancelled'),
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
-    // Previous full month (for trend — needs created_at to filter same day-range)
+    // Previous full month — confirmed only, for apples-to-apples trend
     supabase
       .from('sales')
       .select('total_amount, created_at')
       .gte('created_at', prevStartISO)
       .lte('created_at', prevEndISO)
-      .neq('status', 'cancelled'),
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
     // Stock levels with alerts
     supabase
@@ -64,12 +65,12 @@ export async function getDashboardStats() {
       .eq('status', 'pending')
       .order('created_at', { ascending: true }),
 
-    // MTD sales by boutique (replaces week-only)
+    // MTD confirmed sales by boutique
     supabase
       .from('sales')
       .select('total_amount, boutique_id, boutiques(name), created_at')
       .gte('created_at', mtdISO)
-      .neq('status', 'cancelled'),
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
     // Active orders count (confirmed + preparing + ready)
     supabase
@@ -77,12 +78,13 @@ export async function getDashboardStats() {
       .select('id', { count: 'exact', head: true })
       .in('status', ['confirmed', 'preparing', 'ready']),
 
-    // All-time outstanding créances (partial + unpaid, non-cancelled)
+    // All-time outstanding créances — confirmed sales with unpaid/partial balance
+    // Drafts are excluded: the amount is not yet due until a sale is confirmed
     supabase
       .from('sales')
       .select('total_amount, amount_paid')
       .in('payment_status', ['partial', 'unpaid'])
-      .neq('status', 'cancelled'),
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
     // Product types for type-aware stock alert thresholds
     supabase
@@ -113,7 +115,7 @@ export async function getSalesByPeriod(days: number) {
     .from('sales')
     .select('created_at, total_amount, boutique_id, boutiques(name)')
     .gte('created_at', from.toISOString())
-    .neq('status', 'cancelled')
+    .in('status', ['confirmed', 'preparing', 'ready', 'delivered'])
     .order('created_at', { ascending: true })
 
   return data ?? []
