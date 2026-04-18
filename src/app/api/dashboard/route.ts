@@ -95,7 +95,7 @@ export async function GET() {
       const type = typeMap.get(s.product_id) ?? 'tile'
       return type === 'tile'
         ? Number(s.available_full_cartons) < LOW_STOCK_CARTONS
-        : Number(s.available_tiles)        < LOW_STOCK_UNITS
+        : Number(s.available_qty)          < LOW_STOCK_UNITS
     })
     .map((s: any) => ({
       ...s,

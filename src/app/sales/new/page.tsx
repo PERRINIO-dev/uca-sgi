@@ -38,10 +38,10 @@ export default async function NewSalePage() {
       .select(`
         product_id, reference_code, product_name,
         tiles_per_carton, tile_area_m2,
-        available_tiles, available_full_cartons,
+        available_qty, available_full_cartons,
         available_m2, full_cartons, loose_tiles
       `)
-      .gt('available_tiles', 0)
+      .gt('available_qty', 0)
       .order('product_name'),
 
     supabase

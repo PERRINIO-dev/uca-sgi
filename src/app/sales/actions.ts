@@ -136,7 +136,7 @@ export async function createSale(payload: CreateSalePayload) {
   // 2. Check stock availability — single batched query (no N+1)
   const { data: stocks } = await supabase
     .from('stock')
-    .select('product_id, total_tiles, reserved_tiles')
+    .select('product_id, total_qty, reserved_qty')
     .in('product_id', productIds)
 
   if (!stocks || stocks.length < productIds.length) {
@@ -147,7 +147,7 @@ export async function createSale(payload: CreateSalePayload) {
   for (const item of payload.items) {
     const stock = stockMap.get(item.product_id)
     if (!stock) return { error: 'Stock introuvable pour un produit.' }
-    const available = stock.total_tiles - stock.reserved_tiles
+    const available = stock.total_qty - stock.reserved_qty
     if (available < item.quantity_tiles) {
       return { error: `Stock insuffisant. Disponible : ${available} unité(s).` }
     }
@@ -192,38 +192,21 @@ export async function createSale(payload: CreateSalePayload) {
     return { error: itemsError.message }
   }
 
-  // 4.5 Reserve stock atomically — uses a SECURITY DEFINER RPC with SELECT FOR UPDATE
-  // so two concurrent sales for the same product cannot both succeed past the
-  // availability check (each holds a row-level lock for the duration of the call).
+  // 4.5 Reserve stock for all items atomically — single DB round-trip.
+  // reserve_sale_items() locks rows in product_id order (no deadlocks), checks
+  // all availabilities, then applies all increments — or returns FALSE with
+  // zero partial state if any product is insufficient.
   const adminSupabase = getAdminClient()
-  const reserveMap    = new Map<string, number>()
-  for (const item of serverItems) {
-    reserveMap.set(
-      item.product_id,
-      (reserveMap.get(item.product_id) ?? 0) + item.quantity_tiles
-    )
-  }
 
-  // Track which reservations succeed so we can release them all on any failure.
-  const confirmedReservations = new Map<string, number>()
-  for (const [productId, qty] of reserveMap) {
-    const { data: reserved, error: rpcError } = await adminSupabase
-      .rpc('reserve_stock_on_sale', { p_product_id: productId, p_quantity: qty })
+  const { data: reserved, error: reserveError } = await adminSupabase
+    .rpc('reserve_sale_items', { p_sale_id: sale.id })
 
-    if (rpcError || reserved === false) {
-      // Release every product we already reserved before this failure
-      for (const [prevId, prevQty] of confirmedReservations) {
-        await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: prevId, p_quantity: prevQty })
-      }
-      // Use admin client for cleanup — no DELETE RLS policy exists for authenticated role
-      await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
-      await adminSupabase.from('sales').delete().eq('id', sale.id)
-      if (rpcError) return { error: 'Erreur lors de la réservation du stock. Veuillez réessayer.' }
-      return {
-        error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.',
-      }
+  if (reserveError || reserved === false) {
+    await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
+    await adminSupabase.from('sales').delete().eq('id', sale.id)
+    return {
+      error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.',
     }
-    confirmedReservations.set(productId, qty)
   }
 
   // 5. Create the warehouse order
@@ -239,9 +222,8 @@ export async function createSale(payload: CreateSalePayload) {
     })
 
   if (orderError) {
-    // Clean up orphaned sale and items to preserve data consistency
-    for (const [productId, qty] of confirmedReservations) {
-      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: productId, p_quantity: qty })
+    for (const item of serverItems) {
+      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: item.product_id, p_quantity: item.quantity_tiles })
     }
     await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
     await adminSupabase.from('sales').delete().eq('id', sale.id)
@@ -367,7 +349,7 @@ export async function cancelSale(saleId: string) {
     .eq('sale_id', saleId)
 
   if (saleItems && saleItems.length > 0) {
-    // Aggregate quantities per product then atomically release reserved_tiles
+    // Aggregate quantities per product then atomically release reserved stock
     // via RPC — eliminates the read-then-write race condition.
     const releaseMap = new Map<string, number>()
     for (const item of saleItems) {

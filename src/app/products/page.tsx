@@ -31,7 +31,7 @@ export default async function ProductsPage() {
         purchase_price, floor_price_per_m2, reference_price_per_m2,
         floor_price_per_unit, reference_price_per_unit,
         piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package,
-        stock ( total_tiles, reserved_tiles, last_updated_at )
+        stock ( total_qty, reserved_qty, last_updated_at )
       `)
       .order('created_at', { ascending: false }),
 

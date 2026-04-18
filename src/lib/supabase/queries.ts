@@ -49,7 +49,7 @@ export async function getDashboardStats() {
     supabase
       .from('stock_view')
       .select('*')
-      .order('available_tiles', { ascending: true }),
+      .order('available_qty', { ascending: true }),
 
     // Pending stock requests
     supabase

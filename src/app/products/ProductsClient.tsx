@@ -1296,8 +1296,8 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
 }) {
   const pt: ProductType = p.product_type ?? 'tile'
   const stock     = Array.isArray(p.stock) ? p.stock[0] : p.stock
-  const total     = parseInt(stock?.total_tiles    ?? '0')
-  const reserved  = parseInt(stock?.reserved_tiles ?? '0')
+  const total     = parseInt(stock?.total_qty    ?? '0')
+  const reserved  = parseInt(stock?.reserved_qty ?? '0')
   const available = total - reserved
 
   // Stock color logic

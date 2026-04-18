@@ -257,7 +257,7 @@ export async function createProduct(payload: CreateProductPayload) {
         .from('stock')
         .upsert({
           product_id:      product.id,
-          total_tiles:     initTiles,
+          total_qty:     initTiles,
           last_updated_at: new Date().toISOString(),
           last_updated_by: user.id,
           company_id:      profile.company_id,
@@ -349,7 +349,7 @@ export async function createProduct(payload: CreateProductPayload) {
       .from('stock')
       .upsert({
         product_id:      product.id,
-        total_tiles:     p.initialQuantity,
+        total_qty:     p.initialQuantity,
         last_updated_at: new Date().toISOString(),
         last_updated_by: user.id,
         company_id:      profile.company_id,
@@ -531,11 +531,11 @@ export async function deleteProduct(productId: string) {
   // Guard: stock must be zero (total — not just available)
   const { data: stockRow } = await admin
     .from('stock')
-    .select('quantity_tiles')
+    .select('total_qty')
     .eq('product_id', productId)
     .single()
 
-  if ((stockRow?.quantity_tiles ?? 0) > 0) {
+  if ((stockRow?.total_qty ?? 0) > 0) {
     return { error: 'Ce produit a du stock en cours. Désactivez-le plutôt que de le supprimer.' }
   }
 
@@ -578,7 +578,7 @@ export async function deleteProduct(productId: string) {
     entity_type:        'products',
     entity_id:          productId,
     company_id:         profile.company_id,
-    data_before:        { name: prod.name },
+    data_after:         { name: prod.name },
   })
 
   revalidatePath('/products')

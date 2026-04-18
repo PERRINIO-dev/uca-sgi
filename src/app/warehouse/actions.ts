@@ -135,7 +135,7 @@ export async function updateOrderStatus(
       const [{ data: postStocks }, { data: productTypes }] = await Promise.all([
         admin
           .from('stock_view')
-          .select('product_id, product_name, available_full_cartons, available_tiles')
+          .select('product_id, product_name, available_full_cartons, available_qty')
           .in('product_id', productIds)
           .eq('company_id', profile.company_id),
         admin
@@ -149,7 +149,7 @@ export async function updateOrderStatus(
         const type = typeMap.get(s.product_id) ?? 'tile'
         return type === 'tile'
           ? Number(s.available_full_cartons) < LOW_STOCK_CARTONS
-          : Number(s.available_tiles)        < LOW_STOCK_UNITS
+          : Number(s.available_qty)        < LOW_STOCK_UNITS
       })
       if (lowStock.length > 0) {
         const names = lowStock.map((s: any) => s.product_name).join(', ')

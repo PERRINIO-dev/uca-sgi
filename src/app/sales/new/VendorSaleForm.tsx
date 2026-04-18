@@ -106,7 +106,7 @@ export default function VendorSaleForm({
     if (!selectedProduct) return null
     const isTile = (selectedProduct.product_type ?? 'tile') === 'tile'
     const price  = parseFloat(unitPrice) || 0
-    const availableTiles = parseInt(selectedProduct.available_tiles)
+    const availableTiles = parseInt(selectedProduct.available_qty)
 
     if (isTile) {
       const tileArea = parseFloat(selectedProduct.tile_area_m2)
@@ -228,7 +228,7 @@ export default function VendorSaleForm({
     if (computed.price <= 0 || computed.tiles <= 0) return
     const existingIdx = cart.findIndex(i => i.product.product_id === selectedProduct.product_id && i.unitPricePerM2 === computed.price)
     const isTileProd  = computed.isTile
-    const available   = parseInt(selectedProduct.available_tiles)
+    const available   = parseInt(selectedProduct.available_qty)
     if (existingIdx >= 0) {
       const existing = cart[existingIdx]
       const newQty   = existing.quantityTiles + computed.tiles
@@ -593,7 +593,7 @@ export default function VendorSaleForm({
                 const isSelected  = selectedProduct?.product_id === prod.product_id
                 const prodType    = prod.product_type ?? 'tile'
                 const prodIsTile  = prodType === 'tile'
-                const availCount  = parseInt(prod.available_tiles)
+                const availCount  = parseInt(prod.available_qty)
                 const cfg         = getTypeConfig(prodType)
                 const availDisplay = prodIsTile
                   ? fmtM2(availCount * parseFloat(prod.tile_area_m2))
@@ -739,7 +739,7 @@ export default function VendorSaleForm({
                           )}
                           {computed.stockInsufficient && (
                             <div style={{ marginTop: 8, padding: '8px 10px', background: C.redBg, borderRadius: 6, fontSize: 12, fontWeight: 600, color: C.red, fontFamily: F.body }}>
-                              Stock insuffisant — dispo : {fmtM2(parseInt(selectedProduct.available_tiles)*parseFloat(selectedProduct.tile_area_m2))}
+                              Stock insuffisant — dispo : {fmtM2(parseInt(selectedProduct.available_qty)*parseFloat(selectedProduct.tile_area_m2))}
                             </div>
                           )}
                         </div>

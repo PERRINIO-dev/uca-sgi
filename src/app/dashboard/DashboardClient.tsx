@@ -772,7 +772,7 @@ export default function DashboardClient({
             <div style={{ display: 'flex', flexDirection: 'column', gap: SP[2] }}>
               {(d.stockAlerts.length > 6 ? d.stockAlerts.slice(0, 6) : d.stockAlerts).map((item: any) => {
                 const isTile = (item.product_type ?? 'tile') === 'tile'
-                const avail  = isTile ? Number(item.available_full_cartons) : Number(item.available_tiles)
+                const avail  = isTile ? Number(item.available_full_cartons) : Number(item.available_qty)
                 const isCrit = isTile ? avail < CRITICAL_STOCK_CARTONS : avail < CRITICAL_STOCK_UNITS
                 const clr    = isCrit ? C.red    : C.orange
                 const bgClr  = isCrit ? C.redBg  : C.orangeBg

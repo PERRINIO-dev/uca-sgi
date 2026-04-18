@@ -133,7 +133,7 @@ export async function createCompanyWithOwner(payload: {
     action_type:        'COMPANY_CREATED',
     entity_type:        'companies',
     entity_id:          company.id,
-    company_id:         caller.company_id,
+    company_id:         null,
     data_after:         { name, slug, ownerEmail: email, ownerFullName: fullName },
   })
 
@@ -187,7 +187,7 @@ export async function toggleCompanyActive(companyId: string, isActive: boolean) 
     action_type:        isActive ? 'COMPANY_ACTIVATED' : 'COMPANY_DEACTIVATED',
     entity_type:        'companies',
     entity_id:          companyId,
-    company_id:         caller.company_id,
+    company_id:         null,
     data_after:         { affectedUsers: companyUsers?.length ?? 0 },
   })
 
@@ -226,7 +226,7 @@ export async function resetUserPassword(userId: string, newPassword: string) {
     action_type:        'PLATFORM_USER_PASSWORD_RESET',
     entity_type:        'users',
     entity_id:          userId,
-    company_id:         caller.company_id,
+    company_id:         null,
     data_after:         { target_name: target.full_name, target_email: target.email, target_company_id: target.company_id },
   })
 
@@ -271,7 +271,7 @@ export async function togglePlatformUserActive(userId: string, isActive: boolean
     action_type:        isActive ? 'PLATFORM_USER_REACTIVATED' : 'PLATFORM_USER_SUSPENDED',
     entity_type:        'users',
     entity_id:          userId,
-    company_id:         caller.company_id,
+    company_id:         null,
     data_after:         { target_name: target.full_name, target_email: target.email, target_company_id: target.company_id, is_active: isActive },
   })
 

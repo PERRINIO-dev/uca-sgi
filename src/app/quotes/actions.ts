@@ -215,7 +215,7 @@ export async function convertQuote(
   // Check stock availability before committing
   const { data: stocks } = await supabase
     .from('stock')
-    .select('product_id, total_tiles, reserved_tiles')
+    .select('product_id, total_qty, reserved_qty')
     .in('product_id', productIds)
 
   if (!stocks || stocks.length < productIds.length) {
@@ -226,7 +226,7 @@ export async function convertQuote(
   for (const item of saleItems) {
     const stock = stockMap.get(item.product_id)
     if (!stock) return { error: 'Stock introuvable pour un produit.' }
-    const available = stock.total_tiles - stock.reserved_tiles
+    const available = stock.total_qty - stock.reserved_qty
     if (available < item.quantity_tiles) {
       return { error: `Stock insuffisant pour la conversion. Disponible : ${available} unité(s).` }
     }
@@ -251,28 +251,16 @@ export async function convertQuote(
     return { error: rpcError?.message ?? 'Erreur lors de la confirmation du devis.' }
   }
 
-  // Reserve stock atomically per product.
-  // Track confirmed reservations so partial failures can be fully rolled back.
-  const reserveMap           = new Map<string, number>()
-  const confirmedReservations = new Map<string, number>()
-  for (const item of saleItems) {
-    reserveMap.set(item.product_id, (reserveMap.get(item.product_id) ?? 0) + item.quantity_tiles)
-  }
+  // Atomically reserve stock for all sale items in a single DB round-trip.
+  // reserve_sale_items() locks rows in product_id order (no deadlocks), checks
+  // all availabilities, then applies all increments — or returns FALSE with
+  // zero partial state if any product is insufficient.
+  const { data: reserved, error: reserveError } = await adminSupabase
+    .rpc('reserve_sale_items', { p_sale_id: quoteId })
 
-  for (const [productId, qty] of reserveMap) {
-    const { data: reserved, error: reserveError } = await adminSupabase
-      .rpc('reserve_stock_on_sale', { p_product_id: productId, p_quantity: qty })
-
-    if (reserveError || reserved === false) {
-      // Release every product already reserved before this failure
-      for (const [prevId, prevQty] of confirmedReservations) {
-        await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: prevId, p_quantity: prevQty })
-      }
-      // Revert sale to draft, clear VNT number
-      await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
-      return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez réessayer.' }
-    }
-    confirmedReservations.set(productId, qty)
+  if (reserveError || reserved === false) {
+    await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
+    return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez réessayer.' }
   }
 
   // Create the warehouse order
@@ -286,8 +274,8 @@ export async function convertQuote(
     })
 
   if (orderError) {
-    for (const [productId, qty] of confirmedReservations) {
-      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: productId, p_quantity: qty })
+    for (const item of saleItems) {
+      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: item.product_id, p_quantity: item.quantity_tiles })
     }
     await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
     return { error: orderError.message }

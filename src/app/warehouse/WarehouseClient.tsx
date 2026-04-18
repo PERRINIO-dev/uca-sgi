@@ -313,7 +313,7 @@ export default function WarehouseClient({
     }
 
     const stockRow   = stockLevels.find((s: any) => s.product_id === reqProduct)
-    const stockBefore = stockRow ? parseInt(stockRow.total_tiles) : 0
+    const stockBefore = stockRow ? parseInt(stockRow.total_qty) : 0
     const finalDelta  = reqType === 'correction'
       ? (reqCorrectionSign === 'negative' ? -Math.abs(delta) : Math.abs(delta))
       : delta
@@ -822,10 +822,10 @@ export default function WarehouseClient({
               const unitLabel  = prod?.unit_label ?? (isTile ? 'm²' : 'unité')
 
               const availM2    = parseFloat(item.available_m2)
-              // stock_view has no total_m2 column — compute from total_tiles × tile_area_m2
-              const totalM2    = parseFloat(item.tile_area_m2) * parseInt(item.total_tiles)
-              const available  = parseInt(item.available_tiles)
-              const reserved   = parseInt(item.reserved_tiles)
+              // stock_view has no total_m2 column — compute from total_qty × tile_area_m2
+              const totalM2    = parseFloat(item.tile_area_m2) * parseInt(item.total_qty)
+              const available  = parseInt(item.available_qty)
+              const reserved   = parseInt(item.reserved_qty)
 
               const isLow      = isTile
                 ? parseInt(item.available_full_cartons) < LOW_STOCK_CARTONS
@@ -837,8 +837,8 @@ export default function WarehouseClient({
               const stockColor = isCritical ? C.red : isLow ? C.orange : C.green
               const pct = isTile
                 ? (totalM2 > 0 ? Math.min(100, (availM2 / totalM2) * 100) : 0)
-                : (parseInt(item.total_tiles) > 0
-                  ? Math.min(100, (available / parseInt(item.total_tiles)) * 100)
+                : (parseInt(item.total_qty) > 0
+                  ? Math.min(100, (available / parseInt(item.total_qty)) * 100)
                   : 0)
 
               return (
@@ -918,12 +918,12 @@ export default function WarehouseClient({
                           ['Disponible', fmtNum(available) + ' sac' + (available !== 1 ? 's' : '')],
                           ['Poids dispo', fmtNum(Math.round(available * parseFloat(prod.bag_weight_kg))) + ' kg'],
                           ['Réservé',    fmtNum(reserved) + ' sac' + (reserved !== 1 ? 's' : '')],
-                          ['Total sacs',  fmtNum(parseInt(item.total_tiles)) + ' sacs'],
+                          ['Total sacs',  fmtNum(parseInt(item.total_qty)) + ' sacs'],
                         ]
                       : [
                           ['Disponible', fmtNum(available) + ' ' + pluralize(unitLabel, available)],
                           ['Réservé',    fmtNum(reserved)  + ' ' + pluralize(unitLabel, reserved)],
-                          ['Total',      fmtNum(parseInt(item.total_tiles)) + ' ' + pluralize(unitLabel, parseInt(item.total_tiles))],
+                          ['Total',      fmtNum(parseInt(item.total_qty)) + ' ' + pluralize(unitLabel, parseInt(item.total_qty))],
                         ]
                     ).map(([lbl, val]) => (
                       <div key={lbl} style={{ textAlign: 'center',

@@ -97,9 +97,9 @@ export interface StockView {
   product_name:           string
   tiles_per_carton:       number
   tile_area_m2:           number
-  total_tiles:            number
-  reserved_tiles:         number
-  available_tiles:        number
+  total_qty:              number
+  reserved_qty:           number
+  available_qty:          number
   full_cartons:           number
   loose_tiles:            number
   available_full_cartons: number
