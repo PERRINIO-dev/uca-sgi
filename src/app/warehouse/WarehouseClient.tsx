@@ -5,6 +5,7 @@ import { useRouter }                    from 'next/navigation'
 import { createClient }                 from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
 import PageLayout         from '@/components/PageLayout'
+import { useIsMobile }    from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import {
   LOW_STOCK_CARTONS, CRITICAL_STOCK_CARTONS,
@@ -52,8 +53,9 @@ export default function WarehouseClient({
   myRequests:      any[]
   badgeCounts?:    BadgeCounts
 }) {
-  const router   = useRouter()
-  const supabase = useMemo(() => createClient(), [])
+  const router    = useRouter()
+  const supabase  = useMemo(() => createClient(), [])
+  const isMobile  = useIsMobile()
   const fmt = (n: number) => fmtCurrency(n, currency)
 
   // ── Real-time: refresh when orders, sales, or stock_requests change ─────────
@@ -368,7 +370,7 @@ export default function WarehouseClient({
         {/* Tabs — pill/segment control */}
         <div style={{ display: 'flex', gap: 3, marginBottom: 24,
           background: C.bg, padding: 4, borderRadius: 100,
-          width: 'fit-content', border: `1px solid ${C.border}` }}>
+          width: isMobile ? '100%' : 'fit-content', border: `1px solid ${C.border}` }}>
           {([
             ['orders',   'Commandes',  orders.length],
             ['stock',    'Stock',       null],
@@ -378,12 +380,13 @@ export default function WarehouseClient({
             <button key={id} onClick={() => setTab(id)}
               className="seg-btn"
               style={{
+                flex: isMobile ? 1 : undefined,
                 padding: '8px 20px', borderRadius: 100,
                 fontSize: 13, fontWeight: 600, cursor: 'pointer',
                 background: activeTab === id ? C.surface : 'transparent',
                 color: activeTab === id ? C.ink : C.muted,
                 border: 'none', display: 'flex',
-                alignItems: 'center', gap: 6,
+                alignItems: 'center', justifyContent: 'center', gap: 6,
                 fontFamily: F.body,
                 boxShadow: activeTab === id ? '0 1px 4px rgba(60,30,10,0.10)' : 'none',
               }}>

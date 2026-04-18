@@ -526,7 +526,7 @@ export default function VendorSaleForm({
 
           {/* Step progress */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 0, background: C.bg, border: `1px solid ${C.border}`, borderRadius: 100, padding: '4px 6px' }}>
-            {([{ n: 1, label: 'Sélection' }, { n: 2, label: 'Client & finalisation' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
+            {([{ n: 1, label: isMobile ? 'Produits' : 'Sélection' }, { n: 2, label: isMobile ? 'Finalisation' : 'Client & finalisation' }] as {n:1|2,label:string}[]).map(({ n, label }, idx) => (
               <React.Fragment key={n}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 100, background: formStep === n ? C.amber : 'transparent', transition: 'background 0.2s ease' }}>
                   <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: formStep === n ? 'rgba(255,255,255,0.2)' : formStep > n ? C.green : C.border, color: formStep >= n ? '#FAF5EE' : C.muted, fontSize: 10, fontWeight: 800, flexShrink: 0 }}>
@@ -545,7 +545,7 @@ export default function VendorSaleForm({
 
       {/* ═══════════════════════════ STEP 1 ═══════════════════════════════ */}
       {formStep === 1 && (
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.8fr 1.5fr 280px', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.8fr 1.5fr 280px', gap: 16, alignItems: 'start', paddingBottom: isMobile && cart.length > 0 ? 80 : 0 }}>
 
           {/* ── COL 1: Product catalogue ── */}
           <div style={{ background: C.surface, borderRadius: 14, border: `1px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 1px 4px rgba(60,30,10,0.05)' }}>
@@ -985,7 +985,8 @@ export default function VendorSaleForm({
               </div>
             )}
 
-            {/* Cart panel */}
+            {/* Cart panel + Continuer — desktop only; mobile shows fixed bottom bar */}
+            {!isMobile && (<>
             <div style={{ background: C.sidebarBg, borderRadius: 14, overflow: 'hidden', boxShadow: '0 4px 24px rgba(60,30,10,0.18)' }}>
               {/* Cart header */}
               <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1067,8 +1068,37 @@ export default function VendorSaleForm({
                 <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
+            </>)}
 
           </div>
+        </div>
+      )}
+
+      {/* Mobile floating cart bar — fixed bottom, step 1 only */}
+      {formStep === 1 && isMobile && cart.length > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100,
+          background: C.sidebarBg,
+          padding: '12px 16px 16px',
+          boxShadow: '0 -4px 24px rgba(26,15,6,0.40)',
+          display: 'flex', alignItems: 'center', gap: 12,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body, marginBottom: 2 }}>
+              {cart.length} article{cart.length > 1 ? 's' : ''}
+            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: '#FAF5EE', letterSpacing: '-0.03em', fontFamily: F.display, lineHeight: 1 }}>
+              {fmt(cartTotal)}
+            </div>
+          </div>
+          <button className="btn-amber"
+            onClick={() => { setError(null); setFormStep(2) }}
+            style={{ padding: '12px 22px', borderRadius: R.md, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            Continuer
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+              <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         </div>
       )}
 
