@@ -79,6 +79,7 @@ export default function VendorSaleForm({
   const [successData,      setSuccess]      = useState<any>(null)
   const [step,             setStep]         = useState<'form' | 'success' | 'quote-success'>('form')
   const [formStep,         setFormStep]     = useState<1 | 2>(1)
+  const [cartSheetOpen,    setCartSheet]    = useState(false)
 
   const [inputQty,        setInputQty]        = useState('')
   const [inputPieces,     setInputPieces]     = useState('')
@@ -1083,14 +1084,19 @@ export default function VendorSaleForm({
           boxShadow: '0 -4px 24px rgba(26,15,6,0.40)',
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body, marginBottom: 2 }}>
+          {/* Left: tap to open cart sheet */}
+          <button onClick={() => setCartSheet(true)}
+            style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: F.body, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
               {cart.length} article{cart.length > 1 ? 's' : ''}
+              <svg width="9" height="9" viewBox="0 0 10 10" fill="none" style={{ opacity: 0.4 }}>
+                <path d="M2 7l3-3 3 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
             <div style={{ fontSize: 20, fontWeight: 900, color: '#FAF5EE', letterSpacing: '-0.03em', fontFamily: F.display, lineHeight: 1 }}>
               {fmt(cartTotal)}
             </div>
-          </div>
+          </button>
           <button className="btn-amber"
             onClick={() => { setError(null); setFormStep(2) }}
             style={{ padding: '12px 22px', borderRadius: R.md, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -1100,6 +1106,97 @@ export default function VendorSaleForm({
             </svg>
           </button>
         </div>
+      )}
+
+      {/* Mobile cart bottom sheet */}
+      {formStep === 1 && isMobile && cartSheetOpen && (
+        <>
+          {/* Overlay */}
+          <div onClick={() => setCartSheet(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 110, background: 'rgba(26,15,6,0.55)' }} />
+          {/* Sheet */}
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 120,
+            background: C.sidebarBg,
+            borderRadius: '20px 20px 0 0',
+            boxShadow: '0 -8px 40px rgba(26,15,6,0.50)',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: '75vh',
+          }}>
+            {/* Sheet header */}
+            <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <circle cx="6" cy="13" r="1.2" fill="rgba(255,255,255,0.6)"/><circle cx="12" cy="13" r="1.2" fill="rgba(255,255,255,0.6)"/>
+                  <path d="M1 1h2l2 8h7l1.5-5H5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)', fontFamily: F.body }}>Panier</span>
+                <div style={{ background: C.amber, color: '#FAF5EE', fontSize: 10, fontWeight: 800, width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {cart.length}
+                </div>
+              </div>
+              <button onClick={() => setCartSheet(false)}
+                style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', width: 28, height: 28, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+              </button>
+            </div>
+
+            {/* Cart items — scrollable */}
+            <div style={{ overflowY: 'auto', padding: '10px 12px', flex: 1 }}>
+              {cart.map((item, idx) => {
+                const isItemTile   = (item.product?.product_type ?? 'tile') === 'tile'
+                const itemType     = item.product?.product_type ?? 'unit'
+                const unitLbl      = item.product?.unit_label ?? 'unité'
+                const bagKg        = itemType === 'bag' && item.product?.bag_weight_kg
+                  ? Math.round(item.quantityTiles * parseFloat(item.product.bag_weight_kg)) : null
+                const pkgCount     = itemType === 'unit' && item.product?.pieces_per_package && item.quantityTiles > 0
+                  ? Math.floor(item.quantityTiles / parseInt(item.product.pieces_per_package)) : null
+                const qtyDisplay   = isItemTile
+                  ? `${fmtM2(item.quantityM2)} · ${item.quantityCartons} ctn${item.looseTiles>0?` +${item.looseTiles}`:''}`
+                  : bagKg
+                  ? `${fmtNum(item.quantityTiles)} sac${item.quantityTiles>1?'s':''} (${fmtNum(bagKg)} kg)`
+                  : pkgCount && pkgCount > 0
+                  ? `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)} (${pkgCount} ${item.product?.package_label ?? 'lot'}${pkgCount>1?'s':''})`
+                  : `${fmtNum(item.quantityTiles)} ${pluralize(unitLbl, item.quantityTiles)}`
+                const priceDisplay = isItemTile
+                  ? `${fmtNum(item.unitPricePerM2)} ${currency}/m²`
+                  : `${fmtNum(item.unitPricePerM2)} ${currency}/${unitLbl}`
+                return (
+                  <div key={idx} style={{ padding: '12px', borderRadius: 10, background: 'rgba(255,255,255,0.09)', border: '1px solid rgba(255,255,255,0.14)', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#FAF5EE', fontFamily: F.body, flex: 1, marginRight: 8, lineHeight: 1.3 }}>{item.product.product_name}</span>
+                      <button onClick={() => removeFromCart(idx)}
+                        style={{ background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', width: 26, height: 26, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="9" height="9" viewBox="0 0 8 8" fill="none"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'rgba(250,245,238,0.55)', marginBottom: 6, fontFamily: F.body }}>{qtyDisplay}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                      <span style={{ fontSize: 11, color: 'rgba(250,245,238,0.40)', fontFamily: F.body }}>{priceDisplay}</span>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#FAF5EE', fontFamily: F.display, letterSpacing: '-0.03em' }}>{fmt(item.totalPrice)}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Sheet footer — total + Continuer */}
+            <div style={{ padding: '12px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, fontFamily: F.body }}>Total</span>
+                <span style={{ color: '#fff', fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', fontFamily: F.display }}>{fmt(cartTotal)}</span>
+              </div>
+              <button className="btn-amber"
+                onClick={() => { setCartSheet(false); setError(null); setFormStep(2) }}
+                style={{ width: '100%', padding: '14px', borderRadius: R.md, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48 }}>
+                Continuer
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                  <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* ═══════════════════════════ STEP 2 ═══════════════════════════════ */}
