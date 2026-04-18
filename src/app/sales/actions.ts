@@ -153,82 +153,40 @@ export async function createSale(payload: CreateSalePayload) {
     }
   }
 
-  // 3. Create sale header (use server-verified user.id and server-calculated total)
+  // 3–5. Create sale, items, reserve stock, and create order — one DB transaction.
+  // create_confirmed_sale() executes all four steps atomically: a crash at any
+  // point leaves the DB unchanged (no orphaned sale, no partial reservation).
+  // INSUFFICIENT_STOCK exception rolls back everything; the sale never exists.
   const amountPaid   = Math.max(0, payload.amount_paid ?? 0)
   const paymentStatus =
     amountPaid >= serverTotal ? 'paid' :
     amountPaid > 0            ? 'partial' : 'unpaid'
 
-  const { data: sale, error: saleError } = await supabase
-    .from('sales')
-    .insert({
-      boutique_id:    payload.boutique_id,
-      vendor_id:      user.id,
-      customer_name:  payload.customer_name,
-      customer_phone: payload.customer_phone,
-      customer_cni:   payload.customer_cni,
-      total_amount:   serverTotal,
-      amount_paid:    amountPaid,
-      payment_status: paymentStatus,
-      notes:          payload.notes,
-      status:         'confirmed',
-      sale_number:    '',
-      company_id:     callerProfile.company_id,
-    })
-    .select('id, sale_number')
-    .single()
-
-  if (saleError || !sale) {
-    return { error: saleError?.message ?? 'Erreur lors de la création de la vente.' }
-  }
-
-  // 4. Create sale items (using server-recalculated values)
-  const { error: itemsError } = await supabase
-    .from('sale_items')
-    .insert(serverItems.map(item => ({ ...item, sale_id: sale.id, company_id: callerProfile.company_id })))
-
-  if (itemsError) {
-    await supabase.from('sales').delete().eq('id', sale.id)
-    return { error: itemsError.message }
-  }
-
-  // 4.5 Reserve stock for all items atomically — single DB round-trip.
-  // reserve_sale_items() locks rows in product_id order (no deadlocks), checks
-  // all availabilities, then applies all increments — or returns FALSE with
-  // zero partial state if any product is insufficient.
   const adminSupabase = getAdminClient()
 
-  const { data: reserved, error: reserveError } = await adminSupabase
-    .rpc('reserve_sale_items', { p_sale_id: sale.id })
-
-  if (reserveError || reserved === false) {
-    await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
-    await adminSupabase.from('sales').delete().eq('id', sale.id)
-    return {
-      error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.',
-    }
-  }
-
-  // 5. Create the warehouse order
-  // company_id is inherited automatically by the set_order_number() trigger,
-  // but we pass it explicitly here for defense-in-depth.
-  const { error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      sale_id:      sale.id,
-      order_number: '',
-      status:       'confirmed',
-      company_id:   callerProfile.company_id,
+  const { data: created, error: createError } = await adminSupabase
+    .rpc('create_confirmed_sale', {
+      p_boutique_id:    payload.boutique_id,
+      p_vendor_id:      user.id,
+      p_customer_name:  payload.customer_name,
+      p_customer_phone: payload.customer_phone,
+      p_customer_cni:   payload.customer_cni,
+      p_total_amount:   serverTotal,
+      p_amount_paid:    amountPaid,
+      p_payment_status: paymentStatus,
+      p_notes:          payload.notes,
+      p_company_id:     callerProfile.company_id,
+      p_items:          serverItems,
     })
 
-  if (orderError) {
-    for (const item of serverItems) {
-      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: item.product_id, p_quantity: item.quantity_tiles })
+  if (createError) {
+    if (createError.message.includes('INSUFFICIENT_STOCK')) {
+      return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez vérifier le stock disponible et réessayer.' }
     }
-    await adminSupabase.from('sale_items').delete().eq('sale_id', sale.id)
-    await adminSupabase.from('sales').delete().eq('id', sale.id)
-    return { error: orderError.message }
+    return { error: createError.message ?? 'Erreur lors de la création de la vente.' }
   }
+
+  const sale = created as { sale_id: string; sale_number: string }
 
   // 5.5 Record initial payment in history (enables multi-tranche tracking).
   // Uses admin client — the authenticated sale_payments_insert RLS only covers
@@ -237,7 +195,7 @@ export async function createSale(payload: CreateSalePayload) {
   if (amountPaid > 0) {
     const { data: initPayment } = await adminSupabase
       .from('sale_payments')
-      .insert({ sale_id: sale.id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id, company_id: callerProfile.company_id })
+      .insert({ sale_id: sale.sale_id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id, company_id: callerProfile.company_id })
       .select('id')
       .single()
     // Trigger sync_sale_payment_totals() fires automatically in DB
@@ -247,7 +205,7 @@ export async function createSale(payload: CreateSalePayload) {
       user_role_snapshot: callerProfile.role,
       action_type:        'PAYMENT_RECORDED',
       entity_type:        'sales',
-      entity_id:          sale.id,
+      entity_id:          sale.sale_id,
       company_id:         callerProfile.company_id,
       data_after:         { amount: amountPaid, notes: 'Paiement initial', payment_id: initPayment?.id },
     })
@@ -259,7 +217,7 @@ export async function createSale(payload: CreateSalePayload) {
     user_role_snapshot: callerProfile.role,
     action_type:        'SALE_CREATED',
     entity_type:        'sales',
-    entity_id:          sale.id,
+    entity_id:          sale.sale_id,
     company_id:         callerProfile.company_id,
     data_after: {
       sale_number:  sale.sale_number,
@@ -276,10 +234,10 @@ export async function createSale(payload: CreateSalePayload) {
     title: 'Nouvelle commande',
     body:  `Vente ${sale.sale_number} — ${payload.items.length} article(s) à préparer`,
     url:   '/warehouse',
-    tag:   `order-${sale.id}`,
+    tag:   `order-${sale.sale_id}`,
   }, callerProfile.company_id).catch(console.error)
 
-  return { success: true, saleNumber: sale.sale_number, saleId: sale.id, serverTotal }
+  return { success: true, saleNumber: sale.sale_number, saleId: sale.sale_id, serverTotal }
 }
 
 export async function cancelSale(saleId: string) {
@@ -340,31 +298,8 @@ export async function cancelSale(saleId: string) {
     console.error('[cancelSale] Échec annulation order:', orderCancelError)
   }
 
-  // Release reserved stock for the cancelled sale items.
-  // Use admin client to guarantee visibility regardless of RLS edge cases
-  // (e.g. admin cancelling a preparing sale that belongs to another vendor).
-  const { data: saleItems } = await adminSupabase
-    .from('sale_items')
-    .select('product_id, quantity_tiles')
-    .eq('sale_id', saleId)
-
-  if (saleItems && saleItems.length > 0) {
-    // Aggregate quantities per product then atomically release reserved stock
-    // via RPC — eliminates the read-then-write race condition.
-    const releaseMap = new Map<string, number>()
-    for (const item of saleItems) {
-      releaseMap.set(
-        item.product_id,
-        (releaseMap.get(item.product_id) ?? 0) + item.quantity_tiles
-      )
-    }
-    for (const [productId, qty] of releaseMap) {
-      await adminSupabase.rpc('release_stock_on_cancel', {
-        p_product_id: productId,
-        p_quantity:   qty,
-      })
-    }
-  }
+  // Release all reserved stock for this sale in one atomic DB operation.
+  await adminSupabase.rpc('release_sale_items', { p_sale_id: saleId })
 
   const cancelledSale = updatedSales[0]
   await getAdminClient().from('audit_logs').insert({

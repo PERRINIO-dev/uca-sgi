@@ -243,42 +243,18 @@ export async function convertQuote(
     }
   }
 
-  // Atomically generate VNT number and set status=confirmed
+  // Atomically: assign VNT number, confirm status, reserve stock, create order.
+  // All four steps run in one DB transaction — any failure (including insufficient
+  // stock) raises an exception that rolls back everything.  The quote stays
+  // 'draft' with no side-effects; no TypeScript-level revert is needed.
   const { data: saleNumber, error: rpcError } = await adminSupabase
     .rpc('confirm_quote', { p_sale_id: quoteId })
 
   if (rpcError || !saleNumber) {
-    return { error: rpcError?.message ?? 'Erreur lors de la confirmation du devis.' }
-  }
-
-  // Atomically reserve stock for all sale items in a single DB round-trip.
-  // reserve_sale_items() locks rows in product_id order (no deadlocks), checks
-  // all availabilities, then applies all increments — or returns FALSE with
-  // zero partial state if any product is insufficient.
-  const { data: reserved, error: reserveError } = await adminSupabase
-    .rpc('reserve_sale_items', { p_sale_id: quoteId })
-
-  if (reserveError || reserved === false) {
-    await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
-    return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez réessayer.' }
-  }
-
-  // Create the warehouse order
-  const { error: orderError } = await supabase
-    .from('orders')
-    .insert({
-      sale_id:      quoteId,
-      order_number: '',
-      status:       'confirmed',
-      company_id:   profile.company_id,
-    })
-
-  if (orderError) {
-    for (const item of saleItems) {
-      await adminSupabase.rpc('release_stock_on_cancel', { p_product_id: item.product_id, p_quantity: item.quantity_tiles })
+    if (rpcError?.message.includes('INSUFFICIENT_STOCK')) {
+      return { error: 'Stock insuffisant (vente simultanée détectée). Veuillez réessayer.' }
     }
-    await adminSupabase.from('sales').update({ status: 'draft', sale_number: '' }).eq('id', quoteId)
-    return { error: orderError.message }
+    return { error: rpcError?.message ?? 'Erreur lors de la confirmation du devis.' }
   }
 
   // Record initial payment.
