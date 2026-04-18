@@ -692,7 +692,7 @@ export default function SalesListClient({
                       {isOpen && (
                         <tr>
                           <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: `0 ${SP[3]} ${SP[3]}`, background: C.bg, borderBottom: `1px solid ${C.border}` }}>
-                            <SaleDetail sale={sale} profile={profile} ownerName={d.ownerName} companyName={d.companyName} currency={d.currency} onPaymentAdded={() => router.refresh()} />
+                            <SaleDetail sale={sale} profile={profile} ownerName={d.ownerName} companyName={d.companyName} currency={d.currency} onPaymentAdded={() => { mutate(swrKey); router.refresh() }} />
                           </td>
                         </tr>
                       )}
@@ -859,7 +859,7 @@ function printSaleReceipt(sale: any, ownerName = 'Le Propriétaire', currency = 
     hour: '2-digit', minute: '2-digit',
   })
   const rows = (sale.sale_items ?? []).map((item: any) => {
-    const isTile = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+    const isTile = item.products?.product_type === 'tile'
     const unitLbl = escHtml(item.products?.unit_label ?? (isTile ? 'm²' : 'unité'))
     let qtyCell: string
     let priceCell: string
@@ -1058,6 +1058,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
   }
 
   const canAdd = sale.status !== 'cancelled' &&
+    sale.status !== 'draft' &&
     sale.payment_status !== 'paid' &&
     (['owner', 'admin'].includes(profile.role) || sale.vendor_id === profile.id)
 
@@ -1086,7 +1087,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
             </thead>
             <tbody>
               {(sale.sale_items ?? []).map((item: any) => {
-                const isTile   = !!item.tile_area_m2_snapshot && !!item.tiles_per_carton_snapshot
+                const isTile   = item.products?.product_type === 'tile'
                 const unitLbl  = item.products?.unit_label ?? (isTile ? 'carreau' : 'unité')
                 let qtyDisplay: React.ReactNode
                 let priceDisplay: string
@@ -1183,6 +1184,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
             <div style={{ display: 'flex', gap: SP[2], flexWrap: 'wrap' }}>
               <input
                 type="number" min="1" step="100"
+                max={Math.max(0, Number(sale.total_amount) - Number(sale.amount_paid ?? 0))}
                 value={addAmt}
                 onChange={e => setAddAmt(e.target.value)}
                 placeholder={`Montant (${currency})`}

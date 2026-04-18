@@ -261,14 +261,13 @@ export async function convertQuote(
   // Uses admin client — sale_payments_insert RLS only covers owner/admin;
   // server action already authenticates the caller.
   const paidAmount = Math.max(0, amountPaid ?? 0)
+
+  // Guard: paidAmount must not exceed the sale total (same rule as addPayment)
+  if (paidAmount > Number(quote.total_amount) + 0.01) {
+    return { error: 'Le montant encaissé dépasse le total du devis.' }
+  }
+
   if (paidAmount > 0) {
-    const totalAmount    = Number(quote.total_amount)
-    const paymentStatus  = paidAmount >= totalAmount ? 'paid' : 'partial'
-
-    await adminSupabase.from('sales')
-      .update({ amount_paid: paidAmount, payment_status: paymentStatus })
-      .eq('id', quoteId)
-
     const { data: initPayment } = await adminSupabase
       .from('sale_payments')
       .insert({
@@ -280,6 +279,7 @@ export async function convertQuote(
       })
       .select('id')
       .single()
+    // DB trigger sync_sale_payment_totals() automatically updates sales.amount_paid + payment_status
 
     await adminSupabase.from('audit_logs').insert({
       user_id:            user.id,
@@ -306,6 +306,7 @@ export async function convertQuote(
   revalidatePath('/sales')
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
+  revalidatePath('/reports')
 
   return { success: true, saleNumber: saleNumber as string }
 }
@@ -360,5 +361,6 @@ export async function cancelQuote(quoteId: string) {
   })
 
   revalidatePath('/quotes')
+  revalidatePath('/reports')
   return { success: true }
 }

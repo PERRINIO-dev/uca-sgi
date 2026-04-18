@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useTransition, useCallback } from 'react'
 import { useRouter }    from 'next/navigation'
 import PageLayout       from '@/components/PageLayout'
 import { convertQuote, cancelQuote } from './actions'
@@ -115,6 +115,9 @@ export default function QuotesClient({
   // Cancel modal
   const [cancelId,      setCancelId]      = useState<string | null>(null)
   const [cancelLoading, setCancelLoading] = useState(false)
+  const [cancelError,   setCancelError]   = useState<string | null>(null)
+
+  const isFirstRender = useRef(true)
 
   // ── Navigation helpers ────────────────────────────────────────────────────────
   const push = useCallback((href: string) => startNav(() => router.push(href)), [router, startNav])
@@ -128,6 +131,15 @@ export default function QuotesClient({
     params.set('page', '1')
     startNav(() => router.push(`/quotes?${params.toString()}`))
   }, [router, activeSearch, activeStatus, startNav])
+
+  // Debounced search — triggers navigation 400ms after the user stops typing,
+  // consistent with SalesListClient behaviour.
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    const t = setTimeout(() => applyFilters({ search }), 400)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   const handleLogout = async () => {
     const { createClient } = await import('@/lib/supabase/client')
@@ -163,11 +175,12 @@ export default function QuotesClient({
   const handleCancel = async () => {
     if (!cancelId) return
     setCancelLoading(true)
-    setActionError(null)
+    setCancelError(null)
     const result = await cancelQuote(cancelId)
     setCancelLoading(false)
-    if (result.error) { setActionError(result.error); setCancelId(null); return }
+    if (result.error) { setCancelError(result.error); return }
     setCancelId(null)
+    router.refresh()
   }
 
   // ── Print devis ──────────────────────────────────────────────────────────────
@@ -370,7 +383,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
             <path d="M6.5 1v11M1 6.5h11" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-          Nouvelle vente
+          Nouveau devis
         </button>
       </div>
 
@@ -385,7 +398,6 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && applyFilters({ search })}
             placeholder="Rechercher un devis, client…"
             style={{
               width: '100%', paddingLeft: 30, paddingRight: 12,
@@ -536,7 +548,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
 
                                 {/* Cancel */}
                                 <button
-                                  onClick={e => { e.stopPropagation(); setCancelId(quote.id); setActionError(null) }}
+                                  onClick={e => { e.stopPropagation(); setCancelId(quote.id); setCancelError(null); setActionError(null) }}
                                   title="Annuler le devis"
                                   style={{
                                     padding: '6px 8px', borderRadius: 7, cursor: 'pointer',
@@ -828,6 +840,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                     </div>
                     <input
                       type="number" min="0" step="100"
+                      max={Number(convertingQuote?.total_amount ?? 0)}
                       value={convertAmount}
                       onChange={e => setConvertAmount(e.target.value)}
                       placeholder={`max. ${fmt(Number(convertingQuote?.total_amount))}`}
@@ -885,19 +898,34 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.ink, marginBottom: 4 }}>Annuler le devis</div>
                 <div style={{ fontSize: 13, color: C.muted }}>Cette action est irréversible.</div>
               </div>
-              <button onClick={() => setCancelId(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.dim, padding: 2 }}>
+              <button onClick={() => { setCancelId(null); setCancelError(null) }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: C.dim, padding: 2 }}>
                 <IconX size={13} color={C.dim} />
               </button>
             </div>
-            <div style={{ padding: '20px 24px 24px', display: 'flex', gap: 10 }}>
+            <div style={{ padding: '20px 24px 24px' }}>
+              <p style={{ margin: `0 0 ${SP[4]}`, fontSize: F.sm, color: C.muted, fontFamily: F.body }}>
+                Le devis sera définitivement annulé.
+              </p>
+              {cancelError && (
+                <div style={{
+                  marginBottom: SP[3], padding: `${SP[2]} ${SP[3]}`,
+                  background: C.redBg, borderRadius: R.md,
+                  fontSize: F.sm, color: C.red, fontWeight: F.semibold,
+                  border: `1px solid ${C.redBd}`, fontFamily: F.body,
+                }}>
+                  {cancelError}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 10 }}>
               <button onClick={handleCancel} disabled={cancelLoading}
                 style={{ flex: 1, padding: '12px', background: C.red, color: '#fff', border: 'none', borderRadius: 9, fontSize: 13.5, fontWeight: 700, cursor: cancelLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: cancelLoading ? 0.7 : 1, fontFamily: F.body }}>
                 {cancelLoading ? <><span className="spinner" />Annulation…</> : 'Annuler le devis'}
               </button>
-              <button onClick={() => setCancelId(null)} disabled={cancelLoading}
+              <button onClick={() => { setCancelId(null); setCancelError(null) }} disabled={cancelLoading}
                 style={{ padding: '12px 20px', background: C.bg, color: C.muted, border: `1.5px solid ${C.border}`, borderRadius: 9, fontSize: 13, fontWeight: 500, cursor: 'pointer', fontFamily: F.body }}>
                 Retour
               </button>
+              </div>
             </div>
           </div>
         </div>

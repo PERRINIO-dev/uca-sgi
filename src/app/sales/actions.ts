@@ -338,6 +338,7 @@ export async function addPayment(
     .from('sales').select('id, vendor_id, status, total_amount, amount_paid').eq('id', saleId).single()
   if (!sale) return { error: 'Vente introuvable.' }
   if (sale.status === 'cancelled') return { error: 'Impossible d\'ajouter un paiement à une vente annulée.' }
+  if (sale.status === 'draft')     return { error: 'Convertissez d\'abord le devis en vente confirmée avant d\'enregistrer un paiement.' }
 
   const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
   if (!isAdminOrOwner && sale.vendor_id !== user.id) return { error: 'Accès refusé.' }
@@ -372,5 +373,6 @@ export async function addPayment(
 
   revalidatePath('/sales')
   revalidatePath('/reports')
+  revalidatePath('/dashboard')
   return { success: true }
 }
