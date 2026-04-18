@@ -37,7 +37,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; bd: string }> = 
   ready:      { bg: C.greenBg,  color: C.green,  bd: C.greenBd  },
 }
 
-type Tab = 'overview' | 'sales' | 'products' | 'vendors' | 'audit'
+type Tab = 'overview' | 'sales' | 'products' | 'vendors' | 'devis' | 'audit'
 
 const inputStyle: React.CSSProperties = {
   padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md,
@@ -47,7 +47,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function ReportsClient({
-  profile, currency, companyName = 'meram', sales, boutiques, vendors, auditLogs, badgeCounts,
+  profile, currency, companyName = 'meram', sales, boutiques, vendors, auditLogs, quotes, badgeCounts,
 }: {
   profile:      any
   currency:     string
@@ -56,6 +56,7 @@ export default function ReportsClient({
   boutiques:    any[]
   vendors:      any[]
   auditLogs:    any[]
+  quotes:       any[]
   badgeCounts?: BadgeCounts
 }) {
   const router   = useRouter()
@@ -66,7 +67,9 @@ export default function ReportsClient({
   const [filterBoutique, setBoutique] = useState('all')
   const [filterVendor,   setVendor]   = useState('all')
   const [filterStatus,   setStatus]   = useState('all')
-  const [filterDays,     setDays]     = useState('0')
+  const [filterDays,     setDays]     = useState('90')
+  const [dateFrom,       setDateFrom] = useState('')
+  const [dateTo,         setDateTo]   = useState('')
   const [search,         setSearch]   = useState('')
   const [expandedSale,   setExpanded] = useState<string | null>(null)
 
@@ -76,15 +79,22 @@ export default function ReportsClient({
   }
 
   // ── Apply filters ──────────────────────────────────────────────────────
-  const cutoff = useMemo(() => {
-    if (filterDays === '0') return null
+  const { cutoffStart, cutoffEnd } = useMemo(() => {
+    if (dateFrom || dateTo) {
+      return {
+        cutoffStart: dateFrom ? new Date(dateFrom) : null,
+        cutoffEnd:   dateTo   ? new Date(dateTo + 'T23:59:59') : null,
+      }
+    }
+    if (filterDays === '0') return { cutoffStart: null, cutoffEnd: null }
     const d = new Date()
     d.setDate(d.getDate() - parseInt(filterDays))
-    return d
-  }, [filterDays])
+    return { cutoffStart: d, cutoffEnd: null }
+  }, [filterDays, dateFrom, dateTo])
 
   const filtered = useMemo(() => sales.filter(s => {
-    if (cutoff && new Date(s.created_at) < cutoff)                     return false
+    if (cutoffStart && new Date(s.created_at) < cutoffStart)            return false
+    if (cutoffEnd   && new Date(s.created_at) > cutoffEnd)              return false
     if (filterBoutique !== 'all' && s.boutiques?.id !== filterBoutique) return false
     if (filterVendor   !== 'all' && s.users?.id    !== filterVendor)    return false
     if (filterStatus   !== 'all' && s.status       !== filterStatus)    return false
@@ -94,7 +104,15 @@ export default function ReportsClient({
           !(s.customer_name ?? '').toLowerCase().includes(q)) return false
     }
     return true
-  }), [sales, cutoff, filterBoutique, filterVendor, filterStatus, search])
+  }), [sales, cutoffStart, cutoffEnd, filterBoutique, filterVendor, filterStatus, search])
+
+  const filteredQuotes = useMemo(() => quotes.filter((q: any) => {
+    if (cutoffStart && new Date(q.created_at) < cutoffStart)            return false
+    if (cutoffEnd   && new Date(q.created_at) > cutoffEnd)              return false
+    if (filterBoutique !== 'all' && q.boutiques?.id !== filterBoutique) return false
+    if (filterVendor   !== 'all' && q.users?.id    !== filterVendor)    return false
+    return true
+  }), [quotes, cutoffStart, cutoffEnd, filterBoutique, filterVendor])
 
   // ── KPIs ───────────────────────────────────────────────────────────────
   const kpis = useMemo(() => {
@@ -103,7 +121,7 @@ export default function ReportsClient({
     const delivered = filtered.filter(s => s.status === 'delivered')
     const totalM2   = confirmed.reduce((sum, s) =>
       sum + s.sale_items.reduce((a: number, i: any) =>
-        i.tile_area_m2_snapshot
+        i.products?.product_type === 'tile' && i.tile_area_m2_snapshot
           ? a + i.quantity_tiles * parseFloat(i.tile_area_m2_snapshot)
           : a
       , 0), 0
@@ -114,28 +132,41 @@ export default function ReportsClient({
       : 0
     const totalEncaisse  = confirmed.reduce((sum, s) => sum + (s.amount_paid ?? 0), 0)
     const totalEnAttente = totalCA - totalEncaisse
+    const totalCost = confirmed.reduce((sum, s) =>
+      sum + s.sale_items.reduce((a: number, i: any) => {
+        const isTile        = i.products?.product_type === 'tile'
+        const purchasePrice = parseFloat(i.purchase_price_snapshot ?? '0') || 0
+        const m2            = isTile ? i.quantity_tiles * parseFloat(i.tile_area_m2_snapshot ?? '0') : 0
+        return a + (isTile ? purchasePrice * m2 : purchasePrice * i.quantity_tiles)
+      }, 0)
+    , 0)
+    const totalMargin = totalCA - totalCost
+    const marginPct   = totalCA > 0 ? (totalMargin / totalCA) * 100 : 0
     return {
       totalCA, confirmed: confirmed.length,
       delivered: delivered.length,
       totalM2, avgBasket, cancelRate,
       totalEncaisse, totalEnAttente,
+      totalMargin, marginPct,
     }
   }, [filtered])
 
   // ── Daily chart data ───────────────────────────────────────────────────
   const dailyData = useMemo(() => {
-    const map: Record<string, { date: string; ca: number; ventes: number }> = {}
+    const map: Record<string, { date: string; ca: number; ventes: number; _iso: string }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
       .forEach(s => {
-        const date = new Date(s.created_at).toLocaleDateString('fr-FR', {
-          day: '2-digit', month: 'short',
-        })
-        if (!map[date]) map[date] = { date, ca: 0, ventes: 0 }
-        map[date].ca     += s.total_amount
-        map[date].ventes += 1
+        const iso = (s.created_at as string).slice(0, 10)
+        if (!map[iso]) map[iso] = {
+          _iso: iso,
+          date: new Date(s.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
+          ca: 0, ventes: 0,
+        }
+        map[iso].ca     += s.total_amount
+        map[iso].ventes += 1
       })
-    return Object.values(map)
+    return Object.values(map).sort((a, b) => a._iso.localeCompare(b._iso))
   }, [filtered])
 
   // ── Boutique breakdown ─────────────────────────────────────────────────
@@ -163,7 +194,7 @@ export default function ReportsClient({
       .filter(s => s.status !== 'cancelled')
       .forEach(s => s.sale_items.forEach((item: any) => {
         const id     = item.products?.id ?? 'unknown'
-        const isTile = !!item.tile_area_m2_snapshot
+        const isTile = item.products?.product_type === 'tile'
         if (!map[id]) map[id] = {
           name:      item.products?.name ?? '—',
           ref:       item.products?.reference_code ?? '—',
@@ -307,8 +338,12 @@ export default function ReportsClient({
           <p className="page-kicker">Analyse &amp; performance</p>
           <h1 className="page-title">Rapports</h1>
           <p className="page-subtitle">
-            {filtered.length} vente{filtered.length !== 1 ? 's' : ''} sur les{' '}
-            {filterDays} derniers jours
+            {filtered.length} vente{filtered.length !== 1 ? 's' : ''}{' '}
+            {dateFrom || dateTo
+              ? '— période personnalisée'
+              : filterDays === '0'
+                ? '— toute la période'
+                : `sur les ${filterDays} derniers jours`}
           </p>
         </div>
         <button
@@ -328,17 +363,20 @@ export default function ReportsClient({
         borderRadius: 12, border: `1px solid ${C.border}` }}>
         {([['0', 'Tout le temps'], ['30', '30 jours'],
           ['90', '90 jours'], ['365', '1 an'], ['730', '2 ans']] as [string, string][])
-          .map(([val, label]) => (
-            <button key={val} onClick={() => setDays(val)}
-              style={{ padding: '7px 14px', borderRadius: 100,
-                fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                background: filterDays === val ? C.amber : C.bg,
-                color:      filterDays === val ? '#FAF5EE' : C.muted,
-                border: `1.5px solid ${filterDays === val ? C.amber : C.border}`,
-                fontFamily: F.body }}>
-              {label}
-            </button>
-          ))}
+          .map(([val, label]) => {
+            const isActive = filterDays === val && !dateFrom && !dateTo
+            return (
+              <button key={val} onClick={() => { setDays(val); setDateFrom(''); setDateTo('') }}
+                style={{ padding: '7px 14px', borderRadius: 100,
+                  fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  background: isActive ? C.amber : C.bg,
+                  color:      isActive ? '#FAF5EE' : C.muted,
+                  border: `1.5px solid ${isActive ? C.amber : C.border}`,
+                  fontFamily: F.body }}>
+                {label}
+              </button>
+            )
+          })}
         <select value={filterBoutique} onChange={e => setBoutique(e.target.value)}
           style={inputStyle}>
           <option value="all">Toutes les boutiques</option>
@@ -363,6 +401,19 @@ export default function ReportsClient({
         <input value={search} onChange={e => setSearch(e.target.value)}
           placeholder="N° vente ou client…"
           style={{ ...inputStyle, minWidth: 180 }} />
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+          style={{ ...inputStyle, width: 148 }} />
+        <span style={{ fontSize: 11, color: C.muted, alignSelf: 'center' }}>→</span>
+        <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+          style={{ ...inputStyle, width: 148 }} />
+        {(dateFrom || dateTo) && (
+          <button onClick={() => { setDateFrom(''); setDateTo('') }}
+            style={{ padding: '7px 12px', borderRadius: 100, fontSize: 11,
+              fontWeight: 700, cursor: 'pointer', fontFamily: F.body,
+              background: C.redBg, color: C.red, border: `1.5px solid ${C.redBd}` }}>
+            Effacer
+          </button>
+        )}
       </div>
 
       {/* Tabs — pill segment */}
@@ -376,6 +427,7 @@ export default function ReportsClient({
           ['sales',    'Ventes'],
           ['products', 'Produits'],
           ['vendors',  'Vendeurs'],
+          ['devis',    'Pipeline devis'],
           ['audit',    'Audit'],
         ] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
@@ -490,6 +542,43 @@ export default function ReportsClient({
                 </div>
               ))}
           </div>
+
+          {/* Margin KPI — owner only */}
+          {profile.role === 'owner' && kpis.totalCA > 0 && (
+            <div style={{
+              background: C.surface, borderRadius: 10,
+              border: `1px solid ${C.border}`, padding: '18px 20px',
+              borderLeft: `3px solid ${kpis.totalMargin >= 0 ? C.green : C.red}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: C.muted,
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                    marginBottom: 4, fontFamily: F.body }}>
+                    Marge brute (ventes confirmées)
+                  </div>
+                  <div style={{ fontSize: 26, fontWeight: 900,
+                    color: kpis.totalMargin >= 0 ? C.green : C.red,
+                    letterSpacing: '-0.03em', fontFamily: F.body }}>
+                    {fmt(kpis.totalMargin)}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.muted, marginTop: 3, fontFamily: F.body }}>
+                    Sur un CA de {fmt(kpis.totalCA)}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: '-0.02em',
+                    fontFamily: F.body,
+                    color: kpis.marginPct >= 30 ? C.green : kpis.marginPct >= 15 ? C.amber : C.red }}>
+                    {kpis.marginPct.toFixed(1)} %
+                  </div>
+                  <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>
+                    taux de marge
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Daily CA chart */}
           <div style={{ background: C.surface, borderRadius: 12,
@@ -814,6 +903,11 @@ export default function ReportsClient({
         </div>
       )}
 
+      {/* ── DEVIS TAB ── */}
+      {activeTab === 'devis' && (
+        <DevisTab quotes={filteredQuotes} currency={currency} fmt={fmt} />
+      )}
+
       {/* ── AUDIT TAB ── */}
       {activeTab === 'audit' && (
         <AuditLogTab logs={auditLogs} currency={currency} />
@@ -944,6 +1038,9 @@ const ACTION_CONFIG: Record<string, { label: string; color: string; bg: string }
   FLOOR_PRICE_VIOLATION_ATTEMPT: { label: 'Tentative prix plancher', color: C.red, bg: C.redBg },
   BOUTIQUE_CREATED:              { label: 'Boutique créée',          color: C.blue,   bg: C.blueBg },
   PAYMENT_RECORDED:              { label: 'Paiement enregistré',     color: C.green,  bg: C.greenBg },
+  QUOTE_CREATED:                 { label: 'Devis créé',              color: C.blue,   bg: C.blueBg },
+  QUOTE_CONVERTED:               { label: 'Devis converti',          color: C.green,  bg: C.greenBg },
+  QUOTE_CANCELLED:               { label: 'Devis annulé',            color: C.red,    bg: C.redBg },
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -1046,9 +1143,156 @@ function formatAuditDetails(actionType: string, data: Record<string, unknown> | 
       if (!data) return '—'
       return [str(data.name), str(data.address)].filter(Boolean).join(' — ')
 
+    case 'QUOTE_CREATED':
+      if (!data) return '—'
+      return [
+        data.quote_number ? `N° ${data.quote_number}`        : null,
+        data.total_amount ? fmt(data.total_amount)            : null,
+        data.item_count   ? `${data.item_count} article(s)`  : null,
+      ].filter(Boolean).join('  ·  ')
+
+    case 'QUOTE_CONVERTED':
+      if (!data) return '—'
+      return data.sale_number ? `→ ${data.sale_number}` : '—'
+
+    case 'QUOTE_CANCELLED':
+      if (!data) return '—'
+      return data.quote_number ? `N° ${data.quote_number}` : '—'
+
     default:
       return '—'
   }
+}
+
+// ── Devis Pipeline Tab ────────────────────────────────────────────────────────
+const QUOTE_STATUS_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  draft:      { bg: C.blueBg,  color: C.blue,  label: 'En attente' },
+  confirmed:  { bg: C.greenBg, color: C.green, label: 'Converti'   },
+  preparing:  { bg: C.greenBg, color: C.green, label: 'Converti'   },
+  ready:      { bg: C.greenBg, color: C.green, label: 'Converti'   },
+  delivered:  { bg: C.greenBg, color: C.green, label: 'Converti'   },
+  cancelled:  { bg: C.redBg,   color: C.red,   label: 'Annulé'     },
+}
+
+function DevisTab({ quotes, currency, fmt }: {
+  quotes: any[]; currency: string; fmt: (n: number) => string
+}) {
+  const open      = quotes.filter(q => q.status === 'draft')
+  const converted = quotes.filter(q => q.status !== 'draft' && q.status !== 'cancelled')
+  const cancelled = quotes.filter(q => q.status === 'cancelled')
+  const total     = quotes.length
+  const convRate  = total > 0 ? (converted.length / total) * 100 : 0
+  const pipelineCA = open.reduce((sum: number, q: any) => sum + (q.total_amount ?? 0), 0)
+
+  const TH: React.CSSProperties = {
+    padding: '13px 14px', textAlign: 'left', fontSize: 12, fontWeight: 700,
+    color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em',
+    fontFamily: F.body, background: C.bg,
+  }
+  const TD: React.CSSProperties = { padding: '12px 14px', fontFamily: F.body }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+      {/* KPI cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+        {([
+          ['Total créés',     String(total),                          C.amber, C.amber,       'Sur la période'],
+          ['En attente',      String(open.length),                    C.blue,  C.blue,        open.length > 0 ? `${fmt(pipelineCA)} en pipeline` : 'Aucun devis ouvert'],
+          ['Convertis',       String(converted.length),               C.green, C.green,       `Taux : ${convRate.toFixed(1)} %`],
+          ['Annulés',         String(cancelled.length),               cancelled.length > 0 ? C.red : C.muted, cancelled.length > 0 ? C.red : C.muted, cancelled.length > 0 ? 'Non concrétisés' : 'Aucun'],
+        ] as [string, string, string, string, string][]).map(([label, value, color, accent, hint]) => (
+          <div key={label} style={{
+            background: C.surface, borderRadius: 10,
+            border: `1px solid ${C.border}`, padding: '14px 16px',
+            borderLeft: `3px solid ${accent}`,
+          }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+              marginBottom: 6, fontFamily: F.body }}>
+              {label}
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 900, color, letterSpacing: '-0.02em', fontFamily: F.body, marginBottom: 3 }}>
+              {value}
+            </div>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{hint}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Pipeline CA banner — only when there are open quotes */}
+      {open.length > 0 && (
+        <div style={{
+          background: C.surface, borderRadius: 10, padding: '16px 20px',
+          border: `1px solid ${C.blueBd}`, borderLeft: `4px solid ${C.blue}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        }}>
+          <div style={{ fontSize: 13, color: C.blue, fontWeight: 600, fontFamily: F.body }}>
+            Pipeline devis ouverts ({open.length})
+          </div>
+          <div style={{ fontSize: 20, fontWeight: 900, color: C.blue, fontFamily: F.body, letterSpacing: '-0.02em' }}>
+            {fmt(pipelineCA)}
+          </div>
+        </div>
+      )}
+
+      {/* Quote list */}
+      {quotes.length === 0 ? (
+        <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`,
+          padding: 48, textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: F.body }}>
+          Aucun devis sur la période sélectionnée.
+        </div>
+      ) : (
+        <div style={{ background: C.surface, borderRadius: 12, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                  {['N° Devis', 'Date', 'Client', 'Boutique', 'Vendeur', 'Montant', 'Statut', 'N° Vente'].map(h => (
+                    <th key={h} style={TH}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {quotes.map((q: any) => {
+                  const ss = QUOTE_STATUS_STYLE[q.status] ?? { bg: C.bg, color: C.muted, label: q.status }
+                  const isConverted = q.status !== 'draft' && q.status !== 'cancelled'
+                  return (
+                    <tr key={q.id} style={{ borderBottom: `1px solid ${C.border}` }}>
+                      <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
+                        {q.quote_number}
+                      </td>
+                      <td style={{ ...TD, fontSize: 12, color: C.muted }}>
+                        <div>{new Date(q.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}</div>
+                        <div style={{ fontSize: 11 }}>{new Date(q.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+                      </td>
+                      <td style={{ ...TD, fontSize: 13, color: C.ink }}>{q.customer_name ?? '—'}</td>
+                      <td style={{ ...TD, fontSize: 13, color: C.ink }}>{q.boutiques?.name ?? '—'}</td>
+                      <td style={{ ...TD, fontSize: 13, color: C.ink }}>{q.users?.full_name ?? '—'}</td>
+                      <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>{fmt(q.total_amount)}</td>
+                      <td style={TD}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 5,
+                          fontSize: 11, fontWeight: 600, padding: '3px 10px',
+                          borderRadius: 100, background: ss.bg, color: ss.color, fontFamily: F.body,
+                        }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: ss.color, flexShrink: 0 }} />
+                          {ss.label}
+                        </span>
+                      </td>
+                      <td style={{ ...TD, fontSize: 12, color: isConverted ? C.amber : C.muted, fontWeight: isConverted ? 700 : 400 }}>
+                        {isConverted && q.sale_number ? q.sale_number : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
 
 function AuditLogTab({ logs, currency }: { logs: any[]; currency: string }) {

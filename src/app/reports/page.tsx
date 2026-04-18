@@ -26,6 +26,7 @@ export default async function ReportsPage() {
     { data: boutiques },
     { data: vendors },
     { data: auditLogs },
+    { data: quotes },
     badgeCounts,
   ] = await Promise.all([
     // All confirmed sales — drafts (devis) excluded: they are not revenue
@@ -70,6 +71,17 @@ export default async function ReportsPage() {
       .order('created_at', { ascending: false })
       .limit(500),
 
+    // All quotes (sales with a quote_number) — includes open, converted, cancelled
+    supabase
+      .from('sales')
+      .select(`
+        id, quote_number, sale_number, created_at, status, total_amount, customer_name,
+        boutiques ( id, name ),
+        users!sales_vendor_id_fkey ( id, full_name )
+      `)
+      .not('quote_number', 'is', null)
+      .order('created_at', { ascending: false }),
+
     getBadgeCounts(profile.role, supabase),
   ])
 
@@ -85,6 +97,7 @@ export default async function ReportsPage() {
       boutiques={boutiques ?? []}
       vendors={vendors ?? []}
       auditLogs={auditLogs ?? []}
+      quotes={quotes ?? []}
       badgeCounts={badgeCounts}
     />
   )
