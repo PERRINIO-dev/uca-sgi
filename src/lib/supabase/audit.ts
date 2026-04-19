@@ -32,6 +32,9 @@ export type AuditActionType =
   | 'PLATFORM_USER_REACTIVATED'
   | 'PLATFORM_USER_PASSWORD_RESET'
   | 'USER_ROLE_CHANGED'
+  | 'CUSTOMER_CREATED'
+  | 'CUSTOMER_UPDATED'
+  | 'CUSTOMER_DELETED'
 
 export interface AuditEntry {
   user_id:            string | null

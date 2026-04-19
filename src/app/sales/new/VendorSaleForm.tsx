@@ -5,6 +5,7 @@ import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
 import { createQuote }        from '@/app/quotes/actions'
+import { searchCustomers }    from '@/app/customers/actions'
 import PageLayout             from '@/components/PageLayout'
 import { useIsMobile }        from '@/hooks/useIsMobile'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
@@ -80,6 +81,9 @@ export default function VendorSaleForm({
   const [step,             setStep]         = useState<'form' | 'success' | 'quote-success'>('form')
   const [formStep,         setFormStep]     = useState<1 | 2>(1)
   const [cartSheetOpen,    setCartSheet]    = useState(false)
+  const [customerId,       setCustomerId]   = useState<string | null>(null)
+  const [suggestions,      setSuggestions]  = useState<any[]>([])
+  const [showSuggestions,  setShowSugg]     = useState(false)
 
   const [inputQty,        setInputQty]        = useState('')
   const [inputPieces,     setInputPieces]     = useState('')
@@ -95,6 +99,21 @@ export default function VendorSaleForm({
     document.documentElement.scrollTop = 0
     document.body.scrollTop = 0
   }, [formStep])
+
+  // Debounced customer autocomplete — fires when customerName changes and no
+  // customer is already linked (customerId set).
+  useEffect(() => {
+    if (customerId) return
+    const trimmed = customerName.trim()
+    if (trimmed.length < 2) { setSuggestions([]); setShowSugg(false); return }
+    const t = setTimeout(async () => {
+      const { data } = await searchCustomers(trimmed)
+      if (data.length > 0) { setSuggestions(data); setShowSugg(true) }
+      else setShowSugg(false)
+    }, 300)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customerName, customerId])
 
   const resetInputs = () => {
     setInputM2(''); setInputTiles(''); setCartons(''); setLoose('')
@@ -255,6 +274,16 @@ export default function VendorSaleForm({
 
   const removeFromCart = (idx: number) => setCart(prev => prev.filter((_,i) => i !== idx))
 
+  const selectCustomer = (c: any) => {
+    setName(c.full_name)
+    setPhone(c.phone  ?? '')
+    setPhone2(c.phone2 ?? '')
+    setCNI(c.cni     ?? '')
+    setCustomerId(c.id)
+    setSuggestions([])
+    setShowSugg(false)
+  }
+
   const handleConfirm = async () => {
     if (cart.length === 0) return
     if (!customerName.trim())  { setError('Le nom du client est obligatoire.');        return }
@@ -265,6 +294,7 @@ export default function VendorSaleForm({
     const result = await createSale({
       boutique_id: selectedBoutique?.id ?? boutique?.id,
       vendor_id: profile.id,
+      customer_id: customerId,
       customer_name: customerName.trim(),
       customer_phone: phone,
       customer_cni: customerCNI.trim(),
@@ -298,6 +328,7 @@ export default function VendorSaleForm({
     const result = await createQuote({
       boutique_id:    selectedBoutique?.id ?? boutique?.id,
       vendor_id:      profile.id,
+      customer_id:    customerId,
       customer_name:  customerName.trim(),
       customer_phone: customerPhone.trim() || null,
       customer_cni:   customerCNI.trim() || null,
@@ -428,7 +459,7 @@ export default function VendorSaleForm({
               </button>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
+                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); resetInputs(); setStep('form'); setFormStep(1) }}
                   style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
@@ -482,7 +513,7 @@ export default function VendorSaleForm({
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); resetInputs(); setStep('form'); setFormStep(1) }}
+                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); resetInputs(); setStep('form'); setFormStep(1) }}
                   style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
@@ -1224,9 +1255,55 @@ export default function VendorSaleForm({
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
-                <div>
+                <div style={{ position: 'relative' }}>
                   <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Nom du client <span style={{ color: C.red }}>*</span></label>
-                  <input type="text" value={customerName} onChange={e => setName(e.target.value)} placeholder="ex : Michel Abanda" style={inputStyle(!customerName.trim() && !!error)} />
+                  <div style={{ position: 'relative' }}>
+                    <input type="text" value={customerName}
+                      onChange={e => { setName(e.target.value); setCustomerId(null) }}
+                      onFocus={() => { if (suggestions.length > 0) setShowSugg(true) }}
+                      onBlur={() => setTimeout(() => setShowSugg(false), 150)}
+                      placeholder="ex : Michel Abanda"
+                      style={{ ...inputStyle(!customerName.trim() && !!error), paddingRight: customerId ? 32 : undefined }} />
+                    {customerId && (
+                      <button type="button" onClick={() => { setCustomerId(null); setSuggestions([]); setShowSugg(false) }}
+                        title="Dissocier le client"
+                        style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: C.green, border: 'none', cursor: 'pointer', color: 'white', width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
+                        <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    )}
+                  </div>
+                  {/* Linked customer badge */}
+                  {customerId && (
+                    <div style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                        <circle cx="6" cy="6" r="5" fill={C.greenBg} stroke={C.greenBd} strokeWidth="1"/>
+                        <path d="M3.5 6l2 2 3-3" stroke={C.green} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span style={{ fontSize: 10, color: C.green, fontWeight: 600, fontFamily: F.body }}>Client lié — historique disponible</span>
+                    </div>
+                  )}
+                  {/* Autocomplete dropdown */}
+                  {showSuggestions && suggestions.length > 0 && (
+                    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30, background: C.surfaceEl, border: `1.5px solid ${C.border}`, borderRadius: R.md, boxShadow: '0 8px 24px rgba(60,30,10,0.14)', marginTop: 4, overflow: 'hidden' }}>
+                      {suggestions.map((s, i) => (
+                        <button key={s.id} type="button"
+                          onMouseDown={() => selectCustomer(s)}
+                          style={{ width: '100%', textAlign: 'left', padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer', borderBottom: i < suggestions.length - 1 ? `1px solid ${C.borderSub}` : 'none', display: 'flex', alignItems: 'center', gap: 10 }}
+                          onMouseEnter={e => (e.currentTarget.style.background = C.surfaceHov)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: C.amberGlow, border: `1px solid ${C.amber}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ fontSize: 10, fontWeight: 800, color: C.amber, fontFamily: F.body }}>
+                              {s.full_name.split(' ').filter(Boolean).slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join('')}
+                            </span>
+                          </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, fontFamily: F.body }}>{s.full_name}</div>
+                            {s.phone && <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>{s.phone}</div>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>

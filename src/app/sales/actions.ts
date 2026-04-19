@@ -20,6 +20,7 @@ interface SaleItem {
 interface CreateSalePayload {
   boutique_id:    string
   vendor_id:      string
+  customer_id:    string | null
   customer_name:  string | null
   customer_phone: string | null
   customer_cni:   string | null
@@ -168,6 +169,7 @@ export async function createSale(payload: CreateSalePayload) {
     .rpc('create_confirmed_sale', {
       p_boutique_id:    payload.boutique_id,
       p_vendor_id:      user.id,
+      p_customer_id:    payload.customer_id ?? null,
       p_customer_name:  payload.customer_name,
       p_customer_phone: payload.customer_phone,
       p_customer_cni:   payload.customer_cni,

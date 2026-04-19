@@ -19,6 +19,7 @@ interface QuoteItem {
 interface CreateQuotePayload {
   boutique_id:    string
   vendor_id:      string
+  customer_id:    string | null
   customer_name:  string | null
   customer_phone: string | null
   customer_cni:   string | null
@@ -115,6 +116,7 @@ export async function createQuote(payload: CreateQuotePayload) {
     .insert({
       boutique_id:    payload.boutique_id,
       vendor_id:      user.id,
+      customer_id:    payload.customer_id ?? null,
       customer_name:  payload.customer_name,
       customer_phone: payload.customer_phone,
       customer_cni:   payload.customer_cni,
