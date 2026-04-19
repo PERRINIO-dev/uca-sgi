@@ -1,6 +1,6 @@
 import React from 'react'
 import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
-import type { InvoiceData, InvoiceItem, InvoicePayment } from './types'
+import type { InvoiceData, InvoiceItem } from './types'
 import { pluralize } from '@/lib/pluralize'
 
 // ── Palette ──────────────────────────────────────────────────────────────────
@@ -24,13 +24,31 @@ const GOLD       = '#78350F'
 const GOLD_BG    = '#FFFBEB'
 const GOLD_BD    = '#FDE68A'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-const fmtNum  = (n: number) => new Intl.NumberFormat('fr-FR').format(Math.round(n))
-const fmtAmt  = (n: number, cur: string) => `${fmtNum(n)} ${cur}`
-const fmtM2   = (n: number) =>
-  new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
+// ── Helpers ───────────────────────────────────────────────────────────────────
+// Node.js v22 fr-FR uses U+202F (narrow no-break space) as thousands separator.
+// Built-in PDF fonts (Helvetica, etc.) don't include that glyph — it renders as
+// a fallback character.  Strip it to a regular ASCII space after formatting.
+const sanitize = (s: string) => s.replace(/\u202F/g, ' ')
+
+const fmtNum = (n: number) =>
+  sanitize(new Intl.NumberFormat('fr-FR').format(Math.round(n)))
+const fmtAmt = (n: number, cur: string) => `${fmtNum(n)} ${cur}`
+const fmtM2  = (n: number) =>
+  sanitize(
+    new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(n),
+  )
 const fmtDate = (s: string, opts?: Intl.DateTimeFormatOptions) =>
-  new Date(s).toLocaleDateString('fr-FR', opts ?? { day: 'numeric', month: 'long', year: 'numeric' })
+  new Date(s).toLocaleDateString('fr-FR', opts ?? {
+    day: 'numeric', month: 'long', year: 'numeric',
+  })
+
+// Unit labels that are abbreviations (1-2 chars: m, L, kg…) must not be
+// pluralised — "100 ms" for linear metres looks wrong; keep them invariant.
+const pluralizeUnit = (label: string, count: number) =>
+  label.length <= 2 ? label : pluralize(label, count)
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const S = StyleSheet.create({
@@ -431,7 +449,7 @@ const S = StyleSheet.create({
     borderTopColor: BORDER,
     borderTopStyle: 'solid',
   },
-  sigColLeft: { flex: 1, marginRight: 20 },
+  sigColLeft:  { flex: 1, marginRight: 20 },
   sigColRight: { flex: 1 },
   sigName: {
     fontSize: 9.5,
@@ -490,8 +508,8 @@ function ItemRow({ item, idx, currency }: { item: InvoiceItem; idx: number; curr
     qtySub   = `${fmtNum(fullCartons)} ctn${loose > 0 ? ` + ${loose} pcs` : ''}`
     priceStr = `${fmtNum(item.unit_price_per_m2)} ${currency}/m\u00b2`
   } else {
-    const unitLbl = item.unit_label || 'unit\u00e9'
-    const pLbl    = pluralize(unitLbl, item.quantity_tiles)
+    const unitLbl = item.unit_label || 'unite'
+    const pLbl    = pluralizeUnit(unitLbl, item.quantity_tiles)
     qtyMain  = `${fmtNum(item.quantity_tiles)} ${pLbl}`
     priceStr = `${fmtNum(item.unit_price_per_m2)} ${currency}/${unitLbl}`
   }
@@ -544,9 +562,9 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
     items, payments, notes,
   } = data
 
-  const isSale   = doc_type === 'sale'
-  const balance  = Math.max(0, total_amount - amount_paid)
-  const genDate  = new Date().toLocaleDateString('fr-FR', {
+  const isSale  = doc_type === 'sale'
+  const balance = Math.max(0, total_amount - amount_paid)
+  const genDate = new Date().toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
   })
@@ -599,10 +617,10 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         {!isSale && (
           <View style={S.quoteNotice}>
             <Text style={S.quoteNoticeTitle}>
-              Devis estimatif — non contractuel avant signature
+              {'Devis estimatif \u2014 non contractuel avant signature'}
             </Text>
             <Text style={S.quoteNoticeBody}>
-              {'Ce document est valable 30\u00a0jours \u00e0 compter du ' +
+              {'Ce document est valable 30 jours \u00e0 compter du ' +
                fmtDate(created_at) +
                '. Les prix sont susceptibles d\u2019\u00e9voluer. ' +
                'La vente est confirm\u00e9e uniquement apr\u00e8s signature des deux parties.'}
@@ -613,13 +631,13 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         {/* ── Client / Vendor grid ────────────────────────────────────────── */}
         <View style={S.infoGrid}>
           <View style={S.infoColLeft}>
-            <Text style={S.infoLabel}>CLIENT</Text>
+            <Text style={S.infoLabel}>{'CLIENT'}</Text>
             <Text style={S.infoName}>{customer_name || 'Client anonyme'}</Text>
             {customer_phone ? <Text style={S.infoSub}>{customer_phone}</Text> : null}
-            {customer_cni   ? <Text style={S.infoDim}>CNI\u00a0: {customer_cni}</Text> : null}
+            {customer_cni   ? <Text style={S.infoDim}>{'CNI : ' + customer_cni}</Text> : null}
           </View>
           <View style={S.infoColRight}>
-            <Text style={S.infoLabel}>VENDEUR</Text>
+            <Text style={S.infoLabel}>{'VENDEUR'}</Text>
             <Text style={S.infoName}>{vendor_name}</Text>
             <Text style={S.infoSub}>{boutique_name}</Text>
             {boutique_phone ? <Text style={S.infoDim}>{boutique_phone}</Text> : null}
@@ -628,23 +646,20 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
 
         {/* ── Items table ─────────────────────────────────────────────────── */}
         <View style={S.table}>
-          {/* Table header */}
           <View style={S.tableHeader}>
             <View style={S.colDesignation}>
-              <Text style={S.thText}>D\u00c9SIGNATION</Text>
+              <Text style={S.thText}>{'D\u00c9SIGNATION'}</Text>
             </View>
             <View style={S.colQty}>
-              <Text style={S.thCenter}>QUANTIT\u00c9</Text>
+              <Text style={S.thCenter}>{'QUANTIT\u00c9'}</Text>
             </View>
             <View style={S.colPrice}>
-              <Text style={S.thRight}>PRIX UNIT.</Text>
+              <Text style={S.thRight}>{'PRIX UNIT.'}</Text>
             </View>
             <View style={S.colTotal}>
-              <Text style={S.thRight}>TOTAL</Text>
+              <Text style={S.thRight}>{'TOTAL'}</Text>
             </View>
           </View>
-
-          {/* Item rows */}
           {items.map((item, i) => (
             <ItemRow key={i} item={item} idx={i} currency={currency} />
           ))}
@@ -653,27 +668,29 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         {/* ── Totals ──────────────────────────────────────────────────────── */}
         <View style={S.totalsSection}>
           <View style={S.totalsBox}>
+            {/* Sous-total + Encaissé only when a partial or full payment exists */}
             {amount_paid > 0 && (
               <View style={S.totalLineRow}>
-                <Text style={S.totalLbl}>Sous-total</Text>
+                <Text style={S.totalLbl}>{'Sous-total'}</Text>
                 <Text style={S.totalVal}>{fmtAmt(total_amount, currency)}</Text>
               </View>
             )}
             {amount_paid > 0 && (
               <View style={S.totalLineRow}>
-                <Text style={S.totalLbl}>Encaiss\u00e9</Text>
+                <Text style={S.totalLbl}>{'Encaiss\u00e9'}</Text>
                 <Text style={S.totalPaid}>{fmtAmt(amount_paid, currency)}</Text>
               </View>
             )}
-            {balance > 0 && (
+            {/* Reste à payer: only when there IS a partial payment and a remaining balance */}
+            {amount_paid > 0 && balance > 0 && (
               <View style={S.totalLineRow}>
-                <Text style={S.totalLbl}>Reste \u00e0 payer</Text>
+                <Text style={S.totalLbl}>{'Reste \u00e0 payer'}</Text>
                 <Text style={S.totalRem}>{fmtAmt(balance, currency)}</Text>
               </View>
             )}
             {amount_paid > 0 && <View style={S.divider} />}
             <View style={S.grandTotalBox}>
-              <Text style={S.grandTotalLbl}>TOTAL</Text>
+              <Text style={S.grandTotalLbl}>{'TOTAL'}</Text>
               <Text style={S.grandTotalAmt}>{fmtAmt(total_amount, currency)}</Text>
             </View>
           </View>
@@ -686,10 +703,10 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
           </View>
         )}
 
-        {/* ── Payment history (only when multiple tranches) ───────────────── */}
+        {/* ── Payment history (only when multiple tranches recorded) ─────── */}
         {isSale && payments.length > 1 && (
           <View style={S.payHistSection}>
-            <Text style={S.sectionTitle}>HISTORIQUE DES PAIEMENTS</Text>
+            <Text style={S.sectionTitle}>{'HISTORIQUE DES PAIEMENTS'}</Text>
             {payments.map((p, i) => (
               <View key={i} style={i % 2 === 0 ? S.payHistRow : S.payHistRowAlt}>
                 <Text style={S.payHistDate}>
@@ -705,7 +722,7 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         {/* ── Notes ──────────────────────────────────────────────────────── */}
         {notes ? (
           <View style={S.notesBox}>
-            <Text style={S.sectionTitle}>NOTES</Text>
+            <Text style={S.sectionTitle}>{'NOTES'}</Text>
             <Text style={S.notesTxt}>{notes}</Text>
           </View>
         ) : null}
@@ -714,11 +731,9 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         <View style={S.sigSection}>
           <View style={S.sigColLeft}>
             <Text style={S.sigName}>{vendor_name}</Text>
-            <Text style={S.sigRole}>
-              {'Vendeur \u2014 ' + boutique_name}
-            </Text>
+            <Text style={S.sigRole}>{'Vendeur \u2014 ' + boutique_name}</Text>
             <View style={S.sigLine} />
-            <Text style={S.sigSub}>Signature du vendeur</Text>
+            <Text style={S.sigSub}>{'Signature du vendeur'}</Text>
           </View>
           <View style={S.sigColRight}>
             {isSale ? (
@@ -726,14 +741,14 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
                 <Text style={S.sigName}>{owner_name}</Text>
                 <Text style={S.sigRole}>{'Propri\u00e9taire \u2014 ' + company_name}</Text>
                 <View style={S.sigLine} />
-                <Text style={S.sigSub}>Signature et cachet</Text>
+                <Text style={S.sigSub}>{'Signature et cachet'}</Text>
               </>
             ) : (
               <>
                 <Text style={S.sigName}>{customer_name || 'Le Client'}</Text>
-                <Text style={S.sigRole}>Acceptation du devis</Text>
+                <Text style={S.sigRole}>{'Acceptation du devis'}</Text>
                 <View style={S.sigLine} />
-                <Text style={S.sigSub}>Lu et approuv\u00e9 \u2014 signature du client</Text>
+                <Text style={S.sigSub}>{'Lu et approuv\u00e9 \u2014 signature du client'}</Text>
               </>
             )}
           </View>
