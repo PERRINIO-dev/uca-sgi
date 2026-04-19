@@ -5,7 +5,7 @@ import { useRouter }          from 'next/navigation'
 import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
 import { createQuote }        from '@/app/quotes/actions'
-import { searchCustomers }    from '@/app/customers/actions'
+import { searchCustomers, createCustomer } from '@/app/customers/actions'
 import PageLayout             from '@/components/PageLayout'
 import { useIsMobile }        from '@/hooks/useIsMobile'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
@@ -84,6 +84,7 @@ export default function VendorSaleForm({
   const [customerId,       setCustomerId]   = useState<string | null>(null)
   const [suggestions,      setSuggestions]  = useState<any[]>([])
   const [showSuggestions,  setShowSugg]     = useState(false)
+  const [saveAsCustomer,   setSaveAsCustomer] = useState(true)
 
   const [inputQty,        setInputQty]        = useState('')
   const [inputPieces,     setInputPieces]     = useState('')
@@ -318,6 +319,9 @@ export default function VendorSaleForm({
     })
     setLoading(false)
     if (result.error) { setError(result.error); return }
+    if (saveAsCustomer && !customerId && customerName.trim()) {
+      createCustomer({ full_name: customerName.trim(), phone: customerPhone.trim() || null, phone2: customerPhone2.trim() || null, cni: customerCNI.trim() || null, notes: null }).catch(() => {})
+    }
     setSuccess(result); setStep('success')
   }
 
@@ -351,6 +355,9 @@ export default function VendorSaleForm({
     })
     setQuoteLoading(false)
     if (result.error) { setError(result.error); return }
+    if (saveAsCustomer && !customerId && customerName.trim()) {
+      createCustomer({ full_name: customerName.trim(), phone: customerPhone.trim() || null, phone2: customerPhone2.trim() || null, cni: customerCNI.trim() || null, notes: null }).catch(() => {})
+    }
     setSuccess(result); setStep('quote-success')
   }
 
@@ -459,7 +466,7 @@ export default function VendorSaleForm({
               </button>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); resetInputs(); setStep('form'); setFormStep(1) }}
+                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); setSaveAsCustomer(true); resetInputs(); setStep('form'); setFormStep(1) }}
                   style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
@@ -513,7 +520,7 @@ export default function VendorSaleForm({
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
-                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); resetInputs(); setStep('form'); setFormStep(1) }}
+                  onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); setSaveAsCustomer(true); resetInputs(); setStep('form'); setFormStep(1) }}
                   style={{ flex: 1, padding: '11px', borderRadius: R.md, border: `1.5px solid ${C.amber}`, background: C.amberGlow, color: C.amber, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
                   Nouvelle vente
                 </button>
@@ -1322,6 +1329,13 @@ export default function VendorSaleForm({
                   <input type="tel" value={customerPhone2} onChange={e => setPhone2(e.target.value)} placeholder="ex : 6 88 44 55 66" style={inputStyle()} />
                 </div>
               </div>
+              {!customerId && customerName.trim().length >= 2 && (
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, cursor: 'pointer' }}>
+                  <input type="checkbox" checked={saveAsCustomer} onChange={e => setSaveAsCustomer(e.target.checked)}
+                    style={{ width: 14, height: 14, accentColor: C.amber, cursor: 'pointer' }} />
+                  <span style={{ fontSize: 11, color: C.muted, fontFamily: F.body }}>Mémoriser ce client pour les prochains achats</span>
+                </label>
+              )}
               <div style={{ marginTop: 14 }}>
                 <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>Notes <span style={{ fontSize: 11, fontWeight: 400, color: C.muted }}>(optionnel)</span></label>
                 <textarea value={notes} rows={2} onChange={e => setNotes(e.target.value)} placeholder="Instructions de livraison, observations…" style={{ ...inputStyle(), resize: 'vertical' }} />
