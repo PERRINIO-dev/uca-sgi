@@ -5,8 +5,9 @@ import { useRouter }    from 'next/navigation'
 import PageLayout       from '@/components/PageLayout'
 import { convertQuote, cancelQuote } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
-import { fmtCurrency }      from '@/lib/format'
-import { pluralize }        from '@/lib/pluralize'
+import { fmtCurrency }        from '@/lib/format'
+import { pluralize }          from '@/lib/pluralize'
+import { downloadInvoicePdf } from '@/lib/pdf/download'
 
 import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
@@ -63,6 +64,57 @@ function IconPrint({ size = 13, color = 'currentColor' }: { size?: number; color
     </svg>
   )
 }
+function PdfButton({ quoteId, docNumber }: { quoteId: string; docNumber: string }) {
+  const [loading, setLoading] = React.useState(false)
+  const [err,     setErr]     = React.useState<string | null>(null)
+  const handle = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setLoading(true); setErr(null)
+    try { await downloadInvoicePdf(quoteId, docNumber) }
+    catch (ex) { setErr((ex as Error).message) }
+    finally { setLoading(false) }
+  }
+  return (
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+      <button
+        onClick={handle}
+        disabled={loading}
+        title="Télécharger le devis en PDF"
+        style={{
+          padding: '6px 10px', borderRadius: 7, cursor: loading ? 'not-allowed' : 'pointer',
+          border: `1.5px solid ${loading ? C.border : C.amber}`,
+          background: loading ? C.surfaceSub : C.amberGlow,
+          color: loading ? C.muted : C.amber, fontSize: 12, fontWeight: 600,
+          fontFamily: F.body, display: 'flex', alignItems: 'center', gap: 5,
+          opacity: loading ? 0.7 : 1, transition: 'all 0.14s',
+        }}
+      >
+        {loading ? (
+          <><span className="spinner" style={{ width: 10, height: 10 }} />PDF…</>
+        ) : (
+          <>
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+              <path d="M2 2.5A.5.5 0 0 1 2.5 2H9l3 3v6.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-9Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+              <path d="M4.5 7.5h1a.75.75 0 0 1 0 1.5H4.5V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+              <path d="M7 7.5h.75a1 1 0 0 1 0 2H7V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+              <path d="M9.5 7.5v2M9.5 8.5H10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+            </svg>
+            PDF
+          </>
+        )}
+      </button>
+      {err && (
+        <span style={{
+          position: 'absolute', top: '110%', right: 0, zIndex: 50, whiteSpace: 'nowrap',
+          background: C.redBg, border: `1px solid ${C.redBd}`, borderRadius: 6,
+          padding: '4px 8px', fontSize: 11, color: C.red, fontFamily: F.body,
+        }}>{err}</span>
+      )}
+    </div>
+  )
+}
+
 function IconEmpty({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
@@ -526,8 +578,11 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                               }}
                             >
                               <IconPrint size={13} color={C.muted} />
-                              Devis
+                              Imprimer
                             </button>
+
+                            {/* PDF download / share */}
+                            <PdfButton quoteId={quote.id} docNumber={quote.quote_number ?? ''} />
 
                             {isDraft && (
                               <>

@@ -7,8 +7,9 @@ import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
 import { cancelSale, addPayment } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
-import { fmtCurrency }       from '@/lib/format'
-import { pluralize }         from '@/lib/pluralize'
+import { fmtCurrency }         from '@/lib/format'
+import { pluralize }           from '@/lib/pluralize'
+import { downloadInvoicePdf }  from '@/lib/pdf/download'
 import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -844,6 +845,18 @@ function IconPrint({ size = 13 }: { size?: number }) {
   )
 }
 
+function IconPdf({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M2 2.5A.5.5 0 0 1 2.5 2H9l3 3v6.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-9Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+      <path d="M4.5 7.5h1a.75.75 0 0 1 0 1.5H4.5V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+      <path d="M7 7.5h.75a1 1 0 0 1 0 2H7V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+      <path d="M9.5 7.5v2M9.5 8.5H10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 function escHtml(s: string | null | undefined): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
@@ -1027,12 +1040,14 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
 }) {
   const fmt = (n: number) => fmtCurrency(n, currency)
   const supabase   = useMemo(() => createClient(), [])
-  const [payments, setPayments] = useState<any[] | null>(null)
-  const [showAdd,  setShowAdd]  = useState(false)
-  const [addAmt,   setAddAmt]   = useState('')
-  const [addNotes, setAddNotes] = useState('')
-  const [adding,   setAdding]   = useState(false)
-  const [addError, setAddError] = useState<string | null>(null)
+  const [payments,   setPayments]  = useState<any[] | null>(null)
+  const [showAdd,    setShowAdd]   = useState(false)
+  const [addAmt,     setAddAmt]    = useState('')
+  const [addNotes,   setAddNotes]  = useState('')
+  const [adding,     setAdding]    = useState(false)
+  const [addError,   setAddError]  = useState<string | null>(null)
+  const [pdfLoading, setPdfLoad]   = useState(false)
+  const [pdfError,   setPdfError]  = useState<string | null>(null)
 
   const loadPayments = useCallback(async () => {
     const { data } = await supabase
@@ -1055,6 +1070,17 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
     await loadPayments()
     setAddAmt(''); setAddNotes(''); setShowAdd(false)
     onPaymentAdded()
+  }
+
+  const handlePdf = async () => {
+    setPdfLoad(true); setPdfError(null)
+    try {
+      await downloadInvoicePdf(sale.id, sale.sale_number)
+    } catch (e) {
+      setPdfError((e as Error).message)
+    } finally {
+      setPdfLoad(false)
+    }
   }
 
   const canAdd = sale.status !== 'cancelled' &&
@@ -1263,12 +1289,24 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
           )}
           {!sale.customer_phone && !sale.notes && <span style={{ color: C.dim }}>Aucune note</span>}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: SP[2] }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>
           <button
             onClick={() => printSaleReceipt(sale, ownerName, currency, companyName)}
             style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], padding: `${SP[1.5]} ${SP[3]}`, background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.xs, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
-            <IconPrint /> Imprimer le reçu
+            <IconPrint /> Imprimer
           </button>
+          <button
+            onClick={handlePdf}
+            disabled={pdfLoading}
+            title="Télécharger ou partager le PDF"
+            style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], padding: `${SP[1.5]} ${SP[3]}`, background: pdfLoading ? C.surfaceSub : C.amberGlow, color: pdfLoading ? C.muted : C.amber, border: `1px solid ${pdfLoading ? C.border : C.amber}`, borderRadius: R.sm, fontSize: F.xs, fontWeight: F.semibold, cursor: pdfLoading ? 'not-allowed' : 'pointer', fontFamily: F.body, opacity: pdfLoading ? 0.7 : 1, transition: 'all 0.14s' }}>
+            {pdfLoading
+              ? <><span className="spinner" style={{ width: 10, height: 10 }} />PDF…</>
+              : <><IconPdf /> PDF</>}
+          </button>
+          {pdfError && (
+            <span style={{ fontSize: F.xs, color: C.red, fontFamily: F.body }}>{pdfError}</span>
+          )}
           <div style={{ fontSize: F.lg, fontWeight: F.xbold, color: C.ink, fontFamily: F.display, letterSpacing: F.lsTighter }}>{fmt(sale.total_amount)}</div>
         </div>
       </div>

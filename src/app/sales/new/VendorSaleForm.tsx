@@ -6,6 +6,7 @@ import { createClient }       from '@/lib/supabase/client'
 import { createSale }         from '@/app/sales/actions'
 import { createQuote }        from '@/app/quotes/actions'
 import { searchCustomers, createCustomer } from '@/app/customers/actions'
+import { downloadInvoicePdf }             from '@/lib/pdf/download'
 import PageLayout             from '@/components/PageLayout'
 import { useIsMobile }        from '@/hooks/useIsMobile'
 import type { BadgeCounts }  from '@/lib/supabase/badge-counts'
@@ -81,6 +82,8 @@ export default function VendorSaleForm({
   const [step,             setStep]         = useState<'form' | 'success' | 'quote-success'>('form')
   const [formStep,         setFormStep]     = useState<1 | 2>(1)
   const [cartSheetOpen,    setCartSheet]    = useState(false)
+  const [pdfLoading,       setPdfLoad]      = useState(false)
+  const [pdfError,         setPdfError]     = useState<string | null>(null)
   const [customerId,       setCustomerId]   = useState<string | null>(null)
   const [suggestions,      setSuggestions]  = useState<any[]>([])
   const [showSuggestions,  setShowSugg]     = useState(false)
@@ -455,15 +458,43 @@ export default function VendorSaleForm({
 
             {/* Actions */}
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <button className="btn-amber" onClick={printReceipt}
-                style={{ width: '100%', padding: '13px', border: 'none', borderRadius: R.md, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: F.body, height: 44 }}>
-                <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                  <rect x="1" y="5" width="13" height="8" rx="1.5" stroke="white" strokeWidth="1.3"/>
-                  <path d="M4 5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v2" stroke="white" strokeWidth="1.3"/>
-                  <path d="M4 10.5h7M4 8h4.5" stroke="white" strokeWidth="1.1" strokeLinecap="round"/>
-                </svg>
-                Imprimer le reçu
-              </button>
+              {/* Print + PDF row */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={printReceipt}
+                  style={{ flex: 1, padding: '11px', border: `1.5px solid ${C.border}`, borderRadius: R.md, fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: F.body, background: C.surface, color: C.muted }}>
+                  <svg width="13" height="13" viewBox="0 0 15 15" fill="none">
+                    <rect x="1" y="5" width="13" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M4 5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v2" stroke="currentColor" strokeWidth="1.3"/>
+                    <path d="M4 10.5h7M4 8h4.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+                  </svg>
+                  Imprimer
+                </button>
+                <button
+                  onClick={async () => {
+                    setPdfLoad(true); setPdfError(null)
+                    try { await downloadInvoicePdf(successData.saleId, successData.saleNumber) }
+                    catch (e) { setPdfError((e as Error).message) }
+                    finally { setPdfLoad(false) }
+                  }}
+                  disabled={pdfLoading}
+                  style={{ flex: 1, padding: '11px', border: `1.5px solid ${pdfLoading ? C.border : C.amber}`, borderRadius: R.md, fontSize: 12, fontWeight: 700, cursor: pdfLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: F.body, background: pdfLoading ? C.surfaceSub : C.amberGlow, color: pdfLoading ? C.muted : C.amber, opacity: pdfLoading ? 0.7 : 1 }}>
+                  {pdfLoading
+                    ? <><span className="spinner" style={{ width: 11, height: 11 }} />PDF…</>
+                    : <>
+                        <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                          <path d="M2 2.5A.5.5 0 0 1 2.5 2H9l3 3v6.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-9Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                          <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                          <path d="M4.5 7.5h1a.75.75 0 0 1 0 1.5H4.5V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                          <path d="M7 7.5h.75a1 1 0 0 1 0 2H7V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                          <path d="M9.5 7.5v2M9.5 8.5H10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        </svg>
+                        PDF
+                      </>}
+                </button>
+              </div>
+              {pdfError && (
+                <p style={{ margin: 0, fontSize: 11, color: C.red, fontFamily: F.body, textAlign: 'center' }}>{pdfError}</p>
+              )}
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); setSaveAsCustomer(true); resetInputs(); setStep('form'); setFormStep(1) }}
@@ -518,6 +549,32 @@ export default function VendorSaleForm({
               </div>
             </div>
             <div style={{ padding: '0 28px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* PDF download for quote */}
+              <button
+                onClick={async () => {
+                  setPdfLoad(true); setPdfError(null)
+                  try { await downloadInvoicePdf(successData.quoteId, successData.quoteNumber) }
+                  catch (e) { setPdfError((e as Error).message) }
+                  finally { setPdfLoad(false) }
+                }}
+                disabled={pdfLoading}
+                style={{ width: '100%', padding: '11px', border: `1.5px solid ${pdfLoading ? C.border : C.gold}`, borderRadius: R.md, fontSize: 12, fontWeight: 700, cursor: pdfLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, fontFamily: F.body, background: pdfLoading ? C.surfaceSub : C.goldBg, color: pdfLoading ? C.muted : C.gold, opacity: pdfLoading ? 0.7 : 1 }}>
+                {pdfLoading
+                  ? <><span className="spinner" style={{ width: 11, height: 11 }} />Génération du PDF…</>
+                  : <>
+                      <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 2.5A.5.5 0 0 1 2.5 2H9l3 3v6.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-9Z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                        <path d="M9 2v3h3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round"/>
+                        <path d="M4.5 7.5h1a.75.75 0 0 1 0 1.5H4.5V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        <path d="M7 7.5h.75a1 1 0 0 1 0 2H7V7.5Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                        <path d="M9.5 7.5v2M9.5 8.5H10.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+                      </svg>
+                      Télécharger le devis PDF
+                    </>}
+              </button>
+              {pdfError && (
+                <p style={{ margin: 0, fontSize: 11, color: C.red, fontFamily: F.body, textAlign: 'center' }}>{pdfError}</p>
+              )}
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
                   onClick={() => { setCart([]); setName(''); setPhone(''); setPhone2(''); setCNI(''); setNotes(''); setAmountPaid(''); setCustomerId(null); setSuggestions([]); setSaveAsCustomer(true); resetInputs(); setStep('form'); setFormStep(1) }}
