@@ -421,25 +421,6 @@ const S = StyleSheet.create({
   payHistNote: { flex: 3, fontSize: 8, color: DIM },
   payHistAmt:  { flex: 2, fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: GREEN, textAlign: 'right' },
 
-  // Notes
-  notesBox: {
-    backgroundColor: SURFACE,
-    borderRadius: 5,
-    paddingTop: 8,
-    paddingBottom: 8,
-    paddingLeft: 12,
-    paddingRight: 12,
-    borderWidth: 0.5,
-    borderColor: BORDER,
-    borderStyle: 'solid',
-    marginBottom: 14,
-  },
-  notesTxt: {
-    fontSize: 9,
-    color: TEXT,
-    lineHeight: 1.5,
-  },
-
   // Signatures
   sigSection: {
     flexDirection: 'row',
@@ -559,7 +540,7 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
     vendor_name,
     customer_name, customer_phone, customer_cni,
     total_amount, amount_paid, payment_status,
-    items, payments, notes,
+    items, payments,
   } = data
 
   const isSale  = doc_type === 'sale'
@@ -718,14 +699,6 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
             ))}
           </View>
         )}
-
-        {/* ── Notes ──────────────────────────────────────────────────────── */}
-        {notes ? (
-          <View style={S.notesBox}>
-            <Text style={S.sectionTitle}>{'NOTES'}</Text>
-            <Text style={S.notesTxt}>{notes}</Text>
-          </View>
-        ) : null}
 
         {/* ── Signature block ─────────────────────────────────────────────── */}
         <View style={S.sigSection}>
