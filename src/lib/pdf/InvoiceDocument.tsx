@@ -1,5 +1,5 @@
 import React from 'react'
-import { Document, Page, View, Text, Image, StyleSheet } from '@react-pdf/renderer'
+import { Document, Page, View, Text, Svg, Path, StyleSheet } from '@react-pdf/renderer'
 import type { InvoiceData, InvoiceItem } from './types'
 import { pluralize } from '@/lib/pluralize'
 
@@ -73,25 +73,10 @@ const S = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
-  logoImg: {
-    width: 42,
-    height: 42,
-    marginRight: 11,
-    borderRadius: 4,
-  },
-  logoFallback: {
-    width: 42,
-    height: 42,
-    marginRight: 11,
-    borderRadius: 4,
-    backgroundColor: COGNAC,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoFallbackText: {
-    fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
-    color: WHITE,
+  logoMark: {
+    width: 38,
+    height: 31,
+    marginRight: 12,
   },
   companyName: {
     fontSize: 20,
@@ -535,7 +520,7 @@ function PaymentPill({ status }: { status: string }) {
 export function InvoiceDocument({ data }: { data: InvoiceData }) {
   const {
     doc_number, doc_type, created_at,
-    company_name, currency, owner_name, logo_data_uri,
+    company_name, currency, owner_name,
     boutique_name, boutique_phone, boutique_address,
     vendor_name,
     customer_name, customer_phone, customer_cni,
@@ -562,15 +547,18 @@ export function InvoiceDocument({ data }: { data: InvoiceData }) {
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <View style={S.header}>
           <View style={S.headerLeft}>
-            {logo_data_uri ? (
-              <Image src={logo_data_uri} style={S.logoImg} />
-            ) : (
-              <View style={S.logoFallback}>
-                <Text style={S.logoFallbackText}>
-                  {company_name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            <Svg viewBox="0 0 20 16" style={S.logoMark}>
+              <Path
+                d="M2.5 14V2.5L10 9L17.5 2.5V14"
+                stroke={COGNAC} strokeWidth="2.3"
+                strokeLinecap="round" strokeLinejoin="round"
+              />
+              <Path
+                d="M2.5 14h15"
+                stroke={COGNAC} strokeWidth="2.3"
+                strokeLinecap="round"
+              />
+            </Svg>
             <View>
               <Text style={S.companyName}>{company_name}</Text>
               <Text style={S.boutiqueName}>{boutique_name}</Text>
