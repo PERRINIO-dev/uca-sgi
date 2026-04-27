@@ -614,8 +614,10 @@ button:focus-visible {
 .modal-overlay { animation: modalBackdrop 0.18s ease forwards; }
 .modal-panel   { animation: modalPanel    0.26s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
 
-/* ── Drawer slide-in from right ─────────────────────────────────────── */
-.drawer-panel { animation: slideInRight 0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+/* ── Drawer slide-in / slide-out from right ─────────────────────────── */
+@keyframes slideOutRight { from { opacity: 1; transform: translateX(0) } to { opacity: 0; transform: translateX(48px) } }
+.drawer-panel      { animation: slideInRight  0.28s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
+.drawer-panel-exit { animation: slideOutRight 0.22s cubic-bezier(0.32, 0.72, 0, 1) forwards; }
 
 /* ── Toast notification ─────────────────────────────────────────────── */
 .toast {

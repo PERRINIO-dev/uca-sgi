@@ -401,9 +401,12 @@ export default function AdminClient({
   const [toggling, setToggling] = useState<string | null>(null)
 
   // ── Drawer ────────────────────────────────────────────────────────────────
-  const [drawerCid,    setDrawerCid]    = useState<string | null>(null)
-  const [drawerError,  setDrawerError]  = useState<string | null>(null)
-  const [togglingUser, setTogglingUser] = useState<string | null>(null)
+  const [drawerCid,     setDrawerCid]     = useState<string | null>(null)
+  const [drawerClosing, setDrawerClosing] = useState(false)
+  const [drawerError,   setDrawerError]   = useState<string | null>(null)
+  const [togglingUser,  setTogglingUser]  = useState<string | null>(null)
+
+  function closeDrawer() { setDrawerClosing(true) }
 
   // ── Suspend user confirmation ─────────────────────────────────────────────
   const [confirmSuspend, setConfirmSuspend] = useState<{ userId: string; name: string } | null>(null)
@@ -633,6 +636,13 @@ export default function AdminClient({
           Admin
         </span>
       </div>
+
+      {/* Current tab name — mobile only, since sidebar is hidden */}
+      {isMobile && (
+        <div style={{ fontSize: F.sm, fontWeight: F.semibold, color: C.sidebarText, marginLeft: SP[2] }}>
+          {{ overview: "Vue d'ensemble", companies: 'Entreprises', journal: 'Journal' }[tab]}
+        </div>
+      )}
 
       <div style={{ flex: 1 }} />
 
@@ -882,7 +892,17 @@ export default function AdminClient({
                 </div>
                 <button
                   onClick={() => setTab('journal')}
-                  style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], background: 'none', border: 'none', cursor: 'pointer', fontSize: F.sm, color: C.amber, fontFamily: F.body, fontWeight: F.medium }}
+                  onMouseEnter={() => setRowHover('journal-link')}
+                  onMouseLeave={() => setRowHover(null)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: SP[1.5],
+                    background: rowHover === 'journal-link' ? C.amberGlow : 'transparent',
+                    border: `1px solid ${rowHover === 'journal-link' ? 'rgba(160,83,26,0.22)' : 'transparent'}`,
+                    borderRadius: R.sm, padding: `${SP[1]} ${SP[2]}`,
+                    cursor: 'pointer', fontSize: F.sm, color: C.amber,
+                    fontFamily: F.body, fontWeight: F.medium,
+                    transition: TR.fast,
+                  }}
                 >
                   Voir le journal <IconArrowRight size={11} color={C.amber} />
                 </button>
@@ -1002,6 +1022,7 @@ export default function AdminClient({
                         <tr
                           key={co.id}
                           className="trow-click"
+                          onClick={() => { setDrawerCid(co.id); setDrawerClosing(false); setDrawerError(null) }}
                           style={{ borderBottom: i < visibleCompanies.length - 1 ? `1px solid ${C.borderSub}` : 'none' }}
                         >
                           <td style={{ padding: `${SP[3.5]} ${SP[4]}` }}>
@@ -1056,7 +1077,7 @@ export default function AdminClient({
                           <td style={{ padding: `${SP[3.5]} ${SP[4]}`, textAlign: 'right' }}>
                             <button
                               className="btn-surface"
-                              onClick={() => { setDrawerCid(co.id); setDrawerError(null) }}
+                              onClick={e => { e.stopPropagation(); setDrawerCid(co.id); setDrawerClosing(false); setDrawerError(null) }}
                               style={{
                                 display: 'inline-flex', alignItems: 'center', gap: SP[1.5],
                                 padding: `${SP[1.5]} ${SP[3]}`,
@@ -1211,18 +1232,21 @@ export default function AdminClient({
     {drawerCompany && (
       <>
         <div
-          onClick={() => { setDrawerCid(null); setDrawerError(null) }}
+          onClick={() => closeDrawer()}
           className="modal-overlay"
           style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.35)', zIndex: Z.overlay, backdropFilter: 'blur(2px)' }}
         />
-        <div className="drawer-panel" style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0,
-          width: '100%', maxWidth: 460,
-          background: C.surfaceEl, zIndex: Z.overlay + 1,
-          boxShadow: '-8px 0 48px rgba(60,30,10,0.14)',
-          display: 'flex', flexDirection: 'column',
-          fontFamily: F.body,
-        }}>
+        <div
+          className={drawerClosing ? 'drawer-panel-exit' : 'drawer-panel'}
+          onAnimationEnd={() => { if (drawerClosing) { setDrawerCid(null); setDrawerClosing(false); setDrawerError(null) } }}
+          style={{
+            position: 'fixed', top: 0, right: 0, bottom: 0,
+            width: '100%', maxWidth: 460,
+            background: C.surfaceEl, zIndex: Z.overlay + 1,
+            boxShadow: '-8px 0 48px rgba(60,30,10,0.14)',
+            display: 'flex', flexDirection: 'column',
+            fontFamily: F.body,
+          }}>
           <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})`, flexShrink: 0 }} />
 
           {/* Header */}
@@ -1241,7 +1265,7 @@ export default function AdminClient({
             </div>
             <button
               className="btn-icon"
-              onClick={() => { setDrawerCid(null); setDrawerError(null) }}
+              onClick={() => closeDrawer()}
               style={{ width: 30, height: 30, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
             >
               <IconClose size={12} color={C.muted} />
@@ -1251,8 +1275,11 @@ export default function AdminClient({
           {/* Body */}
           <div style={{ flex: 1, overflowY: 'auto', padding: SP[5] }}>
             {drawerError && (
-              <div style={{ padding: `${SP[2.5]} ${SP[3.5]}`, borderRadius: R.md, marginBottom: SP[4], background: C.redBg, border: `1px solid ${C.redBd}`, fontSize: F.sm, color: C.red }}>
-                {drawerError}
+              <div style={{ padding: `${SP[2.5]} ${SP[3.5]}`, borderRadius: R.md, marginBottom: SP[4], background: C.redBg, border: `1px solid ${C.redBd}`, fontSize: F.sm, color: C.red, display: 'flex', alignItems: 'center', gap: SP[2] }}>
+                <span style={{ flex: 1 }}>{drawerError}</span>
+                <button onClick={() => setDrawerError(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', color: C.red, opacity: 0.55, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <IconClose size={11} color={C.red} />
+                </button>
               </div>
             )}
 
@@ -1360,6 +1387,7 @@ export default function AdminClient({
         query={cmdQuery}
         onQueryChange={setCmdQuery}
         companies={companies}
+        isMobile={isMobile}
         onClose={() => { setCmdOpen(false); setCmdQuery('') }}
         onAction={action => {
           setCmdOpen(false); setCmdQuery('')
@@ -1390,17 +1418,18 @@ export default function AdminClient({
             </p>
             <div style={{ display: 'flex', gap: SP[2.5] }}>
               <button
+                className="btn-ghost"
+                onClick={() => setConfirmSuspend(null)}
+                style={{ padding: `0 ${SP[4]}`, height: 40, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}
+              >
+                Annuler
+              </button>
+              <button
                 className="btn-red"
                 onClick={async () => { const t = confirmSuspend; setConfirmSuspend(null); await handleUserToggle(t.userId, false) }}
                 style={{ flex: 1, height: 40, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
               >
                 Confirmer la suspension
-              </button>
-              <button
-                onClick={() => setConfirmSuspend(null)}
-                style={{ padding: `0 ${SP[4]}`, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}
-              >
-                Annuler
               </button>
             </div>
           </div>
@@ -1463,19 +1492,20 @@ export default function AdminClient({
             )}
             <div style={{ display: 'flex', gap: SP[2.5] }}>
               <button
+                className="btn-ghost"
+                onClick={() => { setResetTarget(null); setResetError(null); setResetPwd('') }}
+                disabled={resetLoading}
+                style={{ padding: `0 ${SP[4]}`, height: 42, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: F.body }}
+              >
+                Annuler
+              </button>
+              <button
                 className="btn-amber"
                 onClick={handlePasswordReset}
                 disabled={resetLoading || resetPwd.length < 8}
                 style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer', fontFamily: F.body, opacity: resetPwd.length < 8 ? 0.45 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
               >
                 {resetLoading ? <><span className="spinner-dark" style={{ width: 13, height: 13 }} /> En cours…</> : 'Confirmer'}
-              </button>
-              <button
-                onClick={() => { setResetTarget(null); setResetError(null); setResetPwd('') }}
-                disabled={resetLoading}
-                style={{ padding: `0 ${SP[4]}`, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: resetLoading ? 'not-allowed' : 'pointer', fontFamily: F.body }}
-              >
-                Annuler
               </button>
             </div>
           </div>
@@ -1581,7 +1611,7 @@ export default function AdminClient({
                   </div>
                 )}
                 <div style={{ display: 'flex', gap: SP[2.5] }}>
-                  <button type="button" onClick={() => { setFormStep(1); setFormError(null) }} disabled={submitting} style={{ padding: `0 ${SP[4]}`, height: 42, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}>
+                  <button type="button" className="btn-ghost" onClick={() => { setFormStep(1); setFormError(null) }} disabled={submitting} style={{ padding: `0 ${SP[4]}`, height: 42, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}>
                     Retour
                   </button>
                   <button type="submit" className="btn-amber" disabled={submitting} style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}>
@@ -1615,6 +1645,14 @@ export default function AdminClient({
             </p>
             <div style={{ display: 'flex', gap: SP[2.5] }}>
               <button
+                className="btn-ghost"
+                onClick={() => setConfirmLogout(false)}
+                disabled={loggingOut}
+                style={{ padding: `0 ${SP[4]}`, height: 40, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: loggingOut ? 'not-allowed' : 'pointer', fontFamily: F.body }}
+              >
+                Annuler
+              </button>
+              <button
                 onClick={async () => {
                   setLoggingOut(true)
                   const { createClient } = await import('@/lib/supabase/client')
@@ -1626,13 +1664,6 @@ export default function AdminClient({
                 style={{ flex: 1, height: 40, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: loggingOut ? 'wait' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
               >
                 {loggingOut ? <><span className="spinner-dark" style={{ width: 13, height: 13 }} /> Déconnexion…</> : 'Se déconnecter'}
-              </button>
-              <button
-                onClick={() => setConfirmLogout(false)}
-                disabled={loggingOut}
-                style={{ padding: `0 ${SP[4]}`, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: loggingOut ? 'not-allowed' : 'pointer', fontFamily: F.body }}
-              >
-                Annuler
               </button>
             </div>
           </div>
@@ -1760,10 +1791,11 @@ function UserRow({ user, menuOpen, isToggling, onMenuToggle, onReset, onSuspend,
   )
 }
 
-function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
+function CmdPalette({ query, onQueryChange, companies, isMobile, onClose, onAction }: {
   query:         string
   onQueryChange: (q: string) => void
   companies:     Company[]
+  isMobile?:     boolean
   onClose:       () => void
   onAction:      (a: string) => void
 }) {
@@ -1836,7 +1868,7 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
       className="modal-overlay"
       style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh', zIndex: Z.modal + 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}
     >
-      <div style={{
+      <div className="modal-panel" style={{
         background: C.surfaceEl, borderRadius: R.xl,
         width: '100%', maxWidth: 520,
         border: `1px solid ${C.border}`,
@@ -1929,8 +1961,8 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
           )}
         </div>
 
-        {/* Footer hint */}
-        {total > 0 && (
+        {/* Footer hint — hidden on mobile (no physical keyboard) */}
+        {total > 0 && !isMobile && (
           <div style={{ padding: `${SP[2]} ${SP[4]}`, borderTop: `1px solid ${C.borderSub}`, display: 'flex', gap: SP[3], alignItems: 'center' }}>
             {[['↑↓', 'Naviguer'], ['↵', 'Sélectionner'], ['ESC', 'Fermer']].map(([key, desc]) => (
               <span key={key} style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], fontSize: 10, color: C.dim }}>
