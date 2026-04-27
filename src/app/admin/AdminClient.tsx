@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useRef } from 'react'
 import { useRouter }                                   from 'next/navigation'
+import { useIsMobile }                                 from '@/hooks/useIsMobile'
 import {
   createCompanyWithOwner,
   toggleCompanyActive,
@@ -377,8 +378,9 @@ export default function AdminClient({
   totalSalesThisMonth: number
   badgeCounts?:        BadgeCounts
 }) {
-  const router = useRouter()
-  const [, startTransition] = useTransition()
+  const router    = useRouter()
+  const isMobile  = useIsMobile()
+  const [isPending, startTransition] = useTransition()
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const [tab, setTab] = useState<'overview' | 'companies' | 'journal'>('overview')
@@ -424,6 +426,17 @@ export default function AdminClient({
   // ── Member context menu ───────────────────────────────────────────────────
   const [memberMenu, setMemberMenu] = useState<string | null>(null)
 
+  // ── Mobile nav ────────────────────────────────────────────────────────────
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+
+  // ── Logout confirmation ───────────────────────────────────────────────────
+  const [confirmLogout,  setConfirmLogout]  = useState(false)
+  const [loggingOut,     setLoggingOut]     = useState(false)
+
+  // ── Hover tracking ────────────────────────────────────────────────────────
+  const [navHover,  setNavHover]  = useState<string | null>(null)
+  const [rowHover,  setRowHover]  = useState<string | null>(null)
+
   // ── Derived ───────────────────────────────────────────────────────────────
   const drawerCompany    = drawerCid ? (companies.find(c => c.id === drawerCid) ?? null) : null
   const activeCompanies  = companies.filter(c => c.is_active).length
@@ -458,7 +471,7 @@ export default function AdminClient({
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault(); setCmdOpen(o => !o); setCmdQuery('')
       }
-      if (e.key === 'Escape') { setCmdOpen(false); setMemberMenu(null) }
+      if (e.key === 'Escape') { setCmdOpen(false); setMemberMenu(null); if (!loggingOut) setConfirmLogout(false) }
     }
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
@@ -584,8 +597,26 @@ export default function AdminClient({
       paddingLeft: SP[5], paddingRight: SP[5],
       zIndex: Z.sticky + 10, fontFamily: F.body,
     }}>
+      {/* Hamburger (mobile only) */}
+      {isMobile && (
+        <button
+          onClick={() => setMobileNavOpen(o => !o)}
+          style={{
+            width: 34, height: 34, marginRight: SP[3], flexShrink: 0,
+            background: mobileNavOpen ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${C.sidebarBd}`, borderRadius: R.sm,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5,
+            cursor: 'pointer', padding: 0,
+          }}
+        >
+          <span style={{ display: 'block', width: 14, height: 1.5, background: mobileNavOpen ? C.amber : C.sidebarMuted, borderRadius: 2, transition: TR.fast }} />
+          <span style={{ display: 'block', width: 14, height: 1.5, background: mobileNavOpen ? C.amber : C.sidebarMuted, borderRadius: 2, transition: TR.fast }} />
+          <span style={{ display: 'block', width: 9, height: 1.5, background: mobileNavOpen ? C.amber : C.sidebarMuted, borderRadius: 2, transition: TR.fast, alignSelf: 'flex-start', marginLeft: 2.5 }} />
+        </button>
+      )}
+
       {/* Brand */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: SP[2.5], width: SIDEBAR_W - 20, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: SP[2.5], width: isMobile ? 'auto' : SIDEBAR_W - 20, flexShrink: 0 }}>
         <svg width="20" height="15" viewBox="0 0 22 16" fill="none">
           <path d="M2 15V2L10 9L18 2V15" stroke={C.sidebarInk} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
           <path d="M2 15h16" stroke={C.sidebarInk} strokeWidth="2.2" strokeLinecap="round"/>
@@ -605,46 +636,69 @@ export default function AdminClient({
 
       <div style={{ flex: 1 }} />
 
-      {/* Command palette trigger */}
-      <button
-        onClick={() => { setCmdOpen(true); setCmdQuery('') }}
-        style={{
-          display: 'flex', alignItems: 'center', gap: SP[2],
-          padding: `${SP[1.5]} ${SP[3]}`, borderRadius: R.sm,
-          background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.sidebarBd}`,
-          color: C.sidebarMuted, fontSize: F.sm, fontFamily: F.body, cursor: 'pointer',
-          transition: TR.fast,
-        }}
-      >
-        <IconSearch size={12} color={C.sidebarMuted} />
-        <span>Rechercher…</span>
-        <kbd style={{
-          fontSize: 10, color: C.sidebarDim,
-          background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.sidebarBd}`,
-          borderRadius: R.xs, padding: '1px 5px', fontFamily: F.mono,
-        }}>
-          ⌘K
-        </kbd>
-      </button>
+      {/* isPending refresh indicator */}
+      {isPending && (
+        <div style={{ marginRight: SP[3], display: 'flex', alignItems: 'center', gap: SP[1.5] }}>
+          <span className="spinner-light" style={{ width: 12, height: 12, borderWidth: 1.5 }} />
+          <span style={{ fontSize: 11, color: C.sidebarMuted }}>Actualisation…</span>
+        </div>
+      )}
+
+      {/* Command palette trigger (hidden on very small screens) */}
+      {!isMobile && (
+        <button
+          onClick={() => { setCmdOpen(true); setCmdQuery('') }}
+          style={{
+            display: 'flex', alignItems: 'center', gap: SP[2],
+            padding: `${SP[1.5]} ${SP[3]}`, borderRadius: R.sm,
+            background: 'rgba(255,255,255,0.05)', border: `1px solid ${C.sidebarBd}`,
+            color: C.sidebarMuted, fontSize: F.sm, fontFamily: F.body, cursor: 'pointer',
+            transition: TR.fast,
+          }}
+        >
+          <IconSearch size={12} color={C.sidebarMuted} />
+          <span>Rechercher…</span>
+          <kbd style={{
+            fontSize: 10, color: C.sidebarDim,
+            background: 'rgba(255,255,255,0.06)', border: `1px solid ${C.sidebarBd}`,
+            borderRadius: R.xs, padding: '1px 5px', fontFamily: F.mono,
+          }}>
+            ⌘K
+          </kbd>
+        </button>
+      )}
 
       {/* Operator avatar */}
       <div style={{
         marginLeft: SP[4], width: 32, height: 32, borderRadius: R.full,
         background: 'rgba(160,83,26,0.18)', border: '1.5px solid rgba(160,83,26,0.40)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 11, fontWeight: F.bold, color: C.amber, cursor: 'default',
+        fontSize: 11, fontWeight: F.bold, color: C.amber, cursor: 'default', flexShrink: 0,
       }}>
         {profile.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
       </div>
     </div>
 
     {/* ── Sidebar ──────────────────────────────────────────────────────────── */}
+    {/* Mobile backdrop */}
+    {isMobile && mobileNavOpen && (
+      <div
+        onClick={() => setMobileNavOpen(false)}
+        className="modal-overlay"
+        style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.55)', zIndex: Z.sticky + 8, backdropFilter: 'blur(2px)' }}
+      />
+    )}
     <div style={{
       position: 'fixed', top: TOPBAR_H, left: 0, bottom: 0, width: SIDEBAR_W,
       background: C.sidebarBg, borderRight: `1px solid ${C.sidebarBd}`,
       display: 'flex', flexDirection: 'column',
       zIndex: Z.sticky + 9,
       paddingTop: SP[3],
+      ...(isMobile ? {
+        transform: mobileNavOpen ? 'translateX(0)' : `translateX(-${SIDEBAR_W}px)`,
+        transition: 'transform 0.26s cubic-bezier(0.32,0.72,0,1)',
+        boxShadow: mobileNavOpen ? '8px 0 32px rgba(26,15,6,0.30)' : 'none',
+      } : {}),
     }}>
       {([
         { id: 'overview',  label: 'Vue d\'ensemble', Icon: IconGrid     },
@@ -655,15 +709,17 @@ export default function AdminClient({
         return (
           <button
             key={id}
-            onClick={() => setTab(id)}
+            onClick={() => { setTab(id); setMobileNavOpen(false) }}
+            onMouseEnter={() => setNavHover(id)}
+            onMouseLeave={() => setNavHover(null)}
             style={{
               position: 'relative',
               display: 'flex', alignItems: 'center', gap: SP[2.5],
               margin: `1px ${SP[2]}`, padding: `${SP[2.5]} ${SP[3]}`,
               borderRadius: R.sm,
-              background: active ? C.sidebarEl : 'transparent',
+              background: active ? C.sidebarEl : navHover === id ? C.sidebarHov : 'transparent',
               border: 'none', cursor: 'pointer',
-              color: active ? C.sidebarInk : C.sidebarMuted,
+              color: active ? C.sidebarInk : navHover === id ? C.sidebarText : C.sidebarMuted,
               fontSize: F.base, fontWeight: active ? F.semibold : F.regular,
               fontFamily: F.body, textAlign: 'left',
               transition: TR.fast,
@@ -698,20 +754,20 @@ export default function AdminClient({
           </div>
         </div>
         <button
-          onClick={async () => {
-            const { createClient } = await import('@/lib/supabase/client')
-            await createClient().auth.signOut()
-            router.push('/login')
-          }}
+          onClick={() => setConfirmLogout(true)}
+          onMouseEnter={() => setNavHover('logout')}
+          onMouseLeave={() => setNavHover(null)}
           style={{
             display: 'flex', alignItems: 'center', gap: SP[2.5],
             width: '100%', padding: `${SP[2]} ${SP[3]}`,
-            background: 'transparent', border: 'none', cursor: 'pointer',
-            color: C.sidebarMuted, fontSize: F.sm, fontFamily: F.body, textAlign: 'left',
+            background: navHover === 'logout' ? 'rgba(153,27,27,0.12)' : 'transparent',
+            border: 'none', cursor: 'pointer',
+            color: navHover === 'logout' ? '#FCACA0' : C.sidebarMuted,
+            fontSize: F.sm, fontFamily: F.body, textAlign: 'left',
             borderRadius: R.sm, transition: TR.fast,
           }}
         >
-          <IconLogOut size={14} color={C.sidebarMuted} />
+          <IconLogOut size={14} color={navHover === 'logout' ? '#FCACA0' : C.sidebarMuted} />
           Déconnexion
         </button>
       </div>
@@ -719,25 +775,22 @@ export default function AdminClient({
 
     {/* ── Content area ─────────────────────────────────────────────────────── */}
     <div style={{
-      marginLeft: SIDEBAR_W, marginTop: TOPBAR_H,
+      marginLeft: isMobile ? 0 : SIDEBAR_W, marginTop: TOPBAR_H,
       minHeight: `calc(100vh - ${TOPBAR_H}px)`,
       background: CANVAS, fontFamily: F.body,
     }}>
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: `${SP[8]} ${SP[8]} ${SP[16]}` }}>
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: isMobile ? `${SP[5]} ${SP[4]} ${SP[16]}` : `${SP[8]} ${SP[8]} ${SP[16]}` }}>
 
         {/* Toast */}
         {successMsg && (
-          <div style={{
-            position: 'fixed', bottom: SP[6], right: SP[6],
-            padding: `${SP[3]} ${SP[4]}`, borderRadius: R.lg,
-            background: C.greenBg, border: `1px solid ${C.greenBd}`,
-            boxShadow: SH.lg, fontSize: F.sm, fontWeight: F.medium, color: C.green,
-            display: 'flex', alignItems: 'center', gap: SP[2.5],
-            zIndex: Z.toast, maxWidth: 360,
+          <div className="toast toast-green" style={{
+            zIndex: Z.toast,
           }}>
-            <span style={{ width: 7, height: 7, borderRadius: R.full, background: C.green, flexShrink: 0 }} />
-            {successMsg}
-            <button onClick={() => setSuccessMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.green, marginLeft: SP[1], fontSize: F.lg, lineHeight: 1, padding: 0, opacity: 0.6 }}>×</button>
+            <span style={{ width: 7, height: 7, borderRadius: R.full, background: C.green, flexShrink: 0, animation: 'pulseDot 2s ease-in-out infinite' }} />
+            <span style={{ fontSize: F.sm, fontWeight: F.medium, color: C.green, flex: 1 }}>{successMsg}</span>
+            <button onClick={() => setSuccessMsg(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.green, padding: '0 2px', opacity: 0.55, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+              <IconClose size={11} color={C.green} />
+            </button>
           </div>
         )}
 
@@ -758,7 +811,7 @@ export default function AdminClient({
             </div>
 
             {/* KPI grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: SP[3.5], marginBottom: SP[9] }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(4,1fr)', gap: SP[3.5], marginBottom: SP[9] }}>
               {([
                 {
                   label: 'Entreprises actives',
@@ -785,7 +838,7 @@ export default function AdminClient({
                   Icon: IconActivity, color: C.amber,
                 },
               ] as const).map(({ label, value, sub, Icon, color }) => (
-                <div key={label} style={{
+                <div key={label} className="kpi-card" style={{
                   background: C.surface, borderRadius: R.xl,
                   border: `1px solid ${C.border}`,
                   padding: `${SP[5]} ${SP[5]}`,
@@ -798,11 +851,7 @@ export default function AdminClient({
                   }}>
                     <Icon size={17} color={color} />
                   </div>
-                  <div style={{
-                    fontSize: F['3xl'], fontWeight: F.xbold, color: C.ink,
-                    letterSpacing: F.lsTightest, fontFamily: F.mono,
-                    lineHeight: F.lhNone, marginBottom: SP[1.5],
-                  }}>
+                  <div className="kpi-value" style={{ marginBottom: SP[1.5] }}>
                     {value}
                   </div>
                   <div style={{ fontSize: F.sm, color: C.muted, fontWeight: F.medium, marginBottom: SP[0.5] }}>{label}</div>
@@ -849,11 +898,17 @@ export default function AdminClient({
                     const detail = auditDetail(entry)
                     const co     = affectedCompany(entry)
                     return (
-                      <div key={entry.id} style={{
-                        display: 'flex', alignItems: 'center', gap: SP[3.5],
-                        padding: `${SP[2.5]} ${SP[5]}`,
-                        borderBottom: i < Math.min(auditLogs.length, 8) - 1 ? `1px solid ${C.borderSub}` : 'none',
-                      }}>
+                      <div
+                        key={entry.id}
+                        onMouseEnter={() => setRowHover(`feed-${entry.id}`)}
+                        onMouseLeave={() => setRowHover(null)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: SP[3.5],
+                          padding: `${SP[2.5]} ${SP[5]}`,
+                          borderBottom: i < Math.min(auditLogs.length, 8) - 1 ? `1px solid ${C.borderSub}` : 'none',
+                          background: rowHover === `feed-${entry.id}` ? C.surfaceHov : 'transparent',
+                          transition: 'background 0.12s ease', cursor: 'default',
+                        }}>
                         <div style={{ width: 8, height: 8, borderRadius: R.full, background: meta.color, flexShrink: 0 }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>
@@ -883,14 +938,14 @@ export default function AdminClient({
           <div className="fade-in-up">
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: SP[6], gap: SP[4] }}>
               <div>
-                <h1 style={{ margin: 0, fontSize: F.xl, fontWeight: F.bold, color: C.ink, letterSpacing: F.lsTighter }}>Entreprises</h1>
+                <h1 style={{ margin: 0, fontSize: F['2xl'], fontWeight: F.bold, color: C.ink, letterSpacing: F.lsTighter, fontFamily: F.display, lineHeight: F.lhTight, fontOpticalSizing: 'auto' } as any}>Entreprises</h1>
                 <p style={{ margin: `${SP[1]} 0 0`, fontSize: F.sm, color: C.muted }}>
                   {companies.length} entreprise{companies.length !== 1 ? 's' : ''} · {activeCompanies} active{activeCompanies !== 1 ? 's' : ''}
                 </p>
               </div>
               <button
                 className="btn-amber"
-                onClick={() => { setShowModal(true); setFormStep(1); setFormError(null) }}
+                onClick={() => { setDrawerCid(null); setShowModal(true); setFormStep(1); setFormError(null) }}
                 style={{ display: 'flex', alignItems: 'center', gap: SP[2], height: 38, padding: `0 ${SP[4]}`, flexShrink: 0 }}
               >
                 <IconPlus size={13} color="#FAF5EE" />
@@ -922,7 +977,7 @@ export default function AdminClient({
                     ? 'Aucune entreprise ne correspond à cette recherche.'
                     : 'Créez votre première entreprise pour démarrer.'}
                   action={!companySearch
-                    ? { label: 'Nouvelle entreprise', onClick: () => { setShowModal(true); setFormStep(1) } }
+                    ? { label: 'Nouvelle entreprise', onClick: () => { setDrawerCid(null); setShowModal(true); setFormStep(1) } }
                     : undefined}
                 />
               ) : (
@@ -1000,17 +1055,17 @@ export default function AdminClient({
                           </td>
                           <td style={{ padding: `${SP[3.5]} ${SP[4]}`, textAlign: 'right' }}>
                             <button
+                              className="btn-surface"
                               onClick={() => { setDrawerCid(co.id); setDrawerError(null) }}
                               style={{
                                 display: 'inline-flex', alignItems: 'center', gap: SP[1.5],
                                 padding: `${SP[1.5]} ${SP[3]}`,
-                                border: `1px solid ${C.border}`, borderRadius: R.sm,
-                                background: C.surface, color: C.muted,
+                                borderRadius: R.sm,
                                 fontSize: F.sm, fontWeight: F.medium,
-                                cursor: 'pointer', fontFamily: F.body, transition: TR.fast,
+                                cursor: 'pointer', fontFamily: F.body,
                               }}
                             >
-                              Détails <IconChevronRight size={11} color={C.muted} />
+                              Détails <IconChevronRight size={11} />
                             </button>
                           </td>
                         </tr>
@@ -1028,7 +1083,7 @@ export default function AdminClient({
           <div className="fade-in-up">
             <div style={{ marginBottom: SP[6] }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], marginBottom: SP[1] }}>
-                <h1 style={{ margin: 0, fontSize: F.xl, fontWeight: F.bold, color: C.ink, letterSpacing: F.lsTighter }}>Journal</h1>
+                <h1 style={{ margin: 0, fontSize: F['2xl'], fontWeight: F.bold, color: C.ink, letterSpacing: F.lsTighter, fontFamily: F.display, lineHeight: F.lhTight, fontOpticalSizing: 'auto' } as any}>Journal</h1>
                 <span style={{
                   fontSize: F.xs, fontWeight: F.semibold, color: C.amber,
                   background: C.amberGlow, border: '1px solid rgba(160,83,26,0.28)',
@@ -1104,12 +1159,18 @@ export default function AdminClient({
                         const detail = auditDetail(entry)
                         const co     = affectedCompany(entry)
                         return (
-                          <div key={entry.id} style={{
-                            display: 'flex', alignItems: 'center', gap: SP[3.5],
-                            padding: `${SP[2.5]} ${SP[4]}`,
-                            borderRadius: R.lg, background: C.surface,
-                            border: `1px solid ${C.borderSub}`,
-                          }}>
+                          <div
+                            key={entry.id}
+                            onMouseEnter={() => setRowHover(`journal-${entry.id}`)}
+                            onMouseLeave={() => setRowHover(null)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: SP[3.5],
+                              padding: `${SP[2.5]} ${SP[4]}`,
+                              borderRadius: R.lg,
+                              background: rowHover === `journal-${entry.id}` ? C.surfaceHov : C.surface,
+                              border: `1px solid ${rowHover === `journal-${entry.id}` ? C.border : C.borderSub}`,
+                              transition: 'background 0.12s ease, border-color 0.12s ease',
+                            }}>
                             <div style={{ width: 8, height: 8, borderRadius: R.full, background: meta.color, flexShrink: 0 }} />
                             <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: SP[2.5], flexWrap: 'wrap' }}>
                               <Bdg color={meta.color} bg={meta.bg} bd={meta.bd}>{meta.label}</Bdg>
@@ -1151,6 +1212,7 @@ export default function AdminClient({
       <>
         <div
           onClick={() => { setDrawerCid(null); setDrawerError(null) }}
+          className="modal-overlay"
           style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.35)', zIndex: Z.overlay, backdropFilter: 'blur(2px)' }}
         />
         <div className="drawer-panel" style={{
@@ -1178,8 +1240,9 @@ export default function AdminClient({
               </div>
             </div>
             <button
+              className="btn-icon"
               onClick={() => { setDrawerCid(null); setDrawerError(null) }}
-              style={{ background: CANVAS, border: `1px solid ${C.border}`, borderRadius: R.sm, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+              style={{ width: 30, height: 30, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}
             >
               <IconClose size={12} color={C.muted} />
             </button>
@@ -1239,7 +1302,10 @@ export default function AdminClient({
                   fontFamily: F.body, opacity: toggling === drawerCompany.id ? 0.6 : 1,
                 }}
               >
-                {toggling === drawerCompany.id ? '…' : drawerCompany.is_active ? 'Suspendre l\'entreprise' : 'Réactiver'}
+                {toggling === drawerCompany.id
+                  ? <><span className="spinner" style={{ width: 13, height: 13, borderColor: drawerCompany.is_active ? `${C.red}30` : `${C.green}30`, borderTopColor: drawerCompany.is_active ? C.red : C.green }} /> En cours…</>
+                  : drawerCompany.is_active ? 'Suspendre l\'entreprise' : 'Réactiver'
+                }
               </button>
             </div>
 
@@ -1297,7 +1363,7 @@ export default function AdminClient({
         onClose={() => { setCmdOpen(false); setCmdQuery('') }}
         onAction={action => {
           setCmdOpen(false); setCmdQuery('')
-          if      (action === 'create')    { setShowModal(true); setFormStep(1) }
+          if      (action === 'create')    { setDrawerCid(null); setShowModal(true); setFormStep(1) }
           else if (action === 'companies') setTab('companies')
           else if (action === 'journal')   setTab('journal')
           else if (action === 'overview')  setTab('overview')
@@ -1312,6 +1378,7 @@ export default function AdminClient({
     {confirmSuspend && (
       <div
         onClick={e => { if (e.target === e.currentTarget) setConfirmSuspend(null) }}
+        className="modal-overlay"
         style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal + 10, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body }}
       >
         <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 380, border: `1px solid ${C.border}`, boxShadow: SH.xl, overflow: 'hidden' }}>
@@ -1323,8 +1390,9 @@ export default function AdminClient({
             </p>
             <div style={{ display: 'flex', gap: SP[2.5] }}>
               <button
+                className="btn-red"
                 onClick={async () => { const t = confirmSuspend; setConfirmSuspend(null); await handleUserToggle(t.userId, false) }}
-                style={{ flex: 1, height: 40, background: C.red, color: C.white, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}
+                style={{ flex: 1, height: 40, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
               >
                 Confirmer la suspension
               </button>
@@ -1346,6 +1414,7 @@ export default function AdminClient({
     {resetTarget && (
       <div
         onClick={e => { if (e.target === e.currentTarget && !resetLoading) { setResetTarget(null); setResetError(null); setResetPwd('') } }}
+        className="modal-overlay"
         style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.50)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal + 10, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body }}
       >
         <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 400, border: `1px solid ${C.border}`, boxShadow: SH.xl, overflow: 'hidden' }}>
@@ -1397,9 +1466,9 @@ export default function AdminClient({
                 className="btn-amber"
                 onClick={handlePasswordReset}
                 disabled={resetLoading || resetPwd.length < 8}
-                style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer', fontFamily: F.body, opacity: resetPwd.length < 8 ? 0.45 : 1 }}
+                style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: resetLoading || resetPwd.length < 8 ? 'not-allowed' : 'pointer', fontFamily: F.body, opacity: resetPwd.length < 8 ? 0.45 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
               >
-                {resetLoading ? 'En cours…' : 'Confirmer'}
+                {resetLoading ? <><span className="spinner-dark" style={{ width: 13, height: 13 }} /> En cours…</> : 'Confirmer'}
               </button>
               <button
                 onClick={() => { setResetTarget(null); setResetError(null); setResetPwd('') }}
@@ -1419,7 +1488,8 @@ export default function AdminClient({
     ═══════════════════════════════════════════════════════════════════════ */}
     {showModal && (
       <div
-        onClick={e => { if (e.target === e.currentTarget && !submitting) { setShowModal(false); setFormStep(1) } }}
+        onClick={e => { if (e.target === e.currentTarget && !submitting) { setShowModal(false); setFormStep(1); setForm(emptyForm()); setFormError(null) } }}
+        className="modal-overlay"
         style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.48)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body }}
       >
         <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 520, border: `1px solid ${C.border}`, boxShadow: SH.xl, overflow: 'hidden' }}>
@@ -1443,8 +1513,9 @@ export default function AdminClient({
                 }} />
               ))}
               <button
-                onClick={() => !submitting && (setShowModal(false), setFormStep(1))}
-                style={{ marginLeft: SP[2], background: CANVAS, border: `1px solid ${C.border}`, borderRadius: R.sm, width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                onClick={() => { if (!submitting) { setShowModal(false); setFormStep(1); setForm(emptyForm()); setFormError(null) } }}
+                className="btn-icon"
+                style={{ marginLeft: SP[2], width: 30, height: 30, borderRadius: R.sm, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}
               >
                 <IconClose size={12} color={C.muted} />
               </button>
@@ -1513,8 +1584,8 @@ export default function AdminClient({
                   <button type="button" onClick={() => { setFormStep(1); setFormError(null) }} disabled={submitting} style={{ padding: `0 ${SP[4]}`, height: 42, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: 'pointer', fontFamily: F.body }}>
                     Retour
                   </button>
-                  <button type="submit" className="btn-amber" disabled={submitting} style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body }}>
-                    {submitting ? 'Création en cours…' : 'Créer l\'entreprise'}
+                  <button type="submit" className="btn-amber" disabled={submitting} style={{ flex: 1, height: 42, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.bold, cursor: submitting ? 'wait' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}>
+                    {submitting ? <><span className="spinner-dark" style={{ width: 13, height: 13 }} /> Création en cours…</> : 'Créer l\'entreprise'}
                   </button>
                 </div>
               </>
@@ -1523,6 +1594,52 @@ export default function AdminClient({
         </div>
       </div>
     )}
+    {/* ════════════════════════════════════════════════════════════════════════
+        LOGOUT CONFIRMATION
+    ═══════════════════════════════════════════════════════════════════════ */}
+    {confirmLogout && (
+      <div
+        onClick={e => { if (e.target === e.currentTarget && !loggingOut) setConfirmLogout(false) }}
+        className="modal-overlay"
+        style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: Z.modal + 30, padding: SP[5], backdropFilter: 'blur(4px)', fontFamily: F.body }}
+      >
+        <div className="modal-panel" style={{ background: C.surfaceEl, borderRadius: R.xl, width: '100%', maxWidth: 360, border: `1px solid ${C.border}`, boxShadow: SH.xl, overflow: 'hidden' }}>
+          <div style={{ height: 3, background: `linear-gradient(90deg, ${C.amberActive}, ${C.amber}, ${C.amberDim})` }} />
+          <div style={{ padding: `${SP[5]} ${SP[6]}` }}>
+            <div style={{ width: 44, height: 44, borderRadius: R.lg, background: C.surfaceSub, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: SP[4] }}>
+              <IconLogOut size={18} color={C.muted} />
+            </div>
+            <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, marginBottom: SP[2] }}>Déconnexion</div>
+            <p style={{ margin: `0 0 ${SP[5]}`, fontSize: F.sm, color: C.muted, lineHeight: F.lhRelaxed }}>
+              Vous allez être déconnecté de la console d'administration. Cette action mettra fin à votre session en cours.
+            </p>
+            <div style={{ display: 'flex', gap: SP[2.5] }}>
+              <button
+                onClick={async () => {
+                  setLoggingOut(true)
+                  const { createClient } = await import('@/lib/supabase/client')
+                  await createClient().auth.signOut()
+                  router.push('/login')
+                }}
+                disabled={loggingOut}
+                className="btn-red"
+                style={{ flex: 1, height: 40, border: 'none', borderRadius: R.md, fontSize: F.sm, fontWeight: F.semibold, cursor: loggingOut ? 'wait' : 'pointer', fontFamily: F.body, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2] }}
+              >
+                {loggingOut ? <><span className="spinner-dark" style={{ width: 13, height: 13 }} /> Déconnexion…</> : 'Se déconnecter'}
+              </button>
+              <button
+                onClick={() => setConfirmLogout(false)}
+                disabled={loggingOut}
+                style={{ padding: `0 ${SP[4]}`, background: CANVAS, color: C.muted, border: `1px solid ${C.border}`, borderRadius: R.sm, fontSize: F.sm, fontWeight: F.medium, cursor: loggingOut ? 'not-allowed' : 'pointer', fontFamily: F.body }}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     </>
   )
 }
@@ -1621,7 +1738,8 @@ function UserRow({ user, menuOpen, isToggling, onMenuToggle, onReset, onSuspend,
                     disabled={isToggling}
                     style={{ display: 'flex', alignItems: 'center', gap: SP[2.5], width: '100%', padding: `${SP[2.5]} ${SP[3.5]}`, background: 'none', border: 'none', cursor: isToggling ? 'wait' : 'pointer', fontSize: F.sm, color: C.red, fontFamily: F.body, textAlign: 'left', opacity: isToggling ? 0.5 : 1 }}
                   >
-                    <IconUserOff size={13} color={C.red} /> Suspendre
+                    {isToggling ? <span className="spinner-amber" style={{ width: 12, height: 12, borderColor: `${C.red}30`, borderTopColor: C.red }} /> : <IconUserOff size={13} color={C.red} />}
+                    Suspendre
                   </button>
                 ) : (
                   <button
@@ -1629,7 +1747,8 @@ function UserRow({ user, menuOpen, isToggling, onMenuToggle, onReset, onSuspend,
                     disabled={isToggling}
                     style={{ display: 'flex', alignItems: 'center', gap: SP[2.5], width: '100%', padding: `${SP[2.5]} ${SP[3.5]}`, background: 'none', border: 'none', cursor: isToggling ? 'wait' : 'pointer', fontSize: F.sm, color: C.green, fontFamily: F.body, textAlign: 'left', opacity: isToggling ? 0.5 : 1 }}
                   >
-                    <IconUserCheck size={13} color={C.green} /> Réactiver
+                    {isToggling ? <span className="spinner-amber" style={{ width: 12, height: 12, borderColor: `${C.green}30`, borderTopColor: C.green }} /> : <IconUserCheck size={13} color={C.green} />}
+                    Réactiver
                   </button>
                 )}
               </div>
@@ -1648,31 +1767,73 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
   onClose:       () => void
   onAction:      (a: string) => void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef  = useRef<HTMLInputElement>(null)
+  const listRef   = useRef<HTMLDivElement>(null)
+  const [selIdx, setSelIdx] = useState(-1)
+
   useEffect(() => { inputRef.current?.focus() }, [])
 
   const ACTIONS = [
     { id: 'create',    label: 'Nouvelle entreprise', sub: 'Créer un compte client',       Icon: IconPlus     },
     { id: 'companies', label: 'Entreprises',          sub: 'Voir toutes les entreprises',  Icon: IconBuilding },
     { id: 'journal',   label: 'Journal',              sub: 'Historique des actions',       Icon: IconHistory  },
-    { id: 'overview',  label: 'Vue d\'ensemble',       sub: 'Tableau de bord principal',    Icon: IconGrid     },
+    { id: 'overview',  label: "Vue d'ensemble",        sub: 'Tableau de bord principal',    Icon: IconGrid     },
   ]
 
-  const q          = query.toLowerCase()
-  const matchedCos = q
-    ? companies.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        c.slug.includes(q) ||
-        (c.owner?.email ?? '').toLowerCase().includes(q)
-      ).slice(0, 5)
-    : []
-  const matchedActs = q
-    ? ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.sub.toLowerCase().includes(q))
-    : ACTIONS
+  const q           = query.toLowerCase()
+  const matchedCos  = q ? companies.filter(c =>
+    c.name.toLowerCase().includes(q) || c.slug.includes(q) || (c.owner?.email ?? '').toLowerCase().includes(q)
+  ).slice(0, 5) : []
+  const matchedActs = q ? ACTIONS.filter(a => a.label.toLowerCase().includes(q) || a.sub.toLowerCase().includes(q)) : ACTIONS
+
+  // flat ordered list of action IDs for keyboard nav
+  const allIds: string[] = [
+    ...matchedCos.map(c => `co:${c.id}`),
+    ...matchedActs.map(a => a.id),
+  ]
+  const total = allIds.length
+
+  // reset selection when query changes
+  useEffect(() => { setSelIdx(-1) }, [query])
+
+  // scroll selected item into view
+  useEffect(() => {
+    if (selIdx < 0 || !listRef.current) return
+    const el = listRef.current.querySelector(`[data-cmd-idx="${selIdx}"]`) as HTMLElement | null
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [selIdx])
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelIdx(i => (i + 1) % total)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelIdx(i => i <= 0 ? total - 1 : i - 1)
+    } else if (e.key === 'Enter' && selIdx >= 0 && selIdx < total) {
+      e.preventDefault()
+      onAction(allIds[selIdx])
+    }
+  }
+
+  function itemStyle(id: string): React.CSSProperties {
+    const myIdx = allIds.indexOf(id)
+    const active = selIdx === myIdx
+    return {
+      display: 'flex', alignItems: 'center', gap: SP[3],
+      width: '100%', padding: `${SP[2.5]} ${SP[4]}`,
+      background: active ? C.surfaceHov : 'none',
+      border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: F.body,
+      transition: 'background 0.08s ease',
+      outline: active ? `2px solid ${C.amber}` : 'none',
+      outlineOffset: '-2px',
+    }
+  }
 
   return (
     <div
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      className="modal-overlay"
       style={{ position: 'fixed', inset: 0, background: 'rgba(26,15,6,0.55)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh', zIndex: Z.modal + 20, backdropFilter: 'blur(4px)', fontFamily: F.body }}
     >
       <div style={{
@@ -1688,7 +1849,8 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
           <input
             ref={inputRef}
             value={query}
-            onChange={e => onQueryChange(e.target.value)}
+            onChange={e => { onQueryChange(e.target.value) }}
+            onKeyDown={handleKeyDown}
             placeholder="Rechercher une action, une entreprise…"
             style={{ flex: 1, border: 'none', outline: 'none', fontSize: F.base, fontFamily: F.body, color: C.ink, background: 'transparent' }}
           />
@@ -1697,29 +1859,34 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
           </kbd>
         </div>
 
-        <div style={{ maxHeight: 400, overflowY: 'auto', paddingBottom: SP[1.5] }}>
+        <div ref={listRef} style={{ maxHeight: 400, overflowY: 'auto', paddingBottom: SP[1.5] }}>
           {/* Company results */}
           {matchedCos.length > 0 && (
             <>
               <div style={{ fontSize: 10, fontWeight: F.bold, color: C.dim, letterSpacing: F.lsWider, textTransform: 'uppercase', padding: `${SP[2.5]} ${SP[4]} ${SP[1]}` }}>
                 Entreprises
               </div>
-              {matchedCos.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => onAction(`co:${c.id}`)}
-                  style={{ display: 'flex', alignItems: 'center', gap: SP[3], width: '100%', padding: `${SP[2.5]} ${SP[4]}`, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: F.body }}
-                >
-                  <CompanyAvatar name={c.name} size={26} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: F.sm, fontWeight: F.medium, color: C.ink }}>{c.name}</div>
-                    <div style={{ fontSize: 11, color: C.muted, fontFamily: F.mono }}>{c.slug}</div>
-                  </div>
-                  <Bdg color={c.is_active ? C.green : C.red} bg={c.is_active ? C.greenBg : C.redBg}>
-                    {c.is_active ? 'Actif' : 'Suspendu'}
-                  </Bdg>
-                </button>
-              ))}
+              {matchedCos.map(c => {
+                const idx = allIds.indexOf(`co:${c.id}`)
+                return (
+                  <button
+                    key={c.id}
+                    data-cmd-idx={idx}
+                    onClick={() => onAction(`co:${c.id}`)}
+                    onMouseEnter={() => setSelIdx(idx)}
+                    style={itemStyle(`co:${c.id}`)}
+                  >
+                    <CompanyAvatar name={c.name} size={26} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: F.sm, fontWeight: F.medium, color: C.ink }}>{c.name}</div>
+                      <div style={{ fontSize: 11, color: C.muted, fontFamily: F.mono }}>{c.slug}</div>
+                    </div>
+                    <Bdg color={c.is_active ? C.green : C.red} bg={c.is_active ? C.greenBg : C.redBg}>
+                      {c.is_active ? 'Actif' : 'Suspendu'}
+                    </Bdg>
+                  </button>
+                )
+              })}
             </>
           )}
 
@@ -1729,21 +1896,29 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
               <div style={{ fontSize: 10, fontWeight: F.bold, color: C.dim, letterSpacing: F.lsWider, textTransform: 'uppercase', padding: `${SP[2.5]} ${SP[4]} ${SP[1]}` }}>
                 Actions
               </div>
-              {matchedActs.map(({ id, label, sub, Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => onAction(id)}
-                  style={{ display: 'flex', alignItems: 'center', gap: SP[3], width: '100%', padding: `${SP[2.5]} ${SP[4]}`, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: F.body }}
-                >
-                  <div style={{ width: 30, height: 30, borderRadius: R.md, background: C.surfaceSub, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Icon size={14} color={C.muted} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: F.sm, fontWeight: F.medium, color: C.ink }}>{label}</div>
-                    <div style={{ fontSize: 11, color: C.muted }}>{sub}</div>
-                  </div>
-                </button>
-              ))}
+              {matchedActs.map(({ id, label, sub, Icon }) => {
+                const idx = allIds.indexOf(id)
+                return (
+                  <button
+                    key={id}
+                    data-cmd-idx={idx}
+                    onClick={() => onAction(id)}
+                    onMouseEnter={() => setSelIdx(idx)}
+                    style={itemStyle(id)}
+                  >
+                    <div style={{ width: 30, height: 30, borderRadius: R.md, background: C.surfaceSub, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Icon size={14} color={C.muted} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: F.sm, fontWeight: F.medium, color: C.ink }}>{label}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{sub}</div>
+                    </div>
+                    {idx === selIdx && (
+                      <kbd style={{ marginLeft: 'auto', fontSize: 10, color: C.dim, background: C.surfaceSub, border: `1px solid ${C.border}`, borderRadius: R.xs, padding: '1px 6px', fontFamily: F.mono, flexShrink: 0 }}>↵</kbd>
+                    )}
+                  </button>
+                )
+              })}
             </>
           )}
 
@@ -1753,6 +1928,18 @@ function CmdPalette({ query, onQueryChange, companies, onClose, onAction }: {
             </div>
           )}
         </div>
+
+        {/* Footer hint */}
+        {total > 0 && (
+          <div style={{ padding: `${SP[2]} ${SP[4]}`, borderTop: `1px solid ${C.borderSub}`, display: 'flex', gap: SP[3], alignItems: 'center' }}>
+            {[['↑↓', 'Naviguer'], ['↵', 'Sélectionner'], ['ESC', 'Fermer']].map(([key, desc]) => (
+              <span key={key} style={{ display: 'flex', alignItems: 'center', gap: SP[1.5], fontSize: 10, color: C.dim }}>
+                <kbd style={{ background: C.surfaceSub, border: `1px solid ${C.border}`, borderRadius: R.xs, padding: '1px 5px', fontFamily: F.mono, fontSize: 10 }}>{key}</kbd>
+                {desc}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

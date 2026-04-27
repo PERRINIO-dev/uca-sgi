@@ -81,17 +81,19 @@ src/
 │   ├── constants.ts                  ← LOW_STOCK_CARTONS/UNITS thresholds
 │   ├── format.ts                     ← fmtCurrency(amount, currency)
 │   ├── pluralize.ts                  ← French pluralisation (sac→sacs, eau→eaux…)
+│   ├── dashboard-kpis.ts             ← Shared KPI computation (server + API path)
 │   ├── push/send.ts                  ← sendPushToRoles() / sendPushToUser()
 │   └── supabase/
 │       ├── client.ts · server.ts · admin.ts
+│       ├── audit.ts                  ← AuditActionType union + auditLog() helper
 │       ├── badge-counts.ts
 │       └── queries.ts
 ├── components/
 │   ├── Sidebar.tsx                   ← 240px dark espresso nav, cognac accent
 │   ├── PageLayout.tsx                ← Auth wrapper + mobile header + SW registration
-│   ├── CategoryCombobox.tsx          ← Free-text + inline category creation
 │   ├── PushSubscription.tsx          ← Opt-in notification banner
 │   ├── PwaInstallPrompt.tsx          ← "Add to home screen" prompt
+│   ├── SkeletonShell.tsx             ← Loading skeleton
 │   └── NetworkStatusBanner.tsx       ← Offline banner
 ├── hooks/
 │   └── useIsMobile.ts                ← SSR-safe (breakpoint 768px)
@@ -99,7 +101,12 @@ src/
     ├── layout.tsx / manifest.ts / icon.tsx / apple-icon.tsx
     ├── login/page.tsx                ← Split-screen branding
     ├── auth/callback/route.ts        ← Session exchange + role-based redirect
-    ├── api/push/subscribe/route.ts   ← POST/DELETE push subscription endpoint
+    ├── api/
+    │   ├── push/subscribe/route.ts   ← POST/DELETE push subscription endpoint
+    │   ├── sales/route.ts            ← Paginated sales list with filters
+    │   ├── dashboard/route.ts        ← KPI refresh endpoint (SWR path)
+    │   └── pdf/invoice/[saleId]/     ← Server-side PDF generation
+    ├── customers/actions.ts          ← searchCustomers / createCustomer / update / delete
     ├── admin/                        ← Platform operator panel (is_platform_admin)
     ├── dashboard/                    ← KPIs, stock request approvals, Realtime
     ├── sales/                        ← Sales list + new sale form (VendorSaleForm)
@@ -127,7 +134,7 @@ public/
 ### Tenant tables
 `boutiques`, `users`, `products`, `product_categories`, `stock`,
 `stock_requests`, `sales`, `sale_items`, `sale_payments`, `orders`,
-`audit_logs`
+`customers`, `audit_logs`
 
 ### Client-side queries
 Authenticated client queries need **no explicit `company_id` filter** — RLS
@@ -167,6 +174,11 @@ email, full_name, role, boutique_id (nullable),
 is_active, is_platform_admin, created_at
 ```
 
+**customers**
+```
+id, company_id, full_name, phone, phone2, cni, notes, created_at, updated_at
+```
+
 **products**
 ```
 id, company_id, reference_code (UNIQUE per company), name,
@@ -185,13 +197,13 @@ is_active, created_at
 **stock** — one row per product
 ```
 id, product_id (UNIQUE FK), company_id,
-total_tiles, reserved_tiles, last_updated_at
+total_qty, reserved_qty, last_updated_at
 ```
 
 **stock_view** — computed view (`security_invoker = on`, inherits caller's RLS)
 ```
 product_id, company_id, product_name, reference_code, product_type, unit_label,
-tiles_per_carton, tile_area_m2, total_tiles, reserved_tiles, available_tiles,
+tiles_per_carton, tile_area_m2, total_qty, reserved_qty, available_qty,
 available_full_cartons, loose_tiles, available_m2, full_cartons
 ```
 
@@ -200,7 +212,8 @@ available_full_cartons, loose_tiles, available_m2, full_cartons
 id, company_id,
 sale_number  (auto: VNT-YYYY-NNNN per company × year, empty for drafts),
 quote_number (auto: DEV-YYYY-NNNN per company × year, drafts only),
-boutique_id, vendor_id, customer_name, customer_phone, customer_cni,
+boutique_id, vendor_id,
+customer_id (FK customers, nullable), customer_name, customer_phone, customer_phone2, customer_cni,
 total_amount, amount_paid, payment_status, status, notes, created_at
 ```
 
@@ -251,20 +264,27 @@ endpoint (UNIQUE), subscription (jsonb), created_at
 
 ### Key RPCs
 ```sql
-reserve_stock_on_sale(p_product_id UUID, p_quantity INTEGER) RETURNS BOOLEAN
--- SECURITY DEFINER — SELECT FOR UPDATE then UPDATE reserved_tiles atomically
+create_confirmed_sale(...) RETURNS JSON
+-- SECURITY DEFINER — atomically creates sale + items + reserves stock + creates order
 
-release_stock_on_cancel(p_product_id UUID, p_quantity INTEGER) RETURNS void
--- SECURITY DEFINER — decrements reserved_tiles (not total_tiles)
+reserve_sale_items(p_sale_id UUID) RETURNS void
+-- SECURITY DEFINER — bulk atomic reservation of all items in a sale
 
-decrement_stock_on_delivery(p_product_id UUID, p_quantity INTEGER) RETURNS void
--- SECURITY DEFINER — decrements both total_tiles and reserved_tiles
+release_sale_items(p_sale_id UUID) RETURNS void
+-- SECURITY DEFINER — bulk atomic release of all reserved stock for a sale
+
+decrement_stock_on_delivery(p_product_id UUID, p_quantity INTEGER, p_company_id UUID) RETURNS void
+-- SECURITY DEFINER — decrements both total_qty and reserved_qty atomically
 
 confirm_quote(p_sale_id UUID) RETURNS TEXT
--- SECURITY DEFINER — atomically assigns VNT number and sets status=confirmed
+-- SECURITY DEFINER — atomically assigns VNT number, confirms status,
+--                    reserves stock and creates warehouse order
 
-apply_approved_stock_request(request_id UUID)
--- SECURITY DEFINER — updates total_tiles, records stock_after_tiles
+apply_approved_stock_request(request_id UUID) RETURNS void
+-- SECURITY DEFINER — updates total_qty, records stock_after snapshot
+
+find_or_create_product_category(p_company_id UUID, p_product_type TEXT, p_name TEXT) RETURNS TABLE
+-- Resolves a category name to an id; creates it if new (slug normalised in DB)
 
 get_my_company_id() RETURNS UUID  -- used by RLS policies
 get_my_role() RETURNS TEXT        -- used by RLS policies
@@ -296,6 +316,7 @@ publication:
 | sale_items | via sales join | vendor/admin/owner | — |
 | sale_payments | via sales join | owner/admin/vendor (server action) | — |
 | orders | warehouse/admin/owner | vendor/admin/owner | warehouse/admin/owner |
+| customers | authenticated | vendor/admin/owner | admin/owner |
 | audit_logs | owner/admin | authenticated | never |
 | push_subscriptions | own rows | own rows | own rows |
 
@@ -313,9 +334,9 @@ publication:
 
 **Sidebar visibility:**
 ```
-owner/admin:     Dashboard, Sales, Warehouse, Products, Users, Reports
-vendor:          Sales, Quotes
-warehouse:       Warehouse
+owner/admin:     Dashboard, Sales, Quotes, Warehouse, Catalogue, Utilisateurs, Rapports
+vendor:          Ventes, Devis
+warehouse:       Entrepôt
 platform_admin:  Dedicated /admin interface — no standard nav
 ```
 
@@ -331,9 +352,9 @@ customer before committing stock.
    No stock is reserved at this stage.
 
 2. From /quotes, vendor converts to sale (convertQuote):
-   - confirm_quote RPC assigns VNT number and sets status=confirmed
-   - reserve_stock_on_sale called per product
-   - Warehouse order created
+   - confirm_quote RPC atomically assigns VNT number, confirms status,
+     reserves all stock, and creates the warehouse order
+   - Initial payment recorded if amount_paid > 0
    - Push sent to warehouse/admin/owner
 
 3. Or vendor cancels (cancelQuote) → status: cancelled, no stock impact
@@ -374,25 +395,24 @@ CRITICAL_STOCK_UNITS   =  3   // other types — critical
 ```
 1. Product created → stock row created at 0 (trigger)
 2. Stock request submitted → status: pending
-3. Owner approves → apply_approved_stock_request() adds units to total_tiles
-4. Sale confirmed → reserve_stock_on_sale() increments reserved_tiles
-5. Sale cancelled → release_stock_on_cancel() decrements reserved_tiles
+3. Owner approves → apply_approved_stock_request() adds units to total_qty
+4. Sale confirmed → stock reserved atomically via create_confirmed_sale() RPC
+5. Sale cancelled → release_sale_items() releases all reserved_qty atomically
 6. Delivery confirmed → decrement_stock_on_delivery() decrements
-                        both total_tiles and reserved_tiles atomically
-7. Correction approved → total_tiles adjusted (delta can be negative)
+                        both total_qty and reserved_qty atomically
+7. Correction approved → total_qty adjusted (delta can be negative)
 ```
 
 ### Sale → Order flow
 ```
 Vendor confirms sale (status: confirmed)
-    → Warehouse order auto-created (status: confirmed)
-    → reserved_tiles incremented via reserve_stock_on_sale RPC
+    → create_confirmed_sale() RPC: creates sale + items + reserves stock + creates order
     → Push sent to warehouse/admin/owner
     → Warehouse sees order in real time (Realtime)
-    → Warehouse: "Start" → order/sale: preparing
-    → Warehouse: "Mark ready" → order/sale: ready
+    → Warehouse: "Start"            → order/sale: preparing
+    → Warehouse: "Mark ready"       → order/sale: ready
     → Warehouse: "Confirm delivery" → order/sale: delivered
-    → decrement_stock_on_delivery() atomic UPDATE
+    → decrement_stock_on_delivery() atomic UPDATE per product
     → Push sent to admin/owner if any product falls below threshold
 ```
 
@@ -409,8 +429,7 @@ Vendor confirms sale (status: confirmed)
 | Product below threshold after delivery | admin, owner |
 
 `sendPushToRoles()` requires `companyId` — filters subscribers by company.
-Uses `neq('is_active', false)` to include accounts whose `is_active` is `NULL`
-(created before the column was added).
+Uses `neq('is_active', false)` to include accounts whose `is_active` is `NULL`.
 
 ---
 
@@ -477,7 +496,6 @@ All authenticated pages refresh automatically via three mechanisms:
 
 ```bash
 # Development
-cd C:\Users\majes\uca-sgi
 npm run dev
 # Runs on http://localhost:3000 with Turbopack
 
@@ -490,43 +508,20 @@ npm run start
 
 ---
 
-## 18. Deployment checklist
+## 18. Deployment
 
-- [ ] 5 env vars set in Vercel dashboard (VAPID keys included)
-- [ ] Supabase Auth → Site URL set to production domain
-- [ ] Supabase Auth → Redirect URLs includes `/auth/callback`
-- [ ] Supabase Realtime enabled for `sales` and `stock_requests`
-- [ ] `push_subscriptions` table created with RLS policy
-- [ ] All migrations applied in Supabase SQL editor (in order):
-  - `20260326_decrement_stock_on_delivery.sql`
-  - `20260327_purchase_price_snapshot.sql`
-  - `20260327_release_stock_on_cancel.sql`
-  - `20260328_audit_action_type_payment.sql`
-  - `20260329_multi_tenancy_phase1.sql`
-  - `20260329_fix_stock_trigger_company_id.sql`
-  - `20260329_product_categories.sql`
-  - `20260329_product_tile_columns_nullable.sql`
-  - `20260329_product_price_columns_nullable.sql`
-  - `20260329_product_types_fix.sql`
-  - `20260329_sale_items_snapshots_nullable.sql`
-  - `20260330_reserve_stock_on_sale.sql`
-  - `20260330_platform_admin.sql`
-  - `20260330_platform_operator.sql`
-  - `20260330_fix_platform_operator_rls.sql`
-  - `20260330_admin_audit_types.sql`
-  - `20260330_company_audit_types.sql`
-  - `20260330_product_types.sql`
-  - `20260330_warehouse_sales_rls.sql`
-  - `20260330_companies_currency.sql`
-  - `20260412_quotes.sql`
-  - `20260414_fixes.sql`
-  - `20260415_drop_sale_reservation_trigger.sql`
-  - `20260414_reserved_tiles_correction.sql`
-- [ ] `npm run build` locally — zero errors
-- [ ] Functional test: vendor → new sale → warehouse receives Realtime update
-- [ ] Functional test: warehouse confirms delivery → stock levels updated
-- [ ] Functional test: stock request → admin approves → warehouse notified (push)
-- [ ] Functional test: create quote → convert to sale → stock reserved correctly
-- [ ] Functional test: company suspension → all users disconnected
-- [ ] PWA: add to home screen on iOS → offline fallback works
-- [ ] Push: subscribe → confirm sale → notification received on mobile
+### Environment setup
+- Set all 5 env vars in the Vercel dashboard (VAPID keys included)
+- Supabase Auth → Site URL set to production domain
+- Supabase Auth → Redirect URLs includes `/auth/callback`
+- Supabase Realtime enabled for `sales` and `stock_requests`
+
+### Pre-deploy checklist
+- `npm run build` locally — zero errors
+- Vendor → new sale → warehouse receives Realtime update
+- Warehouse confirms delivery → stock levels updated
+- Stock request → admin approves → warehouse notified (push)
+- Create quote → convert to sale → stock reserved correctly
+- Company suspension → all users disconnected
+- PWA: add to home screen on iOS → offline fallback works
+- Push: subscribe → confirm sale → notification received on mobile

@@ -73,6 +73,8 @@ export const C = {
   blue:       '#1E40AF',  blueBg:   '#EFF6FF',  blueBd:   '#BFDBFE',
   gold:       '#78350F',  goldBg:   '#FFFBEB',  goldBd:   '#FDE68A',
   purple:     '#5B21B6',  purpleBg: '#F5F3FF',  purpleBd: '#DDD6FE',
+  // System/data accent — IDs, references, system values (never brand)
+  slate:    '#3D6B8A',  slateBg: 'rgba(61,107,138,0.10)',  slateBd: 'rgba(61,107,138,0.22)',
 
   // ── Sidebar — dark espresso (strong visual contrast with cream canvas) ─────
   // These tokens are ONLY used inside Sidebar.tsx.
