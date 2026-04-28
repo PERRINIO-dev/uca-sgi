@@ -585,3 +585,76 @@ export async function deleteProduct(productId: string) {
   revalidatePath('/warehouse')
   return { success: true }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bulk price update — owner/admin only
+// ─────────────────────────────────────────────────────────────────────────────
+export async function bulkUpdatePrices(
+  productIds:    string[],
+  adjustmentPct: number,
+  fields:        ('floor' | 'reference' | 'purchase')[],
+): Promise<{ success?: boolean; updated?: number; error?: string }> {
+  if (!productIds.length)  return { error: 'Aucun produit sélectionné.' }
+  if (fields.length === 0) return { error: 'Aucun champ de prix sélectionné.' }
+  if (!Number.isFinite(adjustmentPct) || adjustmentPct === 0) {
+    return { error: 'Le pourcentage doit être différent de 0.' }
+  }
+  if (Math.abs(adjustmentPct) > 100) {
+    return { error: 'Le pourcentage ne peut pas dépasser 100 %.' }
+  }
+
+  const { supabase, user, profile } = await getAuthorizedProfile()
+  if (!user || !profile) return { error: 'Non authentifié.' }
+  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+
+  const admin = getAdminClient()
+
+  const { data: products } = await admin
+    .from('products')
+    .select('id, product_type, floor_price_per_m2, floor_price_per_unit, reference_price_per_m2, reference_price_per_unit, purchase_price')
+    .in('id', productIds)
+    .eq('company_id', profile.company_id)
+    .eq('is_active', true)
+
+  if (!products?.length) return { error: 'Aucun produit trouvé.' }
+
+  const mult = 1 + adjustmentPct / 100
+
+  const results = await Promise.all(products.map((p: any) => {
+    const isTile = (p.product_type ?? 'tile') === 'tile'
+    const patch: Record<string, number> = {}
+
+    if (fields.includes('floor')) {
+      if (isTile  && p.floor_price_per_m2  != null) patch.floor_price_per_m2  = Math.round(p.floor_price_per_m2  * mult)
+      if (!isTile && p.floor_price_per_unit != null) patch.floor_price_per_unit = Math.round(p.floor_price_per_unit * mult)
+    }
+    if (fields.includes('reference')) {
+      if (isTile  && p.reference_price_per_m2  != null) patch.reference_price_per_m2  = Math.round(p.reference_price_per_m2  * mult)
+      if (!isTile && p.reference_price_per_unit != null) patch.reference_price_per_unit = Math.round(p.reference_price_per_unit * mult)
+    }
+    if (fields.includes('purchase') && p.purchase_price != null) {
+      patch.purchase_price = Math.round(p.purchase_price * mult)
+    }
+
+    if (!Object.keys(patch).length) return Promise.resolve({ error: null })
+
+    return admin.from('products').update(patch).eq('id', p.id).eq('company_id', profile.company_id)
+  }))
+
+  const failed = results.filter((r: any) => r.error).length
+  if (failed > 0) return { error: `${failed} produit(s) non mis à jour.` }
+
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: profile.role,
+    action_type:        'PRODUCT_UPDATED',
+    entity_type:        'products',
+    entity_id:          null,
+    company_id:         profile.company_id,
+    data_after:         { bulk: true, product_count: products.length, adjustment_pct: adjustmentPct, fields },
+  })
+
+  revalidatePath('/products')
+  revalidatePath('/warehouse')
+  return { success: true, updated: products.length }
+}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useRouter }    from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { createProduct, updateProduct, deleteProduct } from './actions'
+import { createProduct, updateProduct, deleteProduct, bulkUpdatePrices } from './actions'
 import PageLayout       from '@/components/PageLayout'
 import type { BadgeCounts }    from '@/lib/supabase/badge-counts'
 import type { ProductType, ProductCategory } from '@/lib/types'
@@ -145,6 +145,14 @@ export default function ProductsClient({
   const [filterType,        setFilterType]        = useState<ProductType | 'all'>('all')
   const [search,            setSearch]            = useState('')
   const refCodeTouched = useRef(false)
+
+  // Bulk price update modal
+  const [showBulk,       setShowBulk]       = useState(false)
+  const [bulkPct,        setBulkPct]        = useState('')
+  const [bulkFields,     setBulkFields]     = useState<('floor' | 'reference' | 'purchase')[]>(['floor', 'reference'])
+  const [bulkLoading,    setBulkLoading]    = useState(false)
+  const [bulkError,      setBulkError]      = useState<string | null>(null)
+  const [bulkSuccess,    setBulkSuccess]    = useState<string | null>(null)
 
   const productType = form.productType as ProductType
 
@@ -458,6 +466,37 @@ export default function ProductsClient({
     router.refresh()
   }
 
+  // ── Bulk price update ─────────────────────────────────────────────────────
+  const handleBulkUpdate = async () => {
+    const pct = parseFloat(bulkPct)
+    if (!bulkPct || isNaN(pct) || pct === 0) {
+      setBulkError('Saisissez un pourcentage non nul (ex : +10 ou -5).')
+      return
+    }
+    if (Math.abs(pct) > 100) {
+      setBulkError('Le pourcentage doit être compris entre -100 et +100.')
+      return
+    }
+    if (bulkFields.length === 0) {
+      setBulkError('Sélectionnez au moins un champ à modifier.')
+      return
+    }
+    setBulkError(null)
+    setBulkLoading(true)
+    const ids = filtered.map((p: any) => p.id)
+    const result = await bulkUpdatePrices(ids, pct, bulkFields)
+    setBulkLoading(false)
+    if (result.error) { setBulkError(result.error); return }
+    setBulkSuccess(`${result.updated} produit${(result.updated ?? 0) > 1 ? 's' : ''} mis à jour.`)
+    setTimeout(() => {
+      setBulkSuccess(null)
+      setShowBulk(false)
+      setBulkPct('')
+      setBulkFields(['floor', 'reference'])
+      router.refresh()
+    }, 1800)
+  }
+
   // ── Filter ────────────────────────────────────────────────────────────────
   const filtered = products.filter(p => {
     if (filterActive === 'active'   && !p.is_active) return false
@@ -511,20 +550,38 @@ export default function ProductsClient({
             {products.filter(p => p.is_active).length !== 1 ? 's' : ''}
           </p>
         </div>
-        <button
-          className="btn-amber"
-          onClick={() => {
-            setForm(emptyForm('tile'))
-            setError(null)
-            setSuccess(null)
-            refCodeTouched.current = false
-            setModalStep(1)
-            setShowCreate(true)
-          }}
-          style={{ height: 40, padding: `0 ${SP[5]}`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>
-          Nouveau produit
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {['owner', 'admin'].includes(profile.role) && (
+            <button
+              onClick={() => {
+                setBulkError(null); setBulkSuccess(null)
+                setBulkPct(''); setBulkFields(['floor', 'reference'])
+                setShowBulk(true)
+              }}
+              style={{ height: 40, padding: `0 ${SP[4]}`, display: 'inline-flex', alignItems: 'center', gap: 6,
+                borderRadius: 8, border: `1.5px solid ${C.border}`, background: C.surface,
+                fontSize: 13, fontWeight: 600, color: C.text, cursor: 'pointer', fontFamily: F.body }}>
+              <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+                <path d="M1 7h12M9 3l4 4-4 4" stroke={C.muted} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Révision prix
+            </button>
+          )}
+          <button
+            className="btn-amber"
+            onClick={() => {
+              setForm(emptyForm('tile'))
+              setError(null)
+              setSuccess(null)
+              refCodeTouched.current = false
+              setModalStep(1)
+              setShowCreate(true)
+            }}
+            style={{ height: 40, padding: `0 ${SP[5]}`, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="#FAF5EE" strokeWidth="2" strokeLinecap="round"/></svg>
+            Nouveau produit
+          </button>
+        </div>
       </div>
 
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
@@ -708,6 +765,129 @@ export default function ProductsClient({
                 fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               {deleteLoading ? <><span className="spinner" />Suppression…</> : 'Supprimer définitivement'}
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Bulk price update modal ── */}
+      {showBulk && (
+        <Modal title="Révision des prix en masse" onClose={() => setShowBulk(false)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            {/* Scope summary */}
+            <div style={{ padding: '11px 14px', background: C.amberGlow,
+              borderRadius: 8, border: `1px solid rgba(160,83,26,0.2)` }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: C.amber, fontFamily: F.body }}>
+                {filtered.length} produit{filtered.length !== 1 ? 's' : ''} concerné{filtered.length !== 1 ? 's' : ''}
+              </div>
+              <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 3 }}>
+                Filtres actifs : type = {filterType === 'all' ? 'tous' : filterType} · statut = {filterActive === 'all' ? 'tous' : filterActive === 'active' ? 'actifs' : 'inactifs'}
+                {search && ` · recherche "${search}"`}
+              </div>
+            </div>
+
+            {/* Adjustment % */}
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: C.muted,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                display: 'block', marginBottom: 6, fontFamily: F.body }}>
+                Ajustement (%)
+              </label>
+              <div style={{ position: 'relative', maxWidth: 200 }}>
+                <input
+                  type="number"
+                  value={bulkPct}
+                  onChange={e => setBulkPct(e.target.value)}
+                  placeholder="+10 ou -5"
+                  style={{ width: '100%', padding: '9px 40px 9px 12px', borderRadius: 8,
+                    border: `1.5px solid ${C.border}`, fontSize: 15, fontWeight: 700,
+                    color: C.ink, outline: 'none', boxSizing: 'border-box',
+                    background: C.surface, fontFamily: F.body }}
+                />
+                <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                  fontSize: 14, fontWeight: 700, color: C.muted, pointerEvents: 'none' }}>%</span>
+              </div>
+              <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 5 }}>
+                Positif = hausse · Négatif = baisse · Ex : +10 applique ×1,10 aux prix sélectionnés
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.muted,
+                textTransform: 'uppercase', letterSpacing: '0.06em',
+                marginBottom: 8, fontFamily: F.body }}>
+                Champs à modifier
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {([
+                  ['floor',     'Prix plancher',     'Prix minimum autorisé à la vente'],
+                  ['reference', 'Prix de référence', 'Prix catalogue affiché'],
+                  ['purchase',  "Prix d'achat",      'Prix fournisseur — confidentiel'],
+                ] as ['floor' | 'reference' | 'purchase', string, string][]).map(([key, label, hint]) => {
+                  const checked = bulkFields.includes(key)
+                  return (
+                    <label key={key} style={{ display: 'flex', alignItems: 'flex-start',
+                      gap: 10, cursor: 'pointer', padding: '8px 10px', borderRadius: 8,
+                      background: checked ? C.amberGlow : C.bg,
+                      border: `1px solid ${checked ? 'rgba(160,83,26,0.25)' : C.borderSub}` }}>
+                      <div
+                        onClick={() => setBulkFields(prev =>
+                          checked ? prev.filter(f => f !== key) : [...prev, key]
+                        )}
+                        style={{ width: 16, height: 16, borderRadius: 4, flexShrink: 0, marginTop: 2,
+                          background: checked ? C.amber : C.surface,
+                          border: `1.5px solid ${checked ? C.amber : C.border}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {checked && (
+                          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                            <path d="M1 3.5L3.5 6 8 1" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: C.ink, fontFamily: F.body }}>{label}</div>
+                        <div style={{ fontSize: 11, color: C.muted, fontFamily: F.body, marginTop: 1 }}>{hint}</div>
+                      </div>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
+            {bulkError && (
+              <div style={{ padding: '10px 12px', background: C.redBg, borderRadius: 8,
+                fontSize: 13, color: C.red, fontWeight: 600, fontFamily: F.body }}>
+                {bulkError}
+              </div>
+            )}
+            {bulkSuccess && (
+              <div style={{ padding: '10px 12px', background: C.greenBg, borderRadius: 8,
+                fontSize: 13, color: C.green, fontWeight: 600, fontFamily: F.body }}>
+                {bulkSuccess}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 4 }}>
+              <button onClick={() => setShowBulk(false)}
+                style={{ padding: '9px 18px', borderRadius: 8, border: `1.5px solid ${C.border}`,
+                  background: C.surface, color: C.muted, fontSize: 13, fontWeight: 500,
+                  cursor: 'pointer', fontFamily: F.body }}>
+                Annuler
+              </button>
+              <button
+                onClick={handleBulkUpdate}
+                disabled={bulkLoading || filtered.length === 0}
+                style={{ padding: '9px 18px', borderRadius: 8, border: 'none',
+                  background: bulkLoading || filtered.length === 0 ? C.muted : C.amber,
+                  color: 'white', fontSize: 13, fontWeight: 600,
+                  cursor: bulkLoading || filtered.length === 0 ? 'not-allowed' : 'pointer',
+                  fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                {bulkLoading
+                  ? <><span className="spinner" />Mise à jour…</>
+                  : `Appliquer sur ${filtered.length} produit${filtered.length !== 1 ? 's' : ''}`}
+              </button>
+            </div>
           </div>
         </Modal>
       )}

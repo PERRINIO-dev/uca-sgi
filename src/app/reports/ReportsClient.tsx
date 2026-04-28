@@ -37,7 +37,7 @@ const STATUS_STYLE: Record<string, { bg: string; color: string; bd: string }> = 
   ready:      { bg: C.greenBg,  color: C.green,  bd: C.greenBd  },
 }
 
-type Tab = 'overview' | 'sales' | 'products' | 'vendors' | 'devis' | 'audit'
+type Tab = 'overview' | 'sales' | 'products' | 'rotation' | 'vendors' | 'devis' | 'audit'
 
 const inputStyle: React.CSSProperties = {
   padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md,
@@ -213,24 +213,124 @@ export default function ReportsClient({
     return Object.values(map).sort((a, b) => b.ca - a.ca)
   }, [filtered])
 
-  // ── Vendor performance ─────────────────────────────────────────────────
+  // ── Vendor performance — with margin, créances, cancellations ─────────────
   const vendorData = useMemo(() => {
     const map: Record<string, {
-      name: string; ca: number; ventes: number; avgBasket: number
+      id: string; name: string
+      ca: number; ventes: number; avgBasket: number
+      cost: number; creances: number; cancelCount: number
+    }> = {}
+    filtered.forEach(s => {
+      const id   = s.users?.id   ?? 'unknown'
+      const name = s.users?.full_name ?? 'Inconnu'
+      if (!map[id]) map[id] = { id, name, ca: 0, ventes: 0, avgBasket: 0, cost: 0, creances: 0, cancelCount: 0 }
+      if (s.status === 'cancelled') { map[id].cancelCount++; return }
+      map[id].ca     += Number(s.total_amount)
+      map[id].ventes += 1
+      const balance   = Number(s.total_amount) - Number(s.amount_paid ?? 0)
+      if (balance > 0) map[id].creances += balance
+      map[id].cost += (s.sale_items ?? []).reduce((a: number, i: any) => {
+        const isTile = i.products?.product_type === 'tile'
+        const pp     = parseFloat(i.purchase_price_snapshot ?? '0') || 0
+        const m2     = isTile ? i.quantity_tiles * parseFloat(i.tile_area_m2_snapshot ?? '0') : 0
+        return a + (isTile ? pp * m2 : pp * i.quantity_tiles)
+      }, 0)
+    })
+    return Object.values(map).map(v => ({
+      ...v,
+      avgBasket:  v.ventes > 0 ? v.ca / v.ventes : 0,
+      margin:     v.ca - v.cost,
+      marginPct:  v.ca > 0 ? ((v.ca - v.cost) / v.ca) * 100 : 0,
+    })).sort((a, b) => b.ca - a.ca)
+  }, [filtered])
+
+  // ── Rotation analysis — product velocity + dormant detection ─────────────
+  const rotationData = useMemo(() => {
+    const windowDays = filterDays === '0' ? 90 : (parseInt(filterDays) || 90)
+    const map: Record<string, {
+      id: string; name: string; ref: string; category: string
+      unitLabel: string; isTile: boolean
+      unitsSold: number; lastSaleDate: string | null
     }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
       .forEach(s => {
-        const name = s.users?.full_name ?? 'Inconnu'
-        if (!map[name]) map[name] = { name, ca: 0, ventes: 0, avgBasket: 0 }
-        map[name].ca     += s.total_amount
-        map[name].ventes += 1
+        ;(s.sale_items ?? []).forEach((i: any) => {
+          const pid = i.products?.id ?? 'unknown'
+          if (!map[pid]) map[pid] = {
+            id: pid,
+            name:      i.products?.name          ?? '—',
+            ref:       i.products?.reference_code ?? '—',
+            category:  i.products?.category       ?? '—',
+            unitLabel: i.products?.unit_label      ?? 'unité',
+            isTile:    i.products?.product_type === 'tile',
+            unitsSold: 0, lastSaleDate: null,
+          }
+          map[pid].unitsSold += Number(i.quantity_tiles)
+          if (!map[pid].lastSaleDate || s.created_at > map[pid].lastSaleDate!)
+            map[pid].lastSaleDate = s.created_at
+        })
       })
-    Object.values(map).forEach(v => {
-      v.avgBasket = v.ventes > 0 ? v.ca / v.ventes : 0
+    return Object.values(map).map(p => ({
+      ...p,
+      velocityPerDay: windowDays > 0 ? p.unitsSold / windowDays : 0,
+      daysSinceLastSale: p.lastSaleDate
+        ? Math.floor((Date.now() - new Date(p.lastSaleDate).getTime()) / 86_400_000)
+        : null,
+    })).sort((a, b) => {
+      if (!a.lastSaleDate && !b.lastSaleDate) return 0
+      if (!a.lastSaleDate) return -1
+      if (!b.lastSaleDate) return 1
+      return a.lastSaleDate.localeCompare(b.lastSaleDate)
     })
-    return Object.values(map).sort((a, b) => b.ca - a.ca)
-  }, [filtered])
+  }, [filtered, filterDays])
+
+  // ── Fraud signals — floor violations, cancel rates, high créances ─────────
+  const fraudSignals = useMemo(() => {
+    const signals: { type: string; severity: 'high' | 'medium'; desc: string }[] = []
+
+    // 1. Floor price violation attempts (from audit log)
+    const violations = auditLogs.filter((l: any) => l.action_type === 'FLOOR_PRICE_VIOLATION_ATTEMPT')
+    if (violations.length > 0) {
+      const byVendor: Record<string, number> = {}
+      violations.forEach((v: any) => {
+        const n = v.users?.full_name ?? 'Inconnu'
+        byVendor[n] = (byVendor[n] ?? 0) + 1
+      })
+      Object.entries(byVendor).forEach(([name, count]) =>
+        signals.push({ type: 'floor_price', severity: count >= 3 ? 'high' : 'medium',
+          desc: `${name} — ${count} tentative${count > 1 ? 's' : ''} de vente sous-plancher` })
+      )
+    }
+
+    // 2. High cancellation rate per vendor (threshold: ≥ 5 sales, ≥ 25% cancelled)
+    const vendorTotals: Record<string, { name: string; total: number; cancelled: number }> = {}
+    sales.forEach((s: any) => {
+      const id   = s.users?.id ?? 'unknown'
+      const name = s.users?.full_name ?? 'Inconnu'
+      if (!vendorTotals[id]) vendorTotals[id] = { name, total: 0, cancelled: 0 }
+      vendorTotals[id].total++
+      if (s.status === 'cancelled') vendorTotals[id].cancelled++
+    })
+    Object.values(vendorTotals).forEach(v => {
+      if (v.total < 5) return
+      const rate = v.cancelled / v.total
+      if (rate >= 0.25)
+        signals.push({ type: 'cancel_rate', severity: rate >= 0.4 ? 'high' : 'medium',
+          desc: `${v.name} — ${Math.round(rate * 100)} % d'annulations (${v.cancelled} / ${v.total} ventes)` })
+    })
+
+    // 3. Vendor with disproportionate outstanding créances (> 40% of their CA unpaid)
+    vendorData.forEach(v => {
+      if (v.ca < 10_000) return
+      const rate = v.creances / v.ca
+      if (rate >= 0.4)
+        signals.push({ type: 'creances', severity: rate >= 0.6 ? 'high' : 'medium',
+          desc: `${v.name} — ${Math.round(rate * 100)} % du CA en créances non encaissées` })
+    })
+
+    return signals
+  }, [auditLogs, sales, vendorData])
 
   // ── CSV Export ─────────────────────────────────────────────────────────
   const exportCSV = () => {
@@ -423,12 +523,13 @@ export default function ReportsClient({
         background: C.bg, padding: 4, borderRadius: 100,
         width: 'fit-content', minWidth: 'max-content' }}>
         {([
-          ['overview', 'Vue globale'],
-          ['sales',    'Ventes'],
-          ['products', 'Produits'],
-          ['vendors',  'Vendeurs'],
-          ['devis',    'Pipeline devis'],
-          ['audit',    'Audit'],
+          ['overview',  'Vue globale'],
+          ['sales',     'Ventes'],
+          ['products',  'Produits'],
+          ['rotation',  'Rotation'],
+          ['vendors',   'Vendeurs'],
+          ['devis',     'Pipeline devis'],
+          ['audit',     'Audit'],
         ] as [Tab, string][]).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             style={{ padding: '8px 18px', borderRadius: 100,
@@ -841,61 +942,127 @@ export default function ReportsClient({
         </div>
       )}
 
+      {/* ── ROTATION TAB ── */}
+      {activeTab === 'rotation' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: SP[2] }}>
+          <div style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body, marginBottom: SP[1] }}>
+            Produits triés du plus dormant au plus actif sur la période sélectionnée.
+          </div>
+          {rotationData.length === 0 ? (
+            <div style={{ background: C.surface, borderRadius: R.lg, border: `1px solid ${C.border}`, padding: SP[12], textAlign: 'center', color: C.muted, fontSize: F.base, fontFamily: F.body }}>
+              Aucune donnée sur la période.
+            </div>
+          ) : (
+            <div style={{ background: C.surface, borderRadius: R.lg, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: F.sm, fontFamily: F.body }}>
+                <thead>
+                  <tr style={{ background: C.bg, borderBottom: `1px solid ${C.border}` }}>
+                    {['Produit', 'Réf.', 'Catégorie', 'Dernière vente', 'Vendus', 'Vélocité /j', 'Statut'].map(h => (
+                      <th key={h} style={{ padding: `${SP[2]} ${SP[3]}`, textAlign: 'left', fontSize: F.xs, fontWeight: F.bold, color: C.dim, textTransform: 'uppercase', letterSpacing: F.lsWider, whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rotationData.map((p, i) => {
+                    const days = p.daysSinceLastSale
+                    const isDead = days === null || days > 60
+                    const isSlow = days !== null && days > 30 && days <= 60
+                    const statusColor = isDead ? C.red : isSlow ? C.orange : C.green
+                    const statusBg    = isDead ? C.redBg : isSlow ? C.orangeBg : C.greenBg
+                    const statusBd    = isDead ? C.redBd : isSlow ? C.orangeBd : C.greenBd
+                    const statusLabel = isDead ? (days === null ? 'Aucune vente' : 'Dormant') : isSlow ? 'Ralenti' : 'Actif'
+                    return (
+                      <tr key={p.id} style={{ borderBottom: i < rotationData.length - 1 ? `1px solid ${C.borderSub}` : 'none', background: i % 2 === 0 ? C.surfaceEl : C.surface }}>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, fontWeight: F.semibold, color: C.ink, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, color: C.muted, fontFamily: F.mono, fontSize: F.xs }}>{p.ref}</td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, color: C.muted }}>{p.category}</td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, color: isDead ? C.red : C.text, fontWeight: isDead ? F.semibold : F.regular }}>
+                          {p.lastSaleDate
+                            ? `${new Date(p.lastSaleDate).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} (${days}j)`
+                            : '—'}
+                        </td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, color: C.text, textAlign: 'right' }}>
+                          {fmtNum(Math.round(p.unitsSold))} {p.isTile ? 'car.' : p.unitLabel.slice(0, 3)}
+                        </td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}`, color: C.muted, textAlign: 'right' }}>
+                          {p.velocityPerDay >= 0.1 ? fmtNum(Math.round(p.velocityPerDay * 10) / 10) : '< 0,1'}
+                        </td>
+                        <td style={{ padding: `${SP[2]} ${SP[3]}` }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: SP[1], fontSize: F.xs, fontWeight: F.bold, padding: `${SP[0.5]} ${SP[2]}`, borderRadius: R.full, background: statusBg, color: statusColor, border: `1px solid ${statusBd}` }}>
+                            <span style={{ width: 5, height: 5, borderRadius: '50%', background: statusColor }} />
+                            {statusLabel}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── VENDORS TAB ── */}
       {activeTab === 'vendors' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: SP[3] }}>
           {vendorData.length === 0 ? (
-            <div style={{ background: C.surface, borderRadius: 12,
-              border: `1px solid ${C.border}`, padding: 48,
-              textAlign: 'center', color: C.muted, fontSize: 14, fontFamily: F.body }}>
+            <div style={{ background: C.surface, borderRadius: R.lg, border: `1px solid ${C.border}`, padding: SP[12], textAlign: 'center', color: C.muted, fontSize: F.base, fontFamily: F.body }}>
               Aucune donnée vendeur sur la période.
             </div>
           ) : vendorData.map((v, idx) => {
-            const share = kpis.totalCA > 0 ? (v.ca / kpis.totalCA) * 100 : 0
+            const share  = kpis.totalCA > 0 ? (v.ca / kpis.totalCA) * 100 : 0
             const accent = idx === 0 ? C.gold : idx === 1 ? C.muted : C.border
+            const marginColor = v.marginPct >= 20 ? C.green : v.marginPct >= 10 ? C.orange : C.red
             return (
-              <div key={v.name} style={{
-                background: C.surface, borderRadius: 12,
-                border: `1px solid ${C.border}`,
-                padding: '18px 20px',
-                borderLeft: `4px solid ${accent}`,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginBottom: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <span style={{ fontSize: 20, fontWeight: 900, minWidth: 32,
-                      color: accent, fontFamily: F.body }}>
-                      #{idx + 1}
-                    </span>
+              <div key={v.id} style={{ background: C.surface, borderRadius: R.lg, border: `1px solid ${C.border}`, padding: `${SP[4]} ${SP[5]}`, borderLeft: `4px solid ${accent}` }}>
+                {/* Header row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SP[3] }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: SP[3] }}>
+                    <span style={{ fontSize: F.xl, fontWeight: F.black, minWidth: 32, color: accent, fontFamily: F.display }}>{idx + 1}</span>
                     <div>
-                      <div style={{ fontSize: 15, fontWeight: 700,
-                        color: C.ink, fontFamily: F.body }}>
-                        {v.name}
-                      </div>
-                      <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
-                        {v.ventes} vente{v.ventes !== 1 ? 's' : ''} ·{' '}
-                        panier moy. {fmt(v.avgBasket)}
+                      <div style={{ fontSize: F.md, fontWeight: F.bold, color: C.ink, fontFamily: F.body }}>{v.name}</div>
+                      <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body, marginTop: 2 }}>
+                        {v.ventes} vente{v.ventes !== 1 ? 's' : ''} · panier moy. {fmt(v.avgBasket)}
+                        {v.cancelCount > 0 && (
+                          <span style={{ marginLeft: SP[2], padding: `1px ${SP[1.5]}`, borderRadius: R.full, background: C.redBg, color: C.red, border: `1px solid ${C.redBd}`, fontSize: F.xs }}>
+                            {v.cancelCount} annulation{v.cancelCount > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 18, fontWeight: 900, color: C.ink,
-                      letterSpacing: '-0.02em', fontFamily: F.body }}>
-                      {fmt(v.ca)}
-                    </div>
-                    <div style={{ fontSize: 12, color: C.muted, fontFamily: F.body }}>
-                      {share.toFixed(1)} % du CA total
-                    </div>
+                    <div style={{ fontSize: F.lg, fontWeight: F.black, color: C.ink, letterSpacing: F.lsTight, fontFamily: F.display }}>{fmt(v.ca)}</div>
+                    <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body }}>{share.toFixed(1)} % du CA total</div>
                   </div>
                 </div>
-                <div style={{ height: 6, background: C.bg,
-                  borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%', borderRadius: 3,
-                    width: `${share}%`,
-                    background: idx === 0 ? C.amber : C.muted,
-                    transition: 'width 0.5s ease',
-                  }} />
+
+                {/* CA share bar */}
+                <div style={{ height: 5, background: C.bg, borderRadius: R.full, overflow: 'hidden', marginBottom: SP[3] }}>
+                  <div style={{ height: '100%', borderRadius: R.full, width: `${share}%`, background: idx === 0 ? C.amber : C.muted, transition: 'width 0.5s ease' }} />
+                </div>
+
+                {/* Metrics row */}
+                <div style={{ display: 'flex', gap: SP[2], flexWrap: 'wrap' }}>
+                  {profile.role === 'owner' && (
+                    <div style={{ flex: '1 1 120px', padding: `${SP[2]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1px solid ${C.borderSub}` }}>
+                      <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body, marginBottom: 2 }}>Marge brute</div>
+                      <div style={{ fontSize: F.sm, fontWeight: F.bold, color: marginColor, fontFamily: F.body }}>
+                        {fmt(v.margin)} <span style={{ fontWeight: F.regular, fontSize: F.xs }}>({v.marginPct.toFixed(1)} %)</span>
+                      </div>
+                    </div>
+                  )}
+                  {v.creances > 0 && (
+                    <div style={{ flex: '1 1 120px', padding: `${SP[2]} ${SP[3]}`, background: C.orangeBg, borderRadius: R.md, border: `1px solid ${C.orangeBd}` }}>
+                      <div style={{ fontSize: F.xs, color: C.orange, fontFamily: F.body, marginBottom: 2 }}>Créances</div>
+                      <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.orange, fontFamily: F.body }}>{fmt(v.creances)}</div>
+                    </div>
+                  )}
+                  <div style={{ flex: '1 1 120px', padding: `${SP[2]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1px solid ${C.borderSub}` }}>
+                    <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body, marginBottom: 2 }}>Encaissé</div>
+                    <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.green, fontFamily: F.body }}>{fmt(v.ca - v.creances)}</div>
+                  </div>
                 </div>
               </div>
             )
@@ -910,7 +1077,60 @@ export default function ReportsClient({
 
       {/* ── AUDIT TAB ── */}
       {activeTab === 'audit' && (
-        <AuditLogTab logs={auditLogs} currency={currency} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+          {/* Fraud signals panel — only when signals exist */}
+          {fraudSignals.length > 0 && (
+            <div style={{
+              background: C.redBg, borderRadius: 12,
+              border: `1.5px solid ${C.redBd}`,
+              padding: '16px 20px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 1.5L14.5 13.5H1.5L8 1.5Z" stroke={C.red} strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M8 6.5v3M8 11h.01" stroke={C.red} strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontSize: 12, fontWeight: 700, color: C.red,
+                  textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: F.body }}>
+                  Signaux d'alerte — {fraudSignals.length} détecté{fraudSignals.length > 1 ? 's' : ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {fraudSignals.map((sig, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    background: sig.severity === 'high' ? 'rgba(153,27,27,0.08)' : 'rgba(154,52,18,0.06)',
+                    borderRadius: 8, padding: '10px 14px',
+                    border: `1px solid ${sig.severity === 'high' ? C.redBd : C.orangeBd}`,
+                  }}>
+                    <span style={{
+                      flexShrink: 0, fontSize: 10, fontWeight: 700,
+                      padding: '2px 7px', borderRadius: 100,
+                      background: sig.severity === 'high' ? C.red : C.orange,
+                      color: '#fff', fontFamily: F.body, marginTop: 1,
+                    }}>
+                      {sig.severity === 'high' ? 'CRITIQUE' : 'ATTENTION'}
+                    </span>
+                    <div>
+                      <div style={{ fontSize: 12, color: sig.severity === 'high' ? C.red : C.orange,
+                        fontWeight: 600, fontFamily: F.body, marginBottom: 2 }}>
+                        {sig.type === 'floor_price' ? 'Tentatives prix plancher'
+                          : sig.type === 'cancel_rate' ? 'Taux d\'annulation élevé'
+                          : 'Créances disproportionnées'}
+                      </div>
+                      <div style={{ fontSize: 12, color: C.text, fontFamily: F.body }}>
+                        {sig.desc}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <AuditLogTab logs={auditLogs} currency={currency} />
+        </div>
       )}
     </PageLayout>
   )
