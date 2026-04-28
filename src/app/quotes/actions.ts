@@ -170,6 +170,7 @@ export async function convertQuote(
   customerPhone:  string | null = null,
   customerCni:    string | null = null,
   customerPhone2: string | null = null,
+  paymentMethod:  string = 'especes',
 ) {
   const supabase = await createClient()
 
@@ -273,11 +274,12 @@ export async function convertQuote(
     const { data: initPayment } = await adminSupabase
       .from('sale_payments')
       .insert({
-        sale_id:    quoteId,
-        amount:     paidAmount,
-        notes:      notes ?? 'Paiement à la confirmation du devis',
-        created_by: user.id,
-        company_id: profile.company_id,
+        sale_id:        quoteId,
+        amount:         paidAmount,
+        notes:          notes ?? 'Paiement à la confirmation du devis',
+        payment_method: paymentMethod || 'especes',
+        created_by:     user.id,
+        company_id:     profile.company_id,
       })
       .select('id')
       .single()

@@ -157,6 +157,7 @@ export default function QuotesClient({
   // Convert modal
   const [convertId,      setConvertId]      = useState<string | null>(null)
   const [convertAmount,  setConvertAmount]  = useState('')
+  const [convertMethod,  setConvertMethod]  = useState('especes')
   const [convertNotes,   setConvertNotes]   = useState('')
   const [convertPhone,   setConvertPhone]   = useState('')
   const [convertPhone2,  setConvertPhone2]  = useState('')
@@ -211,14 +212,14 @@ export default function QuotesClient({
     setConvertLoading(true)
     setActionError(null)
     const phone2 = convertPhone2.trim() || null
-    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null, phone, cni, phone2)
+    const result = await convertQuote(convertId, parseFloat(convertAmount) || 0, convertNotes || null, phone, cni, phone2, convertMethod)
     setConvertLoading(false)
     if (result.error) { setActionError(result.error); return }
     setConvertSuccess(result.saleNumber ?? null)
   }
 
   const closeConvertModal = () => {
-    setConvertId(null); setConvertAmount(''); setConvertNotes('')
+    setConvertId(null); setConvertAmount(''); setConvertMethod('especes'); setConvertNotes('')
     setConvertPhone(''); setConvertPhone2(''); setConvertCNI('')
     setConvertSuccess(null); setActionError(null)
   }
@@ -883,6 +884,31 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                     <label style={{ fontSize: 12, fontWeight: 600, color: C.ink, display: 'block', marginBottom: 6, fontFamily: F.body }}>
                       Montant encaissé <span style={{ fontWeight: 400, color: C.muted }}>(optionnel)</span>
                     </label>
+                    {/* Payment method pills */}
+                    <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                      {([
+                        { key: 'especes',      label: 'Espèces' },
+                        { key: 'mobile_money', label: 'Mobile Money' },
+                        { key: 'virement',     label: 'Virement' },
+                        { key: 'cheque',       label: 'Chèque' },
+                      ] as const).map(m => {
+                        const active = convertMethod === m.key
+                        return (
+                          <button key={m.key} type="button"
+                            onClick={() => setConvertMethod(m.key)}
+                            style={{
+                              padding: '5px 11px', borderRadius: 20,
+                              border: `1.5px solid ${active ? C.amber : C.border}`,
+                              background: active ? C.amberGlow : C.bg,
+                              color: active ? C.amber : C.muted,
+                              fontSize: 11, fontWeight: active ? 700 : 500,
+                              cursor: 'pointer', fontFamily: F.body,
+                              transition: 'all 0.12s ease',
+                            }}
+                          >{m.label}</button>
+                        )
+                      })}
+                    </div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                       <button type="button" onClick={() => setConvertAmount(String(convertingQuote?.total_amount ?? ''))}
                         style={{ flex: 1, padding: '8px', borderRadius: 7, border: `1.5px solid ${parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.border}`, background: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.greenBg : C.bg, color: parseFloat(convertAmount) >= Number(convertingQuote?.total_amount) && convertAmount ? C.green : C.muted, fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: F.body }}>
@@ -912,7 +938,7 @@ ${quote.notes ? `<div style="margin-bottom:28px;padding:12px 16px;background:#F8
                       type="text"
                       value={convertNotes}
                       onChange={e => setConvertNotes(e.target.value)}
-                      placeholder="ex : Virement, chèque…"
+                      placeholder="Référence, observations…"
                       style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: `1.5px solid ${C.border}`, fontSize: 13, color: C.ink, outline: 'none', boxSizing: 'border-box', background: C.surface, fontFamily: F.body }}
                     />
                   </div>
