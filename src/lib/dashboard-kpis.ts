@@ -29,6 +29,7 @@ export interface DashboardKpisOutput {
   mtdMargin:       number
   mtdMarginPct:    number | null
   allTimeCreances: number
+  stockValuation:  number
   boutiqueStats:   { name: string; ca: number }[]
   dailyChart:      { day: string; ca: number }[]
   stockAlerts:     any[]
@@ -107,6 +108,24 @@ export function computeDashboardKpis(
     .sort((a, b) => a._iso.localeCompare(b._iso))
     .map(({ day, ca }) => ({ day, ca }))
 
+  // ── Stock valuation — available stock at purchase price ──────────────────
+  // Tile value:     purchase_price (per m²) × available_qty × tile_area_m2
+  // Non-tile value: purchase_price (per unit) × available_qty
+  const stockLevelMap = new Map(
+    (stats.stockLevels ?? []).map((s: any) => [s.product_id, s])
+  )
+  let stockValuation = 0
+  for (const prod of (stats.productTypes ?? [])) {
+    const pp = Number(prod.purchase_price ?? 0)
+    if (!pp) continue
+    const sl = stockLevelMap.get(prod.id)
+    if (!sl) continue
+    const isTile = (prod.product_type ?? 'tile') === 'tile'
+    const qty    = Number(sl.available_qty ?? 0)
+    const m2     = isTile ? Number(sl.tile_area_m2 ?? 0) : 0
+    stockValuation += isTile ? pp * qty * m2 : pp * qty
+  }
+
   // ── Stock alerts ──────────────────────────────────────────────────────────
   // Tiles:     threshold on available_full_cartons
   // Non-tiles: threshold on available_qty (individual units)
@@ -126,7 +145,7 @@ export function computeDashboardKpis(
     todayCount,
     mtdRevenue, mtdCreances, mtdAvgBasket,
     mtdTrend, mtdMargin, mtdMarginPct,
-    allTimeCreances,
+    allTimeCreances, stockValuation,
     boutiqueStats, dailyChart, stockAlerts,
   }
 }

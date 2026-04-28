@@ -54,6 +54,15 @@ function IconCreances() {
     </svg>
   )
 }
+function IconStock() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
+      <rect x="3" y="9" width="14" height="8" rx="1.5" stroke="#FAF5EE" strokeWidth="1.5"/>
+      <path d="M6 9V7a4 4 0 018 0v2" stroke="#FAF5EE" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M7 13h6" stroke="#FAF5EE" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  )
+}
 function IconMargin() {
   return (
     <svg width="19" height="19" viewBox="0 0 20 20" fill="none">
@@ -180,6 +189,7 @@ export default function DashboardClient({
   mtdMargin,
   mtdMarginPct,
   allTimeCreances,
+  stockValuation,
   activeOrdersCount,
   pendingRequests,
   stockAlerts,
@@ -197,6 +207,7 @@ export default function DashboardClient({
   mtdMargin:         number
   mtdMarginPct:      number | null
   allTimeCreances:   number
+  stockValuation:    number
   activeOrdersCount: number
   pendingRequests:   any[]
   stockAlerts:       any[]
@@ -212,7 +223,7 @@ export default function DashboardClient({
     fallbackData: {
       currency, todayCount,
       mtdRevenue, mtdCreances, mtdAvgBasket, mtdTrend,
-      mtdMargin, mtdMarginPct, allTimeCreances,
+      mtdMargin, mtdMarginPct, allTimeCreances, stockValuation,
       activeOrdersCount, pendingRequests, stockAlerts,
       boutiqueStats, dailyChart, badgeCounts,
     },
@@ -314,6 +325,14 @@ export default function DashboardClient({
       value:   fmt(d.mtdMargin),
       iconBg:  d.mtdMargin >= 0 ? C.green : C.red,
       Icon:    IconMargin,
+      trend:   null,
+      accent:  false,
+    }, {
+      label:   'Valeur du stock',
+      sub:     'Au prix d\'achat · stock disponible',
+      value:   d.stockValuation > 0 ? fmt(Math.round(d.stockValuation)) : '—',
+      iconBg:  C.amber,
+      Icon:    IconStock,
       trend:   null,
       accent:  false,
     }] : []),

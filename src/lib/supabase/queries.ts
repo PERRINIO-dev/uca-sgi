@@ -86,10 +86,10 @@ export async function getDashboardStats() {
       .in('payment_status', ['partial', 'unpaid'])
       .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
-    // Product types for type-aware stock alert thresholds
+    // Product types + purchase prices for stock alerts and valuation
     supabase
       .from('products')
-      .select('id, product_type'),
+      .select('id, product_type, purchase_price'),
   ])
 
   return {

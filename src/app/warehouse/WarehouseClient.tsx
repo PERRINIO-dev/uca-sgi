@@ -98,33 +98,6 @@ export default function WarehouseClient({
     [products]
   )
 
-  // Stock valuation — purchase_price × available_qty, grouped by product type
-  const TYPE_LABELS: Record<string, string> = {
-    tile:      'Carrelage',
-    unit:      'Pièces',
-    linear_m:  'Linéaire',
-    bag:       'Sacs',
-    liter:     'Liquides',
-  }
-  const stockValuation = useMemo(() => {
-    let total = 0
-    const byType: Record<string, number> = {}
-    for (const item of stockLevels) {
-      const prod = productMap.get(item.product_id)
-      if (!prod) continue
-      const pp = parseFloat(prod.purchase_price ?? 0)
-      if (!pp) continue
-      const isTile = (prod.product_type ?? 'tile') === 'tile'
-      const qty    = parseInt(item.available_qty ?? 0)
-      const m2     = parseFloat(item.tile_area_m2 ?? 0)
-      const value  = isTile ? qty * m2 * pp : qty * pp
-      total += value
-      const t = prod.product_type ?? 'tile'
-      byType[t] = (byType[t] ?? 0) + value
-    }
-    return { total, byType }
-  }, [stockLevels, productMap])
-
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
@@ -828,47 +801,6 @@ export default function WarehouseClient({
         {/* ── STOCK TAB ── */}
         {activeTab === 'stock' && (
           <>
-          {/* Valuation summary */}
-          {stockValuation.total > 0 && (
-            <div style={{
-              background: C.surface, borderRadius: R.lg, border: `1px solid ${C.border}`,
-              padding: `${SP[4]} ${SP[5]}`, marginBottom: SP[4],
-              boxShadow: SH.xs, display: 'flex', flexWrap: 'wrap',
-              alignItems: 'center', gap: SP[4],
-            }}>
-              <div style={{ flex: '1 1 200px' }}>
-                <div style={{ fontSize: F.xs, fontWeight: F.bold, color: C.muted, textTransform: 'uppercase', letterSpacing: F.lsWider, marginBottom: SP[1], fontFamily: F.body }}>
-                  Valorisation du stock
-                </div>
-                <div style={{ fontSize: F['3xl'], fontWeight: F.bold, color: C.ink, fontFamily: F.display, letterSpacing: F.lsTight, lineHeight: F.lhTight }}>
-                  {fmt(Math.round(stockValuation.total))}
-                </div>
-                <div style={{ fontSize: F.xs, color: C.dim, marginTop: SP[0.5], fontFamily: F.body }}>
-                  au prix d'achat · stock disponible uniquement
-                </div>
-              </div>
-              {Object.keys(stockValuation.byType).length > 1 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: SP[2], flex: '2 1 300px' }}>
-                  {Object.entries(stockValuation.byType)
-                    .sort(([, a], [, b]) => b - a)
-                    .map(([type, val]) => (
-                      <div key={type} style={{
-                        padding: `${SP[1.5]} ${SP[3]}`, borderRadius: R.md,
-                        background: C.bg, border: `1px solid ${C.borderSub}`,
-                        display: 'flex', flexDirection: 'column', gap: 2,
-                      }}>
-                        <span style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body, fontWeight: F.medium }}>
-                          {TYPE_LABELS[type] ?? type}
-                        </span>
-                        <span style={{ fontSize: F.sm, fontWeight: F.bold, color: C.text, fontFamily: F.body }}>
-                          {fmt(Math.round(val))}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          )}
           <input
             value={stockSearch}
             onChange={e => setStockSearch(e.target.value)}

@@ -47,6 +47,7 @@ export default async function DashboardPage() {
       mtdMargin={kpis.mtdMargin}
       mtdMarginPct={kpis.mtdMarginPct}
       allTimeCreances={kpis.allTimeCreances}
+      stockValuation={kpis.stockValuation}
       activeOrdersCount={stats.activeOrdersCount}
       pendingRequests={stats.pendingRequests}
       stockAlerts={kpis.stockAlerts}
