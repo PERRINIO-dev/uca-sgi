@@ -90,6 +90,17 @@ function IconQuote({ c = 'currentColor' }: { c?: string }) {
   )
 }
 
+function IconCaisse({ c = 'currentColor' }: { c?: string }) {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="2" y="6.5" width="16" height="11" rx="1.5" stroke={c} strokeWidth="1.4"/>
+      <path d="M6 6.5V5a4 4 0 018 0v1.5" stroke={c} strokeWidth="1.4" strokeLinecap="round"/>
+      <circle cx="10" cy="12" r="2" stroke={c} strokeWidth="1.3"/>
+      <path d="M10 10.5v-.5M10 14v-.5" stroke={c} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 function IconPlatform({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -175,6 +186,7 @@ const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconDashboard, 'Tableau de bord', '/dashboard',  ['owner', 'admin']],
   [IconSales,     'Ventes',          '/sales',      ['owner', 'admin', 'vendor']],
   [IconQuote,     'Devis',           '/quotes',     ['owner', 'admin', 'vendor']],
+  [IconCaisse,    'Caisse',          '/caisse',     ['owner', 'admin', 'vendor']],
   [IconWarehouse, 'Entrepôt',        '/warehouse',  ['owner', 'admin', 'warehouse']],
   [IconCatalog,   'Catalogue',       '/products',   ['owner', 'admin']],
   [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
