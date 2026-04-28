@@ -15,6 +15,7 @@ import { fmtCurrency } from '@/lib/format'
 import { pluralize }   from '@/lib/pluralize'
 
 import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
+import { downloadBLPdf } from '@/lib/pdf/download'
 
 const fmtNum = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n)
@@ -74,6 +75,8 @@ export default function WarehouseClient({
   const [activeTab,     setTab]       = useState<Tab>('orders')
   const [expandedOrder, setExpanded]  = useState<string | null>(null)
   const [loadingOrder,  setLoadingOrd] = useState<string | null>(null)
+  const [blLoading,     setBLLoading]  = useState<string | null>(null)
+  const [blError,       setBLError]    = useState<string | null>(null)
   const [confirmDelivery, setConfirm] = useState<string | null>(null)
 
   // Stock request form state
@@ -570,6 +573,46 @@ export default function WarehouseClient({
                         </svg>
                         Imprimer
                       </button>
+
+                      {/* BL PDF — available once goods are ready */}
+                      {['ready', 'delivered'].includes(order.status) && (
+                        <button
+                          onClick={async e => {
+                            e.stopPropagation()
+                            setBLError(null)
+                            setBLLoading(order.id)
+                            try {
+                              await downloadBLPdf(order.id, order.order_number)
+                            } catch (err: any) {
+                              setBLError(err?.message ?? 'Erreur PDF')
+                            } finally {
+                              setBLLoading(null)
+                            }
+                          }}
+                          disabled={blLoading === order.id}
+                          title="Télécharger le bon de livraison"
+                          style={{
+                            padding: '9px 11px',
+                            background: blLoading === order.id ? C.bg : C.amberGlow,
+                            color: C.amber,
+                            border: `1px solid rgba(160,83,26,0.3)`,
+                            borderRadius: 7, fontSize: 12, fontWeight: 600,
+                            cursor: blLoading === order.id ? 'not-allowed' : 'pointer',
+                            fontFamily: F.body,
+                            display: 'flex', alignItems: 'center', gap: 5,
+                          }}>
+                          {blLoading === order.id ? (
+                            <><span className="spinner" />BL…</>
+                          ) : (
+                            <>
+                              <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                                <path d="M6.5 1v7M4 6l2.5 2.5L9 6M2 10v1.5h9V10" stroke={C.amber} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                              BL PDF
+                            </>
+                          )}
+                        </button>
+                      )}
                       </div>{/* end stopPropagation */}
                       <span style={{ color: C.muted, paddingLeft: 4, display: 'flex', cursor: 'pointer' }}>
                         {isOpen

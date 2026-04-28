@@ -1,3 +1,47 @@
+// ── Bon de Livraison ──────────────────────────────────────────────────────────
+
+export interface BLItem {
+  product_name:              string
+  reference_code:            string | null
+  product_type:              string
+  unit_label:                string
+  quantity_tiles:            number
+  tile_area_m2_snapshot:     number | null
+  tiles_per_carton_snapshot: number | null
+}
+
+export interface BLData {
+  // Document identity
+  order_number:     string          // CMD-2026-0001
+  sale_number:      string          // VNT-2026-0002
+  sale_created_at:  string
+  delivery_date:    string | null   // delivery_confirmed_at when available
+
+  // Company
+  company_name:     string
+  logo_data_uri:    string | null
+
+  // Boutique
+  boutique_name:    string
+  boutique_address: string | null
+  boutique_phone:   string | null
+
+  // People
+  vendor_name:      string          // who made the sale
+  prepared_by:      string | null   // assigned_to user (warehouse)
+
+  // Customer
+  customer_name:    string | null
+  customer_phone:   string | null
+  customer_cni:     string | null
+
+  // Content
+  items:            BLItem[]
+  order_notes:      string | null
+}
+
+// ── Invoice ───────────────────────────────────────────────────────────────────
+
 export interface InvoiceItem {
   product_name:              string
   reference_code:            string | null
