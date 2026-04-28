@@ -1044,6 +1044,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
   const [showAdd,    setShowAdd]   = useState(false)
   const [addAmt,     setAddAmt]    = useState('')
   const [addNotes,   setAddNotes]  = useState('')
+  const [addMethod,  setAddMethod] = useState('especes')
   const [adding,     setAdding]    = useState(false)
   const [addError,   setAddError]  = useState<string | null>(null)
   const [pdfLoading, setPdfLoad]   = useState(false)
@@ -1052,7 +1053,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
   const loadPayments = useCallback(async () => {
     const { data } = await supabase
       .from('sale_payments')
-      .select('id, amount, notes, created_at, users!sale_payments_created_by_fkey(full_name)')
+      .select('id, amount, notes, payment_method, created_at, users!sale_payments_created_by_fkey(full_name)')
       .eq('sale_id', sale.id)
       .order('created_at', { ascending: true })
     setPayments(data ?? [])
@@ -1064,11 +1065,11 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
     const amount = parseFloat(addAmt)
     if (!amount || amount <= 0) { setAddError('Montant invalide.'); return }
     setAdding(true); setAddError(null)
-    const result = await addPayment(sale.id, amount, addNotes || null)
+    const result = await addPayment(sale.id, amount, addNotes || null, addMethod)
     setAdding(false)
     if (result.error) { setAddError(result.error); return }
     await loadPayments()
-    setAddAmt(''); setAddNotes(''); setShowAdd(false)
+    setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setShowAdd(false)
     onPaymentAdded()
   }
 
@@ -1170,8 +1171,31 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
                 background: i === payments.length - 1 ? C.greenBg : C.surfaceEl,
                 border: `1px solid ${i === payments.length - 1 ? C.greenBd : C.borderSub}`,
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: SP[2] }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap' }}>
                   <span style={{ fontSize: F.sm, fontWeight: F.bold, color: C.green, fontFamily: F.body }}>+{fmt(p.amount)}</span>
+                  {(() => {
+                    const METHOD_LABELS: Record<string, string> = {
+                      especes: 'Espèces', mobile_money: 'Mobile Money',
+                      virement: 'Virement', cheque: 'Chèque', autre: 'Autre',
+                    }
+                    const METHOD_COLORS: Record<string, { bg: string; color: string; bd: string }> = {
+                      especes:      { bg: C.greenBg,  color: C.green,  bd: C.greenBd },
+                      mobile_money: { bg: C.blueBg,   color: C.blue,   bd: C.blueBd  },
+                      virement:     { bg: C.purpleBg, color: C.purple, bd: C.purpleBd },
+                      cheque:       { bg: C.goldBg,   color: C.gold,   bd: C.goldBd  },
+                      autre:        { bg: C.surfaceSub, color: C.muted, bd: C.border },
+                    }
+                    const m = p.payment_method ?? 'especes'
+                    const mc = METHOD_COLORS[m] ?? METHOD_COLORS.autre
+                    return (
+                      <span style={{
+                        fontSize: F.xs, fontWeight: F.semibold, fontFamily: F.body,
+                        padding: `1px ${SP[1.5]}`, borderRadius: R.full,
+                        background: mc.bg, color: mc.color, border: `1px solid ${mc.bd}`,
+                        letterSpacing: F.lsWide,
+                      }}>{METHOD_LABELS[m] ?? m}</span>
+                    )
+                  })()}
                   {p.notes && <span style={{ fontSize: F.xs, color: C.dim, fontFamily: F.body }}>· {p.notes}</span>}
                 </div>
                 <div style={{ fontSize: F.xs, color: C.dim, fontFamily: F.body }}>
@@ -1207,6 +1231,31 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
         {canAdd && showAdd && (
           <div style={{ marginTop: SP[2], padding: `${SP[3]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1.5px solid ${C.border}` }}>
             <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.ink, marginBottom: SP[2], fontFamily: F.body }}>Nouveau versement</div>
+            {/* Payment method pills */}
+            <div style={{ display: 'flex', gap: SP[1.5], marginBottom: SP[2], flexWrap: 'wrap' }}>
+              {([
+                { key: 'especes', label: 'Espèces' },
+                { key: 'mobile_money', label: 'Mobile Money' },
+                { key: 'virement', label: 'Virement' },
+                { key: 'cheque', label: 'Chèque' },
+              ] as const).map(m => {
+                const active = addMethod === m.key
+                return (
+                  <button key={m.key} type="button"
+                    onClick={() => setAddMethod(m.key)}
+                    style={{
+                      padding: `${SP[0.5]} ${SP[2]}`, borderRadius: R.full,
+                      border: `1.5px solid ${active ? C.amber : C.border}`,
+                      background: active ? C.amberGlow : 'transparent',
+                      color: active ? C.amber : C.muted,
+                      fontSize: F.xs, fontWeight: active ? F.bold : F.medium,
+                      cursor: 'pointer', fontFamily: F.body,
+                      transition: `all ${TR.fast}`,
+                    }}
+                  >{m.label}</button>
+                )
+              })}
+            </div>
             <div style={{ display: 'flex', gap: SP[2], flexWrap: 'wrap' }}>
               <input
                 type="number" min="1" step="100"
@@ -1235,7 +1284,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
               </button>
               <button
                 className="btn-ghost"
-                onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddError(null) }}
+                onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setAddError(null) }}
                 disabled={adding}
                 style={{ borderRadius: R.sm, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
                 Annuler

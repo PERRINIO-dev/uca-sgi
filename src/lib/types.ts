@@ -11,6 +11,8 @@ export type UserRole = 'owner' | 'admin' | 'vendor' | 'warehouse'
  */
 export type ProductType = 'tile' | 'unit' | 'linear_m' | 'bag' | 'liter'
 
+export type PaymentMethod = 'especes' | 'mobile_money' | 'virement' | 'cheque' | 'autre'
+
 export type SaleStatus =
   | 'draft'
   | 'confirmed'

@@ -18,16 +18,17 @@ interface SaleItem {
 }
 
 interface CreateSalePayload {
-  boutique_id:    string
-  vendor_id:      string
-  customer_id:    string | null
-  customer_name:  string | null
-  customer_phone: string | null
-  customer_cni:   string | null
-  total_amount:   number
-  amount_paid:    number
-  notes:          string | null
-  items:          SaleItem[]
+  boutique_id:      string
+  vendor_id:        string
+  customer_id:      string | null
+  customer_name:    string | null
+  customer_phone:   string | null
+  customer_cni:     string | null
+  total_amount:     number
+  amount_paid:      number
+  payment_method:   string
+  notes:            string | null
+  items:            SaleItem[]
 }
 
 export async function createSale(payload: CreateSalePayload) {
@@ -197,7 +198,7 @@ export async function createSale(payload: CreateSalePayload) {
   if (amountPaid > 0) {
     const { data: initPayment } = await adminSupabase
       .from('sale_payments')
-      .insert({ sale_id: sale.sale_id, amount: amountPaid, notes: 'Paiement initial', created_by: user.id, company_id: callerProfile.company_id })
+      .insert({ sale_id: sale.sale_id, amount: amountPaid, notes: 'Paiement initial', payment_method: payload.payment_method || 'especes', created_by: user.id, company_id: callerProfile.company_id })
       .select('id')
       .single()
     // Trigger sync_sale_payment_totals() fires automatically in DB
@@ -323,9 +324,10 @@ export async function cancelSale(saleId: string) {
 }
 
 export async function addPayment(
-  saleId:  string,
-  amount:  number,
-  notes:   string | null,
+  saleId:        string,
+  amount:        number,
+  notes:         string | null,
+  paymentMethod: string = 'especes',
 ) {
   const supabase = await createClient()
 
@@ -355,7 +357,7 @@ export async function addPayment(
   // server action already authenticates and authorises the caller.
   const { data: newPayment, error: insertError } = await getAdminClient()
     .from('sale_payments')
-    .insert({ sale_id: saleId, amount, notes, created_by: user.id, company_id: profile.company_id })
+    .insert({ sale_id: saleId, amount, notes, payment_method: paymentMethod || 'especes', created_by: user.id, company_id: profile.company_id })
     .select('id')
     .single()
 

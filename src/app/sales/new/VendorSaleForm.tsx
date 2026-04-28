@@ -75,6 +75,7 @@ export default function VendorSaleForm({
   const [customerCNI,      setCNI]          = useState('')
   const [notes,            setNotes]        = useState('')
   const [amountPaid,       setAmountPaid]   = useState('')
+  const [paymentMethod,    setPaymentMethod] = useState<string>('especes')
   const [loading,          setLoading]      = useState(false)
   const [quoteLoading,     setQuoteLoading] = useState(false)
   const [error,            setError]        = useState<string | null>(null)
@@ -304,6 +305,7 @@ export default function VendorSaleForm({
       customer_cni: customerCNI.trim(),
       total_amount: cartTotal,
       amount_paid: parseFloat(amountPaid) || 0,
+      payment_method: paymentMethod,
       notes: notes || null,
       items: cart.map(item => {
         const isItemTile = (item.product.product_type ?? 'tile') === 'tile'
@@ -1416,6 +1418,37 @@ export default function VendorSaleForm({
                   Acompte / Partiel
                 </button>
               </div>
+
+              {/* Payment method */}
+              {(() => {
+                const methods: { key: string; label: string }[] = [
+                  { key: 'especes',      label: 'Espèces' },
+                  { key: 'mobile_money', label: 'Mobile Money' },
+                  { key: 'virement',     label: 'Virement' },
+                  { key: 'cheque',       label: 'Chèque' },
+                ]
+                return (
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+                    {methods.map(m => {
+                      const active = paymentMethod === m.key
+                      return (
+                        <button key={m.key} type="button"
+                          onClick={() => setPaymentMethod(m.key)}
+                          style={{
+                            padding: '6px 12px', borderRadius: 20,
+                            border: `1.5px solid ${active ? C.amber : C.border}`,
+                            background: active ? C.amberGlow : C.bg,
+                            color: active ? C.amber : C.muted,
+                            fontSize: 12, fontWeight: active ? 700 : 500,
+                            cursor: 'pointer', fontFamily: F.body,
+                            transition: 'all 0.12s ease',
+                          }}
+                        >{m.label}</button>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
 
               <input type="number" min="0" step="100" value={amountPaid} onChange={e => setAmountPaid(e.target.value)} placeholder={`Montant encaissé (max ${fmt(cartTotal)})`} style={inputStyle()} />
 
