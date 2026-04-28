@@ -80,7 +80,7 @@ export default async function WarehousePage() {
     // All active products for stock request form
     supabase
       .from('products')
-      .select('id, name, reference_code, product_type, unit_label, package_label, tiles_per_carton, tile_area_m2, piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package')
+      .select('id, name, reference_code, product_type, unit_label, package_label, tiles_per_carton, tile_area_m2, piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package, purchase_price, category')
       .eq('is_active', true)
       .order('name'),
 
