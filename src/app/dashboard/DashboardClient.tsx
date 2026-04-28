@@ -190,6 +190,7 @@ export default function DashboardClient({
   mtdMarginPct,
   allTimeCreances,
   stockValuation,
+  paymentsByMethod,
   activeOrdersCount,
   pendingRequests,
   stockAlerts,
@@ -208,6 +209,7 @@ export default function DashboardClient({
   mtdMarginPct:      number | null
   allTimeCreances:   number
   stockValuation:    number
+  paymentsByMethod:  Record<string, number>
   activeOrdersCount: number
   pendingRequests:   any[]
   stockAlerts:       any[]
@@ -223,7 +225,7 @@ export default function DashboardClient({
     fallbackData: {
       currency, todayCount,
       mtdRevenue, mtdCreances, mtdAvgBasket, mtdTrend,
-      mtdMargin, mtdMarginPct, allTimeCreances, stockValuation,
+      mtdMargin, mtdMarginPct, allTimeCreances, stockValuation, paymentsByMethod,
       activeOrdersCount, pendingRequests, stockAlerts,
       boutiqueStats, dailyChart, badgeCounts,
     },
@@ -602,6 +604,68 @@ export default function DashboardClient({
 
       {/* ─── BOTTOM PANELS ───────────────────────────────────────────────────── */}
       <div className="dash-bottom-grid">
+
+        {/* ── Encaissements par mode de règlement ── */}
+        {(() => {
+          const METHOD_CONFIG: Record<string, { label: string; color: string; bg: string; bd: string }> = {
+            especes:      { label: 'Espèces',      color: C.green,  bg: C.greenBg,  bd: C.greenBd  },
+            mobile_money: { label: 'Mobile Money', color: C.blue,   bg: C.blueBg,   bd: C.blueBd   },
+            virement:     { label: 'Virement',     color: C.purple, bg: C.purpleBg, bd: C.purpleBd },
+            cheque:       { label: 'Chèque',       color: C.gold,   bg: C.goldBg,   bd: C.goldBd   },
+            autre:        { label: 'Autre',        color: C.muted,  bg: C.surfaceSub, bd: C.border  },
+          }
+          const methods = Object.entries(d.paymentsByMethod ?? {})
+            .filter(([, v]) => (v as number) > 0)
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+          const total = methods.reduce((s, [, v]) => s + (v as number), 0)
+          return (
+            <Panel>
+              <SectionLabel>Encaissements du mois · par mode</SectionLabel>
+              {methods.length === 0 ? (
+                <div className="empty-state" style={{ padding: `${SP[6]} 0` }}>
+                  <span className="empty-state-desc">Aucun encaissement ce mois</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SP[3] }}>
+                  {methods.map(([method, amount]) => {
+                    const cfg = METHOD_CONFIG[method] ?? METHOD_CONFIG.autre
+                    const pct = total > 0 ? Math.round((amount as number / total) * 100) : 0
+                    return (
+                      <div key={method}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: SP[1] }}>
+                          <span style={{ fontSize: F.sm, fontWeight: F.medium, color: C.text, fontFamily: F.body }}>
+                            {cfg.label}
+                          </span>
+                          <span style={{ fontSize: F.sm, fontWeight: F.bold, color: C.ink, fontFamily: F.body }}>
+                            {fmt(amount as number)}
+                            <span style={{ fontSize: F.xs, fontWeight: F.regular, color: C.dim, marginLeft: SP[1.5] }}>
+                              {pct} %
+                            </span>
+                          </span>
+                        </div>
+                        <div style={{ height: 6, background: C.bg, borderRadius: R.full, overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%', borderRadius: R.full,
+                            width: `${pct}%`, background: cfg.color,
+                            transition: 'width 0.5s ease',
+                          }} />
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div style={{
+                    marginTop: SP[1], paddingTop: SP[3],
+                    borderTop: `1px solid ${C.borderSub}`,
+                    display: 'flex', justifyContent: 'space-between',
+                  }}>
+                    <span style={{ fontSize: F.sm, color: C.muted, fontFamily: F.body }}>Total encaissé</span>
+                    <span style={{ fontSize: F.sm, fontWeight: F.bold, color: C.green, fontFamily: F.body }}>{fmt(total)}</span>
+                  </div>
+                </div>
+              )}
+            </Panel>
+          )
+        })()}
 
         {/* ── Pending approvals ── */}
         <Panel>

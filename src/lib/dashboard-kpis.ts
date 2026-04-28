@@ -17,22 +17,24 @@ interface KpisInput {
   allTimeCreanceSales: any[]
   stockLevels:         any[]
   productTypes:        any[]
+  mtdPayments:         any[]
 }
 
 // ── Output shape ──────────────────────────────────────────────────────────────
 export interface DashboardKpisOutput {
-  todayCount:      number
-  mtdRevenue:      number
-  mtdCreances:     number
-  mtdAvgBasket:    number
-  mtdTrend:        number | null
-  mtdMargin:       number
-  mtdMarginPct:    number | null
-  allTimeCreances: number
-  stockValuation:  number
-  boutiqueStats:   { name: string; ca: number }[]
-  dailyChart:      { day: string; ca: number }[]
-  stockAlerts:     any[]
+  todayCount:        number
+  mtdRevenue:        number
+  mtdCreances:       number
+  mtdAvgBasket:      number
+  mtdTrend:          number | null
+  mtdMargin:         number
+  mtdMarginPct:      number | null
+  allTimeCreances:   number
+  stockValuation:    number
+  paymentsByMethod:  Record<string, number>
+  boutiqueStats:     { name: string; ca: number }[]
+  dailyChart:        { day: string; ca: number }[]
+  stockAlerts:       any[]
 }
 
 export function computeDashboardKpis(
@@ -108,6 +110,13 @@ export function computeDashboardKpis(
     .sort((a, b) => a._iso.localeCompare(b._iso))
     .map(({ day, ca }) => ({ day, ca }))
 
+  // ── MTD payments by method ────────────────────────────────────────────────
+  const paymentsByMethod: Record<string, number> = {}
+  for (const p of (stats.mtdPayments ?? [])) {
+    const m = p.payment_method ?? 'especes'
+    paymentsByMethod[m] = (paymentsByMethod[m] ?? 0) + Number(p.amount)
+  }
+
   // ── Stock valuation — available stock at purchase price ──────────────────
   // Tile value:     purchase_price (per m²) × available_qty × tile_area_m2
   // Non-tile value: purchase_price (per unit) × available_qty
@@ -145,7 +154,7 @@ export function computeDashboardKpis(
     todayCount,
     mtdRevenue, mtdCreances, mtdAvgBasket,
     mtdTrend, mtdMargin, mtdMarginPct,
-    allTimeCreances, stockValuation,
+    allTimeCreances, stockValuation, paymentsByMethod,
     boutiqueStats, dailyChart, stockAlerts,
   }
 }

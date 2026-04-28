@@ -20,7 +20,7 @@ export async function getDashboardStats() {
   const [
     todayResult, mtdResult, prevMonthResult,
     stockResult, pendingResult, boutiqueResult, activeOrdersResult,
-    creancesResult, productTypesResult,
+    creancesResult, productTypesResult, mtdPaymentsResult,
   ] = await Promise.all([
 
     // Today's confirmed sales (drafts are not yet revenue)
@@ -90,18 +90,25 @@ export async function getDashboardStats() {
     supabase
       .from('products')
       .select('id, product_type, purchase_price'),
+
+    // MTD payments by method — for cash breakdown panel
+    supabase
+      .from('sale_payments')
+      .select('payment_method, amount')
+      .gte('created_at', mtdISO),
   ])
 
   return {
-    todaySales:        todayResult.data       ?? [],
-    mtdSales:          mtdResult.data         ?? [],
-    prevMonthSales:    prevMonthResult.data   ?? [],
-    stockLevels:       stockResult.data       ?? [],
-    pendingRequests:   pendingResult.data     ?? [],
-    weekSales:         boutiqueResult.data    ?? [],
-    activeOrdersCount: activeOrdersResult.count ?? 0,
-    allTimeCreanceSales: creancesResult.data  ?? [],
-    productTypes:      productTypesResult.data ?? [],
+    todaySales:        todayResult.data         ?? [],
+    mtdSales:          mtdResult.data           ?? [],
+    prevMonthSales:    prevMonthResult.data      ?? [],
+    stockLevels:       stockResult.data          ?? [],
+    pendingRequests:   pendingResult.data        ?? [],
+    weekSales:         boutiqueResult.data       ?? [],
+    activeOrdersCount: activeOrdersResult.count  ?? 0,
+    allTimeCreanceSales: creancesResult.data     ?? [],
+    productTypes:      productTypesResult.data   ?? [],
+    mtdPayments:       mtdPaymentsResult.data    ?? [],
   }
 }
 
