@@ -159,7 +159,10 @@ export async function createSale(payload: CreateSalePayload) {
   // create_confirmed_sale() executes all four steps atomically: a crash at any
   // point leaves the DB unchanged (no orphaned sale, no partial reservation).
   // INSUFFICIENT_STOCK exception rolls back everything; the sale never exists.
-  const amountPaid   = Math.max(0, payload.amount_paid ?? 0)
+  // Round to nearest integer — client totals may carry sub-unit float noise
+  // (e.g., 60 ×35.28 m² = 2116.8 client-side vs Math.round = 2117 server-side).
+  // Rounding here prevents a 0.2-unit delta from producing a false 'partial' status.
+  const amountPaid   = Math.round(Math.max(0, payload.amount_paid ?? 0))
   const paymentStatus =
     amountPaid >= serverTotal ? 'paid' :
     amountPaid > 0            ? 'partial' : 'unpaid'

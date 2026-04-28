@@ -159,7 +159,7 @@ export default function VendorSaleForm({
       const m2             = parseFloat((tiles * tileArea).toFixed(4))
       const fullCartons    = Math.floor(tiles / tpc)
       const loose          = tiles % tpc
-      const total          = m2 * price
+      const total          = Math.round(m2 * price)
       const floorPrice     = parseFloat(selectedProduct.floor_price_per_m2 ?? 0)
       const refPrice       = parseFloat(selectedProduct.reference_price_per_m2 ?? 0)
       const floorViolation = price > 0 && floorPrice > 0 && price < floorPrice
@@ -184,7 +184,7 @@ export default function VendorSaleForm({
       if (qty <= 0) return null
       const floorPrice     = parseFloat(selectedProduct.floor_price_per_unit ?? 0)
       const refPrice       = parseFloat(selectedProduct.reference_price_per_unit ?? 0)
-      const total          = qty * price
+      const total          = Math.round(qty * price)
       const floorViolation = price > 0 && floorPrice > 0 && price < floorPrice
       const stockInsufficient = qty > availableTiles
       return { isTile: false as const, tiles: qty, m2: 0, fullCartons: 0, loose: 0, price, total, floorPrice, refPrice, floorViolation, stockInsufficient, availableTiles }
@@ -266,9 +266,9 @@ export default function VendorSaleForm({
       if (isTileProd) {
         const tpc = parseInt(selectedProduct.tiles_per_carton)
         const newM2 = parseFloat((newQty * parseFloat(selectedProduct.tile_area_m2)).toFixed(4))
-        updated[existingIdx] = { ...existing, quantityTiles: newQty, quantityM2: newM2, quantityCartons: Math.floor(newQty/tpc), looseTiles: newQty%tpc, totalPrice: newM2*computed.price }
+        updated[existingIdx] = { ...existing, quantityTiles: newQty, quantityM2: newM2, quantityCartons: Math.floor(newQty/tpc), looseTiles: newQty%tpc, totalPrice: Math.round(newM2*computed.price) }
       } else {
-        updated[existingIdx] = { ...existing, quantityTiles: newQty, totalPrice: newQty*computed.price }
+        updated[existingIdx] = { ...existing, quantityTiles: newQty, totalPrice: Math.round(newQty*computed.price) }
       }
       setCart(updated)
     } else {
