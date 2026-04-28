@@ -22,6 +22,9 @@ export default async function WarehousePage() {
     redirect('/dashboard')
   }
 
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
   // All independent queries run in parallel after profile is known
   const [
     { data: orders },
@@ -29,6 +32,7 @@ export default async function WarehousePage() {
     { data: products },
     { data: allStockLevels },
     { data: myRequests },
+    { data: recentSales },
     badgeCounts,
   ] = await Promise.all([
     // Active orders — confirmed, preparing, ready
@@ -103,12 +107,30 @@ export default async function WarehousePage() {
       .order('created_at', { ascending: false })
       .limit(50),
 
+    // Sales items from last 30 days — for consumption velocity
+    supabase
+      .from('sales')
+      .select('sale_items(product_id, quantity_tiles)')
+      .gte('created_at', thirtyDaysAgo.toISOString())
+      .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
+
     getBadgeCounts(profile.role, supabase),
   ])
 
   // Filter stock to active products only (done in JS, not a separate query)
   const activeProductIds = new Set((products ?? []).map((p: any) => p.id))
   const stockLevels = (allStockLevels ?? []).filter((s: any) => activeProductIds.has(s.product_id))
+
+  // Compute avg daily consumption per product over last 30 days
+  const velocityMap: Record<string, number> = {}
+  for (const sale of (recentSales ?? [])) {
+    for (const item of ((sale as any).sale_items ?? [])) {
+      velocityMap[item.product_id] = (velocityMap[item.product_id] ?? 0) + Number(item.quantity_tiles)
+    }
+  }
+  for (const id in velocityMap) {
+    velocityMap[id] = velocityMap[id] / 30
+  }
 
   const currency    = (profile.companies as any)?.currency    ?? 'FCFA'
   const companyName = (profile.companies as any)?.name ?? 'SGI'
@@ -123,6 +145,7 @@ export default async function WarehousePage() {
       stockLevels={stockLevels ?? []}
       products={products ?? []}
       myRequests={myRequests ?? []}
+      velocityMap={velocityMap}
       badgeCounts={badgeCounts}
     />
   )

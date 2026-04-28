@@ -41,7 +41,7 @@ type Tab = 'orders' | 'stock' | 'requests'
 
 export default function WarehouseClient({
   profile, currency, companyName = 'SGI', orders, deliveredOrders,
-  stockLevels, products, myRequests, badgeCounts,
+  stockLevels, products, myRequests, velocityMap = {}, badgeCounts,
 }: {
   profile:         any
   currency:        string
@@ -51,6 +51,7 @@ export default function WarehouseClient({
   stockLevels:     any[]
   products:        any[]
   myRequests:      any[]
+  velocityMap?:    Record<string, number>
   badgeCounts?:    BadgeCounts
 }) {
   const router    = useRouter()
@@ -905,6 +906,17 @@ export default function WarehouseClient({
                         width: `${pct}%`, background: stockColor,
                         transition: 'width 0.4s ease' }} />
                     </div>
+                    {(() => {
+                      const velocity = velocityMap[item.product_id] ?? 0
+                      if (velocity <= 0) return null
+                      const days = Math.round(available / velocity)
+                      const daysColor = days < 15 ? C.red : days < 30 ? C.orange : C.muted
+                      return (
+                        <div style={{ marginTop: 6, fontSize: F.xs, color: daysColor, fontFamily: F.body, textAlign: 'right' }}>
+                          ~{days} jour{days !== 1 ? 's' : ''} de stock · rythme 30j
+                        </div>
+                      )
+                    })()}
                   </div>
 
                   <div style={{ display: 'grid',
