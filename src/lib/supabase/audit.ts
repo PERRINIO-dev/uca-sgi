@@ -36,6 +36,12 @@ export type AuditActionType =
   | 'CUSTOMER_UPDATED'
   | 'CUSTOMER_DELETED'
   | 'CAISSE_CLOSED'
+  | 'SUPPLIER_CREATED'
+  | 'SUPPLIER_UPDATED'
+  | 'PO_CREATED'
+  | 'PO_ORDERED'
+  | 'PO_RECEIVED'
+  | 'PO_CANCELLED'
 
 export interface AuditEntry {
   user_id:            string | null
