@@ -42,6 +42,9 @@ export type AuditActionType =
   | 'PO_ORDERED'
   | 'PO_RECEIVED'
   | 'PO_CANCELLED'
+  | 'RETURN_CREATED'
+  | 'RETURN_VALIDATED'
+  | 'RETURN_CANCELLED'
 
 export interface AuditEntry {
   user_id:            string | null

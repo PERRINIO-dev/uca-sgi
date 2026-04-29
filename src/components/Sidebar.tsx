@@ -111,6 +111,16 @@ function IconSuppliers({ c = 'currentColor' }: { c?: string }) {
   )
 }
 
+function IconReturn({ c = 'currentColor' }: { c?: string }) {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M4 10.5A6.5 6.5 0 1110.5 4H8" stroke={c} strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M8 1.5L5 4.5l3 3" stroke={c} strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M10 12h5M13 9.5l2.5 2.5L13 14.5" stroke={c} strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 function IconPlatform({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -198,6 +208,7 @@ const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
   [IconQuote,     'Devis',           '/quotes',     ['owner', 'admin', 'vendor']],
   [IconCaisse,    'Caisse',          '/caisse',     ['owner', 'admin', 'vendor']],
   [IconWarehouse, 'Entrepôt',        '/warehouse',  ['owner', 'admin', 'warehouse']],
+  [IconReturn,    'Retours',         '/returns',    ['owner', 'admin', 'vendor']],
   [IconSuppliers, 'Fournisseurs',    '/suppliers',  ['owner', 'admin']],
   [IconCatalog,   'Catalogue',       '/products',   ['owner', 'admin']],
   [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
