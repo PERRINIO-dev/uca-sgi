@@ -1,4 +1,51 @@
 /**
+ * Fetches the purchase order PDF and delivers it to the user.
+ */
+export async function downloadPOPdf(
+  orderId:     string,
+  orderNumber: string,
+): Promise<void> {
+  const res = await fetch(`/api/purchase-orders/${encodeURIComponent(orderId)}/pdf`)
+
+  if (!res.ok) {
+    let message = 'Erreur lors de la génération du bon de commande.'
+    try {
+      const body = await res.json()
+      if (body?.error) message = body.error
+    } catch {}
+    throw new Error(message)
+  }
+
+  const blob     = await res.blob()
+  const filename = `BC_${orderNumber.replace(/[^a-zA-Z0-9_\-]/g, '_')}.pdf`
+
+  if (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    typeof navigator.canShare === 'function'
+  ) {
+    const file = new File([blob], filename, { type: 'application/pdf' })
+    if (navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ title: `BC ${orderNumber}`, files: [file] })
+        return
+      } catch (e) {
+        if ((e as DOMException).name === 'AbortError') return
+      }
+    }
+  }
+
+  const url = URL.createObjectURL(blob)
+  const a   = document.createElement('a')
+  a.href     = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  setTimeout(() => URL.revokeObjectURL(url), 100)
+}
+
+/**
  * Fetches the bon de livraison PDF for a given order ID and delivers it to the user.
  * Supports native share sheet on mobile (WhatsApp, email…) with desktop fallback.
  */

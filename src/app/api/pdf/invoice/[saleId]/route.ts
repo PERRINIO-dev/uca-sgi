@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic'
 // ── Logo: load once at module level, cache for the process lifetime ───────────
 let LOGO_DATA_URI: string | null = null
 try {
-  const logoPath = path.join(process.cwd(), 'public', 'logo.jpeg')
+  const logoPath = path.join(process.cwd(), 'public', 'MERAM-Logo.jpeg')
   const buf      = fs.readFileSync(logoPath)
   LOGO_DATA_URI  = `data:image/jpeg;base64,${buf.toString('base64')}`
 } catch {

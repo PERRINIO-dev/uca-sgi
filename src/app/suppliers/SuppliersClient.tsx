@@ -6,6 +6,7 @@ import { createClient }     from '@/lib/supabase/client'
 import PageLayout           from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }      from '@/lib/format'
+import { downloadPOPdf }   from '@/lib/pdf/download'
 import { C, F, R, SP, SH, TR } from '@/lib/design-system'
 import {
   createSupplier, updateSupplier, toggleSupplierActive,
@@ -190,6 +191,8 @@ export default function SuppliersClient({
   const [detailOrder, setDetailOrder] = useState<PurchaseOrder | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
   const [actionError,   setActionError]   = useState<string | null>(null)
+  const [pdfLoading,    setPdfLoading]    = useState<string | null>(null)
+  const [pdfError,      setPdfError]      = useState<string | null>(null)
 
   // Reception modal
   const [showReceive,   setShowReceive]  = useState(false)
@@ -569,8 +572,30 @@ export default function SuppliersClient({
                           )}
 
                           {/* Action buttons */}
-                          {(isReceivable || isCancellable || o.status === 'draft') && (
-                            <div style={{ padding: `${SP[3]} ${SP[5]}`, borderTop: `1px solid ${C.borderSub}`, display: 'flex', gap: SP[2], flexWrap: 'wrap', alignItems: 'center' }}>
+                          <div style={{ padding: `${SP[3]} ${SP[5]}`, borderTop: `1px solid ${C.borderSub}`, display: 'flex', gap: SP[2], flexWrap: 'wrap', alignItems: 'center' }}>
+                              {/* PDF always available */}
+                              <button
+                                onClick={async () => {
+                                  setPdfError(null); setPdfLoading(o.id)
+                                  try { await downloadPOPdf(o.id, o.order_number) }
+                                  catch (e: any) { setPdfError(e?.message ?? 'Erreur PDF') }
+                                  finally { setPdfLoading(null) }
+                                }}
+                                disabled={pdfLoading === o.id}
+                                style={{
+                                  ...btnSecondary, fontSize: F.xs,
+                                  display: 'flex', alignItems: 'center', gap: SP[1],
+                                  opacity: pdfLoading === o.id ? 0.6 : 1,
+                                }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+                                  <path d="M3 13h10M8 2v8M5 7l3 3 3-3" stroke={C.muted} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                                {pdfLoading === o.id ? 'PDF…' : 'BC PDF'}
+                              </button>
+                              {pdfError && detailOrder?.id === o.id && (
+                                <span style={{ fontSize: F.xs, color: C.red }}>{pdfError}</span>
+                              )}
                               {o.status === 'draft' && (
                                 <button
                                   onClick={() => handleMarkOrdered(o.id)}
@@ -601,7 +626,6 @@ export default function SuppliersClient({
                                 <span style={{ fontSize: F.xs, color: C.red }}>{actionError}</span>
                               )}
                             </div>
-                          )}
                         </div>
                       )}
                     </div>
