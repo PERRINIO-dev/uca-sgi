@@ -30,7 +30,7 @@ export default async function ProductsPage() {
         width_cm, height_cm, tiles_per_carton, tile_area_m2, carton_area_m2,
         purchase_price, floor_price_per_m2, reference_price_per_m2,
         floor_price_per_unit, reference_price_per_unit,
-        piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package,
+        piece_length_m, container_volume_l, bag_weight_kg, pieces_per_package, min_stock_qty,
         stock ( total_qty, reserved_qty, last_updated_at )
       `)
       .order('created_at', { ascending: false }),

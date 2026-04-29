@@ -874,12 +874,17 @@ export default function WarehouseClient({
               const available  = parseInt(item.available_qty)
               const reserved   = parseInt(item.reserved_qty)
 
+              const perProductThreshold = prod?.min_stock_qty != null ? Number(prod.min_stock_qty) : null
+              const lowThreshold  = perProductThreshold ?? (isTile ? LOW_STOCK_CARTONS : LOW_STOCK_UNITS)
+              const critThreshold = perProductThreshold != null
+                ? Math.ceil(perProductThreshold * 0.4)
+                : (isTile ? CRITICAL_STOCK_CARTONS : CRITICAL_STOCK_UNITS)
               const isLow      = isTile
-                ? parseInt(item.available_full_cartons) < LOW_STOCK_CARTONS
-                : available < LOW_STOCK_UNITS
+                ? parseInt(item.available_full_cartons) < lowThreshold
+                : available < lowThreshold
               const isCritical = isTile
-                ? parseInt(item.available_full_cartons) < CRITICAL_STOCK_CARTONS
-                : available < CRITICAL_STOCK_UNITS
+                ? parseInt(item.available_full_cartons) < critThreshold
+                : available < critThreshold
 
               const stockColor = isCritical ? C.red : isLow ? C.orange : C.green
               const pct = isTile

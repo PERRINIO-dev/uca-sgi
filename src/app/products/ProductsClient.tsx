@@ -105,6 +105,8 @@ const emptyForm = (type: ProductType = 'tile') => ({
   containerVolumeL: '',
   // bag
   bagWeightKg: '',
+  // stock threshold
+  minStockQty: '',
 })
 
 type FormState = ReturnType<typeof emptyForm>
@@ -360,6 +362,8 @@ export default function ProductsClient({
       // Non-tile pricing
       floorPricePerUnit:    String(p.floor_price_per_unit ?? ''),
       referencePricePerUnit: String(p.reference_price_per_unit ?? ''),
+      // Stock threshold
+      minStockQty: p.min_stock_qty != null ? String(p.min_stock_qty) : '',
     })
     setError(null)
     setSuccess(null)
@@ -389,6 +393,7 @@ export default function ProductsClient({
         floorPricePerM2:     parseFloat(form.floorPricePerM2),
         referencePricePerM2: parseFloat(form.referencePricePerM2),
         isActive:            editProduct.is_active,
+        minStockQty:         form.minStockQty !== '' ? parseFloat(form.minStockQty) : null,
       })
       setLoading(false)
       if (result.error) { setError(result.error); return }
@@ -412,6 +417,7 @@ export default function ProductsClient({
         floorPricePerUnit:     parseFloat(form.floorPricePerUnit),
         referencePricePerUnit: parseFloat(form.referencePricePerUnit),
         isActive:              editProduct.is_active,
+        minStockQty:           form.minStockQty !== '' ? parseFloat(form.minStockQty) : null,
       })
       setLoading(false)
       if (result.error) { setError(result.error); return }
@@ -1447,6 +1453,17 @@ export default function ProductsClient({
                 </>
               )}
 
+              {/* Stock threshold — owner/admin only */}
+              {['owner', 'admin'].includes(profile.role) && (
+                <Field label={`Seuil d'alerte stock (${pt === 'tile' ? 'cartons' : editProduct.unit_label ?? 'unités'})`}>
+                  <input type="number" min="0" step="1"
+                    value={form.minStockQty}
+                    onChange={e => setField('minStockQty', e.target.value)}
+                    placeholder="Défaut global"
+                    style={inputStyle} />
+                </Field>
+              )}
+
               <FormFooter
                 error={error} success={success} loading={loading}
                 onConfirm={handleUpdate}
@@ -1487,11 +1504,15 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
   if (pt === 'tile') {
     const tpc = parseInt(p.tiles_per_carton) || 1
     const availCartons = Math.floor(available / tpc)
-    isCritical = availCartons < CRITICAL_STOCK_CARTONS
-    isLow      = availCartons < LOW_STOCK_CARTONS
+    const lowThreshold  = p.min_stock_qty != null ? Number(p.min_stock_qty) : LOW_STOCK_CARTONS
+    const critThreshold = p.min_stock_qty != null ? Math.ceil(lowThreshold * 0.4) : CRITICAL_STOCK_CARTONS
+    isCritical = availCartons < critThreshold
+    isLow      = availCartons < lowThreshold
   } else {
-    isCritical = available < CRITICAL_STOCK_UNITS
-    isLow      = available < LOW_STOCK_UNITS
+    const lowThreshold  = p.min_stock_qty != null ? Number(p.min_stock_qty) : LOW_STOCK_UNITS
+    const critThreshold = p.min_stock_qty != null ? Math.ceil(lowThreshold * 0.4) : CRITICAL_STOCK_UNITS
+    isCritical = available < critThreshold
+    isLow      = available < lowThreshold
   }
 
   const stockColor = !p.is_active ? C.muted : isCritical ? C.red : isLow ? C.orange : C.green

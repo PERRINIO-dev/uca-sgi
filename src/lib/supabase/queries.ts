@@ -86,10 +86,10 @@ export async function getDashboardStats() {
       .in('payment_status', ['partial', 'unpaid'])
       .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
-    // Product types + purchase prices for stock alerts and valuation
+    // Product types + purchase prices + thresholds for stock alerts and valuation
     supabase
       .from('products')
-      .select('id, product_type, purchase_price'),
+      .select('id, product_type, purchase_price, min_stock_qty'),
 
     // MTD payments by method — for cash breakdown panel
     supabase

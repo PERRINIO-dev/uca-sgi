@@ -395,7 +395,8 @@ export async function updateProduct(payload: {
   // Non-tile pricing
   floorPricePerUnit?:     number
   referencePricePerUnit?: number
-  isActive: boolean
+  isActive:      boolean
+  minStockQty?:  number | null
 }) {
   const { supabase, user, profile } = await getAuthorizedProfile()
 
@@ -443,6 +444,7 @@ export async function updateProduct(payload: {
         floor_price_per_m2:     fp,
         reference_price_per_m2: rp,
         is_active:              payload.isActive,
+        min_stock_qty:          payload.minStockQty ?? null,
       })
       .eq('id', payload.productId)
 
@@ -484,6 +486,7 @@ export async function updateProduct(payload: {
       floor_price_per_unit:    fp,
       reference_price_per_unit: rp,
       is_active:               payload.isActive,
+      min_stock_qty:           payload.minStockQty ?? null,
     })
     .eq('id', payload.productId)
 

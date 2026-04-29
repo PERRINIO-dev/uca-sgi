@@ -138,17 +138,25 @@ export function computeDashboardKpis(
   // ── Stock alerts ──────────────────────────────────────────────────────────
   // Tiles:     threshold on available_full_cartons
   // Non-tiles: threshold on available_qty (individual units)
-  const typeMap = new Map(
-    (stats.productTypes ?? []).map((p: any) => [p.id, p.product_type])
+  // Per-product min_stock_qty overrides global defaults when set.
+  const productMetaMap = new Map(
+    (stats.productTypes ?? []).map((p: any) => [p.id, p])
   )
   const stockAlerts = stats.stockLevels
     .filter((s: any) => {
-      const type = typeMap.get(s.product_id) ?? 'tile'
+      const meta      = productMetaMap.get(s.product_id)
+      const type      = meta?.product_type ?? 'tile'
+      const threshold = meta?.min_stock_qty != null
+        ? Number(meta.min_stock_qty)
+        : type === 'tile' ? LOW_STOCK_CARTONS : LOW_STOCK_UNITS
       return type === 'tile'
-        ? Number(s.available_full_cartons) < LOW_STOCK_CARTONS
-        : Number(s.available_qty)          < LOW_STOCK_UNITS
+        ? Number(s.available_full_cartons) < threshold
+        : Number(s.available_qty)          < threshold
     })
-    .map((s: any) => ({ ...s, product_type: typeMap.get(s.product_id) ?? 'tile' }))
+    .map((s: any) => ({
+      ...s,
+      product_type: productMetaMap.get(s.product_id)?.product_type ?? 'tile',
+    }))
 
   return {
     todayCount,
