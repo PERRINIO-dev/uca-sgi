@@ -7,9 +7,9 @@ import PageLayout            from '@/components/PageLayout'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }       from '@/lib/format'
 import {
-  AreaChart, Area, BarChart, Bar,
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer,
+  Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 
 import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
@@ -72,6 +72,7 @@ export default function ReportsClient({
   const [dateTo,         setDateTo]   = useState('')
   const [search,         setSearch]   = useState('')
   const [expandedSale,   setExpanded] = useState<string | null>(null)
+  const [productSort,    setProductSort] = useState<'ca' | 'margin' | 'marginPct'>('ca')
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -151,9 +152,18 @@ export default function ReportsClient({
     }
   }, [filtered])
 
+  // ── Shared cost helper ─────────────────────────────────────────────────
+  const saleCost = (s: any): number =>
+    (s.sale_items ?? []).reduce((a: number, i: any) => {
+      const isTile = i.products?.product_type === 'tile'
+      const pp     = parseFloat(i.purchase_price_snapshot ?? '0') || 0
+      const m2     = isTile ? i.quantity_tiles * parseFloat(i.tile_area_m2_snapshot ?? '0') : 0
+      return a + (isTile ? pp * m2 : pp * i.quantity_tiles)
+    }, 0)
+
   // ── Daily chart data ───────────────────────────────────────────────────
   const dailyData = useMemo(() => {
-    const map: Record<string, { date: string; ca: number; ventes: number; _iso: string }> = {}
+    const map: Record<string, { date: string; ca: number; cost: number; ventes: number; _iso: string }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
       .forEach(s => {
@@ -161,26 +171,32 @@ export default function ReportsClient({
         if (!map[iso]) map[iso] = {
           _iso: iso,
           date: new Date(s.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
-          ca: 0, ventes: 0,
+          ca: 0, cost: 0, ventes: 0,
         }
         map[iso].ca     += s.total_amount
+        map[iso].cost   += saleCost(s)
         map[iso].ventes += 1
       })
-    return Object.values(map).sort((a, b) => a._iso.localeCompare(b._iso))
-  }, [filtered])
+    return Object.values(map)
+      .sort((a, b) => a._iso.localeCompare(b._iso))
+      .map(d => ({ ...d, margin: d.ca - d.cost, marginPct: d.ca > 0 ? ((d.ca - d.cost) / d.ca) * 100 : 0 }))
+  }, [filtered, saleCost])
 
   // ── Boutique breakdown ─────────────────────────────────────────────────
   const boutiqueData = useMemo(() => {
-    const map: Record<string, { name: string; ca: number; ventes: number }> = {}
+    const map: Record<string, { name: string; ca: number; cost: number; ventes: number }> = {}
     filtered
       .filter(s => s.status !== 'cancelled')
       .forEach(s => {
         const name = s.boutiques?.name ?? 'Inconnue'
-        if (!map[name]) map[name] = { name, ca: 0, ventes: 0 }
+        if (!map[name]) map[name] = { name, ca: 0, cost: 0, ventes: 0 }
         map[name].ca     += s.total_amount
+        map[name].cost   += saleCost(s)
         map[name].ventes += 1
       })
-    return Object.values(map).sort((a, b) => b.ca - a.ca)
+    return Object.values(map)
+      .sort((a, b) => b.ca - a.ca)
+      .map(b => ({ ...b, margin: b.ca - b.cost, marginPct: b.ca > 0 ? ((b.ca - b.cost) / b.ca) * 100 : 0 }))
   }, [filtered])
 
   // ── Top products ───────────────────────────────────────────────────────
@@ -210,8 +226,25 @@ export default function ReportsClient({
         map[id].units += item.quantity_tiles
         map[id].cost  += isTile ? purchasePrice * itemM2 : purchasePrice * item.quantity_tiles
       }))
-    return Object.values(map).sort((a, b) => b.ca - a.ca)
+    return Object.values(map).map(p => ({
+      ...p,
+      margin:    p.ca - p.cost,
+      marginPct: p.ca > 0 ? ((p.ca - p.cost) / p.ca) * 100 : 0,
+      hasPrice:  p.cost > 0,
+    })).sort((a, b) => b.ca - a.ca)
   }, [filtered])
+
+  const sortedProductData = useMemo(() => {
+    const data = [...productData]
+    if (productSort === 'margin')    data.sort((a, b) => b.margin    - a.margin)
+    if (productSort === 'marginPct') data.sort((a, b) => b.marginPct - a.marginPct)
+    return data
+  }, [productData, productSort])
+
+  const missingPriceCount = useMemo(
+    () => productData.filter(p => !p.hasPrice && p.ca > 0).length,
+    [productData],
+  )
 
   // ── Vendor performance — with margin, créances, cancellations ─────────────
   const vendorData = useMemo(() => {
@@ -725,13 +758,43 @@ export default function ReportsClient({
             )}
           </div>
 
+          {/* Daily margin % trend — owner only */}
+          {profile.role === 'owner' && dailyData.length > 0 && (
+            <div style={{ background: C.surface, borderRadius: 12,
+              border: `1px solid ${C.border}`, padding: '20px 24px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                marginBottom: 16, fontFamily: F.body }}>
+                Taux de marge journalier
+              </div>
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
+              <div style={{ minWidth: 320 }}>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={C.border} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: C.muted }} />
+                  <YAxis tick={{ fontSize: 11, fill: C.muted }}
+                    tickFormatter={v => v.toFixed(0) + ' %'} domain={['auto', 'auto']} />
+                  <Tooltip
+                    formatter={(v) => [Number(v).toFixed(1) + ' %', 'Taux de marge']}
+                    contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
+                      fontFamily: F.body, fontSize: 12 }} />
+                  <Line type="monotone" dataKey="marginPct"
+                    stroke={C.green} strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+              </div>
+              </div>
+            </div>
+          )}
+
           {/* Boutique bar chart */}
           <div style={{ background: C.surface, borderRadius: 12,
             border: `1px solid ${C.border}`, padding: '20px 24px' }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: C.muted,
               textTransform: 'uppercase', letterSpacing: '0.08em',
               marginBottom: 16, fontFamily: F.body }}>
-              CA par boutique
+              CA {profile.role === 'owner' ? '& marge' : ''} par boutique
             </div>
             {boutiqueData.length === 0 ? (
               <div style={{ height: 140, display: 'flex',
@@ -742,7 +805,7 @@ export default function ReportsClient({
             ) : (
               <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' as any }}>
               <div style={{ minWidth: 320 }}>
-              <ResponsiveContainer width="100%" height={Math.max(120, boutiqueData.length * 50)}>
+              <ResponsiveContainer width="100%" height={Math.max(120, boutiqueData.length * 60)}>
                 <BarChart data={boutiqueData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke={C.border} horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }}
@@ -752,10 +815,14 @@ export default function ReportsClient({
                   <YAxis type="category" dataKey="name" width={90}
                     tick={{ fontSize: 11, fill: C.muted }} />
                   <Tooltip
-                    formatter={(v) => [fmt(Number(v)), 'CA']}
+                    formatter={(v, name) => [fmt(Number(v)), name === 'ca' ? 'CA' : 'Marge']}
                     contentStyle={{ borderRadius: 8, border: `1px solid ${C.border}`,
                       fontFamily: F.body, fontSize: 12 }} />
+                  {profile.role === 'owner' && <Legend formatter={n => n === 'ca' ? 'CA' : 'Marge'} />}
                   <Bar dataKey="ca" fill={C.amber} radius={[0, 4, 4, 0]} />
+                  {profile.role === 'owner' && (
+                    <Bar dataKey="margin" fill={C.green} radius={[0, 4, 4, 0]} />
+                  )}
                 </BarChart>
               </ResponsiveContainer>
               </div>
@@ -873,72 +940,115 @@ export default function ReportsClient({
 
       {/* ── PRODUCTS TAB ── */}
       {activeTab === 'products' && (
-        <div style={{ background: C.surface, borderRadius: 12,
-          border: `1px solid ${C.border}`, overflow: 'hidden' }}>
-          {productData.length === 0 ? (
-            <div style={{ padding: 48, textAlign: 'center',
-              color: C.muted, fontSize: 14, fontFamily: F.body }}>
-              Aucune donnée produit sur la période.
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ borderBottom: `2px solid ${C.border}` }}>
-                    {[
-                      'Rang', 'Produit', 'Référence', 'Catégorie',
-                      'Surface vendue', 'Quantité', 'CA généré',
-                      ...(profile.role === 'owner' ? ['Marge brute', 'Marge %'] : []),
-                    ].map(h => <th key={h} style={TH}>{h}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {productData.map((p, idx) => {
-                    const margin    = p.ca - p.cost
-                    const marginPct = p.ca > 0 ? (margin / p.ca) * 100 : 0
-                    return (
-                    <tr key={p.ref} style={{ borderBottom: `1px solid ${C.border}` }}>
-                      <td style={{ ...TD, fontSize: 16, fontWeight: 900,
-                        color: idx === 0 ? C.gold : idx === 1 ? C.muted : C.border }}>
-                        #{idx + 1}
-                      </td>
-                      <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
-                        {p.name}
-                      </td>
-                      <td style={{ ...TD, fontSize: 11, color: C.muted }}>
-                        {p.ref}
-                      </td>
-                      <td style={{ ...TD, fontSize: 12, color: C.muted }}>
-                        {p.category}
-                      </td>
-                      <td style={{ ...TD, fontSize: 13, color: C.ink }}>
-                        {p.isTile && p.m2 > 0 ? fmtM2(p.m2) : '—'}
-                      </td>
-                      <td style={{ ...TD, fontSize: 13, color: C.ink }}>
-                        {fmtNum(p.units)}{!p.isTile && ` ${p.unitLabel}`}
-                      </td>
-                      <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
-                        {fmt(p.ca)}
-                      </td>
-                      {profile.role === 'owner' && (
-                        <>
-                          <td style={{ ...TD, fontSize: 13, fontWeight: 700,
-                            color: margin >= 0 ? C.green : C.red }}>
-                            {fmt(margin)}
-                          </td>
-                          <td style={{ ...TD, fontSize: 12,
-                            color: marginPct >= 0 ? C.green : C.red }}>
-                            {p.cost > 0 ? marginPct.toFixed(1) + ' %' : '—'}
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+          {/* Missing price warning — owner only */}
+          {profile.role === 'owner' && missingPriceCount > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              background: C.orangeBg, borderRadius: 10,
+              border: `1.5px solid ${C.orangeBd}`,
+              padding: '12px 16px',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                <path d="M8 1.5L14.5 13.5H1.5L8 1.5Z" stroke={C.orange} strokeWidth="1.5" strokeLinejoin="round"/>
+                <path d="M8 6.5v3M8 11h.01" stroke={C.orange} strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <span style={{ fontSize: 12, color: C.orange, fontFamily: F.body }}>
+                <strong>{missingPriceCount} produit{missingPriceCount > 1 ? 's' : ''}</strong> sans prix d'achat — taux de marge non calculable. Renseignez le prix d'achat dans la fiche produit.
+              </span>
             </div>
           )}
+
+          {/* Sort controls — owner only */}
+          {profile.role === 'owner' && productData.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 12, color: C.muted, fontFamily: F.body, marginRight: 4 }}>
+                Trier par :
+              </span>
+              {([
+                ['ca',        'CA'],
+                ['margin',    'Marge brute'],
+                ['marginPct', 'Taux de marge'],
+              ] as ['ca' | 'margin' | 'marginPct', string][]).map(([val, label]) => (
+                <button key={val} onClick={() => setProductSort(val)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 100,
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                    background: productSort === val ? C.amber : C.bg,
+                    color:      productSort === val ? '#FAF5EE' : C.muted,
+                    border: `1.5px solid ${productSort === val ? C.amber : C.border}`,
+                    fontFamily: F.body,
+                  }}>
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div style={{ background: C.surface, borderRadius: 12,
+            border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+            {sortedProductData.length === 0 ? (
+              <div style={{ padding: 48, textAlign: 'center',
+                color: C.muted, fontSize: 14, fontFamily: F.body }}>
+                Aucune donnée produit sur la période.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `2px solid ${C.border}` }}>
+                      {[
+                        'Rang', 'Produit', 'Référence', 'Catégorie',
+                        'Surface vendue', 'Quantité', 'CA généré',
+                        ...(profile.role === 'owner' ? ['Marge brute', 'Marge %'] : []),
+                      ].map(h => <th key={h} style={TH}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedProductData.map((p, idx) => (
+                      <tr key={p.ref + idx} style={{ borderBottom: `1px solid ${C.border}` }}>
+                        <td style={{ ...TD, fontSize: 16, fontWeight: 900,
+                          color: idx === 0 ? C.gold : idx === 1 ? C.muted : C.border }}>
+                          #{idx + 1}
+                        </td>
+                        <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
+                          {p.name}
+                        </td>
+                        <td style={{ ...TD, fontSize: 11, color: C.muted }}>
+                          {p.ref}
+                        </td>
+                        <td style={{ ...TD, fontSize: 12, color: C.muted }}>
+                          {p.category}
+                        </td>
+                        <td style={{ ...TD, fontSize: 13, color: C.ink }}>
+                          {p.isTile && p.m2 > 0 ? fmtM2(p.m2) : '—'}
+                        </td>
+                        <td style={{ ...TD, fontSize: 13, color: C.ink }}>
+                          {fmtNum(p.units)}{!p.isTile && ` ${p.unitLabel}`}
+                        </td>
+                        <td style={{ ...TD, fontSize: 13, fontWeight: 700, color: C.ink }}>
+                          {fmt(p.ca)}
+                        </td>
+                        {profile.role === 'owner' && (
+                          <>
+                            <td style={{ ...TD, fontSize: 13, fontWeight: 700,
+                              color: p.margin >= 0 ? C.green : C.red }}>
+                              {fmt(p.margin)}
+                            </td>
+                            <td style={{ ...TD, fontSize: 12,
+                              color: p.marginPct >= 0 ? C.green : C.red }}>
+                              {p.hasPrice ? p.marginPct.toFixed(1) + ' %' : '—'}
+                            </td>
+                          </>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
