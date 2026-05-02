@@ -557,7 +557,7 @@ export default function ProductsClient({
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {['owner', 'admin'].includes(profile.role) && (
+          {['owner', 'manager'].includes(profile.role) && (
             <button
               onClick={() => {
                 setBulkError(null); setBulkSuccess(null)
@@ -1454,7 +1454,7 @@ export default function ProductsClient({
               )}
 
               {/* Stock threshold — owner/admin only */}
-              {['owner', 'admin'].includes(profile.role) && (
+              {['owner', 'manager'].includes(profile.role) && (
                 <Field label={`Seuil d'alerte stock (${pt === 'tile' ? 'cartons' : editProduct.unit_label ?? 'unités'})`}>
                   <input type="number" min="0" step="1"
                     value={form.minStockQty}
@@ -1631,7 +1631,7 @@ function ProductCard({ p, profile, currency, toggleLoadingId, onEdit, onToggle, 
             )}
           </button>
           {/* Delete — available to owner/admin for any product with no history */}
-          {['owner', 'admin'].includes(profile.role) && (
+          {['owner', 'manager'].includes(profile.role) && (
             <button
               onClick={() => onDelete(p)}
               title="Supprimer définitivement"

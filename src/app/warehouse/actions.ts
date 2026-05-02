@@ -31,7 +31,7 @@ export async function updateOrderStatus(
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['warehouse', 'admin', 'owner'].includes(profile.role)) {
+  if (!profile || !['warehouse', 'manager', 'owner'].includes(profile.role)) {
     return { error: 'Accès refusé.' }
   }
 
@@ -153,7 +153,7 @@ export async function updateOrderStatus(
       })
       if (lowStock.length > 0) {
         const names = lowStock.map((s: any) => s.product_name).join(', ')
-        sendPushToRoles(admin, ['admin', 'owner'], {
+        sendPushToRoles(admin, ['manager', 'owner'], {
           title: 'Stock bas',
           body:  `Stock bas après livraison : ${names}`,
           url:   '/products',
@@ -185,7 +185,7 @@ export async function submitStockRequest(payload: {
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['warehouse', 'admin', 'owner'].includes(profile.role)) {
+  if (!profile || !['warehouse', 'manager', 'owner'].includes(profile.role)) {
     return { error: 'Accès refusé.' }
   }
 
@@ -242,7 +242,7 @@ export async function submitStockRequest(payload: {
 
   revalidatePath('/warehouse')
   revalidatePath('/dashboard')
-  sendPushToRoles(getAdmin(), ['admin', 'owner'], {
+  sendPushToRoles(getAdmin(), ['manager', 'owner'], {
     title: 'Demande de stock',
     body:  `Nouvelle demande pour ${product?.name ?? 'un produit'} — approbation requise`,
     url:   '/dashboard',

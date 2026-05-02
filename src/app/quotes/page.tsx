@@ -26,7 +26,10 @@ export default async function QuotesPage({
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (profile.role === 'warehouse') redirect('/warehouse')
+  if (profile.role === 'cashier')     redirect('/caisse')
+  if (profile.role === 'delivery')    redirect('/deliveries')
+  if (profile.role === 'warehouse')   redirect('/warehouse')
+  if (profile.role === 'accountant')  redirect('/reports')
 
   const offset      = (currentPage - 1) * PAGE_SIZE
   const search      = params.search?.trim() ?? ''
@@ -55,7 +58,7 @@ export default async function QuotesPage({
     .select('id', { count: 'exact', head: true })
     .in('status', ['draft', 'cancelled'])
 
-  if (profile.role === 'vendor') {
+  if (['seller', 'field_agent'].includes(profile.role)) {
     query      = query.eq('vendor_id', user.id)
     countQuery = countQuery.eq('vendor_id', user.id)
   }

@@ -7,10 +7,14 @@ import type { BadgeCounts }                   from '@/lib/supabase/badge-counts'
 import { C, F, R, SP, SH, TR, Z }            from '@/lib/design-system'
 
 const ROLE_LABELS: Record<string, string> = {
-  owner:     'Propriétaire',
-  admin:     'Administrateur',
-  vendor:    'Vendeur',
-  warehouse: 'Magasinier',
+  owner:       'Propriétaire',
+  manager:     'Gérant',
+  seller:      'Vendeur',
+  cashier:     'Caissier',
+  warehouse:   'Magasinier',
+  delivery:    'Livreur',
+  accountant:  'Comptable',
+  field_agent: 'Commercial terrain',
 }
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -121,6 +125,38 @@ function IconReturn({ c = 'currentColor' }: { c?: string }) {
   )
 }
 
+function IconCustomers({ c = 'currentColor' }: { c?: string }) {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <circle cx="10" cy="6.5" r="3" stroke={c} strokeWidth="1.5"/>
+      <path d="M3.5 18c0-3.5 2.9-6 6.5-6s6.5 2.5 6.5 6" stroke={c} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function IconDelivery({ c = 'currentColor' }: { c?: string }) {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="2" y="6" width="11" height="9" rx="1.5" stroke={c} strokeWidth="1.4"/>
+      <path d="M13 9h3l2 3v3h-5V9Z" stroke={c} strokeWidth="1.4" strokeLinejoin="round"/>
+      <circle cx="6"  cy="16.5" r="1.5" stroke={c} strokeWidth="1.2"/>
+      <circle cx="15" cy="16.5" r="1.5" stroke={c} strokeWidth="1.2"/>
+      <path d="M4.5 9.5h4" stroke={c} strokeWidth="1.2" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function IconPipeline({ c = 'currentColor' }: { c?: string }) {
+  return (
+    <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <rect x="2.5" y="3" width="4.5" height="14" rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="9.5" y="7" width="4.5" height="10" rx="1.5" stroke={c} strokeWidth="1.35"/>
+      <rect x="13.5" y="3" width="4" height="5" rx="1.5" fill={c} opacity="0.25"/>
+      <rect x="13.5" y="3" width="4" height="5" rx="1.5" stroke={c} strokeWidth="1.35"/>
+    </svg>
+  )
+}
+
 function IconPlatform({ c = 'currentColor' }: { c?: string }) {
   return (
     <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -200,20 +236,72 @@ function Avatar({ name }: { name: string }) {
   )
 }
 
-// ── Nav config ─────────────────────────────────────────────────────────────────
+// ── Nav config — une config distincte par rôle ────────────────────────────────
 type NavIcon = React.FC<{ c?: string }>
-const NAV_ITEMS: [NavIcon, string, string, string[]][] = [
-  [IconDashboard, 'Tableau de bord', '/dashboard',  ['owner', 'admin']],
-  [IconSales,     'Ventes',          '/sales',      ['owner', 'admin', 'vendor']],
-  [IconQuote,     'Devis',           '/quotes',     ['owner', 'admin', 'vendor']],
-  [IconCaisse,    'Caisse',          '/caisse',     ['owner', 'admin', 'vendor']],
-  [IconWarehouse, 'Entrepôt',        '/warehouse',  ['owner', 'admin', 'warehouse']],
-  [IconReturn,    'Retours',         '/returns',    ['owner', 'admin', 'vendor']],
-  [IconSuppliers, 'Fournisseurs',    '/suppliers',  ['owner', 'admin']],
-  [IconCatalog,   'Catalogue',       '/products',   ['owner', 'admin']],
-  [IconUsers,     'Utilisateurs',    '/users',      ['owner', 'admin']],
-  [IconReports,   'Rapports',        '/reports',    ['owner', 'admin']],
-]
+type NavItem = { icon: NavIcon; label: string; href: string; badgeKey?: keyof BadgeCounts }
+
+const NAV: Record<string, NavItem[]> = {
+  owner: [
+    { icon: IconDashboard, label: 'Tableau de bord',  href: '/dashboard',  badgeKey: 'pendingApprovals'  },
+    { icon: IconSales,     label: 'Ventes',            href: '/sales'                                    },
+    { icon: IconQuote,     label: 'Devis',             href: '/quotes'                                   },
+    { icon: IconCaisse,    label: 'Caisse',            href: '/caisse'                                   },
+    { icon: IconWarehouse, label: 'Entrepôt',          href: '/warehouse',  badgeKey: 'confirmedOrders'  },
+    { icon: IconDelivery,  label: 'Livraisons',        href: '/deliveries'                               },
+    { icon: IconReturn,    label: 'Retours',           href: '/returns'                                  },
+    { icon: IconCustomers, label: 'Clients',           href: '/customers'                                },
+    { icon: IconSuppliers, label: 'Fournisseurs',      href: '/suppliers'                                },
+    { icon: IconCatalog,   label: 'Catalogue',         href: '/products'                                 },
+    { icon: IconReports,   label: 'Rapports',          href: '/reports'                                  },
+    { icon: IconUsers,     label: 'Utilisateurs',      href: '/users'                                    },
+  ],
+  manager: [
+    { icon: IconDashboard, label: 'Tableau de bord',  href: '/dashboard',  badgeKey: 'pendingApprovals'  },
+    { icon: IconSales,     label: 'Ventes',            href: '/sales'                                    },
+    { icon: IconQuote,     label: 'Devis',             href: '/quotes'                                   },
+    { icon: IconCaisse,    label: 'Caisse',            href: '/caisse'                                   },
+    { icon: IconWarehouse, label: 'Entrepôt',          href: '/warehouse',  badgeKey: 'confirmedOrders'  },
+    { icon: IconDelivery,  label: 'Livraisons',        href: '/deliveries'                               },
+    { icon: IconReturn,    label: 'Retours',           href: '/returns'                                  },
+    { icon: IconCustomers, label: 'Clients',           href: '/customers'                                },
+    { icon: IconSuppliers, label: 'Fournisseurs',      href: '/suppliers'                                },
+    { icon: IconCatalog,   label: 'Catalogue',         href: '/products'                                 },
+    { icon: IconReports,   label: 'Rapports',          href: '/reports'                                  },
+  ],
+  seller: [
+    { icon: IconSales,     label: 'Nouvelle vente',    href: '/sales/new'                                },
+    { icon: IconSales,     label: 'Mes ventes',        href: '/sales'                                    },
+    { icon: IconQuote,     label: 'Devis',             href: '/quotes'                                   },
+    { icon: IconReturn,    label: 'Retours',           href: '/returns'                                  },
+    { icon: IconCustomers, label: 'Clients',           href: '/customers'                                },
+  ],
+  cashier: [
+    { icon: IconCaisse,    label: 'Caisse',            href: '/caisse',     badgeKey: 'pendingPayments'  },
+    { icon: IconSales,     label: 'Ventes du jour',    href: '/sales'                                    },
+  ],
+  warehouse: [
+    { icon: IconWarehouse, label: 'Entrepôt',          href: '/warehouse',  badgeKey: 'confirmedOrders'  },
+    { icon: IconDelivery,  label: 'Livraisons',        href: '/deliveries'                               },
+    { icon: IconSuppliers, label: 'Fournisseurs',      href: '/suppliers'                                },
+  ],
+  delivery: [
+    { icon: IconDelivery,  label: 'Mes livraisons',    href: '/deliveries', badgeKey: 'pendingDeliveries'},
+  ],
+  accountant: [
+    { icon: IconDashboard, label: 'Tableau de bord',  href: '/dashboard'                                },
+    { icon: IconReports,   label: 'Rapports',          href: '/reports'                                  },
+    { icon: IconSales,     label: 'Ventes',            href: '/sales'                                    },
+    { icon: IconCaisse,    label: 'Trésorerie',        href: '/caisse'                                   },
+    { icon: IconCustomers, label: 'Clients',           href: '/customers'                                },
+    { icon: IconSuppliers, label: 'Fournisseurs',      href: '/suppliers'                                },
+    { icon: IconCatalog,   label: 'Catalogue',         href: '/products'                                 },
+  ],
+  field_agent: [
+    { icon: IconQuote,     label: 'Nouvelle commande', href: '/quotes/new'                               },
+    { icon: IconPipeline,  label: 'Mon pipeline',      href: '/pipeline'                                 },
+    { icon: IconCustomers, label: 'Mes clients',       href: '/customers'                                },
+  ],
+}
 
 // ═════════════════════════════════════════════════════════════════════════════
 export default function Sidebar({
@@ -240,12 +328,10 @@ export default function Sidebar({
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const isAdmin      = profile.is_platform_admin === true
-  const visibleItems = isAdmin
-    ? []
-    : NAV_ITEMS.filter(([,,, roles]) => roles.includes(profile.role))
+  const visibleItems: NavItem[] = isAdmin ? [] : (NAV[profile.role] ?? [])
 
   useEffect(() => {
-    visibleItems.forEach(([,, href]) => router.prefetch(href))
+    visibleItems.forEach(item => router.prefetch(item.href))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -304,11 +390,9 @@ export default function Sidebar({
     }
   }
 
-  const getNavBadge = (href: string): number => {
-    if (!badgeCounts) return 0
-    if (href === '/dashboard') return badgeCounts.pendingApprovals
-    if (href === '/warehouse') return badgeCounts.confirmedOrders
-    return 0
+  const getNavBadge = (item: NavItem): number => {
+    if (!badgeCounts || !item.badgeKey) return 0
+    return badgeCounts[item.badgeKey] ?? 0
   }
 
   const activeGlow = 'rgba(160,83,26,0.12)'
@@ -449,12 +533,13 @@ export default function Sidebar({
         <nav style={{ flex: 1, padding: `${SP[2]} ${SP[2]}`, overflowY: 'auto' }} aria-label="Navigation principale">
 
 
-          {visibleItems.map(([Icon, label, href]) => {
-            const active = activeRoute === href
-            const badge  = getNavBadge(href)
+          {visibleItems.map((item) => {
+            const { icon: Icon, label, href } = item
+            const active = activeRoute === href || (href !== '/' && activeRoute.startsWith(href) && href.length > 1)
+            const badge  = getNavBadge(item)
             return (
               <button
-                key={href}
+                key={`${href}-${label}`}
                 className={`nav-item${active ? ' active' : ''}`}
                 onMouseEnter={() => router.prefetch(href)}
                 onClick={() => { onClose?.(); startTransition(() => router.push(href)) }}

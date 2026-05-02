@@ -18,7 +18,7 @@ export default async function UsersPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
+  if (profile.role !== 'owner') redirect('/dashboard')
 
   const [{ data: employees }, { data: boutiques }, badgeCounts] = await Promise.all([
     supabase

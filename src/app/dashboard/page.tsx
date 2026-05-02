@@ -20,9 +20,12 @@ export default async function DashboardPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin'].includes(profile.role)) {
-    if (profile.role === 'vendor')    redirect('/sales')
-    if (profile.role === 'warehouse') redirect('/warehouse')
+  if (!['owner', 'manager', 'accountant'].includes(profile.role)) {
+    if (profile.role === 'seller')      redirect('/sales/new')
+    if (profile.role === 'cashier')     redirect('/caisse')
+    if (profile.role === 'warehouse')   redirect('/warehouse')
+    if (profile.role === 'delivery')    redirect('/deliveries')
+    if (profile.role === 'field_agent') redirect('/pipeline')
     redirect('/sales')
   }
 

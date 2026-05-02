@@ -136,7 +136,7 @@ export default function CaisseClient({
   const supabase = createClient()
   const fmt      = (n: number) => fmtCurrency(n, currency)
 
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  const isOwnerOrAdmin = ['owner', 'manager'].includes(profile.role)
   const today          = new Date().toISOString().slice(0, 10)
 
   // ── State ──────────────────────────────────────────────────────────────────

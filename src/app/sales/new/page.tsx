@@ -18,9 +18,9 @@ export default async function NewSalePage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['vendor', 'admin', 'owner'].includes(profile.role)) redirect('/dashboard')
+  if (!['seller', 'manager', 'owner'].includes(profile.role)) redirect('/dashboard')
 
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  const isOwnerOrAdmin = ['owner', 'manager'].includes(profile.role)
 
   let boutique = profile.boutiques as any
   let allBoutiques: any[] = []

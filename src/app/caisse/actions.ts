@@ -75,7 +75,7 @@ export async function getCaisseData(
   }
 
   // Vendor can only see their own boutique
-  if (profile.role === 'vendor' && profile.boutique_id !== boutiqueId) {
+  if (profile.role === 'cashier' && profile.boutique_id !== boutiqueId) {
     return { data: null, error: 'Accès refusé.' }
   }
 
@@ -175,7 +175,7 @@ export async function getCaisseHistory(
     return { data: [], error: 'Accès refusé.' }
   }
 
-  if (profile.role === 'vendor' && profile.boutique_id !== boutiqueId) {
+  if (profile.role === 'cashier' && profile.boutique_id !== boutiqueId) {
     return { data: [], error: 'Accès refusé.' }
   }
 
@@ -246,7 +246,7 @@ export async function addCashEntry(payload: {
   if (profile.role === 'warehouse') return { error: 'Accès refusé.' }
 
   // Vendor restricted to their boutique
-  if (profile.role === 'vendor' && profile.boutique_id !== payload.boutique_id) {
+  if (profile.role === 'cashier' && profile.boutique_id !== payload.boutique_id) {
     return { error: 'Accès refusé.' }
   }
 
@@ -325,7 +325,7 @@ export async function closeCaisse(payload: {
   }
   if (profile.role === 'warehouse') return { error: 'Accès refusé.' }
 
-  if (profile.role === 'vendor' && profile.boutique_id !== payload.boutique_id) {
+  if (profile.role === 'cashier' && profile.boutique_id !== payload.boutique_id) {
     return { error: 'Accès refusé.' }
   }
 

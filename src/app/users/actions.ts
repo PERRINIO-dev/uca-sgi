@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 export async function createEmployee(payload: {
   email:      string
   fullName:   string
-  role:       'vendor' | 'warehouse' | 'admin'
+  role:       'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
   boutiqueId: string | null
   password:   string
 }) {
@@ -23,11 +23,11 @@ export async function createEmployee(payload: {
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
-  if (payload.role === 'vendor' && !payload.boutiqueId) {
+  if (payload.role === 'seller' && !payload.boutiqueId) {
     return { error: 'Une boutique doit être assignée aux vendeurs.' }
   }
 
@@ -118,7 +118,7 @@ export async function toggleUserActive(
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
@@ -171,7 +171,7 @@ export async function createBoutique(payload: { name: string; address: string })
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
@@ -217,7 +217,7 @@ export async function resetPassword(
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
@@ -273,7 +273,7 @@ export async function toggleBoutiqueActive(
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
@@ -301,7 +301,7 @@ export async function toggleBoutiqueActive(
 export async function updateEmployee(payload: {
   userId:     string
   fullName:   string
-  role:       'vendor' | 'warehouse' | 'admin'
+  role:       'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
   boutiqueId: string | null
 }) {
   const supabase      = await createClient()
@@ -316,15 +316,15 @@ export async function updateEmployee(payload: {
     .eq('id', user.id)
     .single()
 
-  if (!profile || !['owner', 'admin'].includes(profile.role)) {
+  if (!profile || profile.role !== 'owner') {
     return { error: 'Accès refusé.' }
   }
 
-  if (payload.role === 'vendor' && !payload.boutiqueId) {
+  if (payload.role === 'seller' && !payload.boutiqueId) {
     return { error: 'Une boutique doit être assignée aux vendeurs.' }
   }
 
-  // Role hierarchy: admin cannot edit owner accounts; verify target is in same company
+  // Role hierarchy: owner only; verify target is in same company
   const { data: targetProfile } = await adminSupabase
     .from('users')
     .select('role')

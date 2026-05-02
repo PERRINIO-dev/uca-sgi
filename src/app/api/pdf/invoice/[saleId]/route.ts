@@ -84,7 +84,7 @@ export async function GET(
   }
 
   // Vendors can only download their own documents
-  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const isAdminOrOwner = ['owner', 'manager'].includes(profile.role)
   if (!isAdminOrOwner && sale.vendor_id !== user.id) {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
   }

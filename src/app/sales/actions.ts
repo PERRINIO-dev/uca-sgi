@@ -47,7 +47,7 @@ export async function createSale(payload: CreateSalePayload) {
     .single()
 
   if (!callerProfile) return { error: 'Profil introuvable.' }
-  if (!['vendor', 'admin', 'owner'].includes(callerProfile.role)) {
+  if (!['seller', 'manager', 'owner'].includes(callerProfile.role)) {
     return { error: 'Accès refusé.' }
   }
 
@@ -236,7 +236,7 @@ export async function createSale(payload: CreateSalePayload) {
   revalidatePath('/dashboard')
 
   // Fire-and-forget push to warehouse/admin/owner about the new order
-  sendPushToRoles(getAdminClient(), ['warehouse', 'admin', 'owner'], {
+  sendPushToRoles(getAdminClient(), ['warehouse', 'manager', 'owner'], {
     title: 'Nouvelle commande',
     body:  `Vente ${sale.sale_number} — ${payload.items.length} article(s) à préparer`,
     url:   '/warehouse',
@@ -260,7 +260,7 @@ export async function cancelSale(saleId: string) {
 
   if (!profile) return { error: 'Profil introuvable.' }
 
-  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const isAdminOrOwner = ['owner', 'manager'].includes(profile.role)
   const adminSupabase  = getAdminClient()
 
   // Use admin client to bypass RLS — authorization is enforced by server-side
@@ -348,7 +348,7 @@ export async function addPayment(
   if (sale.status === 'cancelled') return { error: 'Impossible d\'ajouter un paiement à une vente annulée.' }
   if (sale.status === 'draft')     return { error: 'Convertissez d\'abord le devis en vente confirmée avant d\'enregistrer un paiement.' }
 
-  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const isAdminOrOwner = ['owner', 'manager', 'cashier'].includes(profile.role)
   if (!isAdminOrOwner && sale.vendor_id !== user.id) return { error: 'Accès refusé.' }
   if (!amount || amount <= 0) return { error: 'Le montant doit être supérieur à 0.' }
 
@@ -407,7 +407,7 @@ export async function createScheduleItem(payload: {
 
   const { data: profile } = await supabase
     .from('users').select('role, company_id').eq('id', user.id).single()
-  if (!profile || !['owner', 'admin'].includes(profile.role))
+  if (!profile || !['owner', 'manager'].includes(profile.role))
     return { error: 'Accès refusé.' }
 
   if (!payload.dueDate)       return { error: 'Date d\'échéance requise.' }
@@ -443,7 +443,7 @@ export async function deleteScheduleItem(itemId: string) {
 
   const { data: profile } = await supabase
     .from('users').select('role, company_id').eq('id', user.id).single()
-  if (!profile || !['owner', 'admin'].includes(profile.role))
+  if (!profile || !['owner', 'manager'].includes(profile.role))
     return { error: 'Accès refusé.' }
 
   const { data: item } = await supabase

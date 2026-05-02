@@ -18,7 +18,7 @@ export default async function ReturnsPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin', 'vendor'].includes(profile.role)) redirect('/dashboard')
+  if (!['owner', 'manager', 'seller', 'warehouse', 'accountant'].includes(profile.role)) redirect('/dashboard')
 
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)

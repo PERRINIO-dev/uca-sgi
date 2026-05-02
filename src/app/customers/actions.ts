@@ -46,7 +46,7 @@ export async function createCustomer(payload: {
   const { data: profile } = await supabase
     .from('users').select('role, company_id').eq('id', user.id).single()
   if (!profile) return { error: 'Profil introuvable.' }
-  if (!['vendor', 'admin', 'owner'].includes(profile.role))
+  if (!['seller', 'manager', 'owner', 'field_agent'].includes(profile.role))
     return { error: 'Accès refusé.' }
 
   if (!payload.full_name?.trim() || payload.full_name.trim().length < 2)
@@ -98,7 +98,7 @@ export async function updateCustomer(customerId: string, payload: {
   const { data: profile } = await supabase
     .from('users').select('role, company_id').eq('id', user.id).single()
   if (!profile) return { error: 'Profil introuvable.' }
-  if (!['admin', 'owner'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['manager', 'owner'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   if (!payload.full_name?.trim() || payload.full_name.trim().length < 2)
     return { error: 'Le nom doit contenir au moins 2 caractères.' }
@@ -145,7 +145,7 @@ export async function deleteCustomer(customerId: string) {
   const { data: profile } = await supabase
     .from('users').select('role, company_id').eq('id', user.id).single()
   if (!profile) return { error: 'Profil introuvable.' }
-  if (!['admin', 'owner'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['manager', 'owner'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   // Block if any non-cancelled sales are linked — preserves audit trail
   const { count } = await supabase

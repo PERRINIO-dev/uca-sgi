@@ -19,7 +19,7 @@ export default async function ProductsPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
+  if (!['owner', 'manager', 'accountant'].includes(profile.role)) redirect('/dashboard')
 
   const [{ data: products }, categories, badgeCounts] = await Promise.all([
     supabase

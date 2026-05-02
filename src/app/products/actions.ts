@@ -190,7 +190,7 @@ export async function createProduct(payload: CreateProductPayload) {
   const { supabase, user, profile } = await getAuthorizedProfile()
 
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   // ── Reference code validation ─────────────────────────────────────────────
   const refCode = payload.referenceCode.trim().toUpperCase()
@@ -401,7 +401,7 @@ export async function updateProduct(payload: {
   const { supabase, user, profile } = await getAuthorizedProfile()
 
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   // Fetch current product type — never trust client
   const { data: current } = await supabase
@@ -518,7 +518,7 @@ export async function updateProduct(payload: {
 export async function deleteProduct(productId: string) {
   const { supabase, user, profile } = await getAuthorizedProfile()
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const admin = getAdminClient()
 
@@ -608,7 +608,7 @@ export async function bulkUpdatePrices(
 
   const { supabase, user, profile } = await getAuthorizedProfile()
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const admin = getAdminClient()
 

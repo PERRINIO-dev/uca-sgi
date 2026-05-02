@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
   if (!profile || !profile.is_active || profile.is_platform_admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  if (profile.role === 'warehouse') {
+  if (['warehouse', 'delivery', 'field_agent'].includes(profile.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const sp          = request.nextUrl.searchParams
   const currentPage = Math.min(10_000, Math.max(1, parseInt(sp.get('page') ?? '1')))
   const offset      = (currentPage - 1) * PAGE_SIZE
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  const isOwnerOrAdmin = ['owner', 'manager'].includes(profile.role)
 
   const search     = sp.get('search')?.trim()     ?? ''
   const status     = sp.get('status')             ?? ''
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     .from('sales')
     .select('id', { count: 'exact', head: true })
 
-  if (profile.role === 'vendor') {
+  if (['seller', 'cashier'].includes(profile.role)) {
     query      = query.eq('vendor_id', user.id)
     countQuery = countQuery.eq('vendor_id', user.id)
   }

@@ -17,15 +17,24 @@ import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { C, F, R, SP, SH, TR, Z } from '@/lib/design-system'
 
 const ROLE_CONFIG = {
-  owner:     { label: 'Propriétaire',   bg: C.purpleBg, color: C.purple, accent: C.purple, bd: C.purpleBd },
-  admin:     { label: 'Administrateur', bg: C.blueBg,   color: C.blue,   accent: C.blue,   bd: C.blueBd   },
-  vendor:    { label: 'Vendeur',        bg: C.greenBg,  color: C.green,  accent: C.green,  bd: C.greenBd  },
-  warehouse: { label: 'Entrepôt',       bg: C.orangeBg, color: C.orange, accent: C.orange, bd: C.orangeBd },
+  owner:       { label: 'Propriétaire',      bg: C.purpleBg, color: C.purple, accent: C.purple, bd: C.purpleBd },
+  manager:     { label: 'Gérant',            bg: C.blueBg,   color: C.blue,   accent: C.blue,   bd: C.blueBd   },
+  seller:      { label: 'Vendeur',           bg: C.greenBg,  color: C.green,  accent: C.green,  bd: C.greenBd  },
+  cashier:     { label: 'Caissier',          bg: C.goldBg,   color: C.gold,   accent: C.gold,   bd: C.goldBd   },
+  warehouse:   { label: 'Magasinier',        bg: C.orangeBg, color: C.orange, accent: C.orange, bd: C.orangeBd },
+  delivery:    { label: 'Livreur',           bg: C.orangeBg, color: C.orange, accent: C.orange, bd: C.orangeBd },
+  accountant:  { label: 'Comptable',         bg: C.blueBg,   color: C.blue,   accent: C.blue,   bd: C.blueBd   },
+  field_agent: { label: 'Commercial terrain',bg: C.greenBg,  color: C.green,  accent: C.green,  bd: C.greenBd  },
 }
-const ROLE_OPTIONS: ['vendor' | 'warehouse' | 'admin', string][] = [
-  ['vendor',    'Vendeur'],
-  ['warehouse', 'Entrepôt'],
-  ['admin',     'Administrateur'],
+type AssignableRole = 'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
+const ROLE_OPTIONS: [AssignableRole, string][] = [
+  ['seller',      'Vendeur'],
+  ['cashier',     'Caissier'],
+  ['warehouse',   'Magasinier'],
+  ['delivery',    'Livreur'],
+  ['manager',     'Gérant'],
+  ['accountant',  'Comptable'],
+  ['field_agent', 'Commercial terrain'],
 ]
 
 const inputStyle: React.CSSProperties = {
@@ -92,7 +101,7 @@ export default function UsersClient({
   const [showCreate,    setShowCreate]    = useState(false)
   const [newEmail,      setNewEmail]      = useState('')
   const [newName,       setNewName]       = useState('')
-  const [newRole,       setNewRole]       = useState<'vendor' | 'warehouse' | 'admin'>('vendor')
+  const [newRole,       setNewRole]       = useState<AssignableRole>('seller')
   const [newBoutique,   setNewBoutique]   = useState('')
   const [newPassword,   setNewPassword]   = useState('')
   const [newShowPwd,    setNewShowPwd]    = useState(false)
@@ -103,7 +112,7 @@ export default function UsersClient({
   // Edit modal
   const [editUser,        setEditUser]        = useState<any>(null)
   const [editName,        setEditName]        = useState('')
-  const [editRole,        setEditRole]        = useState<'vendor' | 'warehouse' | 'admin'>('vendor')
+  const [editRole,        setEditRole]        = useState<AssignableRole>('seller')
   const [editBoutique,    setEditBoutique]    = useState('')
   const [editLoading,     setEditLoading]     = useState(false)
   const [editError,       setEditError]       = useState<string | null>(null)
@@ -161,13 +170,13 @@ export default function UsersClient({
       email:      newEmail.trim().toLowerCase(),
       fullName:   newName.trim(),
       role:       newRole,
-      boutiqueId: newRole === 'vendor' ? (newBoutique || null) : null,
+      boutiqueId: newRole === 'seller' ? (newBoutique || null) : null,
       password:   newPassword,
     })
     setCreating(false)
     if (result.error) { setCreateError(result.error); return }
     setCreateSuccess(`Compte créé pour ${newName}.`)
-    setNewEmail(''); setNewName(''); setNewPassword(''); setNewBoutique(''); setNewRole('vendor')
+    setNewEmail(''); setNewName(''); setNewPassword(''); setNewBoutique(''); setNewRole('seller')
     setTimeout(() => { setCreateSuccess(null); setShowCreate(false); router.refresh() }, 2000)
   }
 
@@ -200,7 +209,7 @@ export default function UsersClient({
       userId:     editUser.id,
       fullName:   editName.trim(),
       role:       editRole,
-      boutiqueId: editRole === 'vendor' ? (editBoutique || null) : null,
+      boutiqueId: editRole === 'seller' ? (editBoutique || null) : null,
     })
     setEditLoading(false)
     if (result.error) { setEditError(result.error); return }
@@ -497,7 +506,7 @@ export default function UsersClient({
               <RoleSelector value={newRole} onChange={setNewRole} />
             </FieldBlock>
 
-            {newRole === 'vendor' && (
+            {newRole === 'seller' && (
               <FieldBlock label="Boutique assignée">
                 <select value={newBoutique} onChange={e => setNewBoutique(e.target.value)}
                   style={inputStyle}>
@@ -541,7 +550,7 @@ export default function UsersClient({
               </FieldBlock>
             )}
 
-            {editRole === 'vendor' && editUser?.role !== 'owner' && (
+            {editRole === 'seller' && editUser?.role !== 'owner' && (
               <FieldBlock label="Boutique assignée">
                 <select value={editBoutique} onChange={e => setEditBoutique(e.target.value)}
                   style={inputStyle}>
@@ -739,8 +748,8 @@ function EyeIcon({ open }: { open: boolean }) {
 }
 
 function RoleSelector({ value, onChange }: {
-  value:    'vendor' | 'warehouse' | 'admin'
-  onChange: (v: 'vendor' | 'warehouse' | 'admin') => void
+  value:    AssignableRole
+  onChange: (v: AssignableRole) => void
 }) {
   return (
     <div style={{ display: 'flex', gap: 6 }}>

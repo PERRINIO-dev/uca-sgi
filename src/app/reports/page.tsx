@@ -18,7 +18,7 @@ export default async function ReportsPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
+  if (!['owner', 'manager', 'accountant'].includes(profile.role)) redirect('/dashboard')
 
   // All independent queries run in parallel after profile is known
   const [
@@ -57,7 +57,7 @@ export default async function ReportsPage() {
     supabase
       .from('users')
       .select('id, full_name')
-      .eq('role', 'vendor')
+      .eq('role', 'seller')
       .eq('is_active', true)
       .order('full_name'),
 

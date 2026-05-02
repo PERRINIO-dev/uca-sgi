@@ -58,7 +58,7 @@ async function getOwnerAdminProfile() {
   if (!profile || !profile.is_active || profile.is_platform_admin) {
     return { supabase, user, profile: null, error: 'Accès refusé.' }
   }
-  if (!['owner', 'admin'].includes(profile.role)) {
+  if (!['owner', 'manager', 'warehouse'].includes(profile.role)) {
     return { supabase, user, profile: null, error: 'Accès refusé.' }
   }
 
@@ -77,6 +77,7 @@ export async function createSupplier(payload: {
 }): Promise<{ error: string | null }> {
   const { supabase, user, profile, error } = await getOwnerAdminProfile()
   if (error || !profile || !user) return { error: error ?? 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const name = payload.name.trim()
   if (name.length < 2) return { error: 'Le nom du fournisseur est requis (2 caractères minimum).' }
@@ -172,6 +173,7 @@ export async function createPurchaseOrder(payload: {
 
   const { supabase, user, profile, error } = await getOwnerAdminProfile()
   if (error || !profile || !user) return { error: error ?? 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   // Validate supplier belongs to this company
   const { data: supplier } = await supabase

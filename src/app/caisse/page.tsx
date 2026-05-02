@@ -24,28 +24,32 @@ export default async function CaissePage({
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (profile.role === 'warehouse') redirect('/warehouse')
+  if (profile.role === 'delivery')    redirect('/deliveries')
+  if (profile.role === 'warehouse')   redirect('/warehouse')
+  if (profile.role === 'seller')      redirect('/sales/new')
+  if (profile.role === 'field_agent') redirect('/pipeline')
+  if (!['owner', 'manager', 'cashier', 'accountant'].includes(profile.role)) redirect('/dashboard')
 
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  const isOwnerOrManager = ['owner', 'manager'].includes(profile.role)
   const today = new Date().toISOString().slice(0, 10)
   const date  = params.date ?? today
 
-  // Resolve boutique: vendor → own boutique; owner/admin → param or first active
-  let boutiqueId = profile.role === 'vendor'
+  // Resolve boutique: cashier → own boutique; owner/manager/accountant → param or first active
+  let boutiqueId = profile.role === 'cashier'
     ? (profile.boutique_id ?? '')
     : (params.boutique_id ?? '')
 
   const [badgeCounts, boutiquesResult] = await Promise.all([
     getBadgeCounts(profile.role, supabase),
-    isOwnerOrAdmin
+    isOwnerOrManager
       ? supabase.from('boutiques').select('id, name').eq('is_active', true).order('name')
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
   ])
 
   const boutiques: { id: string; name: string }[] = (boutiquesResult as any).data ?? []
 
-  // If owner/admin with no boutique_id param, default to first boutique
-  if (isOwnerOrAdmin && !boutiqueId && boutiques.length > 0) {
+  // If owner/manager with no boutique_id param, default to first boutique
+  if (isOwnerOrManager && !boutiqueId && boutiques.length > 0) {
     boutiqueId = boutiques[0].id
   }
 

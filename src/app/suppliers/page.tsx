@@ -18,7 +18,7 @@ export default async function SuppliersPage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['owner', 'admin'].includes(profile.role)) redirect('/dashboard')
+  if (!['owner', 'manager', 'warehouse', 'accountant'].includes(profile.role)) redirect('/dashboard')
 
   const [badgeCounts, suppliersRes, ordersRes, productsRes] = await Promise.all([
     getBadgeCounts(profile.role, supabase),

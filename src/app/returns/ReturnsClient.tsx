@@ -346,7 +346,7 @@ export default function ReturnsClient({
             const res = RESOLUTION[r.resolution] ?? RESOLUTION.credit_note
             const isOpen = expanded === r.id
             const isPending = r.status === 'pending'
-            const canAct = ['owner', 'admin'].includes(profile.role)
+            const canAct = ['owner', 'manager'].includes(profile.role)
 
             return (
               <div key={r.id} style={{

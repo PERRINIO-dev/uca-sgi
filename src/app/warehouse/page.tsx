@@ -18,7 +18,7 @@ export default async function WarehousePage() {
   if (!profile) redirect('/login')
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
-  if (!['warehouse', 'admin', 'owner'].includes(profile.role)) {
+  if (!['warehouse', 'manager', 'owner'].includes(profile.role)) {
     redirect('/dashboard')
   }
 

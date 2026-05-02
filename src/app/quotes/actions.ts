@@ -43,7 +43,7 @@ export async function createQuote(payload: CreateQuotePayload) {
     .single()
 
   if (!callerProfile) return { error: 'Profil introuvable.' }
-  if (!['vendor', 'admin', 'owner'].includes(callerProfile.role)) {
+  if (!['seller', 'manager', 'owner', 'field_agent'].includes(callerProfile.role)) {
     return { error: 'Accès refusé.' }
   }
 
@@ -184,10 +184,10 @@ export async function convertQuote(
     .single()
 
   if (!profile) return { error: 'Profil introuvable.' }
-  if (!['vendor', 'admin', 'owner'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['seller', 'manager', 'owner', 'field_agent'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const adminSupabase  = getAdminClient()
-  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const isAdminOrOwner = ['owner', 'manager'].includes(profile.role)
 
   // Load the quote with its items
   const { data: quote } = await supabase
@@ -330,7 +330,7 @@ export async function cancelQuote(quoteId: string) {
   if (!profile) return { error: 'Profil introuvable.' }
 
   const adminSupabase  = getAdminClient()
-  const isAdminOrOwner = ['owner', 'admin'].includes(profile.role)
+  const isAdminOrOwner = ['owner', 'manager'].includes(profile.role)
 
   const { data: updatedQuotes, error } = isAdminOrOwner
     ? await adminSupabase

@@ -20,7 +20,7 @@ async function getProfile() {
 
   if (!profile || !profile.is_active || profile.is_platform_admin)
     return { error: 'Accès refusé.' as const, supabase, user, profile: null }
-  if (!['owner', 'admin', 'vendor'].includes(profile.role))
+  if (!['owner', 'manager', 'seller', 'warehouse', 'accountant'].includes(profile.role))
     return { error: 'Accès refusé.' as const, supabase, user, profile: null }
 
   return { error: null, supabase, user, profile }
@@ -131,7 +131,7 @@ export async function createReturn(payload: {
 export async function validateReturn(returnId: string) {
   const { error, user, profile } = await getProfile()
   if (error || !user || !profile) return { error: error ?? 'Accès refusé.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const supabase = await createClient()
   const { data: ret } = await supabase
@@ -172,7 +172,7 @@ export async function validateReturn(returnId: string) {
 export async function cancelReturn(returnId: string) {
   const { error, user, profile } = await getProfile()
   if (error || !user || !profile) return { error: error ?? 'Accès refusé.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const supabase = await createClient()
   const { data: ret } = await supabase

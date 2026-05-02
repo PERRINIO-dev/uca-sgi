@@ -30,7 +30,7 @@ export async function GET(
   if (!profile || !profile.is_active || profile.is_platform_admin) {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
   }
-  if (!['owner', 'admin'].includes(profile.role)) {
+  if (!['owner', 'manager', 'warehouse', 'accountant'].includes(profile.role)) {
     return NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
   }
 

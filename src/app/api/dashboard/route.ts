@@ -19,7 +19,7 @@ export async function GET() {
   if (!profile || !profile.is_active || profile.is_platform_admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  if (!['owner', 'admin'].includes(profile.role)) {
+  if (!['owner', 'manager', 'accountant'].includes(profile.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

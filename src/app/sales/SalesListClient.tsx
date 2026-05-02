@@ -356,12 +356,12 @@ export default function SalesListClient({
               : `${d.totalCount} vente${d.totalCount !== 1 ? 's' : ''} · cliquer une ligne pour le détail`}
           </p>
         </div>
-        {['owner', 'admin', 'vendor'].includes(profile.role) && (
+        {['owner', 'manager', 'seller'].includes(profile.role) && (
           <button
             className="btn-amber"
             disabled={firstSalePending}
             onClick={() => {
-              if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+              if (!d.hasBoutiques && ['owner', 'manager'].includes(profile.role)) {
                 setNoBoutiqueWarning(true)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
                 return
@@ -481,8 +481,8 @@ export default function SalesListClient({
               colorScheme: 'light', opacity: navPending ? 0.5 : 1,
             }}
           />
-          {/* Boutique (only for admin/owner who can see all boutiques) */}
-          {['owner', 'admin'].includes(profile.role) && d.boutiquesList.length > 1 && (
+          {/* Boutique (only for manager/owner who can see all boutiques) */}
+          {['owner', 'manager'].includes(profile.role) && d.boutiquesList.length > 1 && (
             <select
               value={boutiqueId}
               onChange={e => handleBoutiqueChange(e.target.value)}
@@ -551,12 +551,12 @@ export default function SalesListClient({
             <p style={{ fontSize: F.base, color: C.muted, margin: `0 0 ${SP[5]}`, fontFamily: F.body }}>
               Les ventes apparaîtront ici une fois créées.
             </p>
-            {['owner', 'admin', 'vendor'].includes(profile.role) && (
+            {['owner', 'manager', 'seller'].includes(profile.role) && (
               <button
                 className="btn-amber"
                 disabled={firstSalePending}
                 onClick={() => {
-                  if (!d.hasBoutiques && ['owner', 'admin'].includes(profile.role)) {
+                  if (!d.hasBoutiques && ['owner', 'manager'].includes(profile.role)) {
                     setNoBoutiqueWarning(true)
                     window.scrollTo({ top: 0, behavior: 'smooth' })
                     return
@@ -579,7 +579,7 @@ export default function SalesListClient({
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['N° Vente', 'Date', 'Client', 'Boutique', ...(profile.role !== 'vendor' ? ['Vendeur'] : []), 'Montant', 'Statut', ''].map(h => (
+                  {['N° Vente', 'Date', 'Client', 'Boutique', ...(profile.role !== 'seller' ? ['Vendeur'] : []), 'Montant', 'Statut', ''].map(h => (
                     <th key={h} style={TH_STYLE}>{h}</th>
                   ))}
                 </tr>
@@ -622,7 +622,7 @@ export default function SalesListClient({
                         </td>
                         <td style={TD_STYLE}>{sale.customer_name || <span style={{ color: C.dim }}>—</span>}</td>
                         <td style={{ ...TD_STYLE, fontSize: F.sm, color: C.muted }}>{sale.boutiques?.name ?? '—'}</td>
-                        {profile.role !== 'vendor' && (
+                        {profile.role !== 'seller' && (
                           <td style={{ ...TD_STYLE, fontSize: F.sm, color: C.muted }}>{sale.users?.full_name ?? '—'}</td>
                         )}
                         <td style={{ ...TD_STYLE, fontSize: F.md, fontWeight: F.semibold, fontFamily: F.body, color: C.ink }}>
@@ -665,9 +665,9 @@ export default function SalesListClient({
                         >
                           {(
                             ['confirmed', 'draft'].includes(sale.status) ||
-                            (['preparing', 'ready'].includes(sale.status) && ['owner', 'admin'].includes(profile.role))
+                            (['preparing', 'ready'].includes(sale.status) && ['owner', 'manager'].includes(profile.role))
                           ) &&
-                           (profile.role !== 'vendor' || sale.vendor_id === profile.id) && (
+                           (profile.role !== 'seller' || sale.vendor_id === profile.id) && (
                             <button
                               className="btn-ghost-danger"
                               onClick={() => { setCancelId(sale.id); setCancelNum(sale.sale_number); setCancelError(null) }}
@@ -692,7 +692,7 @@ export default function SalesListClient({
 
                       {isOpen && (
                         <tr>
-                          <td colSpan={profile.role !== 'vendor' ? 8 : 7} style={{ padding: `0 ${SP[3]} ${SP[3]}`, background: C.bg, borderBottom: `1px solid ${C.border}` }}>
+                          <td colSpan={profile.role !== 'seller' ? 8 : 7} style={{ padding: `0 ${SP[3]} ${SP[3]}`, background: C.bg, borderBottom: `1px solid ${C.border}` }}>
                             <SaleDetail sale={sale} profile={profile} ownerName={d.ownerName} companyName={d.companyName} currency={d.currency} onPaymentAdded={() => { mutate(swrKey); router.refresh() }} />
                           </td>
                         </tr>
@@ -1107,7 +1107,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
   const canAdd = sale.status !== 'cancelled' &&
     sale.status !== 'draft' &&
     sale.payment_status !== 'paid' &&
-    (['owner', 'admin'].includes(profile.role) || sale.vendor_id === profile.id)
+    (['owner', 'manager', 'cashier'].includes(profile.role) || sale.vendor_id === profile.id)
 
   return (
     <div style={{
@@ -1352,7 +1352,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
 
       {/* ── Échéancier ── */}
       {sale.status !== 'cancelled' && sale.status !== 'draft' && (() => {
-        const canManage = ['owner', 'admin'].includes(profile.role)
+        const canManage = ['owner', 'manager'].includes(profile.role)
         const today = new Date(); today.setHours(0,0,0,0)
 
         const handleAddScheduleItem = async () => {

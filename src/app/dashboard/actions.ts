@@ -24,7 +24,7 @@ export async function approveStockRequest(
 ) {
   const { supabase, user, profile } = await getCallerProfile()
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   // 1. Mark as approved
   const { error } = await supabase
@@ -88,7 +88,7 @@ export async function rejectStockRequest(
 ) {
   const { supabase, user, profile } = await getCallerProfile()
   if (!user || !profile) return { error: 'Non authentifié.' }
-  if (!['owner', 'admin'].includes(profile.role)) return { error: 'Accès refusé.' }
+  if (!['owner', 'manager'].includes(profile.role)) return { error: 'Accès refusé.' }
 
   const { error } = await supabase
     .from('stock_requests')

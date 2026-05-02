@@ -31,11 +31,13 @@ export default async function SalesPage({
   if (!profile.is_active) redirect('/login?error=account_suspended')
   if (profile.is_platform_admin) redirect('/admin')
 
-  // Warehouse role has no access to the sales page
-  if (profile.role === 'warehouse') redirect('/warehouse')
+  // Only commercial + management + accounting roles access sales list
+  if (profile.role === 'delivery')    redirect('/deliveries')
+  if (profile.role === 'warehouse')   redirect('/warehouse')
+  if (profile.role === 'field_agent') redirect('/pipeline')
 
   const offset = (currentPage - 1) * PAGE_SIZE
-  const isOwnerOrAdmin = ['owner', 'admin'].includes(profile.role)
+  const isOwnerOrAdmin = ['owner', 'manager'].includes(profile.role)
 
   // Sanitize filter params
   const search     = params.search?.trim() ?? ''
@@ -67,8 +69,8 @@ export default async function SalesPage({
     .from('sales')
     .select('id', { count: 'exact', head: true })
 
-  // Role-based filter: vendors see only their own sales
-  if (profile.role === 'vendor') {
+  // Role-based filter: sellers/cashiers see only their own sales
+  if (['seller', 'cashier'].includes(profile.role)) {
     query      = query.eq('vendor_id', user.id)
     countQuery = countQuery.eq('vendor_id', user.id)
   }
