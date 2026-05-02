@@ -54,6 +54,8 @@ export default async function DashboardPage() {
       stockAlerts={kpis.stockAlerts}
       boutiqueStats={kpis.boutiqueStats}
       dailyChart={kpis.dailyChart}
+      overdueSchedule={kpis.overdueSchedule}
+      todayDateStr={kpis.todayDateStr}
       badgeCounts={badgeCounts}
     />
   )

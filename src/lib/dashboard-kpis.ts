@@ -18,6 +18,8 @@ interface KpisInput {
   stockLevels:         any[]
   productTypes:        any[]
   mtdPayments:         any[]
+  overdueSchedule?:    any[]
+  todayDateStr?:       string
 }
 
 // ── Output shape ──────────────────────────────────────────────────────────────
@@ -35,6 +37,8 @@ export interface DashboardKpisOutput {
   boutiqueStats:     { name: string; ca: number }[]
   dailyChart:        { day: string; ca: number }[]
   stockAlerts:       any[]
+  overdueSchedule:   any[]
+  todayDateStr:      string
 }
 
 export function computeDashboardKpis(
@@ -158,11 +162,18 @@ export function computeDashboardKpis(
       product_type: productMetaMap.get(s.product_id)?.product_type ?? 'tile',
     }))
 
+  const todayDateStr    = stats.todayDateStr ?? new Date().toISOString().split('T')[0]
+  const overdueSchedule = (stats.overdueSchedule ?? []).map((s: any) => ({
+    ...s,
+    isOverdue: s.due_date < todayDateStr,
+  }))
+
   return {
     todayCount,
     mtdRevenue, mtdCreances, mtdAvgBasket,
     mtdTrend, mtdMargin, mtdMarginPct,
     allTimeCreances, stockValuation, paymentsByMethod,
     boutiqueStats, dailyChart, stockAlerts,
+    overdueSchedule, todayDateStr,
   }
 }

@@ -5,7 +5,7 @@ import { useRouter }    from 'next/navigation'
 import useSWR, { useSWRConfig } from 'swr'
 import { createClient } from '@/lib/supabase/client'
 import PageLayout       from '@/components/PageLayout'
-import { cancelSale, addPayment } from './actions'
+import { cancelSale, addPayment, createScheduleItem, deleteScheduleItem } from './actions'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
 import { fmtCurrency }         from '@/lib/format'
 import { pluralize }           from '@/lib/pluralize'
@@ -1050,6 +1050,25 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
   const [pdfLoading, setPdfLoad]   = useState(false)
   const [pdfError,   setPdfError]  = useState<string | null>(null)
 
+  // ── Schedule state ──────────────────────────────────────────────────────────
+  const [schedule,      setSchedule]     = useState<any[] | null>(null)
+  const [showSchForm,   setShowSchForm]  = useState(false)
+  const [schDate,       setSchDate]      = useState('')
+  const [schAmount,     setSchAmount]    = useState('')
+  const [schLabel,      setSchLabel]     = useState('')
+  const [schAdding,     setSchAdding]    = useState(false)
+  const [schError,      setSchError]     = useState<string | null>(null)
+  const [scheduleItemId, setScheduleItemId] = useState<string | null>(null)
+
+  const loadSchedule = useCallback(async () => {
+    const { data } = await supabase
+      .from('sale_payment_schedules')
+      .select('id, due_date, amount, label, is_paid, paid_at')
+      .eq('sale_id', sale.id)
+      .order('due_date', { ascending: true })
+    setSchedule(data ?? [])
+  }, [sale.id, supabase])
+
   const loadPayments = useCallback(async () => {
     const { data } = await supabase
       .from('sale_payments')
@@ -1059,17 +1078,18 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
     setPayments(data ?? [])
   }, [sale.id, supabase])
 
-  useEffect(() => { loadPayments() }, [loadPayments])
+  useEffect(() => { loadPayments(); loadSchedule() }, [loadPayments, loadSchedule])
 
   const handleAdd = async () => {
     const amount = parseFloat(addAmt)
     if (!amount || amount <= 0) { setAddError('Montant invalide.'); return }
     setAdding(true); setAddError(null)
-    const result = await addPayment(sale.id, amount, addNotes || null, addMethod)
+    const result = await addPayment(sale.id, amount, addNotes || null, addMethod, scheduleItemId ?? undefined)
     setAdding(false)
     if (result.error) { setAddError(result.error); return }
     await loadPayments()
-    setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setShowAdd(false)
+    await loadSchedule()
+    setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setShowAdd(false); setScheduleItemId(null)
     onPaymentAdded()
   }
 
@@ -1231,6 +1251,42 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
         {canAdd && showAdd && (
           <div style={{ marginTop: SP[2], padding: `${SP[3]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1.5px solid ${C.border}` }}>
             <div style={{ fontSize: F.sm, fontWeight: F.bold, color: C.ink, marginBottom: SP[2], fontFamily: F.body }}>Nouveau versement</div>
+
+            {/* Link to unpaid schedule item */}
+            {schedule && schedule.filter(s => !s.is_paid).length > 0 && (
+              <div style={{ marginBottom: SP[2] }}>
+                <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body, marginBottom: SP[1] }}>Lier à une échéance (optionnel)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: SP[1] }}>
+                  {schedule.filter(s => !s.is_paid).map(s => {
+                    const active = scheduleItemId === s.id
+                    return (
+                      <button key={s.id} type="button"
+                        onClick={() => {
+                          if (active) { setScheduleItemId(null); setAddAmt('') }
+                          else { setScheduleItemId(s.id); setAddAmt(String(s.amount)) }
+                        }}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: SP[2],
+                          padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm, textAlign: 'left',
+                          border: `1.5px solid ${active ? C.amber : C.border}`,
+                          background: active ? C.amberGlow : C.surfaceEl,
+                          cursor: 'pointer', fontFamily: F.body,
+                        }}>
+                        <span style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${active ? C.amber : C.border}`, background: active ? C.amber : 'transparent', flexShrink: 0 }} />
+                        <span style={{ fontSize: F.xs, color: C.muted, fontFamily: F.body }}>
+                          {new Date(s.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          {s.label && ` · ${s.label}`}
+                        </span>
+                        <span style={{ marginLeft: 'auto', fontSize: F.xs, fontWeight: F.bold, color: active ? C.amber : C.ink, fontFamily: F.body }}>
+                          {fmt(s.amount)}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Payment method pills */}
             <div style={{ display: 'flex', gap: SP[1.5], marginBottom: SP[2], flexWrap: 'wrap' }}>
               {([
@@ -1284,7 +1340,7 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
               </button>
               <button
                 className="btn-ghost"
-                onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setAddError(null) }}
+                onClick={() => { setShowAdd(false); setAddAmt(''); setAddNotes(''); setAddMethod('especes'); setAddError(null); setScheduleItemId(null) }}
                 disabled={adding}
                 style={{ borderRadius: R.sm, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
                 Annuler
@@ -1293,6 +1349,121 @@ function SaleDetail({ sale, profile, ownerName, companyName, currency, onPayment
           </div>
         )}
       </div>
+
+      {/* ── Échéancier ── */}
+      {sale.status !== 'cancelled' && sale.status !== 'draft' && (() => {
+        const canManage = ['owner', 'admin'].includes(profile.role)
+        const today = new Date(); today.setHours(0,0,0,0)
+
+        const handleAddScheduleItem = async () => {
+          if (!schDate) { setSchError('Date requise.'); return }
+          const amt = parseFloat(schAmount)
+          if (!amt || amt <= 0) { setSchError('Montant invalide.'); return }
+          setSchAdding(true); setSchError(null)
+          const result = await createScheduleItem({ saleId: sale.id, dueDate: schDate, amount: amt, label: schLabel })
+          setSchAdding(false)
+          if (result?.error) { setSchError(result.error); return }
+          await loadSchedule()
+          setSchDate(''); setSchAmount(''); setSchLabel(''); setShowSchForm(false)
+        }
+
+        const handleDeleteScheduleItem = async (itemId: string) => {
+          const result = await deleteScheduleItem(itemId)
+          if (!result?.error) await loadSchedule()
+        }
+
+        return (
+          <div style={{ padding: `${SP[3]} ${SP[4]}`, borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: SP[2] }}>
+              <div style={{ fontSize: F.xs, fontWeight: F.bold, color: C.dim, textTransform: 'uppercase', letterSpacing: F.lsWider, fontFamily: F.body }}>
+                Échéancier
+              </div>
+              {canManage && !showSchForm && (
+                <button type="button"
+                  onClick={() => setShowSchForm(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: SP[1], padding: `2px ${SP[2]}`, borderRadius: R.full, border: `1px solid ${C.border}`, background: 'transparent', color: C.muted, fontSize: F.xs, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                  Ajouter
+                </button>
+              )}
+            </div>
+
+            {schedule === null ? (
+              <div style={{ fontSize: F.sm, color: C.dim, fontFamily: F.body }}>Chargement…</div>
+            ) : schedule.length === 0 && !showSchForm ? (
+              <div style={{ fontSize: F.sm, color: C.dim, fontFamily: F.body }}>Aucune échéance planifiée</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: SP[1] }}>
+                {schedule.map(s => {
+                  const dueDate = new Date(s.due_date)
+                  dueDate.setHours(0,0,0,0)
+                  const isOverdue  = !s.is_paid && dueDate < today
+                  const isUpcoming = !s.is_paid && dueDate >= today
+                  const badgeBg    = s.is_paid ? C.greenBg  : isOverdue ? C.redBg    : C.goldBg
+                  const badgeBd    = s.is_paid ? C.greenBd  : isOverdue ? C.redBd    : C.goldBd
+                  const badgeColor = s.is_paid ? C.green    : isOverdue ? C.red      : C.gold
+                  const badgeLabel = s.is_paid ? 'Encaissé' : isOverdue ? 'En retard' : 'À venir'
+
+                  return (
+                    <div key={s.id} style={{
+                      display: 'flex', alignItems: 'center', gap: SP[2], flexWrap: 'wrap',
+                      padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm,
+                      background: s.is_paid ? C.surfaceSub : isOverdue ? C.redBg : C.surfaceEl,
+                      border: `1px solid ${s.is_paid ? C.borderSub : isOverdue ? C.redBd : C.border}`,
+                    }}>
+                      <span style={{ fontSize: F.xs, color: C.muted, fontFamily: F.mono, flexShrink: 0 }}>
+                        {new Date(s.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                      <span style={{ fontSize: F.sm, fontWeight: F.bold, color: s.is_paid ? C.muted : C.ink, fontFamily: F.body, flexShrink: 0, textDecoration: s.is_paid ? 'line-through' : 'none' }}>
+                        {fmt(s.amount)}
+                      </span>
+                      {s.label && <span style={{ fontSize: F.xs, color: C.dim, fontFamily: F.body }}>{s.label}</span>}
+                      <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: SP[1], padding: `1px ${SP[1.5]}`, borderRadius: R.full, background: badgeBg, border: `1px solid ${badgeBd}`, fontSize: F.xs, fontWeight: F.bold, color: badgeColor, fontFamily: F.body, flexShrink: 0 }}>
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: badgeColor }} />
+                        {badgeLabel}
+                      </span>
+                      {canManage && !s.is_paid && (
+                        <button type="button"
+                          onClick={() => handleDeleteScheduleItem(s.id)}
+                          title="Supprimer cette échéance"
+                          style={{ display: 'inline-flex', alignItems: 'center', padding: '2px', borderRadius: R.xs, border: 'none', background: 'transparent', color: C.dim, cursor: 'pointer', flexShrink: 0 }}>
+                          <svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {canManage && showSchForm && (
+              <div style={{ marginTop: SP[2], padding: `${SP[2]} ${SP[3]}`, background: C.bg, borderRadius: R.md, border: `1.5px solid ${C.border}` }}>
+                <div style={{ display: 'flex', gap: SP[2], flexWrap: 'wrap', marginBottom: SP[1.5] }}>
+                  <input type="date" value={schDate} onChange={e => setSchDate(e.target.value)}
+                    style={{ flex: '1 1 130px', padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm, border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text, background: C.surfaceEl, outline: 'none', fontFamily: F.body, boxSizing: 'border-box' }} />
+                  <input type="number" min="1" step="100" value={schAmount} onChange={e => setSchAmount(e.target.value)}
+                    placeholder={`Montant (${currency})`}
+                    style={{ flex: '1 1 130px', padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm, border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text, background: C.surfaceEl, outline: 'none', fontFamily: F.body, boxSizing: 'border-box' }} />
+                  <input type="text" value={schLabel} onChange={e => setSchLabel(e.target.value)}
+                    placeholder="Libellé (optionnel)"
+                    style={{ flex: '2 1 160px', padding: `${SP[1.5]} ${SP[2]}`, borderRadius: R.sm, border: `1.5px solid ${C.border}`, fontSize: F.sm, color: C.text, background: C.surfaceEl, outline: 'none', fontFamily: F.body, boxSizing: 'border-box' }} />
+                </div>
+                {schError && <div style={{ fontSize: F.sm, color: C.red, marginBottom: SP[1.5], fontFamily: F.body }}>{schError}</div>}
+                <div style={{ display: 'flex', gap: SP[2] }}>
+                  <button className="btn-amber" onClick={handleAddScheduleItem} disabled={schAdding}
+                    style={{ borderRadius: R.sm, border: 'none', fontSize: F.sm, fontWeight: F.semibold, cursor: schAdding ? 'not-allowed' : 'pointer', fontFamily: F.body, display: 'inline-flex', alignItems: 'center', gap: SP[1.5], opacity: schAdding ? 0.7 : 1 }}>
+                    {schAdding ? <><span className="spinner" />Ajout…</> : 'Ajouter'}
+                  </button>
+                  <button className="btn-ghost" onClick={() => { setShowSchForm(false); setSchDate(''); setSchAmount(''); setSchLabel(''); setSchError(null) }} disabled={schAdding}
+                    style={{ borderRadius: R.sm, fontSize: F.sm, fontWeight: F.semibold, cursor: 'pointer', fontFamily: F.body }}>
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* ── Statut paiement ── */}
       {sale.payment_status && sale.status !== 'cancelled' && (() => {

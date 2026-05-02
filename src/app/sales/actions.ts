@@ -327,10 +327,11 @@ export async function cancelSale(saleId: string) {
 }
 
 export async function addPayment(
-  saleId:        string,
-  amount:        number,
-  notes:         string | null,
-  paymentMethod: string = 'especes',
+  saleId:          string,
+  amount:          number,
+  notes:           string | null,
+  paymentMethod:   string = 'especes',
+  scheduleItemId?: string | null,
 ) {
   const supabase = await createClient()
 
@@ -367,7 +368,15 @@ export async function addPayment(
   if (insertError) return { error: insertError.message }
   // DB trigger sync_sale_payment_totals() automatically updates sales.amount_paid + payment_status
 
-  // Use admin client + actual payment UUID as entity_id to satisfy any FK trigger on audit_logs
+  // Mark schedule item paid if one was linked
+  if (scheduleItemId) {
+    await getAdminClient()
+      .from('sale_payment_schedules')
+      .update({ is_paid: true, paid_at: new Date().toISOString() })
+      .eq('id', scheduleItemId)
+      .eq('company_id', profile.company_id)
+  }
+
   await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,
     user_role_snapshot: profile.role,
@@ -380,6 +389,79 @@ export async function addPayment(
 
   revalidatePath('/sales')
   revalidatePath('/reports')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ── Schedule item CRUD (owner / admin only) ───────────────────────────────────
+
+export async function createScheduleItem(payload: {
+  saleId:   string
+  dueDate:  string
+  amount:   number
+  label:    string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: profile } = await supabase
+    .from('users').select('role, company_id').eq('id', user.id).single()
+  if (!profile || !['owner', 'admin'].includes(profile.role))
+    return { error: 'Accès refusé.' }
+
+  if (!payload.dueDate)       return { error: 'Date d\'échéance requise.' }
+  if (payload.amount <= 0)    return { error: 'Montant invalide.' }
+
+  // Verify sale belongs to this company
+  const { data: sale } = await supabase
+    .from('sales').select('id, status').eq('id', payload.saleId).single()
+  if (!sale) return { error: 'Vente introuvable.' }
+  if (sale.status === 'cancelled') return { error: 'Vente annulée.' }
+
+  const { error } = await getAdminClient()
+    .from('sale_payment_schedules')
+    .insert({
+      company_id: profile.company_id,
+      sale_id:    payload.saleId,
+      due_date:   payload.dueDate,
+      amount:     Math.round(payload.amount),
+      label:      payload.label.trim() || null,
+      created_by: user.id,
+    })
+
+  if (error) return { error: error.message }
+  revalidatePath('/sales')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function deleteScheduleItem(itemId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: profile } = await supabase
+    .from('users').select('role, company_id').eq('id', user.id).single()
+  if (!profile || !['owner', 'admin'].includes(profile.role))
+    return { error: 'Accès refusé.' }
+
+  const { data: item } = await supabase
+    .from('sale_payment_schedules')
+    .select('id, is_paid, company_id')
+    .eq('id', itemId)
+    .single()
+
+  if (!item || item.company_id !== profile.company_id) return { error: 'Échéance introuvable.' }
+  if (item.is_paid) return { error: 'Impossible de supprimer une échéance déjà encaissée.' }
+
+  const { error } = await supabase
+    .from('sale_payment_schedules')
+    .delete()
+    .eq('id', itemId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/sales')
   revalidatePath('/dashboard')
   return { success: true }
 }

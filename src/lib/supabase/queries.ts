@@ -17,10 +17,13 @@ export async function getDashboardStats() {
   const prevStartISO   = prevMonthStart.toISOString()
   const prevEndISO     = prevMonthEnd.toISOString()
 
+  const todayDateStr = today.toISOString().split('T')[0]
+
   const [
     todayResult, mtdResult, prevMonthResult,
     stockResult, pendingResult, boutiqueResult, activeOrdersResult,
     creancesResult, productTypesResult, mtdPaymentsResult,
+    overdueScheduleResult,
   ] = await Promise.all([
 
     // Today's confirmed sales (drafts are not yet revenue)
@@ -96,6 +99,15 @@ export async function getDashboardStats() {
       .from('sale_payments')
       .select('payment_method, amount')
       .gte('created_at', mtdISO),
+
+    // Overdue and upcoming schedule items (next 30 days + all overdue)
+    supabase
+      .from('sale_payment_schedules')
+      .select('id, sale_id, due_date, amount, label, sales(sale_number, customer_name)')
+      .eq('is_paid', false)
+      .lte('due_date', new Date(today.getTime() + 30 * 86400000).toISOString().split('T')[0])
+      .order('due_date', { ascending: true })
+      .limit(50),
   ])
 
   return {
@@ -108,7 +120,9 @@ export async function getDashboardStats() {
     activeOrdersCount: activeOrdersResult.count  ?? 0,
     allTimeCreanceSales: creancesResult.data     ?? [],
     productTypes:      productTypesResult.data   ?? [],
-    mtdPayments:       mtdPaymentsResult.data    ?? [],
+    mtdPayments:        mtdPaymentsResult.data    ?? [],
+    overdueSchedule:    overdueScheduleResult.data ?? [],
+    todayDateStr,
   }
 }
 

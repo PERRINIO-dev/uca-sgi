@@ -196,6 +196,8 @@ export default function DashboardClient({
   stockAlerts,
   boutiqueStats,
   dailyChart,
+  overdueSchedule,
+  todayDateStr,
   badgeCounts,
 }: {
   profile:           any
@@ -215,6 +217,8 @@ export default function DashboardClient({
   stockAlerts:       any[]
   boutiqueStats:     any[]
   dailyChart:        any[]
+  overdueSchedule:   any[]
+  todayDateStr:      string
   badgeCounts?:      BadgeCounts
 }) {
   const router     = useRouter()
@@ -227,7 +231,7 @@ export default function DashboardClient({
       mtdRevenue, mtdCreances, mtdAvgBasket, mtdTrend,
       mtdMargin, mtdMarginPct, allTimeCreances, stockValuation, paymentsByMethod,
       activeOrdersCount, pendingRequests, stockAlerts,
-      boutiqueStats, dailyChart, badgeCounts,
+      boutiqueStats, dailyChart, overdueSchedule, todayDateStr, badgeCounts,
     },
     revalidateOnFocus: false,
     dedupingInterval:  60_000,
@@ -930,6 +934,63 @@ export default function DashboardClient({
             </div>
           )}
         </Panel>
+
+        {/* ── Échéances en retard / à venir ── */}
+        {(d.overdueSchedule ?? []).length > 0 && (
+          <Panel>
+            <SectionLabel
+              action={(
+                <span style={{
+                  fontSize: F.xs, fontWeight: F.semibold,
+                  color: C.red, background: C.redBg, border: `1px solid ${C.redBd}`,
+                  borderRadius: R.full, padding: `${SP[0.5]} ${SP[2]}`, fontFamily: F.body,
+                }}>
+                  {(d.overdueSchedule as any[]).filter((s: any) => s.isOverdue).length} en retard
+                </span>
+              )}
+            >
+              Échéances de paiement
+            </SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: SP[1.5] }}>
+              {(d.overdueSchedule as any[]).map((s: any) => {
+                const isOverdue = s.isOverdue
+                const clr  = isOverdue ? C.red    : C.gold
+                const bg   = isOverdue ? C.redBg  : C.goldBg
+                const bd   = isOverdue ? C.redBd  : C.goldBd
+                return (
+                  <div key={s.id} style={{
+                    display: 'flex', alignItems: 'center', gap: SP[3], flexWrap: 'wrap',
+                    padding: `${SP[2]} ${SP[3]}`, borderRadius: R.md,
+                    background: bg, border: `1px solid ${bd}`,
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: F.sm, fontWeight: F.semibold, color: C.ink, fontFamily: F.body, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {s.sales?.customer_name ?? '—'}
+                      </div>
+                      <div style={{ fontSize: F.xs, color: C.muted, fontFamily: F.mono, marginTop: 1 }}>
+                        {s.sales?.sale_number}
+                        {s.label && <span style={{ color: C.dim }}> · {s.label}</span>}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                      <div style={{ fontSize: F.lg, fontWeight: F.bold, color: clr, fontFamily: F.display, letterSpacing: F.lsTightest }}>
+                        {fmt(s.amount)}
+                      </div>
+                      <div style={{ fontSize: F.xs, color: clr, marginTop: 1, fontFamily: F.body, fontWeight: F.semibold }}>
+                        {new Date(s.due_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              <div style={{ textAlign: 'right' }}>
+                <a href="/sales" style={{ fontSize: F.xs, color: C.amber, fontWeight: F.semibold, fontFamily: F.body, textDecoration: 'none' }}>
+                  Gérer les paiements →
+                </a>
+              </div>
+            </div>
+          </Panel>
+        )}
       </div>
 
       {/* ── Reject modal ── */}
