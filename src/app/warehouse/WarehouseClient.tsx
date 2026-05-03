@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useRouter }                    from 'next/navigation'
 import { createClient }                 from '@/lib/supabase/client'
 import { updateOrderStatus, submitStockRequest } from './actions'
+import { assignDelivery } from '@/app/deliveries/actions'
 import PageLayout         from '@/components/PageLayout'
 import { useIsMobile }    from '@/hooks/useIsMobile'
 import type { BadgeCounts } from '@/lib/supabase/badge-counts'
@@ -42,7 +43,7 @@ type Tab = 'orders' | 'stock' | 'requests'
 
 export default function WarehouseClient({
   profile, currency, companyName = 'SGI', orders, deliveredOrders,
-  stockLevels, products, myRequests, velocityMap = {}, badgeCounts,
+  stockLevels, products, myRequests, velocityMap = {}, deliveryUsers = [], badgeCounts,
 }: {
   profile:         any
   currency:        string
@@ -53,6 +54,7 @@ export default function WarehouseClient({
   products:        any[]
   myRequests:      any[]
   velocityMap?:    Record<string, number>
+  deliveryUsers?:  { id: string; full_name: string }[]
   badgeCounts?:    BadgeCounts
 }) {
   const router    = useRouter()
@@ -78,6 +80,9 @@ export default function WarehouseClient({
   const [blLoading,     setBLLoading]  = useState<string | null>(null)
   const [blError,       setBLError]    = useState<string | null>(null)
   const [confirmDelivery, setConfirm] = useState<string | null>(null)
+  const [deliverySelections, setDeliverySelections] = useState<Record<string, string>>({})
+  const [assigningOrder,     setAssigningOrder]     = useState<string | null>(null)
+  const [assignError,        setAssignError]        = useState<string | null>(null)
 
   // Stock request form state
   const [reqProduct,        setReqProduct]        = useState('')
@@ -128,6 +133,18 @@ export default function WarehouseClient({
     await updateOrderStatus(confirmDelivery, 'delivered')
     setConfirm(null)
     setLoadingOrd(null)
+    router.refresh()
+  }
+
+  const handleAssignDelivery = async (orderId: string) => {
+    const userId = deliverySelections[orderId]
+    if (!userId) return
+    setAssigningOrder(orderId)
+    setAssignError(null)
+    const result = await assignDelivery(orderId, userId)
+    setAssigningOrder(null)
+    if (result?.error) { setAssignError(result.error); return }
+    setDeliverySelections(prev => { const next = { ...prev }; delete next[orderId]; return next })
     router.refresh()
   }
 
@@ -622,6 +639,69 @@ export default function WarehouseClient({
                       </span>
                     </div>
                   </div>
+
+                  {/* Delivery assignment strip — always visible for ready orders */}
+                  {order.status === 'ready' && deliveryUsers.length > 0 && (
+                    <div
+                      style={{
+                        borderTop: `1px solid ${C.borderSub}`,
+                        padding: '10px 20px',
+                        background: C.bg,
+                        display: 'flex', alignItems: 'center',
+                        gap: 10, flexWrap: 'wrap',
+                      }}
+                      onClick={e => e.stopPropagation()}>
+                      <span style={{ fontSize: 11.5, fontWeight: 600, color: C.muted, fontFamily: F.body, whiteSpace: 'nowrap' }}>
+                        Livreur :
+                      </span>
+                      {order.assigned_delivery_id ? (
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.green, fontFamily: F.body }}>
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ marginRight: 4, verticalAlign: 'middle' }}>
+                            <circle cx="5" cy="5" r="4" fill={C.greenBg} stroke={C.green} strokeWidth="1.2"/>
+                            <path d="M2.5 5l2 2 3-3" stroke={C.green} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          {deliveryUsers.find(u => u.id === order.assigned_delivery_id)?.full_name ?? 'Assigné'}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 11.5, fontWeight: 600, color: C.orange, fontFamily: F.body }}>
+                          Non assigné
+                        </span>
+                      )}
+                      <select
+                        value={deliverySelections[order.id] ?? ''}
+                        onChange={e => setDeliverySelections(prev => ({ ...prev, [order.id]: e.target.value }))}
+                        style={{
+                          padding: '5px 10px', borderRadius: 6, fontSize: 12,
+                          border: `1.5px solid ${C.border}`, color: C.ink,
+                          background: C.surface, fontFamily: F.body,
+                          cursor: 'pointer', outline: 'none',
+                        }}>
+                        <option value="">
+                          {order.assigned_delivery_id ? '— Réassigner —' : '— Choisir un livreur —'}
+                        </option>
+                        {deliveryUsers.map(u => (
+                          <option key={u.id} value={u.id}>{u.full_name}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleAssignDelivery(order.id)}
+                        disabled={!deliverySelections[order.id] || assigningOrder === order.id}
+                        style={{
+                          padding: '5px 14px', borderRadius: 6,
+                          fontSize: 12, fontWeight: 700,
+                          border: 'none', cursor: deliverySelections[order.id] ? 'pointer' : 'default',
+                          fontFamily: F.body,
+                          background: C.amber, color: '#FAF5EE',
+                          opacity: (!deliverySelections[order.id] || assigningOrder === order.id) ? 0.4 : 1,
+                          transition: 'opacity 0.15s',
+                        }}>
+                        {assigningOrder === order.id ? 'Assignation…' : 'Assigner'}
+                      </button>
+                      {assignError && assigningOrder === null && (
+                        <span style={{ fontSize: 11.5, color: C.red, fontFamily: F.body }}>{assignError}</span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Order detail — expanded */}
                   {isOpen && sale?.sale_items && (

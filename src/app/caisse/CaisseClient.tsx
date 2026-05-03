@@ -16,6 +16,16 @@ import {
   type CashClosing,
   type CashEntryType,
 } from './actions'
+import { addPayment } from '@/app/sales/actions'
+
+type PendingSale = {
+  id: string
+  sale_number: string
+  customer_name: string | null
+  customer_phone: string | null
+  total_amount: number
+  amount_paid: number
+}
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -122,6 +132,7 @@ export default function CaisseClient({
   initialBoutiqueId,
   initialDate,
   initialData,
+  pendingSales: initialPendingSales = [],
 }: {
   profile:           any
   currency:          string
@@ -131,12 +142,14 @@ export default function CaisseClient({
   initialBoutiqueId: string
   initialDate:       string
   initialData:       CaisseDay | null
+  pendingSales?:     PendingSale[]
 }) {
   const router   = useRouter()
   const supabase = createClient()
   const fmt      = (n: number) => fmtCurrency(n, currency)
 
   const isOwnerOrAdmin = ['owner', 'manager'].includes(profile.role)
+  const isCashier      = profile.role === 'cashier'
   const today          = new Date().toISOString().slice(0, 10)
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -144,7 +157,18 @@ export default function CaisseClient({
   const [activeDate,       setActiveDate]       = useState(initialDate)
   const [data,             setData]             = useState<CaisseDay | null>(initialData)
   const [loading,          setLoading]          = useState(false)
-  const [tab,              setTab]              = useState<'today' | 'history'>('today')
+  const [tab,              setTab]              = useState<'today' | 'history' | 'encaisser'>(
+    isCashier ? 'encaisser' : 'today'
+  )
+
+  // À encaisser state
+  const [pendingSales,      setPendingSales]     = useState<PendingSale[]>(initialPendingSales)
+  const [encaisserSaleId,   setEncaisserSaleId]  = useState<string | null>(null)
+  const [encaisserAmount,   setEncaisserAmount]  = useState('')
+  const [encaisserMethod,   setEncaisserMethod]  = useState('especes')
+  const [encaisserNotes,    setEncaisserNotes]   = useState('')
+  const [encaisserLoading,  setEncaisserLoading] = useState(false)
+  const [encaisserError,    setEncaisserError]   = useState<string | null>(null)
 
   // Add entry modal
   const [showAdd,      setShowAdd]     = useState(false)
@@ -202,9 +226,35 @@ export default function CaisseClient({
     setHistLoading(false)
   }
 
-  const handleTabChange = (t: 'today' | 'history') => {
+  const handleTabChange = (t: 'today' | 'history' | 'encaisser') => {
     setTab(t)
     if (t === 'history' && !histLoaded) loadHistory()
+  }
+
+  const handleEncaisserSubmit = async (saleId: string) => {
+    const amount = parseFloat(encaisserAmount.replace(/\s/g, '').replace(',', '.'))
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setEncaisserError('Montant invalide.')
+      return
+    }
+    setEncaisserLoading(true)
+    setEncaisserError(null)
+    const result = await addPayment(saleId, amount, encaisserNotes.trim() || null, encaisserMethod)
+    setEncaisserLoading(false)
+    if (result?.error) { setEncaisserError(result.error); return }
+    setPendingSales(prev => {
+      const sale = prev.find(s => s.id === saleId)
+      if (!sale) return prev
+      const newAmountPaid = (Number(sale.amount_paid) || 0) + amount
+      if (newAmountPaid >= Number(sale.total_amount) - 0.01) {
+        return prev.filter(s => s.id !== saleId)
+      }
+      return prev.map(s => s.id === saleId ? { ...s, amount_paid: newAmountPaid } : s)
+    })
+    setEncaisserSaleId(null)
+    setEncaisserAmount('')
+    setEncaisserNotes('')
+    setEncaisserMethod('especes')
   }
 
   // ── Derived values ─────────────────────────────────────────────────────────
@@ -372,24 +422,41 @@ export default function CaisseClient({
               {activeBoutique.name}
             </div>
           )}
-          <input
-            type="date"
-            value={activeDate}
-            max={today}
-            onChange={e => handleDateChange(e.target.value)}
-            style={{ ...inputStyle, width: 'auto' }}
-          />
-          {!isToday && (
-            <button
-              onClick={() => handleDateChange(today)}
-              style={{ ...btnSecondary, padding: `${SP[2]} ${SP[3]}`, fontSize: F.xs }}
-            >
-              Aujourd&apos;hui
-            </button>
+          {tab !== 'encaisser' && (
+            <>
+              <input
+                type="date"
+                value={activeDate}
+                max={today}
+                onChange={e => handleDateChange(e.target.value)}
+                style={{ ...inputStyle, width: 'auto' }}
+              />
+              {!isToday && (
+                <button
+                  onClick={() => handleDateChange(today)}
+                  style={{ ...btnSecondary, padding: `${SP[2]} ${SP[3]}`, fontSize: F.xs }}
+                >
+                  Aujourd&apos;hui
+                </button>
+              )}
+            </>
           )}
 
           {/* Tabs */}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: SP[1], background: C.surfaceSub, borderRadius: R.lg, padding: SP[1] }}>
+            <button onClick={() => handleTabChange('encaisser')} style={tabStyle(tab === 'encaisser')}>
+              À encaisser
+              {pendingSales.length > 0 && (
+                <span style={{
+                  marginLeft: SP[1],
+                  background: tab === 'encaisser' ? C.amber : C.orange,
+                  color: '#fff', fontSize: F.xs, fontWeight: F.bold,
+                  padding: `0 ${SP[1]}`, borderRadius: R.full, lineHeight: '16px',
+                }}>
+                  {pendingSales.length}
+                </span>
+              )}
+            </button>
             <button onClick={() => handleTabChange('today')}   style={tabStyle(tab === 'today')}>Caisse</button>
             <button onClick={() => handleTabChange('history')} style={tabStyle(tab === 'history')}>Historique</button>
           </div>
@@ -399,6 +466,179 @@ export default function CaisseClient({
         {!activeBoutiqueId && (
           <div style={{ ...cardStyle, textAlign: 'center', color: C.muted, padding: SP[10] }}>
             Aucune boutique disponible.
+          </div>
+        )}
+
+        {/* ══════════════════════════════════ À ENCAISSER TAB ════════════════ */}
+        {tab === 'encaisser' && (
+          <div>
+            {pendingSales.length === 0 ? (
+              <div style={{ ...cardStyle, textAlign: 'center', padding: SP[10] }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: '50%',
+                  background: C.greenBg, border: `1.5px solid ${C.greenBd}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+                    <path d="M4 11l5 5 9-9" stroke={C.green} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div style={{ fontSize: F.base, fontWeight: F.bold, color: C.ink, marginBottom: SP[1] }}>
+                  Aucune vente en attente
+                </div>
+                <div style={{ fontSize: F.sm, color: C.muted }}>
+                  Tous les paiements sont à jour.
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: SP[3] }}>
+                {pendingSales.map(sale => {
+                  const balance = Number(sale.total_amount) - Number(sale.amount_paid || 0)
+                  const isPaying = encaisserSaleId === sale.id
+                  return (
+                    <div key={sale.id} style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+                      {/* Sale header */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', flexWrap: 'wrap',
+                        gap: SP[3], padding: `${SP[4]} ${SP[5]}`,
+                        borderLeft: `4px solid ${C.amber}`,
+                      }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', gap: SP[2], alignItems: 'center', marginBottom: SP[1], flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontFamily: F.mono, fontSize: F.sm, fontWeight: F.bold,
+                              background: C.amberGlow, color: C.amber,
+                              padding: `2px ${SP[2]}`, borderRadius: R.sm,
+                              border: `1px solid rgba(160,83,26,0.2)`,
+                            }}>
+                              {sale.sale_number}
+                            </span>
+                            {Number(sale.amount_paid) > 0 && (
+                              <span style={{
+                                fontSize: F.xs, fontWeight: F.semibold,
+                                background: C.goldBg, color: C.gold,
+                                border: `1px solid ${C.goldBd}`,
+                                padding: `2px ${SP[2]}`, borderRadius: R.full,
+                              }}>
+                                Partiel
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: F.sm, fontWeight: F.semibold, color: C.ink, marginBottom: 2 }}>
+                            {sale.customer_name ?? 'Client anonyme'}
+                            {sale.customer_phone && (
+                              <span style={{ fontWeight: 400, color: C.muted }}> · {sale.customer_phone}</span>
+                            )}
+                          </div>
+                          <div style={{ display: 'flex', gap: SP[4], fontSize: F.xs, color: C.muted }}>
+                            <span>Total : <strong style={{ color: C.ink, fontFamily: F.mono }}>{fmt(Number(sale.total_amount))}</strong></span>
+                            {Number(sale.amount_paid) > 0 && (
+                              <span>Payé : <strong style={{ color: C.green, fontFamily: F.mono }}>{fmt(Number(sale.amount_paid))}</strong></span>
+                            )}
+                            <span>Solde : <strong style={{ color: C.amber, fontFamily: F.mono }}>{fmt(balance)}</strong></span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (isPaying) {
+                              setEncaisserSaleId(null)
+                            } else {
+                              setEncaisserSaleId(sale.id)
+                              setEncaisserAmount(String(Math.round(balance)))
+                              setEncaisserMethod('especes')
+                              setEncaisserNotes('')
+                              setEncaisserError(null)
+                            }
+                          }}
+                          style={{
+                            ...btnPrimary,
+                            display: 'flex', alignItems: 'center', gap: SP[1],
+                            opacity: isPaying ? 0.7 : 1,
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <rect x="1" y="3" width="12" height="8" rx="1.5" stroke="#fff" strokeWidth="1.3"/>
+                            <path d="M1 6h12" stroke="#fff" strokeWidth="1.3"/>
+                            <path d="M4 9h2" stroke="#fff" strokeWidth="1.3" strokeLinecap="round"/>
+                          </svg>
+                          {isPaying ? 'Annuler' : 'Encaisser'}
+                        </button>
+                      </div>
+
+                      {/* Payment form */}
+                      {isPaying && (
+                        <div style={{
+                          borderTop: `1px solid ${C.borderSub}`,
+                          padding: `${SP[4]} ${SP[5]}`,
+                          background: C.bg,
+                        }}>
+                          <div style={{ display: 'flex', gap: SP[3], flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                            <div style={{ flex: '1 1 140px' }}>
+                              <label style={{ display: 'block', fontSize: F.xs, fontWeight: F.semibold, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: SP[1] }}>
+                                Montant ({currency})
+                              </label>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={encaisserAmount}
+                                onChange={e => setEncaisserAmount(e.target.value)}
+                                autoFocus
+                                style={{ ...inputStyle, fontFamily: F.mono, fontWeight: F.bold }}
+                              />
+                            </div>
+                            <div style={{ flex: '1 1 140px' }}>
+                              <label style={{ display: 'block', fontSize: F.xs, fontWeight: F.semibold, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: SP[1] }}>
+                                Mode de paiement
+                              </label>
+                              <select
+                                value={encaisserMethod}
+                                onChange={e => setEncaisserMethod(e.target.value)}
+                                style={{ ...inputStyle }}
+                              >
+                                <option value="especes">Espèces</option>
+                                <option value="virement">Virement</option>
+                                <option value="mobile_money">Mobile Money</option>
+                                <option value="cheque">Chèque</option>
+                              </select>
+                            </div>
+                            <div style={{ flex: '2 1 200px' }}>
+                              <label style={{ display: 'block', fontSize: F.xs, fontWeight: F.semibold, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: SP[1] }}>
+                                Notes (optionnel)
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="Référence, numéro de reçu…"
+                                value={encaisserNotes}
+                                onChange={e => setEncaisserNotes(e.target.value)}
+                                style={{ ...inputStyle }}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleEncaisserSubmit(sale.id)}
+                              disabled={encaisserLoading}
+                              style={{
+                                ...btnPrimary,
+                                opacity: encaisserLoading ? 0.6 : 1,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {encaisserLoading ? 'Enregistrement…' : 'Confirmer'}
+                            </button>
+                          </div>
+                          {encaisserError && (
+                            <div style={{ marginTop: SP[2], padding: `${SP[2]} ${SP[3]}`, background: C.redBg, color: C.red, border: `1px solid ${C.redBd}`, borderRadius: R.md, fontSize: F.sm }}>
+                              {encaisserError}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

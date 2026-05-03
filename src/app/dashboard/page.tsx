@@ -25,7 +25,7 @@ export default async function DashboardPage() {
     if (profile.role === 'cashier')     redirect('/caisse')
     if (profile.role === 'warehouse')   redirect('/warehouse')
     if (profile.role === 'delivery')    redirect('/deliveries')
-    if (profile.role === 'field_agent') redirect('/pipeline')
+    if (profile.role === 'field_agent') redirect('/quotes/new')
     redirect('/sales')
   }
 

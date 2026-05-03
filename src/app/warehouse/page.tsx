@@ -33,6 +33,7 @@ export default async function WarehousePage() {
     { data: allStockLevels },
     { data: myRequests },
     { data: recentSales },
+    { data: deliveryUsers },
     badgeCounts,
   ] = await Promise.all([
     // Active orders — confirmed, preparing, ready
@@ -44,6 +45,7 @@ export default async function WarehousePage() {
         preparation_started_at,
         preparation_confirmed_at,
         assigned_to,
+        assigned_delivery_id,
         sales (
           id, sale_number, customer_name,
           customer_phone, total_amount, notes,
@@ -114,6 +116,14 @@ export default async function WarehousePage() {
       .gte('created_at', thirtyDaysAgo.toISOString())
       .in('status', ['confirmed', 'preparing', 'ready', 'delivered']),
 
+    // Active delivery users for assignment
+    supabase
+      .from('users')
+      .select('id, full_name')
+      .eq('role', 'delivery')
+      .eq('is_active', true)
+      .order('full_name'),
+
     getBadgeCounts(profile.role, supabase),
   ])
 
@@ -146,6 +156,7 @@ export default async function WarehousePage() {
       products={products ?? []}
       myRequests={myRequests ?? []}
       velocityMap={velocityMap}
+      deliveryUsers={deliveryUsers ?? []}
       badgeCounts={badgeCounts}
     />
   )

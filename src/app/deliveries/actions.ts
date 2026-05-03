@@ -86,6 +86,45 @@ export async function confirmDelivery(orderId: string) {
   return { success: true }
 }
 
+export async function reportDeliveryIssue(orderId: string, reason: string, notes: string) {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, company_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile || !['delivery', 'warehouse', 'manager', 'owner'].includes(profile.role)) {
+    return { error: 'Accès refusé.' }
+  }
+
+  const { data: order } = await supabase
+    .from('orders')
+    .select('order_number')
+    .eq('id', orderId)
+    .single()
+
+  if (!order) return { error: 'Commande introuvable.' }
+
+  const admin = getAdminClient()
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: profile.role,
+    action_type:        'DELIVERY_ISSUE_REPORTED',
+    entity_type:        'orders',
+    entity_id:          orderId,
+    company_id:         profile.company_id,
+    data_after:         { order_number: order.order_number, reason, notes },
+  })
+
+  revalidatePath('/deliveries')
+  return { success: true }
+}
+
 export async function assignDelivery(orderId: string, deliveryUserId: string) {
   const supabase = await createClient()
 
@@ -102,6 +141,12 @@ export async function assignDelivery(orderId: string, deliveryUserId: string) {
     return { error: 'Accès refusé.' }
   }
 
+  const { data: order } = await supabase
+    .from('orders')
+    .select('order_number')
+    .eq('id', orderId)
+    .single()
+
   const { error } = await supabase
     .from('orders')
     .update({ assigned_delivery_id: deliveryUserId })
@@ -109,6 +154,17 @@ export async function assignDelivery(orderId: string, deliveryUserId: string) {
     .in('status', ['confirmed', 'preparing', 'ready'])
 
   if (error) return { error: error.message }
+
+  const admin = getAdminClient()
+  await admin.from('audit_logs').insert({
+    user_id:            user.id,
+    user_role_snapshot: profile.role,
+    action_type:        'DELIVERY_ASSIGNED',
+    entity_type:        'orders',
+    entity_id:          orderId,
+    company_id:         profile.company_id,
+    data_after:         { assigned_delivery_id: deliveryUserId, order_number: order?.order_number },
+  })
 
   revalidatePath('/deliveries')
   revalidatePath('/warehouse')

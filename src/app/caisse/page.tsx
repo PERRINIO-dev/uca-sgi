@@ -56,10 +56,20 @@ export default async function CaissePage({
   const currency    = (profile.companies as any)?.currency ?? 'FCFA'
   const companyName = (profile.companies as any)?.name ?? 'SGI'
 
-  // Pre-fetch today's (or requested) caisse data
-  const { data: initialData } = boutiqueId
-    ? await getCaisseData(boutiqueId, date)
-    : { data: null }
+  // Run caisse data + pending sales in parallel
+  const [{ data: initialData }, { data: pendingSales }] = await Promise.all([
+    boutiqueId ? getCaisseData(boutiqueId, date) : Promise.resolve({ data: null }),
+    boutiqueId
+      ? supabase
+          .from('sales')
+          .select('id, sale_number, customer_name, customer_phone, total_amount, amount_paid')
+          .eq('boutique_id', boutiqueId)
+          .in('status', ['confirmed', 'preparing', 'ready'])
+          .not('payment_status', 'eq', 'paid')
+          .order('created_at', { ascending: false })
+          .limit(50)
+      : Promise.resolve({ data: [] as any[] }),
+  ])
 
   return (
     <CaisseClient
@@ -71,6 +81,7 @@ export default async function CaissePage({
       initialBoutiqueId={boutiqueId}
       initialDate={date}
       initialData={initialData}
+      pendingSales={pendingSales ?? []}
     />
   )
 }

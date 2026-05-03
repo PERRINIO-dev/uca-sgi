@@ -6,7 +6,16 @@ import PageLayout                   from '@/components/PageLayout'
 import { createClient }             from '@/lib/supabase/client'
 import { C, F, SP, R, SH, TR }     from '@/lib/design-system/tokens'
 import type { BadgeCounts }         from '@/lib/supabase/badge-counts'
-import { confirmDelivery }          from './actions'
+import { confirmDelivery, reportDeliveryIssue } from './actions'
+
+const ISSUE_REASONS = [
+  { value: 'absent',    label: 'Client absent' },
+  { value: 'refus',     label: 'Refus de réception' },
+  { value: 'adresse',   label: 'Mauvaise adresse' },
+  { value: 'article',   label: 'Article endommagé' },
+  { value: 'paiement',  label: 'Paiement refusé' },
+  { value: 'autre',     label: 'Autre' },
+]
 
 function fmtCurrency(n: number, currency: string) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' ' + currency
@@ -77,6 +86,11 @@ export default function DeliveriesClient({
   const [confirmId,    setConfirmId]    = useState<string | null>(null)
   const [confirmError, setConfirmError] = useState<string | null>(null)
   const [confirming,   startConfirm]   = useTransition()
+  const [issueId,      setIssueId]      = useState<string | null>(null)
+  const [issueReason,  setIssueReason]  = useState('absent')
+  const [issueNotes,   setIssueNotes]   = useState('')
+  const [issueLoading, setIssueLoading] = useState(false)
+  const [issueError,   setIssueError]   = useState<string | null>(null)
 
   const handleConfirm = (orderId: string) => {
     setConfirmError(null)
@@ -86,6 +100,17 @@ export default function DeliveriesClient({
       setConfirmId(null)
       router.refresh()
     })
+  }
+
+  const handleIssueSubmit = async (orderId: string) => {
+    setIssueLoading(true)
+    setIssueError(null)
+    const res = await reportDeliveryIssue(orderId, issueReason, issueNotes.trim())
+    setIssueLoading(false)
+    if (res.error) { setIssueError(res.error); return }
+    setIssueId(null)
+    setIssueReason('absent')
+    setIssueNotes('')
   }
 
   return (
@@ -150,13 +175,14 @@ export default function DeliveriesClient({
                 overflow: 'hidden',
                 transition: TR.base,
               }}>
-                {/* Card header */}
+                {/* Card header — tap to expand detail */}
                 <div
                   onClick={() => setExpanded(isOpen ? null : order.id)}
                   style={{
                     padding: `${SP[4]} ${SP[5]}`,
                     cursor: 'pointer',
                     display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: SP[3],
+                    borderLeft: `4px solid ${order.status === 'ready' ? C.amber : C.muted}`,
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -170,7 +196,7 @@ export default function DeliveriesClient({
                       {sale?.customer_name ?? 'Client non spécifié'}
                     </p>
                     {sale?.customer_phone && (
-                      <a href={`tel:${sale.customer_phone}`} style={{
+                      <a href={`tel:${sale.customer_phone}`} onClick={e => e.stopPropagation()} style={{
                         fontSize: F.xs, color: C.amber, fontFamily: F.body,
                         textDecoration: 'none', fontWeight: 600,
                       }}>
@@ -184,19 +210,170 @@ export default function DeliveriesClient({
                     </p>
                     <p style={{ margin: `${SP[1]} 0 0`, fontSize: F.xs, color: C.muted, fontFamily: F.body }}>
                       {itemCount} article{itemCount !== 1 ? 's' : ''}
+                      {' '}
+                      <span style={{ opacity: 0.6 }}>{isOpen ? '▲' : '▼'}</span>
                     </p>
                   </div>
                 </div>
 
-                {/* Expanded detail */}
+                {/* Confirm action — always visible for ready orders */}
+                {order.status === 'ready' && (
+                  <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                      padding: `${SP[3]} ${SP[5]}`,
+                      borderTop: `1px solid ${C.borderSub}`,
+                      background: C.amberGlow,
+                    }}
+                  >
+                    {issueId === order.id ? (
+                      <div>
+                        <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.sm, fontWeight: 600, color: C.red, fontFamily: F.body }}>
+                          Signaler un problème de livraison
+                        </p>
+                        <div style={{ display: 'flex', gap: SP[2], marginBottom: SP[2], flexWrap: 'wrap' }}>
+                          {ISSUE_REASONS.map(r => (
+                            <button
+                              key={r.value}
+                              onClick={() => setIssueReason(r.value)}
+                              style={{
+                                padding: `${SP[1]} ${SP[3]}`, borderRadius: R.full,
+                                fontSize: F.xs, fontWeight: 600, cursor: 'pointer',
+                                fontFamily: F.body, border: `1.5px solid ${issueReason === r.value ? C.red : C.border}`,
+                                background: issueReason === r.value ? C.redBg : C.surface,
+                                color: issueReason === r.value ? C.red : C.muted,
+                              }}
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                        <textarea
+                          placeholder="Détails supplémentaires (optionnel)…"
+                          value={issueNotes}
+                          onChange={e => setIssueNotes(e.target.value)}
+                          rows={2}
+                          style={{
+                            width: '100%', boxSizing: 'border-box',
+                            marginBottom: SP[2], padding: `${SP[2]} ${SP[3]}`,
+                            borderRadius: R.md, border: `1.5px solid ${C.border}`,
+                            fontSize: F.sm, fontFamily: F.body, color: C.text,
+                            background: C.surface, resize: 'none', outline: 'none',
+                          }}
+                        />
+                        {issueError && (
+                          <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.xs, color: C.red, fontFamily: F.body }}>
+                            {issueError}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: SP[2] }}>
+                          <button
+                            onClick={() => { setIssueId(null); setIssueError(null) }}
+                            style={{
+                              flex: 1, padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
+                              border: `1.5px solid ${C.border}`, background: C.surface,
+                              fontSize: F.sm, fontWeight: 600, color: C.text,
+                              cursor: 'pointer', fontFamily: F.body,
+                            }}>
+                            Annuler
+                          </button>
+                          <button
+                            onClick={() => handleIssueSubmit(order.id)}
+                            disabled={issueLoading}
+                            style={{
+                              flex: 2, padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
+                              border: 'none', background: C.red, color: '#fff',
+                              fontSize: F.sm, fontWeight: 700,
+                              cursor: issueLoading ? 'not-allowed' : 'pointer', fontFamily: F.body,
+                              opacity: issueLoading ? 0.7 : 1,
+                            }}>
+                            {issueLoading ? 'Envoi…' : 'Envoyer le signalement'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : confirmId === order.id ? (
+                      <div>
+                        <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.sm, fontWeight: 600, color: C.amber, fontFamily: F.body }}>
+                          Confirmer la livraison de cette commande ?
+                        </p>
+                        {confirmError && (
+                          <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.sm, color: C.red, fontFamily: F.body }}>
+                            {confirmError}
+                          </p>
+                        )}
+                        <div style={{ display: 'flex', gap: SP[2] }}>
+                          <button
+                            onClick={() => { setConfirmId(null); setConfirmError(null) }}
+                            style={{
+                              flex: 1, padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
+                              border: `1.5px solid ${C.border}`, background: C.surface,
+                              fontSize: F.sm, fontWeight: 600, color: C.text,
+                              cursor: 'pointer', fontFamily: F.body,
+                            }}>
+                            Annuler
+                          </button>
+                          <button
+                            disabled={confirming}
+                            onClick={() => handleConfirm(order.id)}
+                            style={{
+                              flex: 2, padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
+                              border: 'none', background: C.green,
+                              fontSize: F.sm, fontWeight: 700, color: '#fff',
+                              cursor: confirming ? 'not-allowed' : 'pointer', fontFamily: F.body,
+                              opacity: confirming ? 0.7 : 1,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[1],
+                            }}>
+                            <IconTruck />
+                            {confirming ? 'Confirmation…' : 'Oui, livraison confirmée'}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: SP[2] }}>
+                        <button
+                          onClick={() => { setConfirmId(order.id); setConfirmError(null) }}
+                          style={{
+                            flex: 3, padding: `${SP[3]} ${SP[4]}`,
+                            borderRadius: R.md, border: 'none',
+                            background: C.amber, color: '#FAF5EE',
+                            fontSize: F.base, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: F.body,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
+                          }}>
+                          <IconTruck />
+                          Confirmer la livraison
+                        </button>
+                        <button
+                          onClick={() => { setIssueId(order.id); setIssueReason('absent'); setIssueNotes(''); setIssueError(null) }}
+                          title="Signaler un problème"
+                          style={{
+                            flex: 1, padding: `${SP[3]} ${SP[3]}`,
+                            borderRadius: R.md, border: `1.5px solid ${C.redBd}`,
+                            background: C.redBg, color: C.red,
+                            fontSize: F.xs, fontWeight: 700,
+                            cursor: 'pointer', fontFamily: F.body,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[1],
+                          }}>
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <path d="M6 1L11 10H1L6 1Z" stroke={C.red} strokeWidth="1.2" strokeLinejoin="round"/>
+                            <path d="M6 5v2.5" stroke={C.red} strokeWidth="1.2" strokeLinecap="round"/>
+                            <circle cx="6" cy="9" r="0.5" fill={C.red}/>
+                          </svg>
+                          Problème
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Expanded detail — items + notes */}
                 {isOpen && (
                   <div style={{
                     borderTop: `1px solid ${C.borderSub}`,
                     padding: `${SP[4]} ${SP[5]}`,
                     background: C.bg,
                   }}>
-                    {/* Items */}
-                    <div style={{ marginBottom: SP[4] }}>
+                    <div style={{ marginBottom: sale?.notes ? SP[4] : 0 }}>
                       <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.xs, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: F.body }}>
                         Articles
                       </p>
@@ -222,9 +399,8 @@ export default function DeliveriesClient({
                       </div>
                     </div>
 
-                    {/* Notes */}
                     {sale?.notes && (
-                      <div style={{ marginBottom: SP[4] }}>
+                      <div>
                         <p style={{ margin: `0 0 ${SP[1]}`, fontSize: F.xs, fontWeight: 700, color: C.muted, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: F.body }}>
                           Notes
                         </p>
@@ -232,66 +408,6 @@ export default function DeliveriesClient({
                           {sale.notes}
                         </p>
                       </div>
-                    )}
-
-                    {/* Confirm delivery button */}
-                    {order.status === 'ready' && (
-                      <>
-                        {confirmId === order.id ? (
-                          <div style={{
-                            background: C.orangeBg, border: `1px solid ${C.orangeBd}`,
-                            borderRadius: R.md, padding: SP[4],
-                            marginTop: SP[2],
-                          }}>
-                            <p style={{ margin: `0 0 ${SP[3]}`, fontSize: F.sm, fontWeight: 600, color: C.orange, fontFamily: F.body }}>
-                              Confirmer la livraison de cette commande ?
-                            </p>
-                            {confirmError && (
-                              <p style={{ margin: `0 0 ${SP[2]}`, fontSize: F.sm, color: C.red, fontFamily: F.body }}>
-                                {confirmError}
-                              </p>
-                            )}
-                            <div style={{ display: 'flex', gap: SP[2] }}>
-                              <button
-                                onClick={() => { setConfirmId(null); setConfirmError(null) }}
-                                style={{
-                                  padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
-                                  border: `1.5px solid ${C.border}`, background: C.surface,
-                                  fontSize: F.sm, fontWeight: 600, color: C.text,
-                                  cursor: 'pointer', fontFamily: F.body,
-                                }}>
-                                Annuler
-                              </button>
-                              <button
-                                disabled={confirming}
-                                onClick={() => handleConfirm(order.id)}
-                                style={{
-                                  padding: `${SP[2]} ${SP[4]}`, borderRadius: R.md,
-                                  border: 'none', background: C.green,
-                                  fontSize: F.sm, fontWeight: 600, color: '#fff',
-                                  cursor: confirming ? 'not-allowed' : 'pointer', fontFamily: F.body,
-                                  opacity: confirming ? 0.7 : 1,
-                                }}>
-                                {confirming ? 'Confirmation...' : 'Confirmer la livraison'}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => { setConfirmId(order.id); setConfirmError(null) }}
-                            style={{
-                              width: '100%', padding: `${SP[3]} ${SP[4]}`,
-                              borderRadius: R.md, border: 'none',
-                              background: C.amber, color: '#FAF5EE',
-                              fontSize: F.sm, fontWeight: 700,
-                              cursor: 'pointer', fontFamily: F.body,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SP[2],
-                            }}>
-                            <IconTruck />
-                            Confirmer la livraison
-                          </button>
-                        )}
-                      </>
                     )}
                   </div>
                 )}

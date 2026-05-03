@@ -183,7 +183,7 @@ export default function PipelineClient({
         {/* Quote list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: SP[2] }}>
           {filtered.map((quote: any) => (
-            <Link key={quote.id} href={`/quotes`} style={{ textDecoration: 'none' }}>
+            <Link key={quote.id} href={`/quotes?search=${encodeURIComponent(quote.quote_number ?? quote.sale_number ?? '')}`} style={{ textDecoration: 'none' }}>
               <div style={{
                 background: C.surface, borderRadius: R.md,
                 border: `1px solid ${C.border}`,
