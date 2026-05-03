@@ -86,34 +86,37 @@ function IconStore() {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function UsersClient({
-  profile, employees, boutiques, currentUserId, badgeCounts,
+  profile, employees, boutiques, boutiqueAssignments, currentUserId, badgeCounts,
 }: {
-  profile:       any
-  employees:     any[]
-  boutiques:     any[]
-  currentUserId: string
-  badgeCounts?:  BadgeCounts
+  profile:             any
+  employees:           any[]
+  boutiques:           any[]
+  boutiqueAssignments: Record<string, string[]>
+  currentUserId:       string
+  badgeCounts?:        BadgeCounts
 }) {
   const router   = useRouter()
   const supabase = createClient()
 
   // Create form
-  const [showCreate,    setShowCreate]    = useState(false)
-  const [newEmail,      setNewEmail]      = useState('')
-  const [newName,       setNewName]       = useState('')
-  const [newRole,       setNewRole]       = useState<AssignableRole>('seller')
-  const [newBoutique,   setNewBoutique]   = useState('')
-  const [newPassword,   setNewPassword]   = useState('')
-  const [newShowPwd,    setNewShowPwd]    = useState(false)
-  const [creating,      setCreating]      = useState(false)
-  const [createError,   setCreateError]   = useState<string | null>(null)
-  const [createSuccess, setCreateSuccess] = useState<string | null>(null)
+  const [showCreate,      setShowCreate]      = useState(false)
+  const [newEmail,        setNewEmail]        = useState('')
+  const [newName,         setNewName]         = useState('')
+  const [newRole,         setNewRole]         = useState<AssignableRole>('seller')
+  const [newBoutique,     setNewBoutique]     = useState('')
+  const [newBoutiqueIds,  setNewBoutiqueIds]  = useState<string[]>([])
+  const [newPassword,     setNewPassword]     = useState('')
+  const [newShowPwd,      setNewShowPwd]      = useState(false)
+  const [creating,        setCreating]        = useState(false)
+  const [createError,     setCreateError]     = useState<string | null>(null)
+  const [createSuccess,   setCreateSuccess]   = useState<string | null>(null)
 
   // Edit modal
   const [editUser,        setEditUser]        = useState<any>(null)
   const [editName,        setEditName]        = useState('')
   const [editRole,        setEditRole]        = useState<AssignableRole>('seller')
   const [editBoutique,    setEditBoutique]    = useState('')
+  const [editBoutiqueIds, setEditBoutiqueIds] = useState<string[]>([])
   const [editLoading,     setEditLoading]     = useState(false)
   const [editError,       setEditError]       = useState<string | null>(null)
   // Password section inside edit modal
@@ -161,22 +164,35 @@ export default function UsersClient({
     setTimeout(() => { setBoutiqueSuccess(null); router.refresh() }, 1500)
   }
 
+  const handleNewRoleChange = (r: AssignableRole) => {
+    setNewRole(r)
+    if (r !== 'seller' && r !== 'cashier') setNewBoutique('')
+    if (r !== 'manager') setNewBoutiqueIds([])
+  }
+
+  const handleEditRoleChange = (r: AssignableRole) => {
+    setEditRole(r)
+    if (r !== 'seller' && r !== 'cashier') setEditBoutique('')
+    if (r !== 'manager') setEditBoutiqueIds([])
+  }
+
   // ── Create employee ──────────────────────────────────────────────────────────
   const handleCreate = async () => {
     if (!newEmail || !newName || !newPassword) return
     if (newPassword.length < 8) { setCreateError('Le mot de passe doit contenir au moins 8 caractères.'); return }
     setCreating(true); setCreateError(null)
     const result = await createEmployee({
-      email:      newEmail.trim().toLowerCase(),
-      fullName:   newName.trim(),
-      role:       newRole,
-      boutiqueId: newRole === 'seller' ? (newBoutique || null) : null,
-      password:   newPassword,
+      email:       newEmail.trim().toLowerCase(),
+      fullName:    newName.trim(),
+      role:        newRole,
+      boutiqueId:  (newRole === 'seller' || newRole === 'cashier') ? (newBoutique || null) : null,
+      boutiqueIds: newRole === 'manager' ? newBoutiqueIds : [],
+      password:    newPassword,
     })
     setCreating(false)
     if (result.error) { setCreateError(result.error); return }
     setCreateSuccess(`Compte créé pour ${newName}.`)
-    setNewEmail(''); setNewName(''); setNewPassword(''); setNewBoutique(''); setNewRole('seller')
+    setNewEmail(''); setNewName(''); setNewPassword(''); setNewBoutique(''); setNewBoutiqueIds([]); setNewRole('seller')
     setTimeout(() => { setCreateSuccess(null); setShowCreate(false); router.refresh() }, 2000)
   }
 
@@ -194,6 +210,7 @@ export default function UsersClient({
     setEditName(emp.full_name)
     setEditRole(emp.role)
     setEditBoutique(emp.boutiques?.id ?? '')
+    setEditBoutiqueIds(boutiqueAssignments[emp.id] ?? [])
     setEditError(null)
     setEditPwdOpen(false)
     setEditPwd('')
@@ -206,10 +223,11 @@ export default function UsersClient({
     if (!editUser || !editName) return
     setEditLoading(true); setEditError(null)
     const result = await updateEmployee({
-      userId:     editUser.id,
-      fullName:   editName.trim(),
-      role:       editRole,
-      boutiqueId: editRole === 'seller' ? (editBoutique || null) : null,
+      userId:      editUser.id,
+      fullName:    editName.trim(),
+      role:        editRole,
+      boutiqueId:  (editRole === 'seller' || editRole === 'cashier') ? (editBoutique || null) : null,
+      boutiqueIds: editRole === 'manager' ? editBoutiqueIds : [],
     })
     setEditLoading(false)
     if (result.error) { setEditError(result.error); return }
@@ -413,7 +431,16 @@ export default function UsersClient({
                         </span>
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 13, color: C.ink, fontFamily: F.body }}>
-                        {emp.boutiques?.name ?? <span style={{ color: C.muted }}>—</span>}
+                        {(() => {
+                          if (emp.role === 'manager') {
+                            const ids = boutiqueAssignments[emp.id] ?? []
+                            const names = ids.map((id: string) => boutiques.find((b: any) => b.id === id)?.name).filter(Boolean)
+                            return names.length > 0
+                              ? <span style={{ fontSize: F.xs }}>{names.join(', ')}</span>
+                              : <span style={{ color: C.muted }}>—</span>
+                          }
+                          return emp.boutiques?.name ?? <span style={{ color: C.muted }}>—</span>
+                        })()}
                       </td>
                       <td style={{ padding: '13px 16px', fontSize: 12, color: C.muted, fontFamily: F.body }}>
                         {new Date(emp.created_at).toLocaleDateString('fr-FR', {
@@ -503,11 +530,11 @@ export default function UsersClient({
             </FieldBlock>
 
             <FieldBlock label="Rôle *">
-              <RoleSelector value={newRole} onChange={setNewRole} />
+              <RoleSelector value={newRole} onChange={handleNewRoleChange} />
             </FieldBlock>
 
-            {newRole === 'seller' && (
-              <FieldBlock label="Boutique assignée">
+            {(newRole === 'seller' || newRole === 'cashier') && (
+              <FieldBlock label={newRole === 'seller' ? 'Boutique assignée *' : 'Boutique (caisse) *'}>
                 <select value={newBoutique} onChange={e => setNewBoutique(e.target.value)}
                   style={inputStyle}>
                   <option value="">— Sélectionner —</option>
@@ -515,6 +542,16 @@ export default function UsersClient({
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
+              </FieldBlock>
+            )}
+
+            {newRole === 'manager' && boutiques.filter(b => b.is_active).length > 0 && (
+              <FieldBlock label="Boutiques assignées">
+                <BoutiqueMultiSelect
+                  boutiques={boutiques.filter(b => b.is_active)}
+                  selected={newBoutiqueIds}
+                  onChange={setNewBoutiqueIds}
+                />
               </FieldBlock>
             )}
 
@@ -546,12 +583,12 @@ export default function UsersClient({
 
             {editUser?.role !== 'owner' && (
               <FieldBlock label="Rôle">
-                <RoleSelector value={editRole} onChange={setEditRole} />
+                <RoleSelector value={editRole} onChange={handleEditRoleChange} />
               </FieldBlock>
             )}
 
-            {editRole === 'seller' && editUser?.role !== 'owner' && (
-              <FieldBlock label="Boutique assignée">
+            {(editRole === 'seller' || editRole === 'cashier') && editUser?.role !== 'owner' && (
+              <FieldBlock label={editRole === 'seller' ? 'Boutique assignée *' : 'Boutique (caisse) *'}>
                 <select value={editBoutique} onChange={e => setEditBoutique(e.target.value)}
                   style={inputStyle}>
                   <option value="">— Sélectionner —</option>
@@ -559,6 +596,16 @@ export default function UsersClient({
                     <option key={b.id} value={b.id}>{b.name}</option>
                   ))}
                 </select>
+              </FieldBlock>
+            )}
+
+            {editRole === 'manager' && editUser?.role !== 'owner' && boutiques.filter(b => b.is_active).length > 0 && (
+              <FieldBlock label="Boutiques assignées">
+                <BoutiqueMultiSelect
+                  boutiques={boutiques.filter(b => b.is_active)}
+                  selected={editBoutiqueIds}
+                  onChange={setEditBoutiqueIds}
+                />
               </FieldBlock>
             )}
 
@@ -869,6 +916,49 @@ function Feedback({ error, success }: { error?: string | null; success?: string 
         </svg>
       )}
       {error ?? success}
+    </div>
+  )
+}
+
+function BoutiqueMultiSelect({ boutiques, selected, onChange }: {
+  boutiques: { id: string; name: string }[]
+  selected:  string[]
+  onChange:  (ids: string[]) => void
+}) {
+  const toggle = (id: string) =>
+    onChange(selected.includes(id) ? selected.filter(x => x !== id) : [...selected, id])
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+      {boutiques.map(b => {
+        const checked = selected.includes(b.id)
+        return (
+          <button key={b.id} type="button" onClick={() => toggle(b.id)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '8px 10px', borderRadius: R.sm, cursor: 'pointer',
+              background: checked ? C.amberGlow : C.bg,
+              border: `1.5px solid ${checked ? C.amber : C.border}`,
+              textAlign: 'left', fontFamily: F.body,
+            }}>
+            <span style={{
+              width: 14, height: 14, borderRadius: 4, flexShrink: 0,
+              background: checked ? C.amber : C.bg,
+              border: `1.5px solid ${checked ? C.amber : C.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {checked && (
+                <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                  <path d="M1 3l2.5 2.5L8 1" stroke="#FAF5EE" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </span>
+            <span style={{ fontSize: F.sm, color: checked ? C.amber : C.text, fontWeight: checked ? 600 : 400 }}>
+              {b.name}
+            </span>
+          </button>
+        )
+      })}
     </div>
   )
 }

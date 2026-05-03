@@ -5,11 +5,12 @@ import { getAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function createEmployee(payload: {
-  email:      string
-  fullName:   string
-  role:       'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
-  boutiqueId: string | null
-  password:   string
+  email:       string
+  fullName:    string
+  role:        'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
+  boutiqueId:  string | null   // seller / cashier — single boutique
+  boutiqueIds: string[]        // manager — multi-boutique
+  password:    string
 }) {
   const supabase      = await createClient()
   const adminSupabase = getAdminClient()
@@ -29,6 +30,9 @@ export async function createEmployee(payload: {
 
   if (payload.role === 'seller' && !payload.boutiqueId) {
     return { error: 'Une boutique doit être assignée aux vendeurs.' }
+  }
+  if (payload.role === 'cashier' && !payload.boutiqueId) {
+    return { error: 'Une boutique doit être assignée aux caissiers.' }
   }
 
   if (payload.password.length < 8) {
@@ -82,6 +86,17 @@ export async function createEmployee(payload: {
   if (profileError) {
     await adminSupabase.auth.admin.deleteUser(userId)
     return { error: profileError.message }
+  }
+
+  // Manager: insert multi-boutique assignments
+  if (payload.role === 'manager' && payload.boutiqueIds.length > 0) {
+    await adminSupabase.from('user_boutique_assignments').insert(
+      payload.boutiqueIds.map(bid => ({
+        user_id:    userId,
+        boutique_id: bid,
+        company_id: profile.company_id,
+      }))
+    )
   }
 
   await getAdminClient().from('audit_logs').insert({
@@ -299,10 +314,11 @@ export async function toggleBoutiqueActive(
 }
 
 export async function updateEmployee(payload: {
-  userId:     string
-  fullName:   string
-  role:       'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
-  boutiqueId: string | null
+  userId:      string
+  fullName:    string
+  role:        'seller' | 'cashier' | 'warehouse' | 'delivery' | 'manager' | 'accountant' | 'field_agent'
+  boutiqueId:  string | null  // seller / cashier
+  boutiqueIds: string[]       // manager
 }) {
   const supabase      = await createClient()
   const adminSupabase = getAdminClient()
@@ -322,6 +338,9 @@ export async function updateEmployee(payload: {
 
   if (payload.role === 'seller' && !payload.boutiqueId) {
     return { error: 'Une boutique doit être assignée aux vendeurs.' }
+  }
+  if (payload.role === 'cashier' && !payload.boutiqueId) {
+    return { error: 'Une boutique doit être assignée aux caissiers.' }
   }
 
   // Role hierarchy: owner only; verify target is in same company
@@ -347,6 +366,25 @@ export async function updateEmployee(payload: {
     .eq('company_id', profile.company_id)   // defense-in-depth
 
   if (error) return { error: error.message }
+
+  // Manager: replace all boutique assignments atomically
+  if (payload.role === 'manager') {
+    await adminSupabase
+      .from('user_boutique_assignments')
+      .delete()
+      .eq('user_id', payload.userId)
+      .eq('company_id', profile.company_id)
+
+    if (payload.boutiqueIds.length > 0) {
+      await adminSupabase.from('user_boutique_assignments').insert(
+        payload.boutiqueIds.map(bid => ({
+          user_id:    payload.userId,
+          boutique_id: bid,
+          company_id: profile.company_id,
+        }))
+      )
+    }
+  }
 
   await getAdminClient().from('audit_logs').insert({
     user_id:            user.id,

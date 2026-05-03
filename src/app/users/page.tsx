@@ -20,7 +20,7 @@ export default async function UsersPage() {
   if (profile.is_platform_admin) redirect('/admin')
   if (profile.role !== 'owner') redirect('/dashboard')
 
-  const [{ data: employees }, { data: boutiques }, badgeCounts] = await Promise.all([
+  const [{ data: employees }, { data: boutiques }, { data: assignments }, badgeCounts] = await Promise.all([
     supabase
       .from('users')
       .select(`
@@ -35,14 +35,25 @@ export default async function UsersPage() {
       .select('id, name, is_active')
       .order('name'),
 
+    supabase
+      .from('user_boutique_assignments')
+      .select('user_id, boutique_id'),
+
     getBadgeCounts(profile.role, supabase),
   ])
+
+  const boutiqueAssignments: Record<string, string[]> = {}
+  for (const a of assignments ?? []) {
+    if (!boutiqueAssignments[a.user_id]) boutiqueAssignments[a.user_id] = []
+    boutiqueAssignments[a.user_id].push(a.boutique_id)
+  }
 
   return (
     <UsersClient
       profile={profile}
       employees={employees ?? []}
       boutiques={boutiques ?? []}
+      boutiqueAssignments={boutiqueAssignments}
       currentUserId={user.id}
       badgeCounts={badgeCounts}
     />
